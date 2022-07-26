@@ -7,15 +7,14 @@
 *)
 type storage = {
     treasury : address;
-    tokenAOrders : order list;
-    tokenBOrders : order list
+    buyers : order list;
+    sellers : order list
 }
 
 let pushOrder (storage : storage) (order : order) : operation list * storage =
-    let {trader;tokenType;amount;expiry} = order in
-    match tokenType with
-       A -> ([],{storage with tokenAOrders = order :: storage.tokenAOrders})
-     | B -> ([], {storage with tokenBOrders = order :: storage.tokenBOrders})
+    match order.userType with
+       Buyer -> ([],{storage with buyers = order :: storage.buyers})
+     | Seller -> ([], {storage with sellers = order :: storage.sellers})
 
 let main 
     (action, storage : entrypoints * storage) : operation list * storage =
