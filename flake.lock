@@ -1,0 +1,117 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1656928814,
+        "narHash": "sha256-RIFfgBuKz6Hp89yRr7+NR5tzIAbn52h8vT6vXkYjZoM=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "7e2a3b3dfd9af950a856d66b0a7d01e3c18aa249",
+        "type": "github"
+      },
+      "original": {
+        "id": "flake-utils",
+        "type": "indirect"
+      }
+    },
+    "nix-filter": {
+      "locked": {
+        "lastModified": 1653590866,
+        "narHash": "sha256-E4yKIrt/S//WfW5D9IhQ1dVuaAy8RE7EiCMfnbrOC78=",
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "rev": "3e81a637cdf9f6e9b39aeb4d6e6394d1ad158e16",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-filter",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1658737577,
+        "narHash": "sha256-xosJ5nJT9HX+b6UWsSX6R+ap4AdZOCrl/r+IKFp2ASQ=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5a0e0d73b944157328d54c4ded1cf2f0146a86a5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nix-filter": "nix-filter",
+        "nixpkgs": "nixpkgs",
+        "tezos": "tezos"
+      }
+    },
+    "tezos": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "tezos_release": "tezos_release",
+        "tezos_trunk": "tezos_trunk"
+      },
+      "locked": {
+        "lastModified": 1656683762,
+        "narHash": "sha256-ckZYVPgyCTuwJZqPRptMMX2nBo3zMSh7Nx7enJfOJ7g=",
+        "owner": "marigold-dev",
+        "repo": "tezos-nix",
+        "rev": "cb59263407a451eeb4b8e4064c8837bccf4c2e4e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "marigold-dev",
+        "repo": "tezos-nix",
+        "type": "github"
+      }
+    },
+    "tezos_release": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1651744524,
+        "narHash": "sha256-AEY/m3c+6Yo/gqzO+4vzExQ20ICleIUsSFO1qWTO/OI=",
+        "owner": "tezos",
+        "repo": "tezos",
+        "rev": "cb9f439e58c761e76ade589d1cdbd2abb737dc68",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "tezos",
+        "ref": "v13.0",
+        "repo": "tezos",
+        "type": "gitlab"
+      }
+    },
+    "tezos_trunk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1656577193,
+        "narHash": "sha256-k1wzmuXVY7rm45zkNznLEXeaqM8v789Kzam0xaoXvlI=",
+        "owner": "tezos",
+        "repo": "tezos",
+        "rev": "3829de24b026457d4e6995c21484849e1972f26d",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "tezos",
+        "repo": "tezos",
+        "type": "gitlab"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

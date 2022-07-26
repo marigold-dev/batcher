@@ -27,3 +27,9 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+# Local Contract build files
+build/
+
+# Nix build artefacts
+result
