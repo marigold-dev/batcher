@@ -10,7 +10,6 @@ type direction = Buyer | Seller
 type fixed_expiry = timestamp
 
 (*
-
 amount : the quantity of the given token the user want to trade
 price : the price that the user is ready to pay for the amount of the given token
 *)
@@ -22,6 +21,9 @@ type order = {
     price : nat;
     expiry : fixed_expiry
 }
+
+(*This type represent a result of a match computation, we can partially or totally match two orders*)
+type match_result = Total | Partial of order 
 
 (*
     Ordering -> push an order into the storage
