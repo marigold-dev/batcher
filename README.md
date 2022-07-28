@@ -10,6 +10,7 @@ The process which demonstrates the operations of the treasury contract in the sa
 
 ```
 # Run docker containers
+cd treasury
 docker-compose up -d 
 ```
 
