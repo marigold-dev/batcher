@@ -19,7 +19,7 @@ type order = {
     tokenType : token;
     amount : nat;
     price : nat;
-    expiry : fixed_expiry
+    deadline : timestamp
 }
 
 (*This type represent a result of a match computation, we can partially or totally match two orders*)
