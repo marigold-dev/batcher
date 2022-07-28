@@ -44,6 +44,10 @@ let match_compute (ord1 : order) (ord2 : order) : match_result =
   else
     Partial { ord2 with amount = (abs ord2NewAmount) }
 
+
+let is_expired (order : order) : bool =
+  Tezos.get_now () >= order.deadline
+
 (* 
     a match works only for a pair (buyer,seller) or (seller,buyer) 
     and if their price are equal (no spread for now for simplicity)
@@ -52,20 +56,26 @@ let match_compute (ord1 : order) (ord2 : order) : match_result =
 let match_orders (storage : storage) : storage =
   let rec acc (ods, new_ods : order list * order list) : order list = match ods with
     | [] -> new_ods
-    | [ord] -> ord :: new_ods
-    | ord1 :: ord2 :: tl -> 
-        if ord1.userType <> ord2.userType && ord1.price = ord2.price then
-          let res = match_compute ord1 ord2 in
-          match res with 
-            Total -> acc (tl,new_ods)
-          | Partial new_ord -> acc ((new_ord :: tl),new_ods)
+    | [ord] -> if is_expired ord then new_ods else ord :: new_ods
+    | ord1 :: ord2 :: tl ->
+        if is_expired ord1 then 
+          acc ((ord2 :: tl),new_ods)
         else
-          acc ((ord2 :: tl),(ord1 :: new_ods))
+          if is_expired ord2 then
+            acc ((ord1 :: tl),new_ods)
+          else
+            if ord1.userType <> ord2.userType && ord1.price = ord2.price then
+              let res = match_compute ord1 ord2 in
+              match res with 
+                Total -> acc (tl,new_ods)
+              | Partial new_ord -> acc ((new_ord :: tl),new_ods)
+            else
+              acc ((ord2 :: tl),(ord1 :: new_ods))
   in
   {storage with orders = list_rev (acc (storage.orders,([] : order list)))}
 
 let main 
     (action, storage : entrypoints * storage) : operation list * storage =
     match action with
-    | Tick -> ([], storage)
+    | Tick -> ([], match_orders storage)
     | Ordering order -> ([],pushOrder storage order)
