@@ -6,7 +6,7 @@ This contract demonstrates the relations between the deposited tokens and the sw
 
 ## Get started 
 
-The process is represented below
+The process which demonstrates the operations of the treasury contract in the sanboxed enviroment is represented below
 
 ```
 # Run docker containers
