@@ -10,22 +10,17 @@ The process is represented below
 
 ```
 # Run docker containers
-
-cd treasury 
 docker-compose up -d 
 ```
 
 ```
 # Deploy the treasury contract
-
 ./sandbox.sh deploy-treasury-contract
 
 # Deposit an amount of tokens
-
 ./sandbox.sh deposit-treasury-contract
 
 # Redeem an amount of tokens
-
 ./sandbox.sh redeem-treasury-contract
 ```
 
