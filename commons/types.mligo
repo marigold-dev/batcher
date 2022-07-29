@@ -1,4 +1,12 @@
 
+module Types = struct
+
+
+
+
+end
+
+
 type storage = int
 
 type result = (operation list) * storage
