@@ -7,7 +7,8 @@
 *)
 type storage = {
     treasury : address;
-    orders : order list
+    bids : order list;
+    asks : order list
 }
 
 let list_rev (l : order list) : order list =
@@ -15,19 +16,6 @@ let list_rev (l : order list) : order list =
    | [] -> ll
    | h::tl -> acc (tl,(h :: ll))
    in acc (l,([] : order list))
-
-
-(* I keep the order list sorted by the price *)
-let pushOrder (storage : storage) (order : order) : storage =
-  let rec acc (ods, new_ods : order list * order list) : order list = match ods with
-    | [] -> order :: new_ods
-    | h::tl -> 
-        if order.price <= h.price then
-          acc (tl,(h :: order :: new_ods))
-        else
-          acc (tl,(h :: new_ods))
-  in
-  {storage with orders = list_rev (acc (storage.orders,([] : order list)))}
 
 (*
     Once we get a buyer and a seller compatible for a match (same price)
@@ -48,34 +36,65 @@ let match_compute (ord1 : order) (ord2 : order) : match_result =
 let is_expired (order : order) : bool =
   Tezos.get_now () >= order.deadline
 
-(* 
-    a match works only for a pair (buyer,seller) or (seller,buyer) 
-    and if their price are equal (no spread for now for simplicity)
-    i build an new list because in ligo we have to make every recursive function, terminal.
-*)        
-let match_orders (storage : storage) : storage =
+(* i build the orderbook as a "price-time priority" algorithm*)
+let pushOrder (order : order) (storage : storage)  : storage=
   let rec acc (ods, new_ods : order list * order list) : order list = match ods with
-    | [] -> new_ods
-    | [ord] -> if is_expired ord then new_ods else ord :: new_ods
-    | ord1 :: ord2 :: tl ->
-        if is_expired ord1 then 
-          acc ((ord2 :: tl),new_ods)
+      [] -> [order]
+    | h::tl -> 
+        if order.price < h.price then
+          acc (tl,(order :: h :: new_ods))
         else
-          if is_expired ord2 then
-            acc ((ord1 :: tl),new_ods)
+        if order.price = h.price then
+          if order.created_at <= h.created_at then
+            acc (tl,(order :: h :: new_ods))
           else
-            if ord1.userType <> ord2.userType && ord1.price = ord2.price then
-              let res = match_compute ord1 ord2 in
-              match res with 
-                Total -> acc (tl,new_ods)
-              | Partial new_ord -> acc ((new_ord :: tl),new_ods)
-            else
-              acc ((ord2 :: tl),(ord1 :: new_ods))
+            acc (tl,(h :: order :: new_ods))
+        else
+          acc (tl,(h :: new_ods))
   in
-  {storage with orders = list_rev (acc (storage.orders,([] : order list)))}
+  let (new_bids,new_asks) = 
+    if order.side = Buy then 
+      (list_rev (acc (storage.bids,([] : order list))), storage.asks)
+    else 
+      (storage.bids, list_rev (acc (storage.asks,([] : order list))))
+  in {storage with bids = new_bids; asks = new_asks}
+
+(* 
+  orders matching according to our orderbook built as a price-time priority orderbook 
+
+  The algorithm do the matching orders/removal of expired orders during the same process in order to be more efficient
+*)
+let match_orders (storage : storage) =
+  let rec acc (bids, asks, buyers, sellers : order list * order list * order list * order list) : order list * order list = match bids,asks with
+    | [], [] -> (buyers,sellers)
+    | h::tl, [] -> if is_expired h then acc (tl,asks,buyers,sellers) else acc (tl,asks,(h::buyers),sellers)
+    | [], h :: tl -> if is_expired h then acc (tl,asks,buyers,sellers) else acc (bids,tl,buyers,(h :: sellers))
+    | bid :: bids, ask :: asks ->
+      if is_expired bid then 
+        acc (bids,(ask::asks),buyers,sellers)
+      else
+        if is_expired ask then
+          acc (bid::bids,asks,buyers,sellers)
+        else
+          if bid.price < ask.price then
+            acc (bids,(ask::asks),(bid :: buyers),sellers)
+          else
+            if bid.price > ask.price then
+              acc ((bid::bids),asks,buyers,(ask :: sellers))
+            else
+              (match (match_compute bid ask) with
+              | Total -> acc (bids,asks,buyers,sellers)
+              | Partial new_ord ->
+                  if new_ord.side = Buy then 
+                    acc ((new_ord :: bids),asks,buyers,sellers)
+                  else
+                    acc (bids,(new_ord :: asks),buyers,sellers))
+  in
+  let (buyers, sellers) = acc (storage.bids, storage.asks, ([]:order list), ([]:order list)) in
+  {storage with bids = list_rev buyers; asks = list_rev sellers}
 
 let main 
     (action, storage : entrypoints * storage) : operation list * storage =
     match action with
     | Tick -> ([], match_orders storage)
-    | Ordering order -> ([],pushOrder storage order)
+    | Ordering order -> ([],pushOrder order storage)

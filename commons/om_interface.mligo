@@ -2,7 +2,7 @@
 type token = A | B
 
 (*Direction define if a user is a buyer or a seller*)
-type direction = Buyer | Seller
+type direction = Buy | Sell
 
 (* I think that for the POC, the expiry for a given order would be
   tezos.now + N, this expiry should be 
@@ -15,11 +15,12 @@ price : the price that the user is ready to pay for the amount of the given toke
 *)
 type order = {
     trader : address;
-    userType : direction;
+    side : direction;
     tokenType : token;
     amount : nat;
     price : nat;
-    deadline : timestamp
+    deadline : timestamp;
+    created_at : timestamp
 }
 
 (*This type represent a result of a match computation, we can partially or totally match two orders*)
