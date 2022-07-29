@@ -28,11 +28,15 @@ module Types = struct
      base : price;
   }
 
+  type swap = {
+   from : token;
+   to : token;
+  }
+
   type swap_order = {
     trader : address;
-    from_token : token;
-    to_token : token;
-    price : nat;
+    swap  : swap;
+    to_price : nat;
     tolerance : nat;
     deadline : timestamp;
   }
