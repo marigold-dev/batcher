@@ -1,5 +1,10 @@
 #include "../commons/types.mligo"
 #include "../commons/constants.mligo"
+#import "../commons/types.mligo" "CommonTypes"
+#import "../commons/storage.mligo" "CommonStorage"
+
+(* Use common contract storage *)
+let storage  = CommonStorage.t;
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -14,18 +19,14 @@ type parameter =
 
 let add_order (_o,s : swap_x_to_y_param * storage ) : result = no_op (s)
 
-let update_prices (s : storage) : storage = s
-
 let expire_orders (s : storage) : storage = s
 
-let update_prices_and_expire_orders (s : storage) : storage =
-    let s = update_prices s in
-    let s = expire_orders s in
-    s
 
+let post_price (_price, storage: CommonTypes.price * storage) : result = no_op ()
 
 let main (p, s : parameter * storage) : result =
- let s = update_prices_and_expire_orders s in
+ let s = expire_orders s in
  match p with
    Swap (o) -> add_order (o,s)
  | Update   -> no_op (s)
+ | Post(pr) -> post_price (pr,s)
