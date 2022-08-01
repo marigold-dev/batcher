@@ -11,11 +11,24 @@ type storage = {
     asks : order list
 }
 
-let list_rev (l : order list) : order list =
-  let rec acc (l, ll : order list * order list) : order list = match l with
-   | [] -> ll
-   | h::tl -> acc (tl,(h :: ll))
-   in acc (l,([] : order list))
+(* placeholder function for calling the treasury in order to refund the expired orders *)
+let refund (_order : order) : unit = ()
+
+let list_rev (type a) (xs : a list) : a list =
+  let rec rev (type a) ((xs, acc) : a list * a list) : a list =
+    match xs with
+    | [] -> acc
+    | x :: xs -> rev (xs, (x :: acc)) in
+  rev (xs, ([] : a list))
+
+let concat (type a) (l : a list) (l2 : a list) : a list =
+  let rec acc (type a) (l, l2, new_list : a list * a list * a list) : a list =
+    match l,l2 with
+      | [],[] -> list_rev new_list
+      | [],h::tl -> acc (([] : a list),tl,(h :: new_list))
+      | h::tl, next -> acc (tl,next,(h::new_list))
+    in
+  acc (l, l2, ([] : a list))
 
 (*
     Once we get a buyer and a seller compatible for a match (same price)
@@ -39,24 +52,24 @@ let is_expired (order : order) : bool =
 (* i build the orderbook as a "price-time priority" algorithm*)
 let pushOrder (order : order) (storage : storage)  : storage=
   let rec acc (ods, new_ods : order list * order list) : order list = match ods with
-      [] -> [order]
+      [] -> list_rev (order :: new_ods)
     | h::tl -> 
         if order.price < h.price then
-          acc (tl,(order :: h :: new_ods))
+          concat (list_rev ((h :: order :: new_ods))) tl
         else
         if order.price = h.price then
           if order.created_at <= h.created_at then
-            acc (tl,(order :: h :: new_ods))
+            concat (list_rev ((h :: order :: new_ods))) tl
           else
-            acc (tl,(h :: order :: new_ods))
+            acc (tl,(h :: new_ods))
         else
           acc (tl,(h :: new_ods))
   in
   let (new_bids,new_asks) = 
     if order.side = Buy then 
-      (list_rev (acc (storage.bids,([] : order list))), storage.asks)
+      (acc (storage.bids,([] : order list)), storage.asks)
     else 
-      (storage.bids, list_rev (acc (storage.asks,([] : order list))))
+      (storage.bids, acc (storage.asks,([] : order list)))
   in {storage with bids = new_bids; asks = new_asks}
 
 (* 
@@ -67,13 +80,25 @@ let pushOrder (order : order) (storage : storage)  : storage=
 let match_orders (storage : storage) =
   let rec acc (bids, asks, buyers, sellers : order list * order list * order list * order list) : order list * order list = match bids,asks with
     | [], [] -> (buyers,sellers)
-    | h::tl, [] -> if is_expired h then acc (tl,asks,buyers,sellers) else acc (tl,asks,(h::buyers),sellers)
-    | [], h :: tl -> if is_expired h then acc (tl,asks,buyers,sellers) else acc (bids,tl,buyers,(h :: sellers))
+    | bid::bids, [] -> 
+      if is_expired bid then
+        let _ = refund bid in
+        acc (bids,([]:order list),buyers,sellers)
+      else
+        acc (bids,([]:order list),(bid::buyers),sellers)
+    | [], ask :: asks -> 
+      if is_expired ask then 
+        let _ = refund ask in
+        acc (([]:order list),asks,buyers,sellers) 
+      else 
+        acc (([]:order list),asks,buyers,(ask :: sellers))
     | bid :: bids, ask :: asks ->
-      if is_expired bid then 
+      if is_expired bid then
+        let _ = refund bid in
         acc (bids,(ask::asks),buyers,sellers)
       else
         if is_expired ask then
+          let _ = refund ask in
           acc (bid::bids,asks,buyers,sellers)
         else
           if bid.price < ask.price then
