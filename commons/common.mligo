@@ -10,27 +10,27 @@ module Types = struct
 
   (* A token value ascribes a value to token metadata *)
   type token_value = {
-     [@layout:comb]
-     token : token;
-     value : nat;
+    [@layout:comb]
+    token : token;
+    value : nat;
   }
 
   (* Price associates a timestamp to a token value to fix in time *)
   type price = {
-     [@layout:comb]
-     token : token_value;
-     when : timestamp;
+    [@layout:comb]
+    token : token_value;
+    when : timestamp;
   }
 
   type exchange_rate = {
-     [@layout:comb]
-     quote : price;
-     base : price;
+    [@layout:comb]
+    quote : price;
+    base : price;
   }
 
   type swap = {
-   from : token;
-   to : token;
+    from : token;
+    to : token;
   }
 
   type swap_order = {
@@ -44,7 +44,3 @@ module Types = struct
 
 end
 
-
-type result = (operation list) * storage
-
-}
