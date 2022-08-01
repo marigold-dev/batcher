@@ -1,5 +1,21 @@
 {
-  "deposited_amount": 200,
-  "deposited_price": 10,
-  "received_price": 5
+  "deposited_token": {
+    "address": "KT1GM85JRbgSgB6VDwAmhPQiq4Eg2dmx52gz",
+    "name": "XTZ",
+    "value": 500
+  },
+  "exchange_rate": {
+    "base": {
+      "address": "KT1GM85JRbgSgB6VDwAmhPQiq4Eg2dmx52gz",
+      "name": "XTZ",
+      "value": 10,
+      "timestamp": "2022-07-31T10:59:51Z"
+    },
+    "quote": {
+      "address": "KT1M5uAG8v8b77cat3Bcwy5ASpeMj8mzCmLN",
+      "name": "KITTY",
+      "value": 5,
+      "timestamp": "2022-07-31T12:59:51Z"
+    }
+  }
 }

@@ -1,4 +1,4 @@
 {
   treasury = (Big_map.empty : Storage.Types.treasury);
-  swapped_token = (Big_map.empty : Storage.Types.swapped_token);
+  swapped_treasury = (Big_map.empty : Storage.Types.swapped_treasury);
 }

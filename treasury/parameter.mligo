@@ -1,16 +1,16 @@
+#import "../commons/common.mligo" "Common"
+
 module Types = struct
-  type exchange_rate = {
-    deposited_price : nat;
-    received_price : nat;
-  }
+  type exchange_rate = Common.Types.exchange_rate 
+  type token_value = Common.Types.token_value
 
   type deposit = {
-    deposited_amount : nat;
+    deposited_token : token_value;
     exchange_rate : exchange_rate;
   }
 
   type redeem = {
-    redeemed_amount : nat;
+    redeemed_token : token_value;
     exchange_rate : exchange_rate;
   }
 
