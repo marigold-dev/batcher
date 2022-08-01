@@ -45,6 +45,5 @@ module Types = struct
 end
 
 
-type result = (operation list) * storage
 
 }

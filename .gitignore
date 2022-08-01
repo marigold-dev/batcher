@@ -30,6 +30,7 @@ _opam/
 
 # Local Contract build files
 build/
+out/
 
 # Nix build artefacts
 result
