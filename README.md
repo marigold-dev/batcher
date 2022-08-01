@@ -30,3 +30,9 @@ docker-compose up -d
 ## Contribution
 
 Please refer to the `treasury/sandbox.sh` for more information
+=======
+## Order matching component
+
+Ligo version : 0.47.0
+- Compile : ligo compile contract --protocol jakarta order_matching/src/order_match.mligo
+
