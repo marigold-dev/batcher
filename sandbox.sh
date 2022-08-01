@@ -34,40 +34,46 @@ deploy_contract () {
 }
 
 deploy_treasury_contract () {
-  treasury="./main.mligo"
-  treasury_storage=$(
-     cat <<EOF
-  {
-  treasury = (Big_map.empty : Storage.Types.treasury);
-  swapped_token = (Big_map.empty : Storage.Types.swapped_token);
-}
-EOF
-  )
+  treasury="treasury/main.mligo"
+
+  # Get the treasury storage for a seperate module.
+  storage_dir="data/treasury/storage.mligo"
+  treasury_storage=$(cat "$storage_dir")
 
   deploy_contract "treasury" "$treasury" "$treasury_storage"
 }
 
 deposit_treasury_contract () {
+  deposited_amount=$(jq '.deposited_amount' $1)
+  deposited_price=$(jq '.deposited_price' $1)
+  received_price=$(jq '.received_price' $1)
+
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
-  --entrypoint deposit --arg "Pair 200 (Pair 10 5)"  \
+  --entrypoint deposit --arg "Pair $deposited_amount (Pair $deposited_price $received_price)"  \
   --burn-cap 2
 }
 
 redeem_treasury_contract () {
+  redeemed_amount=$(jq '.redeemed_amount' $1)
+  deposited_price=$(jq '.deposited_price' $1)
+  received_price=$(jq '.received_price' $1)
+
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
-  --entrypoint redeem --arg "Pair (Pair 10 5) 70" \
+  --entrypoint redeem --arg "Pair (Pair $deposited_price $received_price) $redeemed_amount" \
   --burn-cap 2
 }
 
 case "$1" in
 deploy-treasury-contract)
-  deploy_treasury_contract
+  deploy_treasury_contract 
   ;;
 deposit-treasury-contract)
-  deposit_treasury_contract
+  deposit_data="data/treasury/deposit.json"
+  deposit_treasury_contract $deposit_data
   ;;
 redeem-treasury-contract)
-  redeem_treasury_contract
+  redeem_data="data/treasury/redeem.json"
+  redeem_treasury_contract $redeemed_data
   ;;
 esac
 

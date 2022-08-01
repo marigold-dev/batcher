@@ -19,7 +19,7 @@ module Utils = struct
   type redeem = Parameter.Types.redeem  
   type exchange_rate = Parameter.Types.exchange_rate
 
-  (* A person depsits an amount of tokens into storage for swapping *)
+  (* A person deposits an amount of tokens into storage for swapping *)
   let deposit_treasury (deposit_address : address) (deposited_amount : nat) (treasury : Types.treasury) = 
     match Big_map.get_and_update 
       deposit_address
@@ -47,10 +47,9 @@ module Utils = struct
       let updated_amount = old_amount + swapped_amount in 
       Big_map.add deposit_address updated_amount swapped_token
 
-  let deposit (deposited_value : deposit) (storage : Types.t) = 
+  let deposit (deposit_address : address) (deposited_value : deposit) (storage : Types.t) = 
     let { deposited_amount; exchange_rate } = deposited_value in
     let { treasury; swapped_token } = storage in  
-    let deposit_address = Tezos.get_sender () in
     let treasury = deposit_treasury deposit_address deposited_amount treasury in   
     let swapped_token = deposit_swapped_token deposit_address deposited_amount exchange_rate swapped_token in 
     { treasury = treasury; swapped_token = swapped_token }
@@ -89,10 +88,9 @@ module Utils = struct
         let updated_amount = abs (old_amount - swapped_amount) in 
         Big_map.add redeem_address updated_amount swapped_token
 
-  let redeem (redeemed_value : redeem) (storage : Types.t) = 
+  let redeem (redeem_address : address) (redeemed_value : redeem) (storage : Types.t) = 
     let { redeemed_amount; exchange_rate } = redeemed_value in
     let { treasury; swapped_token } = storage in  
-    let redeem_address = Tezos.get_sender () in
     let treasury = redeem_treasury redeem_address redeemed_amount treasury in   
     let swapped_token = redeem_swapped_token redeem_address redeemed_amount exchange_rate swapped_token in 
     { treasury = treasury; swapped_token = swapped_token }

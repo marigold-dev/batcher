@@ -8,6 +8,8 @@ This contract demonstrates the relations between the deposited tokens and the sw
 
 The process which demonstrates the operations of the treasury contract in the sanboxed enviroment is represented below
 
+Install the `jq`
+
 ```
 # Run docker containers
 cd treasury
