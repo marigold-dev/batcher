@@ -39,6 +39,7 @@ module Types = struct
     to_price : nat;
     tolerance : nat;
     deadline : timestamp;
+    created_at : timestamp;
   }
 
 
