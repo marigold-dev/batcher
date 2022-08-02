@@ -1,0 +1,109 @@
+version: "3.8"
+services:
+  elastic:
+    container_name: 0_slip_elastic
+    image: ghcr.io/baking-bad/bcdhub-elastic:4.1.0
+    restart: always
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    environment:
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+
+  db:
+    container_name: 0_slip_postgres
+    image: postgres:12
+    shm_size: 1g
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=indexer
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  api:
+    container_name: 0_slip_api
+    restart: always
+    image: ghcr.io/baking-bad/bcdhub-api:4.1.0
+    environment:
+      - BCD_ENV=sandbox
+      - GIN_MODE=debug
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - SANDBOX_NODE_URI=http://sandbox:20000
+      - SANDBOX_IPFS_GATEWAY=https://cloudflare-ipfs.com
+    depends_on:
+      - elastic
+      - db
+    ports:
+      - 127.0.0.1:14000:14000
+    volumes:
+      - bcdshare:/etc/bcd
+    links:
+      - "flextesa:sandbox"
+
+  indexer:
+    container_name: 0_slip_indexer
+    restart: always
+    image: ghcr.io/baking-bad/bcdhub-indexer:4.1.0
+    environment:
+      - BCD_ENV=sandbox
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - SANDBOX_NODE_URI=http://sandbox:20000
+      - SANDBOX_IPFS_GATEWAY=https://cloudflare-ipfs.com
+    depends_on:
+      - db
+      - metrics
+    links:
+      - "flextesa:sandbox"
+    volumes:
+      - bcdshare:/etc/bcd
+
+  metrics:
+    container_name: 0_slip_metrics
+    restart: always
+    image: ghcr.io/baking-bad/bcdhub-metrics:4.1.0
+    environment:
+      - BCD_ENV=sandbox
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - SANDBOX_NODE_URI=http://sandbox:20000
+      - SANDBOX_IPFS_GATEWAY=https://cloudflare-ipfs.com
+    depends_on:
+      - elastic
+      - db
+    links:
+      - "flextesa:sandbox"
+    volumes:
+      - bcdshare:/etc/bcd
+
+  flextesa:
+    container_name: 0_slip_flextesa
+    restart: always
+    image: oxheadalpha/flextesa:20220715
+    command: kathmandubox start
+    environment:
+      - block_time=4
+    ports:
+      - "20000:20000"
+    expose:
+      - 20000/tcp
+
+  gui:
+    container_name: sandbox_gui
+    restart: always
+    image: bakingbad/bcdhub-gui:4.0
+    depends_on:
+      - api
+    ports:
+      - 127.0.0.1:8000:80
+
+volumes:
+  esdata:
+  bcdshare:
+  db:
+    driver: local

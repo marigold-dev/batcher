@@ -8,6 +8,7 @@ type storage  = CommonStorage.Types.t
 
 type result = (operation list) * storage
 
+
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 (*
@@ -34,4 +35,5 @@ let main
   match p with
    Swap (o) -> add_swap_order (o) (s)
    | Post(r) -> post_rate (r) (s)
+
 

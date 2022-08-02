@@ -19,4 +19,5 @@ module Types = struct
     rates_current : rates_current;
     rates_historic : rates_historic;
   }
+
 end
