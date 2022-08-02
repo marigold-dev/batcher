@@ -35,7 +35,7 @@
       }
     } )
   ];
-  rates_current = (Big_map.empty : rates_current);
-  rates_historic = (Big_map.empty : rates_historic);
+  rates_current = (Big_map.empty : CommonStorage.Types.rates_current);
+  rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic);
 
 }

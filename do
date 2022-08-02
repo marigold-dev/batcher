@@ -4,6 +4,7 @@ set +x
 OP=$1
 ADDROROP=$2
 NAME="0slip"
+BUILDDIR="out"
 
 usage(){
     echo "=============================================================="
@@ -34,14 +35,14 @@ make_out_dir(){
 build_storage() {
     echo "Compiling $NAME storage"
     make_out_dir
-    ligo compile contract slip/$NAME.mligo -e  main -s cameligo -o build/$NAME.tz
+    ligo compile contract slip/$NAME.mligo -e  main -s cameligo -o $BUILDDIR/$NAME.tz
 }
 
 build_contract(){
     echo "Compiling $NAME contract"
     make_out_dir
     INITSTORAGE=$(<slip/storage/storage.mligo)
-    ligo compile storage slip/$NAME.mligo "$INITSTORAGE" -s cameligo  -e main -o build/$NAME-storage.tz
+    ligo compile storage slip/$NAME.mligo "$INITSTORAGE" -s cameligo  -e main -o $BUILDDIR/$NAME-storage.tz
 }
 
 build(){
