@@ -2,12 +2,12 @@
   valid_tokens = [
     {
        name = "XTZ";
-       address = ("0" : address);
-    },
+       address = ("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address);
+    };
     {
        name = "tzBTC";
        address = ("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address);
-    },
+    };
     {
       name = "USDT";
       address = ("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address);
@@ -17,7 +17,7 @@
     ("XTZ/USDT", {
       to =     {
        name = "XTZ";
-       address = ("0" : address);
+       address = ("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address);
     };
     from = {
       name = "USDT";
