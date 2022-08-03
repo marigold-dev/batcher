@@ -24,7 +24,6 @@ let add_swap_order (_o : CommonTypes.Types.swap_order) (s : storage ) : result =
 
 let expire_orders (s : storage) : storage = s
 
-
 let post_rate (r : CommonTypes.Types.exchange_rate) (s : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate (r) (s) in
   no_op (updated_rate_storage)
