@@ -1,4 +1,4 @@
-#include "../../commons/om_interface.mligo"
+#include "../commons/om_interface.mligo"
 
 (*For now, the storage is only :
     - The treasury address (i need it for now as we work on separate component
@@ -47,13 +47,13 @@ let match_compute (ord1 : order) (ord2 : order) : match_result =
 
 
 let is_expired (order : order) : bool =
-  Tezos.get_now () >= order.deadline
+  Tezos.now >= order.deadline
 
 (* i build the orderbook as a "price-time priority" algorithm*)
 let pushOrder (order : order) (storage : storage)  : storage=
   let rec acc (ods, new_ods : order list * order list) : order list = match ods with
       [] -> list_rev (order :: new_ods)
-    | h::tl -> 
+    | h::tl ->
         if order.price < h.price then
           concat (list_rev ((h :: order :: new_ods))) tl
         else
@@ -65,32 +65,32 @@ let pushOrder (order : order) (storage : storage)  : storage=
         else
           acc (tl,(h :: new_ods))
   in
-  let (new_bids,new_asks) = 
-    if order.side = Buy then 
+  let (new_bids,new_asks) =
+    if order.side = Buy then
       (acc (storage.bids,([] : order list)), storage.asks)
-    else 
+    else
       (storage.bids, acc (storage.asks,([] : order list)))
   in {storage with bids = new_bids; asks = new_asks}
 
-(* 
-  orders matching according to our orderbook built as a price-time priority orderbook 
+(*
+  orders matching according to our orderbook built as a price-time priority orderbook
 
   The algorithm do the matching orders/removal of expired orders during the same process in order to be more efficient
 *)
 let match_orders (storage : storage) =
   let rec acc (bids, asks, buyers, sellers : order list * order list * order list * order list) : order list * order list = match bids,asks with
     | [], [] -> (buyers,sellers)
-    | bid::bids, [] -> 
+    | bid::bids, [] ->
       if is_expired bid then
         let _ = refund bid in
         acc (bids,([]:order list),buyers,sellers)
       else
         acc (bids,([]:order list),(bid::buyers),sellers)
-    | [], ask :: asks -> 
-      if is_expired ask then 
+    | [], ask :: asks ->
+      if is_expired ask then
         let _ = refund ask in
-        acc (([]:order list),asks,buyers,sellers) 
-      else 
+        acc (([]:order list),asks,buyers,sellers)
+      else
         acc (([]:order list),asks,buyers,(ask :: sellers))
     | bid :: bids, ask :: asks ->
       if is_expired bid then
@@ -110,7 +110,7 @@ let match_orders (storage : storage) =
               (match (match_compute bid ask) with
               | Total -> acc (bids,asks,buyers,sellers)
               | Partial new_ord ->
-                  if new_ord.side = Buy then 
+                  if new_ord.side = Buy then
                     acc ((new_ord :: bids),asks,buyers,sellers)
                   else
                     acc (bids,(new_ord :: asks),buyers,sellers))
@@ -118,8 +118,3 @@ let match_orders (storage : storage) =
   let (buyers, sellers) = acc (storage.bids, storage.asks, ([]:order list), ([]:order list)) in
   {storage with bids = list_rev buyers; asks = list_rev sellers}
 
-let main 
-    (action, storage : entrypoints * storage) : operation list * storage =
-    match action with
-    | Tick -> ([], match_orders storage)
-    | Ordering order -> ([],pushOrder order storage)
