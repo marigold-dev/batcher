@@ -24,7 +24,7 @@
           #overlays = [ tezos.overlays.default ];
         };
       in {
-        devShell = pkgs.mkShell {
+        devShells.${system}.default  = pkgs.mkShell {
           name = "0-slip";
           buildInputs = with pkgs; with ocamlPackages; [
             cmake

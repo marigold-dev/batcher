@@ -14,22 +14,6 @@
         "type": "indirect"
       }
     },
-    "ligolang": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1659572655,
-        "narHash": "sha256-H6Vr+t6LsFgvfihQ26T/MNHyeBJ+ik7aG0JZ46uN4Rg=",
-        "owner": "ligolang",
-        "repo": "ligo",
-        "rev": "81d2f8d91ff9cbedd0503de1078b0d729ac86692",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "ligolang",
-        "repo": "ligo",
-        "type": "gitlab"
-      }
-    },
     "nix-filter": {
       "locked": {
         "lastModified": 1653590866,
@@ -64,7 +48,6 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "ligolang": "ligolang",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs",
         "tezos": "tezos"
