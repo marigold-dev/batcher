@@ -38,18 +38,19 @@ module Types = struct
   type swap_order = {
     trader : address;
     swap  : swap;
+    from_amount : nat;
     to_price : nat;
     tolerance : nat;
     deadline : timestamp;
   }
 
   type deposit = {
-    deposited_token : token_amount;
+    deposited_token_amount : token_amount;
     exchange_rate : exchange_rate;
   }
 
   type redeem = {
-    redeemed_token : token_amount;
+    redeemed_token_amount : token_amount;
     exchange_rate : exchange_rate;
   }
 
@@ -59,6 +60,11 @@ end
 module Utils = struct
 
   let get_token_name_from_price (t : Types.token_price) = t.token.name
+
+  let get_rate_name_from_swap (s : Types.swap) : string =
+    let quote_name = s.to.name in
+    let base_name = s.from.name in
+    quote_name ^ "/" ^ base_name
 
   let get_rate_name (r : Types.exchange_rate) : string =
     let quote_name = get_token_name_from_price (r.quote) in

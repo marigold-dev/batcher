@@ -47,12 +47,12 @@ module Utils = struct
         Big_map.add deposit_address { old_token with amount = updated_amount } swapped_treasury
 
   let deposit (deposit_address : address) (deposited_value : CommonTypes.Types.deposit) (storage : CommonStorage.Types.t) =
-    let { deposited_token; exchange_rate } = deposited_value in
+    let { deposited_token_amount; exchange_rate } = deposited_value in
     let treasury = storage.treasury in
     let swapped_treasury = storage.swapped_treasury in
-    let treasury = deposit_treasury deposit_address deposited_token treasury in
-    let swapped_treasury = deposit_swapped_token deposit_address deposited_token exchange_rate swapped_treasury in
-    { treasury = treasury; swapped_treasury = swapped_treasury }
+    let treasury = deposit_treasury deposit_address deposited_token_amount treasury in
+    let swapped_treasury = deposit_swapped_token deposit_address deposited_token_amount exchange_rate swapped_treasury in
+    { storage with  treasury = treasury; swapped_treasury = swapped_treasury }
 
   (* A person redeems an amount of tokens from storage *)
   let redeem_treasury (redeem_address : address) (redeemed_token : token_amount) (treasury : CommonStorage.Types.treasury) =
@@ -92,10 +92,10 @@ module Utils = struct
           Big_map.add redeem_address { old_token with amount = updated_amount } swapped_treasury
 
   let redeem (redeem_address : address) (redeemed_value : CommonTypes.Types.redeem) (storage : CommonStorage.Types.t) =
-    let { redeemed_token; exchange_rate } = redeemed_value in
+    let { redeemed_token_amount; exchange_rate } = redeemed_value in
     let treasury = storage.treasury in
     let swapped_treasury  = storage.swapped_treasury in
-    let treasury = redeem_treasury redeem_address redeemed_token treasury in
-    let swapped_treasury = redeem_swapped_token redeem_address redeemed_token exchange_rate swapped_treasury in
+    let treasury = redeem_treasury redeem_address redeemed_token_amount treasury in
+    let swapped_treasury = redeem_swapped_token redeem_address redeemed_token_amount exchange_rate swapped_treasury in
     { treasury = treasury; swapped_treasury = swapped_treasury }
 end

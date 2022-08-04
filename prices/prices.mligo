@@ -35,13 +35,22 @@ end
 
 module Rates = struct
 
-  let post_rate (rate : CommonTypes.Types.exchange_rate) (storage : CommonStorage.Types.t) : CommonStorage.Types.t =
+  type storage = CommonStorage.Types.t
+  type rate = CommonTypes.Types.exchange_rate
+  type swap_order = CommonTypes.Types.swap_order
+
+  let post_rate (rate : rate) (storage : storage) : storage =
     let rate_name = CommonTypes.Utils.get_rate_name(rate) in
     let _ = Utils.is_valid_rate_type (rate_name) (storage.valid_swaps) in
     let s = Utils.archive_rate (rate_name) (storage) in
     let s = Utils.update_current_rate (rate_name) (rate) (s) in
     s
 
+  let get_rate (swap_order: swap_order) (storage : storage) : rate =
+    let rate_name =  CommonTypes.Utils.get_rate_name_from_swap swap_order.swap in
+    match Big_map.find_opt rate_name storage.rates_current with
+      | None -> (failwith PriceErrors.no_rate_available_for_swap : rate)
+      | Some r -> r
 
 end
 
