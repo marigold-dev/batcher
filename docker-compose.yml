@@ -84,8 +84,8 @@ services:
   flextesa:
     container_name: 0_slip_flextesa
     restart: always
-    image: oxheadalpha/flextesa:20220715
-    command: kathmandubox start
+    image: oxheadalpha/flextesa:20220127
+    command: hangzbox start
     environment:
       - block_time=4
     ports:
