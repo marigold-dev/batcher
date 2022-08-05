@@ -45,12 +45,12 @@ module Types = struct
   }
 
   type deposit = {
-    deposited_token_amount : token_amount;
+    deposited_token : token_amount;
     exchange_rate : exchange_rate;
   }
 
   type redeem = {
-    redeemed_token_amount : token_amount;
+    redeemed_token : token_amount;
     exchange_rate : exchange_rate;
   }
 

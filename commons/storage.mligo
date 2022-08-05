@@ -1,23 +1,25 @@
 #import "types.mligo" "CommonTypes"
 
 module Types = struct
- (* The tokens that are valid within the contract  *)
- type valid_tokens = CommonTypes.Types.token list
+  (* The tokens that are valid within the contract  *)
+  type valid_tokens = CommonTypes.Types.token list
 
- (* The swaps of valid tokens that are accepted by the contract  *)
- type valid_swaps =  (string, CommonTypes.Types.swap) map
+  (* The swaps of valid tokens that are accepted by the contract  *)
+  type valid_swaps = (string, CommonTypes.Types.swap) map
 
- (* The current, most up to date exchange rates between tokens  *)
- type rates_current = (string, CommonTypes.Types.exchange_rate) big_map
+  (* The current, most up to date exchange rates between tokens  *)
+  type rates_current = (string, CommonTypes.Types.exchange_rate) big_map
 
- (* Historical rates for the contract - this can be a limited set after the PoC. i.e. last day or week *)
- type rates_historic = (string, CommonTypes.Types.exchange_rate list) big_map
+  (* Historical rates for the contract - this can be a limited set after the PoC. i.e. last day or week *)
+  type rates_historic = (string, CommonTypes.Types.exchange_rate list) big_map
 
-  (* The deposited tokens *)
-  type treasury = (address, CommonTypes.Types.token_amount) big_map
+  type treasury_value = {
+    base_token : CommonTypes.Types.token_amount;
+    swapped_token : CommonTypes.Types.token_amount;  
+  }
 
-  (* The swapped tokens *)
-  type swapped_treasury = (address, CommonTypes.Types.token_amount) big_map
+  (* The treasury storage *)
+  type treasury = (address, treasury_value) big_map
 
   type t = {
     valid_tokens : valid_tokens;
@@ -25,7 +27,6 @@ module Types = struct
     rates_current : rates_current;
     rates_historic : rates_historic;
     treasury : treasury;
-    swapped_treasury : swapped_treasury;
   }
 
 end

@@ -58,10 +58,10 @@ deposit_treasury_contract () {
   quote_token_value=$(jq '.exchange_rate.quote.value' $1 | xargs)
   quote_token_timestamp=$(jq '.exchange_rate.quote.timestamp' $1 | xargs)
  
-  deposited_token="Pair (Pair \"$deposit_address\" \"$deposit_token_name\") $deposit_value"
+  deposited_token="Pair $deposit_value (Pair (Some \"$deposit_address\") \"$deposit_token_name\")"
 
-  base_value="Pair (Pair (Pair \"$base_token_address\" \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
-  quote_value="Pair (Pair (Pair \"$quote_token_address\" \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
+  base_value="Pair (Pair (Pair (Some \"$base_token_address\") \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
+  quote_value="Pair (Pair (Pair (Some \"$quote_token_address\") \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
   exchange_rate="Pair ($base_value) ($quote_value)"
 
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
@@ -84,13 +84,13 @@ redeem_treasury_contract () {
   quote_token_value=$(jq '.exchange_rate.quote.value' $1 | xargs)
   quote_token_timestamp=$(jq '.exchange_rate.quote.timestamp' $1 | xargs)
  
-  redeemed_token="Pair (Pair \"$redeem_address\" \"$redeem_token_name\") $redeem_value"
+  redeemed_token="Pair $redeem_value (Pair (Some \"$redeem_address\") \"$redeem_token_name\")"
 
-  base_value="Pair (Pair (Pair \"$base_token_address\" \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
-  quote_value="Pair (Pair (Pair \"$quote_token_address\" \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
+  base_value="Pair (Pair (Pair (Some \"$base_token_address\") \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
+  quote_value="Pair (Pair (Pair (Some \"$quote_token_address\") \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
   exchange_rate="Pair ($base_value) ($quote_value)"
 
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
+  tezos-client --endpoint $RPC_NODE transfer 0 from alice to treasury \
   --entrypoint redeem --arg "Pair ($exchange_rate) ($redeemed_token)" \
   --burn-cap 2
 }

@@ -25,12 +25,12 @@ type parameter =
 let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
   let address = Tezos.sender in
   let rate = Pricing.Rates.get_rate (o) (s) in
-  let deposited_token_amount : CommonTypes.Types.token_amount =  {
+  let deposited_token : CommonTypes.Types.token_amount =  {
          token = o.swap.from;
          amount = o.from_amount;
      } in
   let deposit : CommonTypes.Types.deposit = {
-     deposited_token_amount = deposited_token_amount;
+     deposited_token = deposited_token;
      exchange_rate = rate;
   }  in
   let s = Treasury.Utils.deposit address deposit s in
