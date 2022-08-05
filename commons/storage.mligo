@@ -13,11 +13,19 @@ module Types = struct
  (* Historical rates for the contract - this can be a limited set after the PoC. i.e. last day or week *)
  type rates_historic = (string, CommonTypes.Types.exchange_rate list) big_map
 
+  (* The deposited tokens *)
+  type treasury = (address, CommonTypes.Types.token_amount) big_map
+
+  (* The swapped tokens *)
+  type swapped_treasury = (address, CommonTypes.Types.token_amount) big_map
+
   type t = {
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
     rates_historic : rates_historic;
+    treasury : treasury;
+    swapped_treasury : swapped_treasury;
   }
 
 end

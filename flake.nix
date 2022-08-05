@@ -24,7 +24,7 @@
           #overlays = [ tezos.overlays.default ];
         };
       in {
-        devShell = pkgs.mkShell {
+        devShells.${system}.default  = pkgs.mkShell {
           name = "0-slip";
           buildInputs = with pkgs; with ocamlPackages; [
             cmake
@@ -55,9 +55,9 @@
 
             installPhase = ''
               mkdir -p $out
-              ligo compile contract $src/slip/0slip.mligo -e  main -s cameligo
+              ligo compile contract $src/slip/0slip.mligo -e  main -s cameligo -o $out/0slip.tz
               INITSTORAGE=$(<$src/slip/storage/storage.mligo)
-              ligo compile storage $src/slip/0slip.mligo "$INITSTORAGE" -s cameligo  -e  main
+              ligo compile storage $src/slip/0slip.mligo "$INITSTORAGE" -s cameligo -e main -o $out/0slip-storage.tz
             '';
 
           };
