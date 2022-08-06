@@ -44,16 +44,6 @@ module Types = struct
     deadline : timestamp;
   }
 
-  type deposit = {
-    deposited_token_amount : token_amount;
-    exchange_rate : exchange_rate;
-  }
-
-  type redeem = {
-    redeemed_token_amount : token_amount;
-    exchange_rate : exchange_rate;
-  }
-
 end
 
 
