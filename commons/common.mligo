@@ -47,20 +47,10 @@ end
 
 module Utils = struct
 
-let list_rev (type a) (xs : a list) : a list =
-  let rec rev (type a) ((xs, acc) : a list * a list) : a list =
-    match xs with
-    | [] -> acc
-    | x :: xs -> rev (xs, (x :: acc)) in
-  rev (xs, ([] : a list))
+let list_rev (type a) (list: a list) : a list = 
+  List.fold_left (fun (xs, x: a list * a) -> x :: xs) [] list
 
-let concat (type a) (l : a list) (l2 : a list) : a list =
-  let rec acc (type a) (l, l2, new_list : a list * a list * a list) : a list =
-    match l,l2 with
-      | [],[] -> list_rev new_list
-      | [],h::tl -> acc (([] : a list),tl,(h :: new_list))
-      | h::tl, next -> acc (tl,next,(h::new_list))
-    in
-  acc (l, l2, ([] : a list))
+let list_concat (type a) (left: a list) (right: a list) : a list = 
+  List.fold_right (fun (x, xs : a * a list) -> x :: xs) left right
 
 end
