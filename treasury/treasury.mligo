@@ -18,7 +18,8 @@ module Utils = struct
       Big_map.add address received_token treasury
     | (Some old_token, treasury) ->
       if old_token.token = received_token.token then
-        (failwith TreasuryErrors.not_same_token : treasury) 
+        let updated_amount = old_token.amount + received_token.amount in 
+        Big_map.add address { old_token with amount = updated_amount } treasury
       else 
         Big_map.add address received_token treasury
 
