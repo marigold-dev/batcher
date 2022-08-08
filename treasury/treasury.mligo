@@ -97,5 +97,5 @@ module Utils = struct
     let swapped_treasury  = storage.swapped_treasury in
     let treasury = redeem_treasury redeem_address redeemed_token_amount treasury in
     let swapped_treasury = redeem_swapped_token redeem_address redeemed_token_amount exchange_rate swapped_treasury in
-    { treasury = treasury; swapped_treasury = swapped_treasury }
+    { storage with treasury = treasury; swapped_treasury = swapped_treasury }
 end
