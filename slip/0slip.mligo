@@ -44,7 +44,8 @@ let expire_orders (s : storage) : storage = s
 
 let post_rate (r : CommonTypes.Types.exchange_rate) (s : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate (r) (s) in
-  no_op (updated_rate_storage)
+  let new_storage = trigger_order_matching_computation s in
+  no_op (new_storage)
 
 let trigger_order_matching_computation (storage : storage) : storage =
   let orderbook = storage.orderbook in
@@ -58,6 +59,5 @@ let main
   match p with
    Swap (o) -> add_swap_order (o) (s)
    | Post(r) -> post_rate (r) (s)
-   | Tick -> trigger_order_matching_computation s
 
 

@@ -9,23 +9,24 @@ type match_result = CommonTypes.Types.match_result
 type orderbook = CommonStorage.Types.orderbook
 type storage = CommonStorage.Types.t
 
-
-let refund (_bid : order) : unit = ()
+(* 
+  For now, only support one pair of token 
+*)
 
 (*
     Once we get a buyer and a seller compatible for a match (same price)
     we compute the result of the match, which can be Total (the buyer want the same amount than the seller)
     or Partial (so we have to create a "remainder" order for the buyer or the seller who have amount left after the computation)
 *)
-let match_compute (ord1 : order) (ord2 : order) : match_result =
-  let ord1NewAmount = ord1.from_amount - ord2.from_amount in
-  let ord2NewAmount = ord2.from_amount - ord1.from_amount in
-  if ord1NewAmount = 0 && ord2NewAmount = 0 then
+let compute_match_type (ord1 : order) (ord2 : order) : match_result =
+  let ord1_new_amount = ord1.from_amount - ord2.from_amount in
+  let ord2_new_amount = ord2.from_amount - ord1.from_amount in
+  if ord1_new_amount = 0 && ord2_new_amount = 0 then
     Total
   else
-  if ord1NewAmount > 0 then Partial { ord1 with from_amount = (abs ord1NewAmount) }
+  if ord1_new_amount > 0 then Partial { ord1 with from_amount = (abs ord2_new_amount) }
   else
-    Partial { ord2 with from_amount = (abs ord2NewAmount) }
+    Partial { ord2 with from_amount = (abs ord2_new_amount) }
 
 
 let is_expired (order : order) : bool =
@@ -37,11 +38,11 @@ let pushOrder (order : order) (orderbook : orderbook) (from, _to : string * stri
       [] -> Common.Utils.list_rev (order :: new_ods)
     | h::tl ->
         if order.to_price < h.to_price then
-          Common.Utils.concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
+          Common.Utils.list_concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
         else
         if order.to_price = h.to_price then
           if order.created_at <= h.created_at then
-            Common.Utils.concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
+            Common.Utils.list_concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
           else
             acc (tl,(h :: new_ods))
         else
@@ -54,6 +55,27 @@ let pushOrder (order : order) (orderbook : orderbook) (from, _to : string * stri
       (orderbook.bids, acc (orderbook.asks,([] : orderlist)))
   in {orderbook with bids = new_bids; asks = new_asks}
 
+
+(* I remove the expiried from the bids and asks lists of the orderbook, and i redeem them before *)
+let remove_expiried_orders (storage : storage) : storage =
+  let orderbook = storage.orderbook in
+  let bids = orderbook.bids in
+  let asks = orderbook.asks in
+  let f = 
+    fun (order, storage, l : order * storage * orderlist) ->
+      if is_expired order then
+        (*with the actual treasury redeem function signature it doesn't work because it wait a redeem type, but for me
+        this function just need an address, an amount and the storage, for our case of only one pair for the POC*)
+        let new_storage = Treasury.Utils.redeem order.trader order.from_amount storage in
+        (new_storage, l)
+      else
+        (storage, order :: l) in
+  let (new_storage, new_bids) = List.fold_right f bids (storage,[]) in
+  let (new_storage, new_asks) = List.fold_right f asks (new_storage,[]) in
+
+  let new_orderbook = {orderbook with bids = new_bids; asks = new_asks} in
+  {new_storage with orderbook = new_orderbook}
+
 (*
   orders matching according to our orderbook built as a price-time priority orderbook
 
@@ -62,41 +84,23 @@ let pushOrder (order : order) (orderbook : orderbook) (from, _to : string * stri
 let match_orders (storage : storage) : storage =
   let rec acc (bids, asks, buyers, sellers, storage : orderlist * orderlist * orderlist * orderlist * storage) : orderlist * orderlist = match bids,asks with
     | [], [] -> (buyers,sellers)
-    | bid::bids, [] ->
-      if is_expired bid then
-        let new_storage = Treasury.Utils.redeem bid.trader bid.from_amount storage in
-        acc (bids,([]:orderlist),buyers,sellers,new_storage)
-      else
-        acc (bids,([]:orderlist),(bid::buyers),sellers,storage)
-    | [], ask :: asks ->
-      if is_expired ask then
-        let new_storage = Treasury.Utils.redeem ask.trader ask.from_amount storage in
-        acc (([]:orderlist),asks,buyers,sellers,storage)
-      else
-        acc (([]:orderlist),asks,buyers,(ask :: sellers),storage)
+    | bid::bids, [] -> acc (bids,([]:orderlist),(bid::buyers),sellers,storage)
+    | [], ask :: asks -> acc (([]:orderlist),asks,buyers,(ask :: sellers),storage)
     | bid :: bids, ask :: asks ->
-      if is_expired bid then
-        let new_storage = Treasury.Utils.redeem bid.trader bid.from_amount storage in
-        acc (bids,(ask::asks),buyers,sellers,new_storage)
+      if bid.to_price < ask.to_price then
+        acc (bids,(ask::asks),(bid :: buyers),sellers,storage)
       else
-        if is_expired ask then
-          let new_storage = Treasury.Utils.redeem ask.trader ask.from_amount storage in
-          acc (bid::bids,asks,buyers,sellers,new_storage)
+        if bid.to_price > ask.to_price then
+          acc ((bid::bids),asks,buyers,(ask :: sellers),storage)
         else
-          if bid.to_price < ask.to_price then
-            acc (bids,(ask::asks),(bid :: buyers),sellers,storage)
-          else
-            if bid.to_price > ask.to_price then
-              acc ((bid::bids),asks,buyers,(ask :: sellers),storage)
-            else
-              (match (match_compute bid ask) with
-              (*missing the Treasury.Utils.redeem for partial and total matching*)
-              | Total -> acc (bids,asks,buyers,sellers,storage)
-              | Partial new_ord ->
-                  if new_ord.swap.from.name = bid.swap.from.name then
-                    acc ((new_ord :: bids),asks,buyers,sellers,storage)
-                  else
-                    acc (bids,(new_ord :: asks),buyers,sellers,storage))
+          (match (match_compute bid ask) with
+          (*missing the Treasury.Utils.redeem for partial and total matching*)
+          | Total -> acc (bids,asks,buyers,sellers,storage)
+          | Partial new_ord ->
+              if new_ord.swap.from.name = bid.swap.from.name then
+                acc ((new_ord :: bids),asks,buyers,sellers,storage)
+              else
+                acc (bids,(new_ord :: asks),buyers,sellers,storage))
   in
   let orderbook = storage.orderbook in
   let (buyers, sellers) = acc (orderbook.bids, orderbook.asks, ([]:orderlist), ([]:orderlist), storage) in
