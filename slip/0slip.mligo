@@ -13,6 +13,12 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
+(* The immediate address: 
+  - Store the deposited tokens  
+  - Redeem the tokens to the original address
+*)
+let immediate_address = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
+
 (*
 Entrypoints:
 - Swap A of X token to Y token
@@ -28,7 +34,7 @@ let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
          token = o.swap.from;
          amount = o.from_amount;
      } in
-  let s = Treasury.Utils.deposit address deposited_token s in
+  let s = Treasury.Utils.deposit address immediate_address deposited_token s in
   (* let s = Matching.pushOrder *)
   no_op (s)
 
