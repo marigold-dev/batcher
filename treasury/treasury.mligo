@@ -57,43 +57,24 @@ module Utils = struct
       let _ = transfer_token deposit_address immediate_address deposited_token in 
       { storage with treasury = treasury }
 
-  let handle_token_redemption 
-    (old_token : token_amount) 
-    (redeem_address : address) 
-    (redeemed_token : token_amount)
-    (expiry : boolean) 
-    (treasury : treasury) : treasury = 
-      if expiry || (redeemed_token.amount = old_token.amount) then 
-        Big_map.remove redeem_address treasury 
-      else 
-        Big_map.add redeem_address redeemed_token treasury
-
   (* Redeem cancelled tokens from storage *)
-  let redeem_treasury 
-    (redeem_address : address) 
-    (redeemed_token : token_amount) 
-    (expiry : boolean) 
-    (treasury : treasury) : treasury =
-      match Big_map.get_and_update
-        redeem_address
-        (None : token_amount option)
-        treasury
-      with
-      | (None, treasury) ->
-        (failwith TreasuryErrors.incorrect_address : treasury)
-      | (Some old_token, treasury) ->
-        handle_token_redemption old_token redeem_address redeemed_token expiry treasury
+  let redeem_treasury (redeem_address : address) (redeemed_token : token_amount) (treasury : treasury) : treasury =
+    match Big_map.get_and_update
+      redeem_address
+      (None : token_amount option)
+      treasury
+    with
+    | (None, treasury) ->
+      (failwith TreasuryErrors.incorrect_address : treasury)
+    | (Some _, treasury) ->
+        Big_map.add redeem_address redeemed_token treasury
 
   let redeem 
     (redeem_address : address) 
     (immediate_address : address) 
     (redeemed_token : token_amount) 
-    (expiry : boolean) 
     (storage : storage) : storage =
-      let _ = 
-        if expiry && (redeemed_token.amount <> 0n) then 
-          transfer_token immediate_address redeem_address redeemed_token 
-      in 
       let treasury = redeem_treasury redeem_address redeemed_token expiry storage.treasury in 
+      let _ = transfer_token immediate_address redeem_address redeemed_token in
       { storage with treasury = treasury }
 end
