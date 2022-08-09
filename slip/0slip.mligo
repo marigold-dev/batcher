@@ -33,7 +33,7 @@ let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
   let s = Treasury.Utils.deposit address deposited_token s in
   let orderbook = s.orderbook in
   let new_orderbook = Matching.Utils.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
-  ([], {s with orderbook = new_orderbook})
+  no_op ({s with orderbook = new_orderbook})
 
 let expire_orders (s : storage) : storage = s
 

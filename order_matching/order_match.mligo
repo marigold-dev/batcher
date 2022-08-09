@@ -32,7 +32,7 @@ module Utils = struct
 
 
   let is_expired (order : order) : bool =
-    Tezos.get_now () >= order.deadline
+    Tezos.get_now() >= order.deadline
 
   (* i build the orderbook as a "price-time priority" algorithm*)
   let pushOrder (order : order) (orderbook : orderbook) (from, _to : string * string) : orderbook =
