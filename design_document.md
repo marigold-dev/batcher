@@ -83,43 +83,96 @@ sequenceDiagram
     treasury-->>UserB: transfer(X XTZ)
 ```
 
-
 ### Partial match
 
 If a partial match is found, a partial redemption is triggered from the treasury to fulfil the swap orders.  Any remained swap amount remains and will go through future match cycles in order to try to match the remaining. If no match is found for the remaining amount, a redemption is triggered in the treasury to return the remaining amount to the user that placed the swap.
+
+```mermaid
+sequenceDiagram
+    participant UserA
+    participant UserB
+    participant SWAP
+    participant treasury
+    participant matching
+    UserA-->>SWAP: swap_order(X XTZ at Y for USDT at Z)
+    SWAP-->>treasury: deposit (X XTZ)
+    UserB-->>SWAP: swap_order(R USDT at S for XTZ at T)
+    SWAP-->>treasury:  deposit (R USDT)
+    loop OrderMatching
+        matching->>matching: match find prices and a partial match (50%) on XTZ amount - PARTIAL match
+    end
+    matching->>treasury: redemption(R USDT to UserA)
+    treasury-->>UserA: transfer(R USDT)
+    matching->>treasury: redemption(1/2 of X XTZ to UserB)
+    treasury-->>UserB: transfer(1/2 of X XTZ)
+    loop OrderMatching
+        matching->>matching: match continues to try to find a matching order for the remaining 50% of XTZ deposited
+        matching->>matching: no match found - remaining portion of order expired once expiry time is reached
+    end
+    matching->>treasury: redemption(1/2 of X XTZ to UserA)
+    treasury-->>UserA: transfer(1/2 of X XTZ)
+```
 
 ### No match
 
 If no match is found by the time the swap order expires, a redemption will be triggered to return the deposited amount to the user that placed the swap.
 
-
-
-
-
-
-
-
-### This document aim to describe the big picture, the worklow of the POC, ie the interactions between the differents actors, the available entrypoints etc.
-
 ```mermaid
 sequenceDiagram
-    participant User
-    participant AScript?
-    participant 0slip_sc
-    User->>0slip_sc: transaction(0slip_sc%swap token price amount)
-    Note right of 0slip_sc: Clean the expiried orders (not sure about this one)
-    Note right of 0slip_sc: Add in the treasury map, a relation between User's address and the amount he deposited
-    Note right of 0slip_sc: Create an swap_order and push it into the orderbook
-    loop UpdateExchangeRates
-        AScript?->>SourceOfTruth: get datas about exchange_rate
-        AScript?->>0slip_sc: transaction(0slip_sc%post_rate exchange_rate)
+    participant UserA
+    participant UserB
+    participant SWAP
+    participant treasury
+    participant matching
+    UserA-->>SWAP: swap_order(X XTZ at Y for USDT at Z)
+    SWAP-->>treasury: deposit (X XTZ)
+    UserB-->>SWAP: swap_order(R USDT at S for XTZ at T)
+    SWAP-->>treasury:  deposit (R USDT)
+    loop OrderMatching
+        matching->>matching: no matching orders can be found - NO match
+        matching->>matching: orders are expired once expiry time is reached
     end
-    Note right of 0slip_sc:check if the new rate is valid
-    Note right of 0slip_sc:archive the current rate
-    Note right of 0slip_sc:update the current rate with the new one
-    loop TriggerOrderMatchingAlgorithm
-        AScript?->>0slip_sc: transaction(0slip_sc%Tick)
-    end
-    Note right of 0slip_sc:for each totally or partially matched order
-    0slip_sc-->>User: redeem(amount)
+    matching->>treasury: redemption(R USDT to UserB)
+    treasury-->>UserB: transfer(R USDT)
+    matching->>treasury: redemption(X XTZ to UserA)
+    treasury-->>UserA: transfer(X XTZ)
 ```
+
+## Testing
+
+For the PoC, the minimal set of tests to be completed on a testnet deployment for the contract to be considered working are as follows:
+
+> The test plan should be run on the deployed contract for both initially supported pairs - XTZ/USDT and USDT/tzBTC,
+
+### Scenario 1.   Simple Matching Swap
+
+#### Setup:
+  - Update Oracle price for swap.
+  - Place equal and opposing swaps from different wallets at exact price and correct amounts
+
+#### Result:
+- The swaps should match and the treasury should redeem the correct amounts to the respective wallets
+
+### Scenario 2.   Simple Non Matching Swap
+
+#### Setup:
+  - Update Oracle price for swap.
+  - Place first swap
+  - Update oracle price again
+  - Place opposing swap from a different wallet at a different price
+
+#### Result:
+- The swaps should not match and deposits be returned correctly after expiry
+
+### Scenario 3.   Partial Matching Swap
+
+#### Setup:
+  - Update Oracle price for swap.
+  - Place first swap
+  - Place equal and opposing swap from a different wallet at the same price but differing amount.
+
+#### Result:
+- The swaps should partially match and the treasury should redeem the amounts correctly
+- Any remaining non matched amount should be redeemed to the correct wallet after swap expiry
+
+
