@@ -1,6 +1,6 @@
 # Design document for the 0-slippage DEX POC
 
-The aim of the 0-slippage dex is to enable users to deposit tokens for swap orders at the current Oracle price for a given pair.  The order will then be matched against an opposing order with no slippage in the price (up to a defined tolerance - +- 2bps).  If no order is found to totally fill the order (or partially fill) the order will be expired and the deposits returned.
+The aim of the 0-slippage dex is to enable users to deposit tokens for swap orders at the current Oracle price for a given pair.  The order will then be matched against an opposing order with no slippage in the price (up to a defined tolerance - +- 2bps).  If no order is found to totally fill the order (or partially fill) before the expiry deadline then the order will be expired and the deposits returned.
 
 The first PoC will be a very simple contract that will make the following assumptions/caveats.
 
