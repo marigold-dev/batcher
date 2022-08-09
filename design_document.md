@@ -26,7 +26,7 @@ flowchart LR
    end
 ```
 
-Exchange ratesare posted in the following format:
+Exchange rates are posted in the following format:
 
 ```json
 {
@@ -62,6 +62,27 @@ As there is no UI for the simple PoC, all swap order will be placed via the tezo
 ### Total match
 
 If an exact 'total' matched order is found the matching code triggers the redemption of the tokens in opposing directions from the treasury so it fulfils the swap orders.
+
+```mermaid
+sequenceDiagram
+    participant UserA
+    participant UserB
+    participant SWAP
+    participant treasury
+    participant matching
+    UserA-->>SWAP: swap_order(X XTZ at Y for USDT at Z)
+    SWAP-->>treasury: deposit (X XTZ)
+    UserB-->>SWAP: swap_order(R USDT at S for XTZ at T)
+    SWAP-->>treasury:  deposit (R USDT)
+    loop OrderMatching
+        matching->>matching: match find prices and amounts - TOTAL match
+    end
+    matching->>treasury: redemption(R USDT to UserA)
+    treasury-->>UserA: transfer(R USDT)
+    matching->>treasury: redemption(X XTZ to UserB)
+    treasury-->>UserB: transfer(X XTZ)
+```
+
 
 ### Partial match
 
