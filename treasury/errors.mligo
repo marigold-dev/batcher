@@ -7,3 +7,5 @@ let invalid_token_address : string = "This token address is invalid"
 let not_found_token_address : string = "This token address is not found"
 
 let invalid_token : string = "This added token is not the same as the previous token"
+
+let invalid_tezos_address : string = "This tezos address is invalid"

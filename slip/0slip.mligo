@@ -13,11 +13,11 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
-(* The immediate address: 
+(* The treasury_vault: 
   - Store the deposited tokens  
   - Redeem the tokens to the original address
 *)
-let immediate_address = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
+let treasury_vault = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
 
 (*
 Entrypoints:
@@ -36,11 +36,7 @@ let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
          token = o.swap.from;
          amount = o.from_amount;
      } in
-  let deposit : CommonTypes.Types.deposit = {
-     deposited_token_amount = deposited_token_amount;
-     exchange_rate = rate;
-  }  in
-  let s = Treasury.Utils.deposit address deposit s in
+  let s = Treasury.Utils.deposit address treasury_vault deposited_token s in
   let orderbook = s.orderbook in
   let new_orderbook = Matching.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
   ([], {s with orderbook = new_orderbook})
