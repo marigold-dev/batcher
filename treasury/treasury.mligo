@@ -89,7 +89,7 @@ module Utils = struct
     (treasury_vault : address) 
     (redeemed_token : token_amount) 
     (storage : storage) : storage =
-      let treasury = redeem_treasury redeem_address redeemed_token expiry storage.treasury in 
+      let treasury = redeem_treasury redeem_address redeemed_token storage.treasury in 
       let _ = handle_transfer treasury_vault redeem_address redeemed_token in
       { storage with treasury = treasury }
 end

@@ -50,7 +50,7 @@ let post_rate (r : CommonTypes.Types.exchange_rate) (s : storage) : result =
 
 let trigger_order_matching_computation (storage : storage) : storage =
   let orderbook = storage.orderbook in
-  let new_orderbook Matching.match_orders orderbook in
+  let new_orderbook = Matching.match_orders orderbook in
   {storage with orderbook = new_orderbook}
 
 let main

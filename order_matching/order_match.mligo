@@ -1,5 +1,5 @@
-#import "../commons/common.mligo" "Common"
 #import "../commons/types.mligo" "CommonTypes"
+#import "../commons/utils.mligo" "Utils"
 #import "../commons/storage.mligo" "CommonStorage"
 #import "../treasury/treasury.mligo" "Treasury"
 
@@ -35,14 +35,14 @@ let is_expired (order : order) : bool =
 (* i build the orderbook as a "price-time priority" algorithm*)
 let pushOrder (order : order) (orderbook : orderbook) (from, _to : string * string) : orderbook =
   let rec acc (ods, new_ods : orderlist * orderlist) : orderlist = match ods with
-      [] -> Common.Utils.list_rev (order :: new_ods)
+      [] -> Utils.list_rev (order :: new_ods)
     | h::tl ->
         if order.to_price < h.to_price then
-          Common.Utils.list_concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
+          Utils.list_concat (Utils.list_rev ((h :: order :: new_ods))) tl
         else
         if order.to_price = h.to_price then
           if order.created_at <= h.created_at then
-            Common.Utils.list_concat (Common.Utils.list_rev ((h :: order :: new_ods))) tl
+            Utils.list_concat (Utils.list_rev ((h :: order :: new_ods))) tl
           else
             acc (tl,(h :: new_ods))
         else
@@ -104,6 +104,6 @@ let match_orders (storage : storage) : storage =
   in
   let orderbook = storage.orderbook in
   let (buyers, sellers) = acc (orderbook.bids, orderbook.asks, ([]:orderlist), ([]:orderlist), storage) in
-  let new_orderbook = {orderbook with bids = Common.Utils.list_rev buyers; asks = Common.Utils.list_rev sellers} in
+  let new_orderbook = {orderbook with bids = Utils.list_rev buyers; asks = Utils.list_rev sellers} in
   {storage with orderbook = new_orderbook}
 
