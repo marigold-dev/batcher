@@ -33,7 +33,7 @@ let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
      } in
   let s = Treasury.Utils.deposit address treasury_vault deposited_token s in
   let orderbook = s.orderbook in
-  let new_orderbook = Matching.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
+  let new_orderbook = Matching.Utils.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
   ([], {s with orderbook = new_orderbook})
 
 let expire_orders (s : storage) : storage = s
@@ -45,13 +45,12 @@ let post_rate (r : CommonTypes.Types.exchange_rate) (s : storage) : result =
 
 let trigger_order_matching_computation (storage : storage) : storage =
   let orderbook = storage.orderbook in
-  let new_orderbook = Matching.match_orders orderbook in
+  let new_orderbook = Matching.Utils.match_orders orderbook in
   {storage with orderbook = new_orderbook}
 
 let main
   (p, s : parameter * storage) : result =
-  let s = expire_orders (s) in
-  (* let s = Matching.tick (s) in *)
+  let s = Matching.Utils.remove_expiried_orders (s) in
   match p with
    Swap (o) -> add_swap_order (o) (s)
    | Post(r) -> post_rate (r) (s)
