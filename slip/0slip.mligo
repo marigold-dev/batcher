@@ -13,6 +13,12 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
+(* The immediate address: 
+  - Store the deposited tokens  
+  - Redeem the tokens to the original address
+*)
+let immediate_address = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
+
 (*
 Entrypoints:
 - Swap A of X token to Y token
