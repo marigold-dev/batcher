@@ -45,19 +45,6 @@ module Types = struct
     created_at : timestamp;
   }
 
-  (*This type represent a result of a match computation, we can partially or totally match two orders*)
-  type match_result = Total | Partial of swap_order
-
-  type deposit = {
-    deposited_token_amount : token_amount;
-    exchange_rate : exchange_rate;
-  }
-
-  type redeem = {
-    redeemed_token_amount : token_amount;
-    exchange_rate : exchange_rate;
-  }
-
 end
 
 

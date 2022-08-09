@@ -13,6 +13,12 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
+(* The treasury_vault: 
+  - Store the deposited tokens  
+  - Redeem the tokens to the original address
+*)
+let treasury_vault = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
+
 (*
 Entrypoints:
 - Swap A of X token to Y token
@@ -20,22 +26,17 @@ Entrypoints:
 - a tick for triggering the matching algorithm
 *)
 type parameter =
-  Swap of CommonTypes.Types.swap_order
+| Swap of CommonTypes.Types.swap_order
 | Post of CommonTypes.Types.exchange_rate
 | Tick
 
 let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
   let address = Tezos.sender in
-  let rate = Pricing.Rates.get_rate (o) (s) in
-  let deposited_token_amount : CommonTypes.Types.token_amount =  {
+  let deposited_token : CommonTypes.Types.token_amount =  {
          token = o.swap.from;
          amount = o.from_amount;
      } in
-  let deposit : CommonTypes.Types.deposit = {
-     deposited_token_amount = deposited_token_amount;
-     exchange_rate = rate;
-  }  in
-  let s = Treasury.Utils.deposit address deposit s in
+  let s = Treasury.Utils.deposit address treasury_vault deposited_token s in
   let orderbook = s.orderbook in
   let new_orderbook = Matching.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
   ([], {s with orderbook = new_orderbook})
