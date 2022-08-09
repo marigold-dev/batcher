@@ -45,6 +45,8 @@ module Types = struct
     created_at : timestamp;
   }
 
+  (*This type represent a result of a match computation, we can partially or totally match two orders*)
+  type match_result = Total | Partial of swap_order
 end
 
 
