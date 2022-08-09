@@ -13,11 +13,6 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
-(* The treasury_vault: 
-  - Store the deposited tokens  
-  - Redeem the tokens to the original address
-*)
-let treasury_vault = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
 
 (*
 Entrypoints:

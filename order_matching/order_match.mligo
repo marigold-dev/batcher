@@ -9,8 +9,8 @@ type match_result = CommonTypes.Types.match_result
 type orderbook = CommonStorage.Types.orderbook
 type storage = CommonStorage.Types.t
 
-(* 
-  For now, only support one pair of token 
+(*
+  For now, only support one pair of token
 *)
 
 (*
@@ -61,12 +61,16 @@ let remove_expiried_orders (storage : storage) : storage =
   let orderbook = storage.orderbook in
   let bids = orderbook.bids in
   let asks = orderbook.asks in
-  let f = 
+  let f =
     fun (order, storage, l : order * storage * orderlist) ->
       if is_expired order then
         (*with the actual treasury redeem function signature it doesn't work because it wait a redeem type, but for me
         this function just need an address, an amount and the storage, for our case of only one pair for the POC*)
-        let new_storage = Treasury.Utils.redeem order.trader order.from_amount storage in
+        let redeemed_token_amount = {
+          token = order.swap.from;
+          amount = order.from_amount;
+        } in
+        let new_storage = Treasury.Utils.redeem order.trader redeemed_token_amount storage in
         (new_storage, l)
       else
         (storage, order :: l) in

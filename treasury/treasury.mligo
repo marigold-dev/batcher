@@ -7,6 +7,12 @@ module Utils = struct
   type treasury = CommonStorage.Types.treasury
   type token_amount = CommonTypes.Types.token_amount
 
+  (* The treasury_vault:
+  - Store the deposited tokens
+  - Redeem the tokens to the original address
+  *)
+  let treasury_vault = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
+
   (* Transferred format for tokens in FA12 standard *)
   type transfer_data = {
     [@layout:comb]
@@ -15,22 +21,22 @@ module Utils = struct
     value : nat;
   }
 
-  (* Transfer the tokens to the appropriate address. This is based on the FA 1.2 token standard *) 
-  let transfer_token 
+  (* Transfer the tokens to the appropriate address. This is based on the FA 1.2 token standard *)
+  let transfer_token
     (sender : address)
     (receiver : address)
     (token_address : address)
-    (token_amount : nat) : operation = 
-      let transfer_entrypoint : transfer_data contract = 
-        match (Tezos.get_entrypoint_opt "%transfer" token_address : transfer_data contract option) with 
+    (token_amount : nat) : operation =
+      let transfer_entrypoint : transfer_data contract =
+        match (Tezos.get_entrypoint_opt "%transfer" token_address : transfer_data contract option) with
         | None -> failwith TreasuryErrors.invalid_token_address
         | Some transfer_entrypoint -> transfer_entrypoint
       in
-      let transfer_data : transfer_data = 
+      let transfer_data : transfer_data =
       {
         from = sender;
         to_ = receiver;
-        value = token_amount; 
+        value = token_amount;
       } in
       Tezos.transaction transfer_data 0tez transfer_entrypoint
 
@@ -43,12 +49,12 @@ module Utils = struct
     Tezos.transaction () amount received_contract
 
   let handle_transfer (sender : address) (receiver : address) (received_token : token_amount) : operation =
-    match received_token.token.address with 
+    match received_token.token.address with
     | None ->
       let xtz_amount = received_token.amount * 1tez in
       transfer_xtz receiver xtz_amount
-    | Some token_address -> 
-      transfer_token sender receiver token_address received_token.amount 
+    | Some token_address ->
+      transfer_token sender receiver token_address received_token.amount
 
   (* Deposit tokens into storage *)
   let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
@@ -60,16 +66,15 @@ module Utils = struct
     | (None, treasury) ->
       Big_map.add address received_token treasury
     | (Some old_token, treasury) ->
-      let updated_amount = old_token.amount + received_token.amount in 
+      let updated_amount = old_token.amount + received_token.amount in
       Big_map.add address { old_token with amount = updated_amount } treasury
-        
-  let deposit 
-    (deposit_address : address) 
-    (treasury_vault : address)
-    (deposited_token : token_amount) 
+
+  let deposit
+    (deposit_address : address)
+    (deposited_token : token_amount)
     (storage : storage) : storage =
       let treasury = deposit_treasury deposit_address deposited_token storage.treasury in
-      let _ = handle_transfer deposit_address treasury_vault deposited_token in 
+      let _ = handle_transfer deposit_address treasury_vault deposited_token in
       { storage with treasury = treasury }
 
   (* Redeem the remaining tokens to the original storage after the end of swap process *)
@@ -84,12 +89,11 @@ module Utils = struct
     | (Some _, treasury) ->
         Big_map.add redeem_address redeemed_token treasury
 
-  let redeem 
-    (redeem_address : address) 
-    (treasury_vault : address) 
-    (redeemed_token : token_amount) 
+  let redeem
+    (redeem_address : address)
+    (redeemed_token : token_amount)
     (storage : storage) : storage =
-      let treasury = redeem_treasury redeem_address redeemed_token storage.treasury in 
+      let treasury = redeem_treasury redeem_address redeemed_token storage.treasury in
       let _ = handle_transfer treasury_vault redeem_address redeemed_token in
       { storage with treasury = treasury }
 end
