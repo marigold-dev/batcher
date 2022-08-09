@@ -13,11 +13,6 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
-(* The treasury_vault: 
-  - Store the deposited tokens  
-  - Redeem the tokens to the original address
-*)
-let treasury_vault = ("tz1Kt9BvHop6XKBvZFTy6FhM8VrzQPTRbipB" : address)
 
 (*
 Entrypoints:
@@ -28,7 +23,6 @@ Entrypoints:
 type parameter =
 | Swap of CommonTypes.Types.swap_order
 | Post of CommonTypes.Types.exchange_rate
-| Tick
 
 let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
   let address = Tezos.sender in
@@ -36,27 +30,25 @@ let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
          token = o.swap.from;
          amount = o.from_amount;
      } in
-  let s = Treasury.Utils.deposit address treasury_vault deposited_token s in
+  let s = Treasury.Utils.deposit address deposited_token s in
   let orderbook = s.orderbook in
-  let new_orderbook = Matching.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
-  ([], {s with orderbook = new_orderbook})
+  let new_orderbook = Matching.Utils.pushOrder o orderbook (o.swap.from.name, o.swap.to.name) in
+  no_op ({s with orderbook = new_orderbook})
 
 let expire_orders (s : storage) : storage = s
+
+let trigger_order_matching_computation (storage : storage) : storage =
+  let new_storage = Matching.Utils.match_orders storage in
+  new_storage
 
 let post_rate (r : CommonTypes.Types.exchange_rate) (s : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate (r) (s) in
   let new_storage = trigger_order_matching_computation s in
   no_op (new_storage)
 
-let trigger_order_matching_computation (storage : storage) : storage =
-  let orderbook = storage.orderbook in
-  let new_orderbook = Matching.match_orders orderbook in
-  {storage with orderbook = new_orderbook}
-
 let main
   (p, s : parameter * storage) : result =
-  let s = expire_orders (s) in
-  (* let s = Matching.tick (s) in *)
+  let s = Matching.Utils.remove_expiried_orders (s) in
   match p with
    Swap (o) -> add_swap_order (o) (s)
    | Post(r) -> post_rate (r) (s)
