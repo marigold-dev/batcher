@@ -20,14 +20,13 @@ Entrypoints:
 - a tick for triggering the matching algorithm
 *)
 type parameter =
-  Swap of CommonTypes.Types.swap_order
+| Swap of CommonTypes.Types.swap_order
 | Post of CommonTypes.Types.exchange_rate
 | Tick
 
 let add_swap_order (o : CommonTypes.Types.swap_order) (s : storage ) : result =
   let address = Tezos.sender in
-  let rate = Pricing.Rates.get_rate (o) (s) in
-  let deposited_token_amount : CommonTypes.Types.token_amount =  {
+  let deposited_token : CommonTypes.Types.token_amount =  {
          token = o.swap.from;
          amount = o.from_amount;
      } in
