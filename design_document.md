@@ -175,9 +175,15 @@ For the PoC, the minimal set of tests to be completed on a testnet deployment fo
 - The swaps should partially match and the treasury should redeem the amounts correctly
 - Any remaining non matched amount should be redeemed to the correct wallet after swap expiry
 
+
 ## Next Steps
 
 If the PoC approach and design are approved, the next steps to move to market will include the following:
+
+- ### General
+
+- A test framework will need to be decided upon, one possibility is to use the test framework that was built for Chusai.
+- A more robust CI and deployment pipeline will be required.
 
 ### Matching
 
@@ -198,9 +204,10 @@ If the PoC approach and design are approved, the next steps to move to market wi
 
 ## Possible features
 
+
 Some features that could be included but would need discussion are:
 
 - Variable expiry:  currently the swap orders are given a fixed expiry defined in the contract, this could be expanded to support users defining their own expiries for swap orders that they place.
 - Variable tolerance:  a small tolerance will be built in to the matching process to support non-exact matches, this could be expanded to support users defining their own tolerance levels per swap.
-
+- Sidechain:  should the contract/dapp remain on L1 or move to the sidechain Deku.
 
