@@ -1,6 +1,8 @@
 {
   description = "0-slip development environment";
 
+  nixConfig.bash-promt = "0slip-nix-develop$ ";
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nix-filter = {
@@ -33,6 +35,7 @@
             nixfmt
           ];
           shellHook = ''
+            alias ligodock="docker run --rm -v \"$PWD\":\"$PWD\" -w \"$PWD\" ligolang/ligo:0.47.0"
             alias lcc="ligo compile contract"
             alias lce="ligo compile expression"
             alias lcp="ligo compile parameter"
