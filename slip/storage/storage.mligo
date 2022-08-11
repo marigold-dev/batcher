@@ -37,9 +37,4 @@
   ];
   rates_current = (Big_map.empty : CommonStorage.Types.rates_current);
   rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic);
-  treasury = (Big_map.empty : CommonStorage.Types.treasury);
-  orderbook = {
-    bids = ([] : CommonTypes.Types.swap_order list);
-    asks = ([] : CommonTypes.Types.swap_order list);
-  };
 }
