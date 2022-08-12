@@ -1,6 +1,6 @@
-# Design document for the 0-slippage DEX POC
+# Design document for the Batch Clearing DEX POC
 
-The aim of the 0-slippage dex is to enable users to deposit tokens with the aim of being swapped at a fair price with no slippage.  To enable this users will deposit tokens during a deposit window; all deposits during this window will be a 'batch'. Once the deposit window is over the 'batch' will be 'locked'. Deposits to the dex will not specify a price for the swap, they will specify an offset to whichever oracle price is received after the 'batch' is 'locked'; those offsets being 0, +10bps, or -10bps.  Once the batch is locked there will be a waiting window before the process starts to await an oracle price.  Upon receipt of the oracle price, the batch is terminated and the orders are cleared.
+The aim of the batch clearing dex is to enable users to deposit tokens with the aim of being swapped at a fair price with bounded slippage and almost no impermanent loss.  To enable this users will deposit tokens during a deposit window; all deposits during this window will be a 'batch'. Once the deposit window is over the 'batch' will be 'locked'. Deposits to the dex will not specify a price for the swap, they will specify an offset to whichever oracle price is received after the 'batch' is 'locked'; those offsets being 0, +10bps, or -10bps.  Once the batch is locked there will be a waiting window before the process starts to await an oracle price.  Upon receipt of the oracle price, the batch is terminated and the orders are cleared.
 
 > For V1, the deposit window will be 10 mins and then a wait time of 2 minutes before awaiting the oracle price.
 > Only the XTZ/USDT pair will be supported for V1
@@ -62,7 +62,7 @@ Lets assume that the oracle price $P_{o}$ is 1.9 for the XTZ/USDT pair.  That wo
 
 Lets take the P-10bps sell level first.  All of the buy levels would be interested in buying at that price, so the clearing price at that level would be:
 
-$$ CP_{P-10bps} = \min(X + Y + Z, \dfrac{ R * 1.0001 }{(P)})  $$
+$$ CP_{P-10bps} = \min(X + Y + Z, \dfrac{ R * 1.0001 }{P})  $$
 
 
 ##### P level
@@ -76,5 +76,32 @@ $$ CP_{P} = \min(Y + Z, \dfrac{R+S}{P})  $$
 Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing price at that level would be:
 
 $$ CP_{P-10bps} = \min(Z, \dfrac{R+S+T}{(P * 1.0001)})  $$
+
+#### Illustrative Examples
+
+If the Oracle price for XTZ/USDT is 1.9 and the tolerance is +/- 10 basis points, then the six price levels are:
+
+| Price Levels | 	BUY  	| SELL    |
+|--------------|:------:|:-------:|
+|Price + 10bps |1.90019 |	0.52626 |
+|Price         |	1.9   | 0.52631 |
+|Price - 10bps | 1.89981|	0.52636 |
+
+Assuming these levels we can determine some very basic illustrative examples of different market scenarios:
+
+
+| MARKET |	AMOUNTS SKEW |	BUY X @ (P-) | BUY Y @ (P) | 	BUY Z @ (P+)	| SELL R @ (P-)	| SELL @ S (P)	| SELL T @ (P+)	| Orders cleared @ P-10bps	| Orders cleared @ P	| Orders cleared @ P+10bps	| Clearance Price |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+|SELL PRESSUE	|CENTERED	|55	|100	|45	|1000	|1900	|900	|200	|155	|55	|P-10bps|
+|SELL PRESSUE	|NEG	|100	|55	|45	|1900	|1000	|900	|200	|155	|100	|P-10bps|
+|SELL PRESSUE	|POS	|45	|55	|100	|900	|1000	|1900	|200	|100	|45	|P-10bps|
+|BUY PRESSURE	|CENTERED	|250	|100	|250	|95	|190	|95	|50	|150	|200	|P+10bps|
+|BUY PRESSURE	|NEG	|250	|100	|250	|190	|95	|95	|100	|150	|200	|P+10bps|
+|BUY PRESSURE	|POS	|250	|100	|250	|95	|95	|190	|50	|100	|200	|P+10bps|
+|BALANCED	|CENTERED	|50	|101	|50	|95	|190	|95	|50	|150	|50|	P|
+|BALANCED	|NEG	|101|	50|	50|	190|95|	95	|100|150|	101|	P|
+|BALANCED	|POS	|50	|50	|101|	95|	95|	190	|50	|100|	50|	P|
+|BALANCED	|OPPOSING (NEG)	|50	|50|	101|	190|	95|	95|	100|	100|	50|	P-10bps|
+|BALANCED	|OPPOSING (POS)	|101	|50|	50|	95|	95|	190|	50|	100	|101|	P+10bps|
 
 ## Claiming
