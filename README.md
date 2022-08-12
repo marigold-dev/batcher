@@ -35,16 +35,46 @@ For any deposit, the user can specify the tolerance to the oracle price that the
 Considering that the amount of deposits for each category is different then we have six categories with a differing amount of tokens deposited for each tolerance.
 
 
-| Deposits | P-10      | P         | P+10      |
+| Deposits | P-10bps   | P         | P+10bps   |
 |----------|:---------:|----------:|----------:|
 | *BUY*    | X of USDT | Y of USDT | Z of USDT |
 | *SELL*   | R of XTZ  | S of XTZ  | T of XTZ  |
 
 
-An added complexity is that if I am will to buy at $Price_{oracle}+10bps$ then I will also be implicitly interested in buying at $Price_{oracle}$ and $Price_{oracle}-10bps$ as they are both cheaper levels if I am on the BUY side.
+An added complexity is that if I am will to buy at $Price_{oracle}+10bps$ then I will also be implicitly interested in buying at $Price_{oracle}$ and $Price_{oracle}-10bps$ as they are both cheaper levels if I am on the BUY side.  The converse is true for the sell side in that if I sell for $Price_{oracle}-10bps$, then I would be willing to sell for the higher prices of $Price_{oracle}$ and $Price_{oracle}+10bps$.
+
+#### Determining the clearing price
+
+| Prices   | P-10bps          | P         | P+10bps     |
+|----------|:----------------:|----------:|------------:|
+| *BUY*    | P / 1.0001       | P         | P * 1.0001  |
+| *SELL*   | 1 / (P * 1.0001) | 1/P       |  1.0001 / P |
+
+Lets assume that the oracle price $P_{o}$ is 1.9 for the XTZ/USDT pair.  That would make the levels:
+
+| Prices   | P-10bps   | P         | P+10bps   |
+|----------|:---------:|----------:|----------:|
+| *BUY*    | 1.89998   | 1.9       | 1.900019  |
+| *SELL*   | 0.52626   | 0.52631   |  0.52636  |
 
 
+##### P-10bps level
+
+Lets take the P-10bps sell level first.  All of the buy levels would be interested in buying at that price, so the clearing price at that level would be:
+
+$$ CP_{P-10bps} = \min(X + Y + Z, \dfrac{ R * 1.0001 }{(P)})  $$
 
 
+##### P level
+
+Lets take the P sell level first.  Only the upper 2 buy levels would be interested in buying at that price, but the lower two SELL levels would be interested in selling so the clearing price at that level would be:
+
+$$ CP_{P} = \min(Y + Z, \dfrac{R+S}{P})  $$
+
+##### P+10bps level
+
+Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing price at that level would be:
+
+$$ CP_{P-10bps} = \min(Z, \dfrac{R+S+T}{(P * 1.0001)})  $$
 
 ## Claiming
