@@ -18,7 +18,8 @@ The deposit window is open for a finite time period.  During the time period use
 
 Once the deposit window has closed there will be a period of 2 minutes prior to awaiting an oracle price.  Once that period has elapsed the first received oracle price will close the batch and clearing will start.
 
-## Clearing
+## Clearin
+g
 
 The clearing process is the process of matching the orders to ensure that all users can trade at the fairest possible price.  Upon deposit there will be six categories of order.
 
@@ -26,9 +27,11 @@ The clearing process is the process of matching the orders to ensure that all us
 
 Depending on whether you are buying so selling the pair you will either be on the BUY side of the SELL side. For the pair XTZ/USDT, XTZ is the base and USDT is the quote.  So if the XTZ/USDT rate was 1.9 you would get 1 unit of XTZ for 1.9 of USDT if I am buying the pair, i.e. on the BUY side.  If I am selling the pair, the inverse would be true.  The side of the trade is important to understand which token needs to be deposited in a given swap order.
 
+
 ### Tolerance
 
 For any deposit, the user can specify the tolerance to the oracle price that they are willing to trade at. This means that each side can further be segregated into their tolerance levels; $Price_{oracle}-10bps$,  $Price_{oracle}$ ,  $Price_{oracle}+10bps$.
+
 
 ### Clearing Price
 
@@ -45,37 +48,30 @@ An added complexity is that if I am will to buy at $Price_{oracle}+10bps$ then I
 
 #### Determining the clearing price
 
-| Prices   | P-10bps          | P         | P+10bps     |
-|----------|:----------------:|----------:|------------:|
-| *BUY*    | P / 1.0001       | P         | P * 1.0001  |
-| *SELL*   | 1 / (P * 1.0001) | 1/P       |  1.0001 / P |
-
-Lets assume that the oracle price $P_{o}$ is 1.9 for the XTZ/USDT pair.  That would make the levels:
-
-| Prices   | P-10bps   | P         | P+10bps   |
-|----------|:---------:|----------:|----------:|
-| *BUY*    | 1.89998   | 1.9       | 1.900019  |
-| *SELL*   | 0.52626   | 0.52631   |  0.52636  |
+| Prices   | P-10bps          | P         | P+10bps          |
+|----------|:----------------:|----------:|-----------------:|
+| *BUY*    | P / 1.0001       | P         | P * 1.0001       |
+| *SELL*   | 1.0001 / P       | 1/P       |  1/ (1.0001 * P) |
 
 
 ##### P-10bps level
 
 Lets take the P-10bps sell level first.  All of the buy levels would be interested in buying at that price, so the clearing price at that level would be:
 
-$$ CP_{P-10bps} = \min(X + Y + Z, \dfrac{ R * 1.0001 }{P})  $$
+$$ CP_{P-10bps} = \min(X + Y + Z, R * \dfrac{ 1.0001 }{P})  $$
 
 
 ##### P level
 
 Lets take the P sell level first.  Only the upper 2 buy levels would be interested in buying at that price, but the lower two SELL levels would be interested in selling so the clearing price at that level would be:
 
-$$ CP_{P} = \min(Y + Z, \dfrac{R+S}{P})  $$
+$$ CP_{P} = \min(Y + Z, (R+S) *  \dfrac{1}{P})  $$
 
 ##### P+10bps level
 
 Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing price at that level would be:
 
-$$ CP_{P-10bps} = \min(Z, \dfrac{R+S+T}{(P * 1.0001)})  $$
+$$ CP_{P-10bps} = \min(Z, (R+S+T) * \dfrac{1}{(P * 1.0001)})  $$
 
 #### Illustrative Examples
 
@@ -103,5 +99,6 @@ Assuming these levels we can determine some very basic illustrative examples of 
 |BALANCED	|POS	|50	|50	|101|	95|	95|	190	|50	|100|	50|	P|
 |BALANCED	|OPPOSING (NEG)	|50	|50|	101|	190|	95|	95|	100|	100|	50|	P-10bps|
 |BALANCED	|OPPOSING (POS)	|101	|50|	50|	95|	95|	190|	50|	100	|101|	P+10bps|
+
 
 ## Claiming
