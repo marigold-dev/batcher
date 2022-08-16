@@ -102,6 +102,8 @@ Assuming these levels we can determine some very basic illustrative examples of 
 
 Once we now the clearing price we will know how many can be matched (some partially) and those will receive pro-rata execution of their orders.  For those that bid outside of the clearing price they will receive their deposits back when they claim.
 
+> A Google [Sheet](https://docs.google.com/spreadsheets/d/1tWIQEVi2COW3UOH7BPbcNrqe77SsPqZVFqN7nfLe6mc/edit?usp=sharing) with these calculations in is available.
+>
 ## Claiming
 
 After clearing, users can claim their 'results', whether that be their original deposits, a partially matched order result or a fully filled order for the opposing token.
