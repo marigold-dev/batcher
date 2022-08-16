@@ -95,6 +95,28 @@ redeem_treasury_contract () {
   --burn-cap 2
 }
 
+deploy_token_contract () {
+  token="token/main.mligo"
+
+  # Get the token storage for a seperate module.
+  token_dir="data/token/storage.mligo"
+  token_storage=$(cat "$token_dir")
+
+  deploy_contract "token" "$token" "$token_storage"
+}
+
+transfer_token_contract () {
+  tezos-client --endpoint $RPC_NODE transfer 0 from jago to token \
+  --entrypoint transfer --arg '{ Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" { Pair "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb" (Pair 0 50) } }' \
+  --burn-cap 2
+}
+
+update_operators_token_contract () {
+  tezos-client --endpoint $RPC_NODE transfer 0 from bob to token \
+  --entrypoint update_operators --arg '{ Right (Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" (Pair "tz1cppweGFj4ZyrTqbkNCcSsCkgWp5UekxVd" 0)) }' \
+  --burn-cap 2
+}
+
 case "$1" in
 deploy-treasury-contract)
   deploy_treasury_contract 
@@ -106,6 +128,15 @@ deposit-treasury-contract)
 redeem-treasury-contract)
   redeem_data="data/treasury/redeem.json"
   redeem_treasury_contract $redeem_data
+  ;;
+deploy-token-contract)
+  deploy_token_contract
+  ;;
+transfer-token-contract)
+  transfer_token_contract
+  ;;
+update-operators-token-contract)
+  update_operators_token_contract
   ;;
 esac
 
