@@ -18,8 +18,7 @@ The deposit window is open for a finite time period.  During the time period use
 
 Once the deposit window has closed there will be a period of 2 minutes prior to awaiting an oracle price.  Once that period has elapsed the first received oracle price will close the batch and clearing will start.
 
-## Clearin
-g
+## Clearing
 
 The clearing process is the process of matching the orders to ensure that all users can trade at the fairest possible price.  Upon deposit there will be six categories of order.
 
