@@ -24,7 +24,7 @@ The clearing process is the process of matching the orders to ensure that all us
 
 ### Side
 
-Depending on whether you are buying so selling the pair you will either be on the BUY side of the SELL side. For the pair XTZ/USDT, XTZ is the base and USDT is the quote.  So if the XTZ/USDT rate was 1.9 you would get 1 unit of XTZ for 1.9 of USDT if I am buying the pair, i.e. on the BUY side.  If I am selling the pair, the inverse would be true.  The side of the trade is important to understand which token needs to be deposited in a given swap order.
+Depending on whether you are buying or selling the pair you will either be on the BUY side or the SELL side. For the pair XTZ/USDT, XTZ is the base and USDT is the quote.  So if the XTZ/USDT rate was 1.9 you would get 1 unit of XTZ for 1.9 of USDT if I am buying the pair, i.e. on the BUY side.  If I am selling the pair, the inverse would be true.  The side of the trade is important to understand which token needs to be deposited in a given swap order.
 
 
 ### Tolerance
