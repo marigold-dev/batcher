@@ -100,5 +100,8 @@ Assuming these levels we can determine some very basic illustrative examples of 
 |BALANCED	|OPPOSING (NEG)	|50	|50|	101|	190|	95|	95|	100|	100|	50|	P-10bps|
 |BALANCED	|OPPOSING (POS)	|101	|50|	50|	95|	95|	190|	50|	100	|101|	P+10bps|
 
+Once we now the clearing price we will know how many can be matched (some partially) and those will receive pro-rata execution of their orders.  For those that bid outside of the clearing price they will receive their deposits back when they claim.
 
 ## Claiming
+
+After clearing, users can claim their 'results', whether that be their original deposits, a partially matched order result or a fully filled order for the opposing token.
