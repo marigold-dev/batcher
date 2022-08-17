@@ -1,5 +1,3 @@
-
-
 module Types = struct
 
   (* Associate alias to token address *)
@@ -9,7 +7,6 @@ module Types = struct
     address : address option;
   }
 
-
   (* Side of an order, either BUY side or SELL side  *)
   type side = BUY | SELL
 
@@ -18,39 +15,35 @@ module Types = struct
 
   (* A token value ascribes an amount to token metadata *)
   type token_amount = {
-     [@layout:comb]
-     token : token;
-     amount : nat;
+    [@layout:comb]
+    token : token;
+    amount : nat;
   }
-
 
   type swap = {
-   from : token_amount;
-   to : token;
+    from : token_amount;
+    to : token;
   }
-
+  (*I change the type of the rate from tez to nat for sake of simplicity*)
   type exchange_rate = {
-     [@layout:comb]
-     swap : swap;
-     rate: tez;
-     when : timestamp;
+    [@layout:comb]
+    swap : swap;
+    rate: nat;
+    when : timestamp;
   }
 
   type swap_order = {
     trader : address;
     swap  : swap;
+    side : side;
     tolerance : tolerance;
-    created_at : timestamp;
   }
 
   (*This type represent a result of a match computation, we can partially or totally match two orders*)
   type match_result = Total | Partial of swap_order
 end
 
-
 module Utils = struct
-
-
   let get_rate_name_from_swap (s : Types.swap) : string =
     let quote_name = s.to.name in
     let base_name = s.from.token.name in
@@ -60,6 +53,5 @@ module Utils = struct
     let quote_name = r.swap.to.name in
     let base_name = r.swap.from.token.name in
     quote_name ^ "/" ^ base_name
-
 end
 
