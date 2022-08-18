@@ -1,5 +1,5 @@
-#import "../commons/types.mligo" "CommonTypes"
-#import "../commons/storage.mligo" "CommonStorage"
+#import "types.mligo" "CommonTypes"
+#import "storage.mligo" "CommonStorage"
 #import "errors.mligo" "PriceErrors"
 
 module Utils = struct
