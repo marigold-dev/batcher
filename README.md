@@ -32,7 +32,9 @@ Depending on whether you are buying or selling the pair you will either be on th
 For any deposit, the user can specify the tolerance to the oracle price that they are willing to trade at. This means that each side can further be segregated into their tolerance levels; $Price_{oracle}-10bps$,  $Price_{oracle}$ ,  $Price_{oracle}+10bps$.
 
 
-### Clearing Price
+### Clearing Level
+
+Given the three tolerance levels, we need to find the level at which we will clear the most orders; the clearing level.
 
 Considering that the amount of deposits for each category is different then we have six categories with a differing amount of tokens deposited for each tolerance.
 
@@ -45,7 +47,7 @@ Considering that the amount of deposits for each category is different then we h
 
 An added complexity is that if I am will to buy at $Price_{oracle}+10bps$ then I will also be implicitly interested in buying at $Price_{oracle}$ and $Price_{oracle}-10bps$ as they are both cheaper levels if I am on the BUY side.  The converse is true for the sell side in that if I sell for $Price_{oracle}-10bps$, then I would be willing to sell for the higher prices of $Price_{oracle}$ and $Price_{oracle}+10bps$.
 
-#### Determining the clearing price
+#### Determining the clearing level
 
 | Prices   | P-10bps          | P         | P+10bps          |
 |----------|:----------------:|----------:|-----------------:|
@@ -55,20 +57,20 @@ An added complexity is that if I am will to buy at $Price_{oracle}+10bps$ then I
 
 ##### P-10bps level
 
-Lets take the P-10bps sell level first.  All of the buy levels would be interested in buying at that price, so the clearing price at that level would be:
+Lets take the P-10bps sell level first.  All of the buy levels would be interested in buying at that price, so the clearing volume at that level would be:
 
 $$ CP_{P-10bps} = \min(X + Y + Z, R * \dfrac{ 1.0001 }{P})  $$
 
 
 ##### P level
 
-Lets take the P sell level first.  Only the upper 2 buy levels would be interested in buying at that price, but the lower two SELL levels would be interested in selling so the clearing price at that level would be:
+Lets take the P sell level first.  Only the upper 2 buy levels would be interested in buying at that price, but the lower two SELL levels would be interested in selling so the clearing volume at that level would be:
 
 $$ CP_{P} = \min(Y + Z, (R+S) *  \dfrac{1}{P})  $$
 
 ##### P+10bps level
 
-Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing price at that level would be:
+Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing volume at that level would be:
 
 $$ CP_{P-10bps} = \min(Z, (R+S+T) * \dfrac{1}{(P * 1.0001)})  $$
 
@@ -85,7 +87,7 @@ If the Oracle price for XTZ/USDT is 1.9 and the tolerance is +/- 10 basis points
 Assuming these levels we can determine some very basic illustrative examples of different market scenarios:
 
 
-| MARKET |	AMOUNTS SKEW |	BUY X @ (P-) | BUY Y @ (P) | 	BUY Z @ (P+)	| SELL R @ (P-)	| SELL @ S (P)	| SELL T @ (P+)	| Orders cleared @ P-10bps	| Orders cleared @ P	| Orders cleared @ P+10bps	| Clearance Price |
+| MARKET |	AMOUNTS SKEW |	BUY X @ (P-) | BUY Y @ (P) | 	BUY Z @ (P+)	| SELL R @ (P-)	| SELL @ S (P)	| SELL T @ (P+)	| Orders cleared @ P-10bps	| Orders cleared @ P	| Orders cleared @ P+10bps	| Clearance Level |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 |SELL PRESSUE	|CENTERED	|55	|100	|45	|1000	|1900	|900	|200	|155	|55	|P-10bps|
 |SELL PRESSUE	|NEG	|100	|55	|45	|1900	|1000	|900	|200	|155	|100	|P-10bps|
@@ -99,7 +101,7 @@ Assuming these levels we can determine some very basic illustrative examples of 
 |BALANCED	|OPPOSING (NEG)	|50	|50|	101|	190|	95|	95|	100|	100|	50|	P-10bps|
 |BALANCED	|OPPOSING (POS)	|101	|50|	50|	95|	95|	190|	50|	100	|101|	P+10bps|
 
-Once we now the clearing price we will know how many can be matched (some partially) and those will receive pro-rata execution of their orders.  For those that bid outside of the clearing price they will receive their deposits back when they claim.
+Once we know the clearing level and the volume that can be cleared at that level,  we will know how many can be matched (some partially) and those will receive pro-rata execution of their orders.  For those that bid outside of the clearing level they will receive their deposits back when they claim.
 
 > A Google [Sheet](https://docs.google.com/spreadsheets/d/1tWIQEVi2COW3UOH7BPbcNrqe77SsPqZVFqN7nfLe6mc/edit?usp=sharing) with these calculations in is available.
 >
