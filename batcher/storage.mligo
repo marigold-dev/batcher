@@ -13,18 +13,14 @@ module Types = struct
   (* Historical rates for the contract - this can be a limited set after the PoC. i.e. last day or week *)
   type rates_historic = (string, CommonTypes.Types.exchange_rate list) big_map
 
-  (*The token distribution according to their side and the tolerance, make the computation of the clearing prices easier*)
-  type side_tolerance_distribution = ((CommonTypes.Types.side * CommonTypes.Types.tolerance), nat) map
-
-  type clearing_prices = ((CommonTypes.Types.side * CommonTypes.Types.tolerance), nat option) map
 
   type t = {
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
     rates_historic : rates_historic;
-    side_tolerance_distribution : side_tolerance_distribution;
-    clearing_prices : clearing_prices
+    treasury: CommonTypes.Types.treasury;
+    batches : CommonTypes.Types.batches;
   }
 
 end
