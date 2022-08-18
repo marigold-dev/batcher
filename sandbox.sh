@@ -115,6 +115,25 @@ update_operators_token_contract () {
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to token \
   --entrypoint update_operators --arg '{ Right (Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" (Pair "tz1cppweGFj4ZyrTqbkNCcSsCkgWp5UekxVd" 0)) }' \
   --burn-cap 2
+  
+post_rate_batcher_contract () {
+  swap_value="Pair (Pair $deposit_amount (Pair (Some \"$deposit_address\") \"$deposit_token\")) (Pair (Some \"$swap_address\") \"$swap_token\")"
+
+  tezos-client --endpoint $RPC_NODE transfer 0 from bob to batcher \
+  --entrypoint post --arg "Pair $1 (Pair ($swap_value) \"$2\")"
+}
+
+get_oracle_price () {
+  quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
+
+  usdt_price=$(echo $quote_data | jq '.usd' | xargs)
+  timestamp=$(echo $quote_data | jq '.timestamp' | xargs)
+
+  # The USDT/XTZ price is caculated with 5 decimals accuracy
+  round_usdt_price=$(printf '%.*f\n' 5 $usdt_price)
+
+  # Update the oracle prices
+  post_rate_batcher_contract $usdt_price $timestamp
 }
 
 case "$1" in
@@ -137,6 +156,9 @@ transfer-token-contract)
   ;;
 update-operators-token-contract)
   update_operators_token_contract
+
+get-oracle-price)
+  get_oracle_price
   ;;
 esac
 
