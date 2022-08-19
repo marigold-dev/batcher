@@ -23,7 +23,7 @@ let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
 
 let has_passed_window (ts: timestamp option) (interval : int) : bool =
     match ts with
-    | Some t ->  t + interval < Tezos.now
+    | Some t ->  t + interval < Tezos.get_now
     | None -> false
 
 let finalize_batch (batches : CommonTypes.Types.batches) : CommonTypes.Types.batches =
@@ -52,7 +52,7 @@ let has_deposit_window_ended( batch : CommonTypes.Types.batch ) : bool =
 let close_current_batch (batches : CommonTypes.Types.batches) : CommonTypes.Types.batches =
    let current_batch = batches.current in
    if (has_deposit_window_ended current_batch) then
-         let closed_batch = { current_batch with status = CLOSED; closed_at = Some(Tezos.now)  } in
+         let closed_batch = { current_batch with status = CLOSED; closed_at = Some(Tezos.get_now)  } in
          let new_current_batch =  CommonTypes.Utils.get_new_current_batch in
          { batches with current = new_current_batch; awaiting_clearing = Some(closed_batch);  }
     else
