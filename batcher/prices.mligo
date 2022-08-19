@@ -46,8 +46,8 @@ module Rates = struct
     let s = Utils.update_current_rate (rate_name) (rate) (s) in
     s
 
-  let get_rate (swap_order: swap_order) (storage : storage) : rate =
-    let rate_name =  CommonTypes.Utils.get_rate_name_from_swap swap_order.swap in
+  let get_rate (swap: CommonTypes.Types.swap) (storage : storage) : rate =
+    let rate_name =  CommonTypes.Utils.get_rate_name_from_swap swap in
     match Big_map.find_opt rate_name storage.rates_current with
       | None -> (failwith PriceErrors.no_rate_available_for_swap : rate)
       | Some r -> r

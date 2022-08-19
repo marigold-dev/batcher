@@ -1,7 +1,7 @@
 {
-  description = "0-slip development environment";
+  description = "batcher development environment";
 
-  nixConfig.bash-promt = "0slip-nix-develop$ ";
+  nixConfig.bash-promt = "batcher-nix-develop$ ";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -27,15 +27,15 @@
         };
       in {
         devShells.${system}.default  = pkgs.mkShell {
-          name = "0-slip";
+          name = "batcher";
           buildInputs = with pkgs; with ocamlPackages; [
             cmake
             glibc
             ligo
             nixfmt
+            docker
           ];
           shellHook = ''
-            alias ligodock="docker run --rm -v \"$PWD\":\"$PWD\" -w \"$PWD\" ligolang/ligo:0.47.0"
             alias lcc="ligo compile contract"
             alias lce="ligo compile expression"
             alias lcp="ligo compile parameter"
@@ -49,18 +49,21 @@
 
         packages = let
           contract = pkgs.stdenv.mkDerivation {
-            name = "0slip";
+            name = "batcher";
             src = ./.;
             buildDir = "$src/build";
 
 
-            buildInputs = with pkgs; [ ligo ];
+            buildInputs = with pkgs; [
+              ligo
+              docker
+          ];
 
-            installPhase = ''
+            buildPhase = ''
               mkdir -p $out
-              ligo compile contract $src/slip/0slip.mligo -e  main -s cameligo -o $out/0slip.tz
-              INITSTORAGE=$(<$src/slip/storage/storage.mligo)
-              ligo compile storage $src/slip/0slip.mligo "$INITSTORAGE" -s cameligo -e main -o $out/0slip-storage.tz
+              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz
+              INITSTORAGE=$(<$src/batcher/storage/storage.mligo)
+              ligo compile storage $src/slip/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
             '';
 
           };
