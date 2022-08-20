@@ -55,7 +55,10 @@ module Types = struct
    status : batch_status;
   }
 
-  type treasury = (address, treasury_item) big_map
+  (* This type helps to easily look up a specific token *)
+  type treasury_token = big_map (token, nat)
+
+  type treasury = (address, treasury_token) big_map
 
   type order_distribution = ((side * tolerance), nat) map
 
