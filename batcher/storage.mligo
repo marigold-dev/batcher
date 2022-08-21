@@ -19,7 +19,7 @@ module Types = struct
     rates_current : rates_current;
     rates_historic : rates_historic;
     treasury: CommonTypes.Types.treasury;
-    batches : CommonTypes.Types.batches;
+    batches : CommonTypes.Types.Batch.batch_set;
   }
 
 end

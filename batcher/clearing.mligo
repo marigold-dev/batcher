@@ -26,8 +26,13 @@ let compute_clearing_prices
   (rate: CommonTypes.Types.exchange_rate)
   (storage : storage) : clearing
 =
+  let current_batch =
+    match storage.batches.current with
+      | None -> failwith "No current batch"
+      | Some batch -> batch
+  in
   let exchange_rate = Pricing.Rates.get_rate rate.swap storage in
-  let orders = storage.batches.current.orders in
+  let orders = current_batch.orders in
 
   let sell_cp_minus : nat = get_distribution_of (SELL,MINUS) orders in
   let sell_cp_exact = get_distribution_of (SELL,EXACT) orders in
