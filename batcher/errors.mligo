@@ -8,7 +8,7 @@ let greater_than_owned_token : string = "This redeemed tokens are greater than t
 
 let invalid_token_address : string = "This token address is invalid"
 
-let not_found_token_address : string = "This token address is not found"
+let not_found_token : string = "This token is not found in the triggered treasury token"
 
 let invalid_token : string = "This added token is not the same as the previous token"
 

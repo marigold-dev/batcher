@@ -72,9 +72,9 @@ module Utils = struct
     with 
     | (None, treasury_token) -> 
       Big_map.add token amount treasury_token
-    | (Some old_amount, transfer_token) -> 
+    | (Some old_amount, treasury_token) -> 
       let updated_amount = old_amount + amount in 
-      Big_map.add token updated_amount transfer_token 
+      Big_map.add token updated_amount treasury_token 
 
   (* Deposit tokens into storage *)
   let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
@@ -98,17 +98,42 @@ module Utils = struct
       let _ = handle_transfer deposit_address treasury_vault deposited_token in 
       { storage with treasury = treasury }
 
+  let handle_redeemed_treasury_token 
+    (token : token) 
+    (amount : nat) 
+    (treasury_vault : address) 
+    (treasury_token : treasury_token) : unit = 
+      match Big_map.get_and_update with 
+        token
+        (None : nat) 
+        treasury_token
+      with 
+      | (None, treasury_token) -> 
+        failwith CommonErrors.not_found_token
+      | (Some old_amount, treasury_token) -> 
+        if old_amount < amount then 
+          failwith CommonErrors.greater_than_owned_token
+        else 
+          let remaining_amount = abs (old_amount - amount) in 
+          let _ = handle_transfer treasury_vault deposit_address { token = token; amount = remaining_amount } in 
+          ()
+    
   (* Redeem the remaining tokens to the original storage after the end of swap process *)
-  let redeem_treasury (deposit_address : address) (redeemed_token : token_amount) (treasury : treasury) : treasury =
-    match Big_map.get_and_update
-      deposit_address
-      (None : treasury_token option)
-      treasury
-    with
-    | (None, treasury) ->
-      (failwith CommonErrors.incorrect_address : treasury)
-    | (Some old_treasury_token, treasury) ->
-        let treasury_token = Big_map.remove redeemed_token.token old_treasury_token 
+  let redeem_treasury 
+    (deposit_address : address) 
+    (redeemed_token : token_amount) 
+    (treasury_vault : address) 
+    (treasury : treasury) : treasury =
+      match Big_map.get_and_update
+        deposit_address
+        (None : treasury_token option)
+        treasury
+      with
+      | (None, treasury) ->
+        failwith CommonErrors.incorrect_address
+      | (Some old_treasury_token, treasury) ->
+        let _ = handle_redeemed_treasury_token redeemed_token.token redeemed_token.amount treasury_vault old_treasury_token in 
+        let treasury_token = Big_map.remove deposit_address old_treasury_token 
         Big_map.add deposit_address treasury_token treasury
 
   let redeem 
@@ -117,7 +142,7 @@ module Utils = struct
     (treasury_vault : address) 
     (redeemed_token : token_amount) 
     (storage : storage) : storage =
-      let treasury = redeem_treasury deposit_address redeemed_token storage.treasury in 
+      let treasury = redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in 
       let _ = handle_transfer treasury_vault redeem_address redeemed_token in
       { storage with treasury = treasury }
 end
