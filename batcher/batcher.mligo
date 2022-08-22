@@ -4,11 +4,10 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
+#import "batch.mligo" "Batch"
 
 type storage  = CommonStorage.Types.t
 type result = (operation list) * storage
-
-module Batch = CommonTypes.Types.Batch
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -102,7 +101,7 @@ let post_rate (rate : CommonTypes.Types.exchange_rate) (storage : storage) : res
     | Some current_batch ->
       let updated_batches =
         let current_time = Tezos.get_now () in
-        if CommonTypes.Types.Batch.should_be_cleared current_batch current_time then
+        if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
           { storage.batches with current = Some batch }
         else

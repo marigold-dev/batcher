@@ -4,8 +4,6 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 
-module Utils = struct
-
 type storage  = CommonStorage.Types.t
 type side  = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
@@ -13,7 +11,6 @@ type clearing = CommonTypes.Types.clearing
 type exchange_rate= CommonTypes.Types.exchange_rate
 type order = CommonTypes.Types.swap_order
 type orders = order list
-
 
 let get_distribution_of
   (side, tolerance : side * tolerance) (orders : orders) : nat
@@ -49,5 +46,3 @@ let compute_clearing_prices
       sell_cp_minus sell_cp_exact sell_cp_plus in
 
   clearing
-
-end

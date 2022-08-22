@@ -2,6 +2,7 @@
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
+#import "../batch.mligo" "Batch"
 
 type originated = Breath.Contract.originated
 
@@ -41,7 +42,7 @@ in review *)
   let rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic) in
   (* FIXME a treasury is not a big map *)
   let treasury = (Big_map.empty : (CommonTypes.Types.treasury)) in
-  let batches = CommonTypes.Types.Batch.new_batch_set in
+  let batches = Batch.new_batch_set in
   {
     valid_tokens = valid_tokens;
     valid_swaps = valid_swaps;
