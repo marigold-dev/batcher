@@ -9,7 +9,7 @@ module Utils = struct
   type treasury_token = CommonTypes.Types.treasury_token
 
   type atomic_trans = 
-  [@layout:comb] {
+    [@layout:comb] {
     to_  : address;
     token_id : nat;
     amount : nat;
@@ -72,8 +72,8 @@ module Utils = struct
     with 
     | (None, treasury_token) -> 
       Big_map.add token amount treasury_token
-    | (Some old_amount, treasury_token) -> 
-      let updated_amount = old_amount + amount in 
+    | (Some old_token_amount, treasury_token) -> 
+      let updated_amount = old_token_amount.amount + amount in 
       Big_map.add token updated_amount treasury_token 
 
   (* Deposit tokens into storage *)
@@ -110,11 +110,11 @@ module Utils = struct
       with 
       | (None, treasury_token) -> 
         failwith CommonErrors.not_found_token
-      | (Some old_amount, treasury_token) -> 
-        if old_amount < amount then 
+      | (Some old_token_amount, treasury_token) -> 
+        if old_token_amount.amount < amount then 
           failwith CommonErrors.greater_than_owned_token
         else 
-          let remaining_amount = abs (old_amount - amount) in 
+          let remaining_amount = abs (old_token_amount.amount - amount) in 
           let _ = handle_transfer treasury_vault deposit_address { token = token; amount = remaining_amount } in 
           ()
     

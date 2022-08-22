@@ -56,7 +56,7 @@ module Types = struct
   }
 
   (* This type helps to easily look up a specific token *)
-  type treasury_token = big_map (token, nat)
+  type treasury_token = big_map (token, token_amount)
 
   type treasury = (address, treasury_token) big_map
 
