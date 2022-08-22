@@ -4,7 +4,7 @@ let no_rate_available_for_swap = "Posted swap doesn't have a corresponding excha
 (* Treasury errors *)
 let incorrect_address : string = "This address has not swapped any tokens"
 
-let greater_than_owned_token : string = "This redeemed tokens are greater than the owned tokens"
+let greater_than_owned_token : string = "This redeemed tokensx are greater than the owned tokens"
 
 let invalid_token_address : string = "This token address is invalid"
 

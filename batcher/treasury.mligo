@@ -40,7 +40,7 @@ module Utils = struct
           tx = [
             {
               to_ = receiver;
-              token_id = 0n; // Need more discussions to decide to whether have token_id parameter or not 
+              token_id = 0n; // Need more discussion to decide to whether have token_id parameter or not 
               amount = token_amount
             }
           ]
@@ -133,7 +133,7 @@ module Utils = struct
         failwith CommonErrors.incorrect_address
       | (Some old_treasury_token, treasury) ->
         let _ = handle_redeemed_treasury_token redeemed_token.token redeemed_token.amount treasury_vault old_treasury_token in 
-        let treasury_token = Big_map.remove deposit_address old_treasury_token 
+        let treasury_token = Big_map.remove redeemed_token.token old_treasury_token 
         Big_map.add deposit_address treasury_token treasury
 
   let redeem 
@@ -142,7 +142,7 @@ module Utils = struct
     (treasury_vault : address) 
     (redeemed_token : token_amount) 
     (storage : storage) : storage =
-      let treasury = redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in 
       let _ = handle_transfer treasury_vault redeem_address redeemed_token in
+      let treasury = redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in 
       { storage with treasury = treasury }
 end
