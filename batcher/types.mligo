@@ -66,8 +66,6 @@ module Types = struct
 
   type treasury = (address, treasury_item) big_map
 
-  type order_distribution = ((side * tolerance), nat) map
-
   module Batch = struct
 
     type t = {
