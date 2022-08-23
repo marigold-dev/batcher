@@ -60,5 +60,9 @@ let originate (level: Breath.Logger.level) =
     initial_storage
     (0tez)
 
-let deposit (order : CommonTypes.Types.swap_order) (storage : storage) () : result =
-  Batcher.deposit order storage
+let deposit (order : CommonTypes.Types.swap_order)
+  (contract : (Batcher.entrypoint, Batcher.storage) originated)
+  (qty: tez)
+  () =
+  let deposit = Deposit order in
+  Breath.Contract.transfert_to contract deposit qty

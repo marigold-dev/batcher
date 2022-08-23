@@ -16,6 +16,10 @@ type entrypoint =
   | Post of CommonTypes.Types.exchange_rate
   | Tick
 
+module Errors = struct
+  let order_pair_doesnt_match = "The order pair and the batch pair don't match"
+end
+
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : Batch.t =
   let rate_name = CommonTypes.Utils.get_rate_name_from_pair batch.pair in
   let rate =
@@ -57,8 +61,13 @@ let try_to_append_order (order : CommonTypes.Types.swap_order)
       if not (Batch.is_open current) then
         failwith "Append an order to a non open batch"
       else
-        let current = Batch.append_order order current in
-        { batches with current = Some current }
+        let current_pair = current.pair in
+        let order_pair = CommonTypes.Utils.pair_of_swap order.swap in
+        if current_pair <> order_pair then
+          failwith Errors.order_pair_doesnt_match
+        else
+          let current = Batch.append_order order current in
+          { batches with current = Some current }
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
