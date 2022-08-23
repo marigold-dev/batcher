@@ -55,8 +55,7 @@ module Types = struct
   type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
 
   type treasury = (address, token_amount) big_map
-
-  end
+end
 
 module Utils = struct
   let get_rate_name_from_swap (s : Types.swap) : string =
@@ -64,10 +63,18 @@ module Utils = struct
     let base_name = s.from.token.name in
     quote_name ^ "/" ^ base_name
 
+  let get_rate_name_from_pair (s : Types.token * Types.token) : string =
+    let (quote, base) = s in
+    let quote_name = quote.name in
+    let base_name = base.name in
+    quote_name ^ "/" ^ base_name
+
   let get_rate_name (r : Types.exchange_rate) : string =
     let quote_name = r.swap.to.name in
     let base_name = r.swap.from.token.name in
     quote_name ^ "/" ^ base_name
 
+  let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
+    (order.from.token, order.to)
 end
 

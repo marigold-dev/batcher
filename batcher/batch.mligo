@@ -1,14 +1,19 @@
-#import "types.mligo" "Types"
+#import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
+
+module Types = CommonTypes.Types
 
 type batch_status =
   | Open of { start_time : timestamp }
   | Closed of { start_time : timestamp ; closing_time : timestamp }
   | Cleared of { at : timestamp; clearing : Types.Types.clearing }
 
+(* Batch of orders for the same pair of tokens *)
 type t = {
   status : batch_status;
-  orders : Types.Types.swap_order list;
+  treasury : Types.treasury;
+  orders : Types.swap_order list;
+  pair : Types.token * Types.token;
 }
 
 (* Set of batches, containing the current batch and the previous (finalized) batches.
@@ -19,14 +24,17 @@ type batch_set = {
   previous : t list;
 }
 
-let make (timestamp : timestamp) (orders : Types.Types.swap_order list) : t =
+let make (timestamp : timestamp) (orders : Types.swap_order list)
+  (pair : Types.token * Types.token) (treasury : Types.treasury) : t =
   {
     status = Open { start_time = timestamp } ;
     orders = orders;
+    treasury = treasury;
+    pair = pair;
   }
 
 (* Append an order to a batch *withouth checks* *)
-let append_order (order : Types.Types.swap_order) (batch : t) : t =
+let append_order (order : Types.swap_order) (batch : t) : t =
   { batch with orders = order :: batch.orders }
 
 let finalize (batch : t) (current_time : timestamp) (clearing : Types.Types.clearing) : t =
@@ -70,9 +78,10 @@ let should_open_new (batches : batch_set) (current_time : timestamp) : bool =
     | Some batch ->
       is_cleared batch
 
-let start_period (order : Types.Types.swap_order) (batches : batch_set)
-  (current_time : timestamp) : batch_set =
-    let new_batch = make current_time [order] in
+let start_period (order : Types.swap_order) (batches : batch_set)
+  (current_time : timestamp) (treasury : Types.treasury) : batch_set =
+    let pair = CommonTypes.Utils.pair_of_swap order.swap in
+    let new_batch = make current_time [order] pair treasury in
     match batches.current with
       | None ->
         { batches with current = Some new_batch }
