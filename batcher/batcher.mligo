@@ -16,30 +16,15 @@ type entrypoint =
   | Post of CommonTypes.Types.exchange_rate
   | Tick
 
-
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : Batch.t =
-  (* FIXME: I don't understand how to get rates *)
-  let token_XTZ = {
-     name = "XTZ";
-     address = (None : address option);
-  }
+  let rate_name = CommonTypes.Utils.get_rate_name_from_pair batch.pair in
+  let rate =
+    match Big_map.find_opt rate_name storage.rates_current with
+        | None -> (failwith Pricing.PriceErrors.no_rate_available_for_swap : CommonTypes.Types.exchange_rate)
+        | Some r -> r
   in
-  let token_USDT = {
-    name = "USDT";
-    address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
-  }
-  in
-  let swap = {
-        from = {
-          token = token_XTZ;
-          amount = 10n
-        };
-        to = token_USDT
-      }
-  in
-  let rate = Pricing.Rates.get_rate swap storage in
-  let clearing = Clearing.Utils.compute_clearing_prices rate storage in
-  Batch.finalize batch current_time clearing
+  let clearing = Clearing.compute_clearing_prices rate storage in
+  Batch.finalize batch current_time clearing rate
 
 let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
@@ -84,7 +69,8 @@ let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
   let current_time = Tezos.get_now () in
   let updated_batches =
     if Batch.should_open_new storage.batches current_time then
-      Batch.start_period order storage.batches current_time
+      let treasury = storage.treasury in
+      Batch.start_period order storage.batches current_time treasury
     else
       try_to_append_order order storage.batches
   in
