@@ -20,7 +20,7 @@ let token_XTZ = {
 }
 
 (* Not used in v1 *)
-let _token_tzBTC = {
+let token_tzBTC = {
    name = "tzBTC";
    address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
 }
@@ -28,7 +28,7 @@ let _token_tzBTC = {
 let initial_storage : Batcher.storage =
   let valid_tokens = [
     token_USDT;
-    token_XTZ
+    token_tzBTC
   ]
   in
   (* TODO? I think this is obsolete but I'm not sure; discuss

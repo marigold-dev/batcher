@@ -17,7 +17,7 @@ let test_first_deposit_starts_period =
       (* TODO: more data? Random data? *)
       let swap = {
         from = {
-          token = Util.token_XTZ;
+          token = Util.token_tzBTC;
           amount = 10n
         };
         to = Util.token_USDT
@@ -25,7 +25,7 @@ let test_first_deposit_starts_period =
       in
       let now = Tezos.get_now () in
       let order : CommonTypes.Types.swap_order = {
-        trader = ("tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb" : address);
+        trader = alice.address;
         swap = swap;
         created_at = now;
         side = BUY;
