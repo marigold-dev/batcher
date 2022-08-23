@@ -102,7 +102,7 @@ let tick (storage : storage) : result =
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
-   | Deposit order  -> deposit order storage
+   | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Tick -> tick storage
 

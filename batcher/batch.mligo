@@ -74,7 +74,7 @@ let should_be_cleared (batch : t) (current_time : timestamp) : bool =
       current_time > closing_time + Constants.price_wait_window
     | _ -> false
 
-let should_open_new (batches : batch_set) (current_time : timestamp) : bool =
+let should_open_new (batches : batch_set) (_current_time : timestamp) : bool =
   match batches.current with
     | None -> true
     | Some batch ->
