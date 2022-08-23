@@ -6,7 +6,7 @@ module Types = CommonTypes.Types
 type batch_status =
   | Open of { start_time : timestamp }
   | Closed of { start_time : timestamp ; closing_time : timestamp }
-  | Cleared of { at : timestamp; clearing : Types.Types.clearing }
+  | Cleared of { at : timestamp; clearing : Types.clearing; rate : Types.exchange_rate }
 
 (* Batch of orders for the same pair of tokens *)
 type t = {
@@ -37,11 +37,13 @@ let make (timestamp : timestamp) (orders : Types.swap_order list)
 let append_order (order : Types.swap_order) (batch : t) : t =
   { batch with orders = order :: batch.orders }
 
-let finalize (batch : t) (current_time : timestamp) (clearing : Types.Types.clearing) : t =
+let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
+  (rate : Types.exchange_rate) : t =
   {
     batch with status = Cleared {
       at = current_time;
-      clearing = clearing
+      clearing = clearing;
+      rate = rate
     }
   }
 
@@ -96,11 +98,10 @@ let close (batch : t) (current_time : timestamp) : t =
     | _ -> failwith "Trying to close a batch which is not open"
 
 let finalize (batch : t) (current_time : timestamp)
-  (clearing : Types.Types.clearing) : t =
+  (clearing : Types.clearing) (rate : Types.exchange_rate) : t =
   match batch.status with
     | Closed _ ->
-      { batch with status = Cleared { at = current_time;
-        clearing = clearing } }
+      finalize batch current_time clearing rate
     | _ -> failwith "Trying to finalize a batch which is not closed"
 
 let new_batch_set : batch_set =
