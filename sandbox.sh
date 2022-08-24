@@ -115,6 +115,7 @@ update_operators_token_contract () {
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to token \
   --entrypoint update_operators --arg '{ Right (Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" (Pair "tz1cppweGFj4ZyrTqbkNCcSsCkgWp5UekxVd" 0)) }' \
   --burn-cap 2
+}
   
 post_rate_batcher_contract () {
   swap_value="Pair (Pair $deposit_amount (Pair (Some \"$deposit_address\") \"$deposit_token\")) (Pair (Some \"$swap_address\") \"$swap_token\")"
@@ -156,7 +157,7 @@ transfer-token-contract)
   ;;
 update-operators-token-contract)
   update_operators_token_contract
-
+  ;;
 get-oracle-price)
   get_oracle_price
   ;;
