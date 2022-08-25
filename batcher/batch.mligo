@@ -1,7 +1,6 @@
 #import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
 #import "orderbook.mligo" "Orderbook"
-
 module Types = CommonTypes.Types
 
 type batch_status =

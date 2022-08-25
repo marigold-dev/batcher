@@ -9,7 +9,6 @@
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
 
-
 type storage  = Storage.Types.t
 type result = (operation list) * storage
 
@@ -89,6 +88,12 @@ let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
   no_op(Treasury.redeem holder storage)
 
+let check_batches (storage : storage ) : storage =
+   let batches = storage.batches in
+   let updated_batches = (match batches.awaiting_clearing with
+                          | None -> close_current_batch batches
+                          | Some (_ac) -> batches) in
+   { storage with batches = updated_batches}
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared.
    TODO: actually update the rate *)

@@ -5,7 +5,6 @@
 #import "../orderbook.mligo" "Order"
 #import "../batch.mligo" "Batch"
 
-
 let one_push_order =
   Breath.Model.case
   "push_order"
