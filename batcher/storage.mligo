@@ -1,4 +1,5 @@
 #import "types.mligo" "CommonTypes"
+#import "order.mligo" "Order"
 
 module Types = struct
   (* The tokens that are valid within the contract  *)
@@ -20,6 +21,7 @@ module Types = struct
     rates_historic : rates_historic;
     treasury: CommonTypes.Types.treasury;
     batches : CommonTypes.Types.batches;
+    orders : Order.t
   }
 
 end

@@ -19,7 +19,7 @@ let clearing_prices
     clearing
 
 (*
-We have ton install the math-lib-cameligo in order to use float instead of nat
+We have to install the math-lib-cameligo in order to use float instead of nat
 but i don't know how to find the package name.
 
 remove the next comment when the package is installed, will need some change in anycase

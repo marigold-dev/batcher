@@ -4,6 +4,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
+#import "order.mligo" "Order"
 
 type storage  = CommonStorage.Types.t
 type result = (operation list) * storage
@@ -19,11 +20,12 @@ type entrypoint =
 let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
     let _key = (order.side, order.tolerance) in
     let _amount_deposited = order.swap.from.amount in
-    no_op (storage)
+    let new_orderbook = Order.push_order order storage.orders in
+    ([],{storage with orders = new_orderbook})
 
 let has_passed_window (ts: timestamp option) (interval : int) : bool =
     match ts with
-    | Some t ->  t + interval < Tezos.get_now
+    | Some t ->  t + interval < Tezos.get_now ()
     | None -> false
 
 let finalize_batch (batches : CommonTypes.Types.batches) : CommonTypes.Types.batches =
@@ -52,7 +54,7 @@ let has_deposit_window_ended( batch : CommonTypes.Types.batch ) : bool =
 let close_current_batch (batches : CommonTypes.Types.batches) : CommonTypes.Types.batches =
    let current_batch = batches.current in
    if (has_deposit_window_ended current_batch) then
-         let closed_batch = { current_batch with status = CLOSED; closed_at = Some(Tezos.get_now)  } in
+         let closed_batch = { current_batch with status = CLOSED; closed_at = Some(Tezos.get_now ())  } in
          let new_current_batch =  CommonTypes.Utils.get_new_current_batch in
          { batches with current = new_current_batch; awaiting_clearing = Some(closed_batch);  }
     else
@@ -63,7 +65,7 @@ let check_batches (storage : storage ) : storage =
    let batches = storage.batches in
    let updated_batches = (match batches.awaiting_clearing with
                           | None -> close_current_batch batches
-                          | Some (ac) -> batches) in
+                          | Some (_ac) -> batches) in
    { storage with batches = updated_batches}
 
 

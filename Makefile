@@ -9,4 +9,5 @@ define test_ligo
 endef
 
 test:
-	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
+	$(call test_ligo,batcher/test/test_orders.mligo)
+	$(call test_ligo,batcher/test/util.mligo)
