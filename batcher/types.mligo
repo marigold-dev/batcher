@@ -1,3 +1,5 @@
+#import "constants.mligo" "Constants"
+
 module Types = struct
 
   (* Associate alias to token address *)
@@ -42,51 +44,24 @@ module Types = struct
     tolerance : tolerance;
   }
 
+
   (*This type represent a result of a match computation, we can partially or totally match two orders*)
   type match_result = Total | Partial of swap_order
 
-
   type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
-
-  type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
-
-  type treasury_item = {
-   token_amount : token_amount;
-   status : batch_status;
-  }
-
-  (* This type helps to easily look up a specific token *)
-  type treasury_token = big_map (token, token_amount)
-
-  type treasury = (address, treasury_token) big_map
-
-  type order_distribution = ((side * tolerance), nat) map
 
 
   type clearing = {
-      clearing_volumes : (tolerance, nat)  map;
-      clearing_tolerance : tolerance;
+    clearing_volumes : (tolerance, nat)  map;
+    clearing_tolerance : tolerance;
   }
 
+  (*This type represent a result of a match computation, we can partially or totally match two orders*)
+  type match_result = Total | Partial of swap_order
 
-  type batch = {
-     started_at : timestamp option;
-     closed_at : timestamp option;
-     finalized_at : timestamp option;
-     status : batch_status;
-     batch_rate: exchange_rate option;
-     orders: swap_order list;
-     treasury: treasury;
-     clearing : clearing option;
-  }
+  type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
 
-  type batches = {
-    current : batch;
-    awaiting_clearing : batch option;
-    previous : batch list;
-  }
-
-
+  type treasury = (address, token_amount) big_map
 end
 
 module Utils = struct
@@ -95,24 +70,18 @@ module Utils = struct
     let base_name = s.from.token.name in
     quote_name ^ "/" ^ base_name
 
+  let get_rate_name_from_pair (s : Types.token * Types.token) : string =
+    let (quote, base) = s in
+    let quote_name = quote.name in
+    let base_name = base.name in
+    quote_name ^ "/" ^ base_name
+
   let get_rate_name (r : Types.exchange_rate) : string =
     let quote_name = r.swap.to.name in
     let base_name = r.swap.from.token.name in
     quote_name ^ "/" ^ base_name
 
-
-  let get_new_current_batch : Types.batch =  {
-              started_at = (None : timestamp option);
-              closed_at =  (None : timestamp option);
-              finalized_at = (None : timestamp option);
-              status =  NOT_OPEN;
-              batch_rate = (None : Types.exchange_rate option) ;
-              orders = ([] : Types.swap_order list);
-              treasury = (Big_map.empty :  (address, Types.treasury_item) big_map);
-              clearing = (None : Types.clearing option)  ;
-              }
-
-
-
+  let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
+    (order.from.token, order.to)
 end
 
