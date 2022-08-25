@@ -53,6 +53,7 @@ module Types = struct
     tolerance : tolerance;
   }
 
+
   type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type clearing = {

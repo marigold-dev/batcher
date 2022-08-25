@@ -9,9 +9,14 @@ define test_ligo
 endef
 
 test:
+<<<<<<< HEAD
 	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
 	$(call test_ligo,batcher/test/test_orders.mligo)
 
 test-math: 
 	$(call test_ligo,batcher/test/test_math.mligo)
 
+=======
+	$(call test_ligo,batcher/test/test_orders.mligo)
+	$(call test_ligo,batcher/test/util.mligo)
+>>>>>>> 260f47c (rebase)

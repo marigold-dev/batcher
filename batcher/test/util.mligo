@@ -49,13 +49,40 @@ in review *)
   (* FIXME a treasury is not a big map *)
   let treasury = (Big_map.empty : (Types.treasury)) in
   let batches = Batch.new_batch_set in
+  let orders = Big_map.literal [
+    ((BUY,EXACT),([] : CommonTypes.Types.swap_order list))
+  ] in
+
   {
     valid_tokens = valid_tokens;
     valid_swaps = valid_swaps;
     rates_current = rates_current;
     rates_historic = rates_historic;
     batches = batches;
+    orders = orders
   }
+
+let default_swap (amount : nat) = {
+  from = {
+    token = token_tzBTC;
+    amount = amount
+  };
+  to = token_USDT
+}
+
+let make_order (swap : nat -> CommonTypes.Types.swap) (amount : nat)
+  (address : address) : CommonTypes.Types.swap_order =
+  let swap = swap amount in
+  let now = Tezos.get_now () in
+  let order : CommonTypes.Types.swap_order = {
+    trader = address;
+    swap = swap;
+    created_at = now;
+    side = BUY;
+    tolerance = EXACT
+  }
+  in
+  order
 
 let default_swap (amount : nat) = {
   from = {

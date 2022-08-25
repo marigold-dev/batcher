@@ -20,12 +20,17 @@ let one_push_order =
     let expected_storage 
       (storage : Batcher.storage) 
       (order : Order.order) =
+        let key = (order.side, order.tolerance) in
         Breath.Assert.is_some_and
-          "The current batch should be some and the orderbook should contain only the alice order"
-          (fun (batch : Batch.t) ->
-            Breath.Assert.is_equal "orderbook content" batch.orderbook.bids [order]
-          )
-        storage.batches.current
+            "The orderbook should contain only alice order"
+            (fun (order_found : Order.order list) ->
+            let expected_value =
+                Breath.Assert.is_equal "orderbook content" order_found [order] in
+            Breath.Result.reduce [
+                expected_value
+            ]
+            )
+            (Big_map.find_opt key storage.orders : Order.order list option)
     in
 
     Breath.Result.reduce [
