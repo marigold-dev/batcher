@@ -72,7 +72,7 @@ $$ CP_{P} = \min(Y + Z, (R+S) *  \dfrac{1}{P})  $$
 
 Lets take the P+10bps sell level first.  All of the sell levels would be interested in selling at that price, but only the upper BUY level would be interested in buying so the clearing volume at that level would be:
 
-$$ CP_{P-10bps} = \min(Z, (R+S+T) * \dfrac{1}{(P * 1.0001)})  $$
+$$ CP_{P+10bps} = \min(Z, (R+S+T) * \dfrac{1}{(P * 1.0001)})  $$
 
 #### Illustrative Examples
 

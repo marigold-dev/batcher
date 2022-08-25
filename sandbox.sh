@@ -115,6 +115,7 @@ update_operators_token_contract () {
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to token \
   --entrypoint update_operators --arg '{ Right (Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" (Pair "tz1cppweGFj4ZyrTqbkNCcSsCkgWp5UekxVd" 0)) }' \
   --burn-cap 2
+}
   
 post_rate_batcher_contract () {
   swap_value="Pair (Pair $deposit_amount (Pair (Some \"$deposit_address\") \"$deposit_token\")) (Pair (Some \"$swap_address\") \"$swap_token\")"
@@ -126,14 +127,27 @@ post_rate_batcher_contract () {
 get_oracle_price () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
 
-  usdt_price=$(echo $quote_data | jq '.usd' | xargs)
   timestamp=$(echo $quote_data | jq '.timestamp' | xargs)
 
+  xtz_usdt_price=$(echo $quote_data | jq '.usd' | xargs)
+  xtz_btc_price=$(echo $quote_data | jq '.btc' | xargs)
+
+  # Regrex for the scientific notation. I.e, 1.2E-05
+  notation_regrex="E|e"
+
+  if [[ "$xtz_usdt_price" =~ $notation_regrex ]]; then 
+    xtz_usdt_price=$(echo "$xtz_usdt_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+  fi 
+
+  if [[ "xtz_btc_price" =~ $notation_regrex ]]; then 
+    xtz_btc_price=$(echo "$xtz_btc_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+  fi 
+
   # The USDT/XTZ price is caculated with 5 decimals accuracy
-  round_usdt_price=$(printf '%.*f\n' 5 $usdt_price)
+  round_btc_usdt_price=$(echo "scale=5; $xtz_usdt_price / $xtz_btc_price" | bc)
 
   # Update the oracle prices
-  post_rate_batcher_contract $usdt_price $timestamp
+  post_rate_batcher_contract $round_btc_usdt_price $timestamp
 }
 
 case "$1" in
@@ -156,10 +170,8 @@ transfer-token-contract)
   ;;
 update-operators-token-contract)
   update_operators_token_contract
-
+  ;;
 get-oracle-price)
   get_oracle_price
   ;;
-esac
-
-
+esac   
