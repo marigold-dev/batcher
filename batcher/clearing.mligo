@@ -18,7 +18,6 @@ type orders = order list
 type buy_side = CommonType.Types.buy_side
 type sell_side = CommonType.Types.sell_side
 
-
 let get_distribution_of
   (side, tolerance : side * tolerance) (orderbook : orderbook) : nat
 =
@@ -52,7 +51,6 @@ let compute_clearing_prices
   let buy_cp_minus = int (get_distribution_of (BUY,MINUS) orders) in
   let buy_cp_exact = int (get_distribution_of (BUY,EXACT) orders) in
   let buy_cp_plus = int (get_distribution_of (BUY,PLUS) orders) in
-
 
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in 
   let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in

@@ -2,13 +2,15 @@
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
-#import "../order.mligo" "Order"
+#import "../batch.mligo" "Batch"
+#import "../orderbook.mligo" "Order"
 
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
 type result = Batcher.result
 type batch = CommonTypes.Types.batch
+type order = CommonTypes.Types.swap_order
 
 let token_USDT = {
   name = "USDT";
@@ -57,7 +59,7 @@ let initial_storage : Batcher.storage =
     awaiting_clearing = (None : batch option);
     previous = ([] : batch list)
   } in
->>>>>>> 754bbce (add a start of an implementation about the order matching, with pushing order function, fill order, and a simple test about push order)
+  let batches = Batch.new_batch_set in
 
   {
     valid_tokens = valid_tokens;
@@ -66,7 +68,6 @@ let initial_storage : Batcher.storage =
     rates_historic = rates_historic;
     treasury = treasury;
     batches = batches;
-    orders = orders
   }
 
 let default_swap (amount : nat) = {
