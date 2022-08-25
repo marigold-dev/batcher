@@ -2,12 +2,14 @@
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
-#import "../order.mligo" "Order"
+#import "../batch.mligo" "Batch"
+#import "../orderbook.mligo" "Order"
 
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
 type result = Batcher.result
+type order = CommonTypes.Types.swap_order
 
 
 let token_USDT = {
@@ -44,9 +46,6 @@ in review *)
   (* FIXME a treasury is not a big map *)
   let treasury = (Big_map.empty : (CommonTypes.Types.treasury)) in
   let batches = Batch.new_batch_set in
-  let orders = Big_map.literal [
-    ((BUY,EXACT),([] : CommonTypes.Types.swap_order list))
-  ] in
 
   {
     valid_tokens = valid_tokens;
@@ -55,7 +54,6 @@ in review *)
     rates_historic = rates_historic;
     treasury = treasury;
     batches = batches;
-    orders = orders
   }
 
 let default_swap (amount : nat) = {

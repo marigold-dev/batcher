@@ -5,7 +5,7 @@
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
 #import "batch.mligo" "Batch"
-#import "order.mligo" "Order"
+#import "orderbook.mligo" "Order"
 
 type storage  = CommonStorage.Types.t
 type result = (operation list) * storage
@@ -73,8 +73,6 @@ let try_to_append_order (order : CommonTypes.Types.swap_order)
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
-  let _key = (order.side, order.tolerance) in
-  let _amount_deposited = order.swap.from.amount in
   let storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batches =

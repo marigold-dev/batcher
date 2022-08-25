@@ -1,5 +1,6 @@
 #import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
+#import "orderbook.mligo" "Order"
 
 module Types = CommonTypes.Types
 
@@ -12,7 +13,7 @@ type batch_status =
 type t = {
   status : batch_status;
   treasury : Types.treasury;
-  orders : Types.swap_order list;
+  orderbook : Order.t;
   pair : Types.token * Types.token;
 }
 
@@ -24,18 +25,19 @@ type batch_set = {
   previous : t list;
 }
 
-let make (timestamp : timestamp) (orders : Types.swap_order list)
+let make (timestamp : timestamp) (orderbook : Order.t)
   (pair : Types.token * Types.token) (treasury : Types.treasury) : t =
   {
     status = Open { start_time = timestamp } ;
-    orders = orders;
+    orderbook = orderbook;
     treasury = treasury;
     pair = pair;
   }
 
 (* Append an order to a batch *withouth checks* *)
 let append_order (order : Types.swap_order) (batch : t) : t =
-  { batch with orders = order :: batch.orders }
+  let new_orderbook = Order.push_order order batch.orderbook in
+  { batch with orderbook = new_orderbook }
 
 let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
   (rate : Types.exchange_rate) : t =
@@ -83,7 +85,8 @@ let should_open_new (batches : batch_set) (_current_time : timestamp) : bool =
 let start_period (order : Types.swap_order) (batches : batch_set)
   (current_time : timestamp) (treasury : Types.treasury) : batch_set =
     let pair = CommonTypes.Utils.pair_of_swap order.swap in
-    let new_batch = make current_time [order] pair treasury in
+    let orderbook = Order.push_order order (Order.empty ()) in
+    let new_batch = make current_time orderbook pair treasury in
     match batches.current with
       | None ->
         { batches with current = Some new_batch }

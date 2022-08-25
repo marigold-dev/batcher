@@ -2,7 +2,8 @@
 #import "util.mligo" "Util"
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
 #import "../types.mligo" "CommonTypes"
-#import "../order.mligo" "Order"
+#import "../orderbook.mligo" "Order"
+#import "../batch.mligo" "Batch"
 
 
 let one_push_order =
@@ -19,17 +20,12 @@ let one_push_order =
     let expected_storage 
       (storage : Batcher.storage) 
       (order : Order.order) =
-        let key = (order.side, order.tolerance) in
         Breath.Assert.is_some_and
-            "The orderbook should contain only alice order"
-            (fun (order_found : Order.order list) ->
-            let expected_value =
-                Breath.Assert.is_equal "orderbook content" order_found [order] in
-            Breath.Result.reduce [
-                expected_value
-            ]
-            )
-            (Big_map.find_opt key storage.orders : Order.order list option)
+          "The current batch should be some and the orderbook should contain only the alice order"
+          (fun (batch : Batch.t) ->
+            Breath.Assert.is_equal "orderbook content" batch.orderbook.bids [order]
+          )
+        storage.batches.current
     in
 
     Breath.Result.reduce [
