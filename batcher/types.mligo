@@ -44,6 +44,13 @@ module Types = struct
     tolerance : tolerance;
   }
 
+
+  (*This type represent a result of a match computation, we can partially or totally match two orders*)
+  type match_result = Total | Partial of swap_order
+
+  type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
+
+
   type clearing = {
     clearing_volumes : (tolerance, nat)  map;
     clearing_tolerance : tolerance;

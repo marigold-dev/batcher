@@ -127,14 +127,27 @@ post_rate_batcher_contract () {
 get_oracle_price () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
 
-  usdt_price=$(echo $quote_data | jq '.usd' | xargs)
   timestamp=$(echo $quote_data | jq '.timestamp' | xargs)
 
+  xtz_usdt_price=$(echo $quote_data | jq '.usd' | xargs)
+  xtz_btc_price=$(echo $quote_data | jq '.btc' | xargs)
+
+  # Regrex for the scientific notation. I.e, 1.2E-05
+  notation_regrex="E|e"
+
+  if [[ "$xtz_usdt_price" =~ $notation_regrex ]]; then 
+    xtz_usdt_price=$(echo "$xtz_usdt_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+  fi 
+
+  if [[ "xtz_btc_price" =~ $notation_regrex ]]; then 
+    xtz_btc_price=$(echo "$xtz_btc_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+  fi 
+
   # The USDT/XTZ price is caculated with 5 decimals accuracy
-  round_usdt_price=$(printf '%.*f\n' 5 $usdt_price)
+  round_btc_usdt_price=$(echo "scale=5; $xtz_usdt_price / $xtz_btc_price" | bc)
 
   # Update the oracle prices
-  post_rate_batcher_contract $usdt_price $timestamp
+  post_rate_batcher_contract $round_btc_usdt_price $timestamp
 }
 
 case "$1" in
@@ -161,6 +174,4 @@ update-operators-token-contract)
 get-oracle-price)
   get_oracle_price
   ;;
-esac
-
-
+esac   
