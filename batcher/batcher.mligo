@@ -5,6 +5,7 @@
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
 #import "batch.mligo" "Batch"
+#import "order.mligo" "Order"
 
 type storage  = CommonStorage.Types.t
 type result = (operation list) * storage
