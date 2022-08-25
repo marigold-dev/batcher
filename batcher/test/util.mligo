@@ -2,7 +2,6 @@
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
-#import "../batch.mligo" "Batch"
 #import "../order.mligo" "Order"
 
 type originated = Breath.Contract.originated
