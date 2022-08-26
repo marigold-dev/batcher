@@ -124,4 +124,3 @@ let main
    | Post new_rate -> post_rate new_rate storage
    | Tick -> tick storage
    | Redeem -> redeem storage
-

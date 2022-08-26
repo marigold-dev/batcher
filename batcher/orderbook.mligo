@@ -10,15 +10,12 @@ type clearing = CommonTypes.Types.clearing
   we can partially or totally match two order, and if the volume of token we can use is
   equal to 0 there is no match*)
 type matching = Total | Partial of order
+
 type key = side
 
 (*
   A bid : the price a buyer is willing to pay for an asset
-<<<<<<< HEAD
-  A ask : the price a seller is willing to auxept for an asset
-=======
   A ask : the price a seller is willing to accept for an asset
->>>>>>> 73ea7db (redesign orderbook file, add filtering, push order, skelleton of matching orders and the main order execution function, and connect all this to new batch design and main contract, rewrite push order test)
 
   Here, the orderbook is a list of bids orders and asks orders
 *)
@@ -127,4 +124,3 @@ let orders_execution (orderbook : t) (clearing : clearing) : t =
   (*what do i do with the remaining bids and asks ? redeem them all ?
     just put them in a new orderbook ?*)
   {orderbook with bids = rem_bids; asks = rem_asks}
-  
