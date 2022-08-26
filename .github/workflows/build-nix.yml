@@ -14,6 +14,6 @@ jobs:
     - name: Store Artefact
       uses: actions/upload-artifact@v2
       with:
-          name: 0-slip-contracts
+          name: batcher-contracts
           path: ./result/*
           retention-days: 1
