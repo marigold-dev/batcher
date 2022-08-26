@@ -1,6 +1,5 @@
 #import "types.mligo" "CommonTypes"
 #import "batch.mligo" "Batch"
-#import "orderbook.mligo" "Order"
 
 module Types = struct
   (* The tokens that are valid within the contract  *)
