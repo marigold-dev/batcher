@@ -96,8 +96,8 @@ let start_period (order : Types.swap_order) (batches : batch_set)
 let close (batch : t) (current_time : timestamp) : t =
   match batch.status with
     | Open { start_time } ->
-      { batch with status = Closed { start_time = start_time;
-        closing_time = current_time } }
+      let new_status = Closed { start_time = start_time; closing_time = current_time } in
+      { batch with status = new_status }
     | _ -> failwith "Trying to close a batch which is not open"
 
 let finalize (batch : t) (current_time : timestamp)

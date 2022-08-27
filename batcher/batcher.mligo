@@ -1,5 +1,6 @@
 #import "constants.mligo" "Constants"
 #import "types.mligo" "CommonTypes"
+#import "treasury.mligo" "Treasury"
 #import "storage.mligo" "CommonStorage"
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
@@ -18,9 +19,6 @@ type entrypoint =
   | Post of CommonTypes.Types.exchange_rate
   | Tick
 
-module Errors = struct
-  let order_pair_doesnt_match = "The order pair and the batch pair don't match"
-end
 
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : Batch.t =
   let rate_name = CommonTypes.Utils.get_rate_name_from_pair batch.pair in
@@ -39,7 +37,8 @@ let tick_current_batches (storage : storage) : storage =
       | None ->
         batches
       | Some batch ->
-        let current_time = Tezos.get_now () in
+        (* REPLACE let current_time = Tezos.get_now () in *)
+        let current_time = Tezos.now in
         let batch =
           if Batch.should_be_closed batch current_time then
             Batch.close batch current_time
@@ -75,7 +74,8 @@ let try_to_append_order (order : CommonTypes.Types.swap_order)
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
   let storage = tick_current_batches storage in
-  let current_time = Tezos.get_now () in
+  (* REPLACE let current_time = Tezos.get_now () in *)
+  let current_time = Tezos.now in
   let updated_batches =
     if Batch.should_open_new storage.batches current_time then
       let treasury = storage.treasury in
@@ -95,7 +95,8 @@ let post_rate (rate : CommonTypes.Types.exchange_rate) (storage : storage) : res
     | None -> no_op (storage)
     | Some current_batch ->
       let updated_batches =
-        let current_time = Tezos.get_now () in
+        (* REPLACE let current_time = Tezos.get_now () in *)
+        let current_time = Tezos.now in
         if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
           { storage.batches with current = Some batch }

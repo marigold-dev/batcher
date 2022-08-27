@@ -14,6 +14,23 @@
         "type": "indirect"
       }
     },
+    "ligolang": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1660159258,
+        "narHash": "sha256-StaBnsMBlGZWVCtFN0j12BWyQbs0lb4C+X2d73F+Hq4=",
+        "owner": "ligolang",
+        "repo": "ligo",
+        "rev": "aff17186820eb948c3c1a0f5bc44e4171ddedd8f",
+        "type": "gitlab"
+      },
+      "original": {
+        "owner": "ligolang",
+        "ref": "0.48.1",
+        "repo": "ligo",
+        "type": "gitlab"
+      }
+    },
     "nix-filter": {
       "locked": {
         "lastModified": 1653590866,
@@ -31,16 +48,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1658737577,
-        "narHash": "sha256-xosJ5nJT9HX+b6UWsSX6R+ap4AdZOCrl/r+IKFp2ASQ=",
+        "lastModified": 1661336769,
+        "narHash": "sha256-5Sf9tMd1Jdm+lTBGspbQ4kEoYCDKpUhEVAZHRcm6mGU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "5a0e0d73b944157328d54c4ded1cf2f0146a86a5",
+        "rev": "03428dbaaa23d6bf458770907b0927b377c873a8",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -48,6 +65,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "ligolang": "ligolang",
         "nix-filter": "nix-filter",
         "nixpkgs": "nixpkgs",
         "tezos": "tezos"
@@ -56,7 +74,7 @@
     "tezos": {
       "inputs": {
         "flake-utils": [
-          "flake-utils"
+          "nixpkgs"
         ],
         "nixpkgs": [
           "nixpkgs"

@@ -22,6 +22,12 @@ module Types = struct
      amount : nat;
   }
 
+  (* A token amount 'held' by a specific address *)
+  type token_holding = {
+    [@layout:comb]
+    holder: address;
+    token_amount : token_amount;
+  }
 
   type swap = {
    from : token_amount;
@@ -53,7 +59,9 @@ module Types = struct
 
   type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
 
-  type treasury = (address, token_amount) big_map
+  type treasury_holding = (string, token_holding) map
+
+  type treasury = (address, treasury_holding) big_map
 end
 
 module Utils = struct

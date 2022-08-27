@@ -4,26 +4,30 @@
   nixConfig.bash-promt = "batcher-nix-develop$ ";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nix-filter = {
       url = "github:numtide/nix-filter";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    ligolang = {
+      url = "gitlab:ligolang/ligo/0.48.1";
+      flake = false;
+    };
+
     tezos.url = "github:marigold-dev/tezos-nix";
     tezos.inputs = {
       nixpkgs.follows = "nixpkgs";
-      flake-utils.follows = "flake-utils";
+      flake-utils.follows = "nixpkgs";
     };
 
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-filter, tezos }@inputs:
+  outputs = { self, nixpkgs, flake-utils, nix-filter, tezos, ligolang }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          #overlays = [ tezos.overlays.default ];
         };
       in {
         devShells.${system}.default  = pkgs.mkShell {
@@ -31,11 +35,12 @@
           buildInputs = with pkgs; with ocamlPackages; [
             cmake
             glibc
-            ligo
             nixfmt
-            docker
+            tezos
+            ligolang
           ];
           shellHook = ''
+            alias lv="ligo version"
             alias lcc="ligo compile contract"
             alias lce="ligo compile expression"
             alias lcp="ligo compile parameter"
@@ -48,16 +53,22 @@
         };
 
         packages = let
+          ligo-compiler-version=0.49.0;
+          tezos-protocol="jakarta";
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
             buildDir = "$src/build";
 
 
-            buildInputs = with pkgs; [
+            buildInputs = with pkgs; with ocamlPackages; [
+              cmake
+              glibc
               ligo
-              docker
-          ];
+              nixfmt
+              #tezos
+              #ligolang
+            ];
 
             buildPhase = ''
               mkdir -p $out

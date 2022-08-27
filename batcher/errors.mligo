@@ -13,3 +13,9 @@ let not_found_token : string = "This token is not found in the triggered treasur
 let invalid_token : string = "This added token is not the same as the previous token"
 
 let invalid_tezos_address : string = "This tezos address is invalid"
+
+let insufficient_token_holding : string = "There is insufficient token holding to perform this swap"
+
+let no_treasury_holding_for_address : string = "There is no treasury holding for address"
+
+let order_pair_doesnt_match = "The order pair and the batch pair don't match"
