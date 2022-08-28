@@ -1,4 +1,5 @@
 #import "constants.mligo" "Constants"
+#import "errors.mligo" "Errors"
 
 module Types = struct
 
@@ -83,5 +84,25 @@ module Utils = struct
 
   let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
     (order.from.token, order.to)
+
+  let get_token_name_from_token_holding
+    (th : Types.token_holding) : string =
+    th.token_amount.token.name
+
+  let assign_new_holder_to_token_holding
+    (new_holder : address)
+    (token_holding : Types.token_holding) : Types.token_holding =
+    { token_holding with holder = new_holder}
+
+  let check_token_equality
+    (this : Types.token_amount)
+    (that : Types.token_amount) : Types.token_amount =
+    if this.token.name = that.token.name then
+      if this.token.address = that.token.address then
+        that
+      else
+        (failwith Errors.tokens_do_not_match : Types.token_amount )
+    else
+      (failwith Errors.tokens_do_not_match : Types.token_amount )
 end
 

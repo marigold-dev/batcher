@@ -16,6 +16,9 @@ let invalid_tezos_address : string = "This tezos address is invalid"
 
 let insufficient_token_holding : string = "There is insufficient token holding to perform this swap"
 
+let insufficient_token_holding_for_decrease : string = "There is not enough token holding at this address to perform the decrease required by the swap"
+
+
 let no_treasury_holding_for_address : string = "There is no treasury holding for address"
 
 let order_pair_doesnt_match = "The order pair and the batch pair don't match"
