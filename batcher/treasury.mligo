@@ -10,7 +10,7 @@ module Utils = struct
   type treasury_holding = CommonTypes.Types.treasury_holding
   type treasury_token = CommonTypes.Types.treasury_token
 
-  let treasury_vault : address = Tezos.get_self_address ()
+  let treasury_vault : address = Tezos.self_address
 
   type transfer_from = {
     from_ : address;
@@ -147,7 +147,7 @@ module Utils = struct
   let check_treasury_holding
     (name : string)
     (th : treasury_holding) : token_holding =
-    match (Map.find_opt (holding.token_amount.token.name) th) with
+    match (Map.find_opt (th.token_amount.token.name) th) with
     | Some (tkh) -> check_token_holding_amount tkh
     | None -> (failwith CommonErrors.insufficient_token_holding : token_holding)
 
@@ -155,17 +155,59 @@ module Utils = struct
     (holding : token_holding)
     (treasury : treasury ): token_holding =
     match Big_map.find_opt holding.address treasury with
-     | Some th -> match (Map.find_opt (holding.token_amount.token.name) th) with
-                  | Some (tkh) -> check_token_holding_amount tkh
-                  | None -> (failwith CommonErrors.insufficient_token_holding : token_holding)
+     | Some th ->  check_treasury_holding
      | None -> (failwith CommonErrors.no_treasury_holding_for_address : token_holding)
 
+  type adjustment = INCREASE | DECREASE
+
+  let check_token_equality
+    (this : token_amount)
+    (that : token_amount) : token_amount =
+    let this_token = this.token in
+    let that_token = that.token in
+    match (this_token.name = that_token.name,this_token.address = that_token.address) with
+    | (true,true) ->  that
+    | _ -> (failwith CommonErrors.tokens_do_not_match : token_amount )
+
+
+  let adjust_token_holding
+    (adj : adjustment)
+    (original : token_holding)
+    (to_adjust : token_holding) : token_holding =
+    match original with
+    | Some (th) ->  let original_amount = original.token_amount in
+                    let adjustment_amount = check_token_equality original_amount to_adjust in
+                    let original_balance = tamount.amount in
+                    let adjustment_balance = adjustment_amount.amount in
+                    let new_balance = (match adj with
+                                       | INCREASE -> original_balance + adjustment_balance
+                                       | DECREASE -> original_balance - adjustment_balance) in
+                    let new_token_amount = { original_amount with amount = new_balance  } in
+                    { original with token_amount = new_token_amount }
+    | None -> (match adj with
+               | INCREASE -> to_adjust
+               | DECREASE -> (failwith CommonErrors.cannot_decrease_token_amount : token_holding))
+
+
+
+  let adjust_treasury_holding
+    (adjustment : adjustment)
+    (token_holding : token_holding)
+    (treasury_holding : treasury_holding) : treasury_holding = treasury_holding
+
   let atomic_swap
-    (this_holding : treasury_holding)
-    (with_that_holding : treasury_holding)
+    (this_token_holding : token_holding)
+    (this_treasury_holding : treasury_holding)
+    (with_that_token_holding : token_holding)
+    (with_that_treasury_holding : treasury_holding)
     (treasury : treasury) : treasury option =
-
-
+    let this_h = adjust_treasury_holding DECREASE this_token_holding this_treasury_holding in
+    let that_h = adjust_treasury_holding DECREASE with_that_token_holding with_that_treasury_holding in
+    let this_h = adjust_treasury_holding INCREASE with_that_token_holding this_treasury_holding in
+    let that_h = adjust_treasury_holding INCREASE this_token_holding with_that_treasury_holding in
+    let t = Big_map.update this_token_holding.holder Some(this_h) treasury in
+    let t = Big_map.update with_that_token_holding.holder Some(that_h) treasury in
+    treasury
 
 
   let swap

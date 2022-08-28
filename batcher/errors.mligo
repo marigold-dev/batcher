@@ -19,3 +19,5 @@ let insufficient_token_holding : string = "There is insufficient token holding t
 let no_treasury_holding_for_address : string = "There is no treasury holding for address"
 
 let order_pair_doesnt_match = "The order pair and the batch pair don't match"
+
+let tokens_do_not_match = "Tokens under comparison do not match"
