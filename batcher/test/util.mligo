@@ -10,6 +10,8 @@ type originated = Breath.Contract.originated
 type storage  = Batcher.storage
 type result = Batcher.result
 type order = CommonTypes.Types.swap_order
+type side = CommonTypes.Types.side
+type tolerance = CommonTypes.Types.tolerance
 
 
 let token_USDT = {
@@ -64,7 +66,7 @@ let default_swap (amount : nat) = {
   to = token_USDT
 }
 
-let make_order (swap : nat -> CommonTypes.Types.swap) (amount : nat)
+let make_order (side : side) (tolerance : tolerance) (swap : nat -> CommonTypes.Types.swap) (amount : nat)
   (address : address) : CommonTypes.Types.swap_order =
   let swap = swap amount in
   let now = Tezos.get_now () in
@@ -72,8 +74,8 @@ let make_order (swap : nat -> CommonTypes.Types.swap) (amount : nat)
     trader = address;
     swap = swap;
     created_at = now;
-    side = BUY;
-    tolerance = EXACT
+    side = side;
+    tolerance = tolerance
   }
   in
   order
