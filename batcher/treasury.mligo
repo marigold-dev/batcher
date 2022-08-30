@@ -1,15 +1,24 @@
 #import "types.mligo" "Types"
 #import "storage.mligo" "Storage"
 #import "errors.mligo" "Errors"
+#import "batch.mligo" "Batch"
+
+type storage = Storage.Types.t
+type treasury = Types.Types.treasury
+type token_amount = Types.Types.token_amount
+type token = Types.Types.token
+type treasury_holding = Types.Types.treasury_holding
+type token_holding = Types.Types.token_holding
 
 module Utils = struct
-  type storage = Storage.Types.t
-  type treasury = Types.Types.treasury
-  type token_amount = Types.Types.token_amount
-  type token = Types.Types.token
-  type treasury_holding = Types.Types.treasury_holding
-  type treasury_token = Types.Types.treasury_token
   type adjustment = INCREASE | DECREASE
+
+ type atomic_trans =
+    [@layout:comb] {
+    to_  : address;
+    token_id : nat;
+    amount : nat;
+  }
 
   type transfer_from = {
     from_ : address;
@@ -19,7 +28,6 @@ module Utils = struct
   (* Transferred format for tokens in FA2 standard *)
   type transfer = transfer_from list
 
-  let treasury_vault : address = Tezos.self_address
 
   (* Transfer the tokens to the appropriate address. This is based on the FA2 token standard *)
   let transfer_token
@@ -45,7 +53,6 @@ module Utils = struct
         }
       ] in
       Tezos.transaction transfer 0tez transfer_entrypoint
-
   (* Transfer the XTZ to the appropriate address *)
   let transfer_xtz (receiver : address) (amount : tez) : operation =
     let received_contract : unit contract =
@@ -62,30 +69,15 @@ module Utils = struct
     | Some token_address ->
       transfer_token sender receiver token_address received_token.amount
 
-  let handle_deposited_treasury_token (token : token) (amount : nat) (treasury_token : treasury_token) : treasury_token =
-    match Big_map.get_and_update
-      token
-      (None : nat)
-      treasury_token
-    with
-    | (None, treasury_token) ->
-      Big_map.add token amount treasury_token
-    | (Some old_token_amount, treasury_token) ->
-      let updated_amount = old_token_amount.amount + amount in
-      Big_map.add token updated_amount treasury_token
 
-  (* Deposit tokens into storage *)
-  let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
-    match Big_map.get_and_update
-      address
-      (None : treasury_token option)
-      treasury
-    with
-    | (None, treasury) ->
-      Big_map.add address received_token treasury
-    | (Some old_treasury_token, treasury) ->
-        let treasury_token = handle_deposited_treasury_token received_token.token received_token.amount old_treasury_token in
-        Big_map.add address treasury_token treasury
+  let token_amount_to_token_holding
+    (holder : address)
+    (token_amount : token_amount) : token_holding =
+    {
+      holder =  holder;
+      token_amount = token_amount;
+    }
+
 
 
   let handle_redeemed_treasury_token
@@ -123,23 +115,6 @@ module Utils = struct
         let _ = handle_redeemed_treasury_token redeemed_token.token redeemed_token.amount treasury_vault old_treasury_token in
         let treasury_token = Big_map.remove redeemed_token.token old_treasury_token in
         Big_map.add deposit_address treasury_token treasury
-
-  let deposit
-    (deposit_address : address)
-    (deposited_token : token_amount)
-    (storage : storage) : storage =
-      let treasury = deposit_treasury deposit_address deposited_token storage.treasury in
-      let _ = handle_transfer deposit_address treasury_vault deposited_token in
-      { storage with treasury = treasury }
-
-  let redeem
-    (deposit_address : address)
-    (redeem_address : address)
-    (redeemed_token : token_amount)
-    (storage : storage) : storage =
-      let _ = handle_transfer treasury_vault redeem_address redeemed_token in
-      let treasury = redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in
-      { storage with treasury = treasury }
 
 
   let check_token_holding_amount
@@ -206,15 +181,76 @@ module Utils = struct
     let t = Big_map.update with_that_token_holding.holder Some(that_h) treasury in
     treasury
 
+  (* Deposit tokens into storage *)
+  let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
+    let token_name = Types.Utils.get_token_name_from_token_amount received_token in
+    let token_holding = token_amount_to_token_holding address received_token in
+    let new_treasury_holding = (match Big_map.find_opt address treasury with
+                                | None -> Map.literal [ (token_name,th )]
+                                | Some (treasury_holding) ->  (match Map.find_opt token_name treasury_holding with
+                                                               | None -> Map.add token_name token_holding treasury_holding
+                                                               | Some (oth) -> let new_token_holding = adjust_token_holding oth INCREASE token_holding in
+                                                                               Map.update token_name Some(new_token_holding) treasury_holding
+                                                               )) in
+    Big_map.update address Some (treasury_holding) treasury
 
-  let swap
+
+  (* FIXME:  This needs to be more robust for cases where one token in a two token holding fails *)
+  let redeem_all_tokens_from_treasury_holding
+    (holder : address)
+    (th : treasury_holding) =
+    let transfer_token_holding (tkh) =
+      (let _ = Utils.handle_transfer treasury_vault redeem_address redeemed_token in
+      ()) in
+    Map.iter transfer_token_holding th
+
+  let redeem_holdings_from_single_batch
+    (holder : address)
+    (batch : Batch.t ) : Batch.t =
+    match batch.status with
+    | Cleared -> (match Big_map.find_opt holder batch.treasury with
+                  | Some (th) -> let _ = redeem_all_tokens_from_treasury_holding holder th in
+                                let updated_treasury = Big_map.delete holder in
+                                { batch with treasury =updated_treasury }
+                  | None -> batch)
+    | Open -> batch
+    | Closed  -> batch
+
+
+  let redeem_holdings_from_batches
+    (holder : address)
+    (batches : batch_set ) : batch_set =
+    let updated_previous = List.map (redeem_holdings_from_batches (holder)) batches.previous in
+    { batches with previous = updated_previous }
+
+      (* let treasury = Utils.redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in *)
+
+end
+
+
+let treasury_vault : address = Tezos.self_address
+
+
+let deposit
+    (deposit_address : address)
+    (deposited_token : token_amount)
+    (storage : storage) : storage =
+      let treasury = Utils.deposit_treasury deposit_address deposited_token storage.treasury in
+      let _ = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+      { storage with treasury = treasury }
+
+let redeem
+    (redeem_address : address)
+    (storage : storage) : storage =
+      let updated_batches = redeem_holdings_from_batches storage.batches in
+      { storage with batches = updated_batches }
+
+let swap
     (this : token_holding)
     (with_that : token_holding)
     (treasury : treasury) : treasury =
-    let this_holding = has_sufficient_holding this treasury in
-    let that_holding = has_sufficient_holding with_that treasury in
-    match atomic_swap this_holding that_holding treasury with
+    let this_holding = Utils.has_sufficient_holding this treasury in
+    let that_holding = Utils.has_sufficient_holding with_that treasury in
+    match Utils.atomic_swap this_holding that_holding treasury with
     | Some (t) -> t
     | None -> treasury
-
-end

@@ -85,6 +85,10 @@ module Utils = struct
   let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
     (order.from.token, order.to)
 
+  let get_token_name_from_token_amount
+    (ta : Types.token_amount) : string =
+    ta.token.name
+
   let get_token_name_from_token_holding
     (th : Types.token_holding) : string =
     th.token_amount.token.name

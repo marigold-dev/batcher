@@ -19,7 +19,6 @@ module Types = struct
     valid_swaps : valid_swaps;
     rates_current : rates_current;
     rates_historic : rates_historic;
-    treasury: CommonTypes.Types.treasury;
     batches : Batch.batch_set;
   }
 

@@ -18,6 +18,7 @@ type entrypoint =
   | Deposit of CommonTypes.Types.swap_order
   | Post of CommonTypes.Types.exchange_rate
   | Tick
+  | Redeem
 
 
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : Batch.t =
@@ -37,8 +38,7 @@ let tick_current_batches (storage : storage) : storage =
       | None ->
         batches
       | Some batch ->
-        (* REPLACE let current_time = Tezos.get_now () in *)
-        let current_time = Tezos.now in
+        let current_time = Tezos.get_now () in
         let batch =
           if Batch.should_be_closed batch current_time then
             Batch.close batch current_time
@@ -74,8 +74,7 @@ let try_to_append_order (order : CommonTypes.Types.swap_order)
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (order: CommonTypes.Types.swap_order) (storage : storage) : result =
   let storage = tick_current_batches storage in
-  (* REPLACE let current_time = Tezos.get_now () in *)
-  let current_time = Tezos.now in
+  let current_time = Tezos.get_now () in
   let updated_batches =
     if Batch.should_open_new storage.batches current_time then
       let treasury = storage.treasury in
@@ -95,8 +94,7 @@ let post_rate (rate : CommonTypes.Types.exchange_rate) (storage : storage) : res
     | None -> no_op (storage)
     | Some current_batch ->
       let updated_batches =
-        (* REPLACE let current_time = Tezos.get_now () in *)
-        let current_time = Tezos.now in
+        let current_time = Tezos.get_now () in
         if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
           { storage.batches with current = Some batch }
@@ -115,4 +113,5 @@ let main
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Tick -> tick storage
+   | Redeem -> redeem storage
 

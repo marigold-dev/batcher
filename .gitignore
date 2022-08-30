@@ -37,3 +37,6 @@ result
 
 # Vim temporary files
 .*.sw?
+
+# Ligo files
+# .ligoproject
