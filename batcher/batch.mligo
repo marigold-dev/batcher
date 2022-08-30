@@ -51,6 +51,11 @@ let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
     }
   }
 
+let get_status_when_its_cleared (batch : t) =
+  match batch.status with
+    | Cleared infos -> infos
+    | _ -> failwith "this batch must be cleared before using this function"
+
 let is_open (batch : t) : bool =
   match batch.status with
     | Open _ -> true

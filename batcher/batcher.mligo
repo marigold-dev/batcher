@@ -107,7 +107,11 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
         let current_time = Tezos.get_now () in
         if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
-          { storage.batches with current = Some batch }
+          let cleared_infos = Batch.get_status_when_its_cleared batch in
+          let new_orderbook =
+            Order.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate in
+          let new_batch = {batch with orderbook = new_orderbook} in
+          { storage.batches with current = Some new_batch }
         else
           storage.batches
       in
