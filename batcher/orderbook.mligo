@@ -40,15 +40,19 @@ let make_new_order (order : order) (amt: nat) : order =
 *)
 let match_orders (ord_1 : order) (ord_2 : order) (exchange_rate : CommonTypes.Types.exchange_rate) : matching * matching =
   let ord_1_swap_amount = ord_1.swap.from.amount * exchange_rate.rate in
-  if ord_2.swap.from.amount >= ord_1_swap_amount then
+  if ord_2.swap.from.amount > ord_1_swap_amount then
     let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
     (* SHOULD UPDATE THE LEDGER HERE *)
     Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
   else
-    let ord_2_swap_amount = ord_2.swap.from.amount / exchange_rate.rate in
-    let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
-    (* SHOULD UPDATE THE LEDGER HERE *)
-    Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
+    if ord_2.swap.from.amount < ord_1_swap_amount then
+      let ord_2_swap_amount = ord_2.swap.from.amount / exchange_rate.rate in
+      let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
+      (* SHOULD UPDATE THE LEDGER HERE *)
+      Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
+    else
+      (* SHOULD UPDATE THE LEDGER HERE *)
+      Total, Total
 
 (*This function push orders auxording to a pro-rata "model"*)
 let push_order (order : order) (orderbook : t) : t = 

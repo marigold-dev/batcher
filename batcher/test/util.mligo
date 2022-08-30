@@ -12,6 +12,8 @@ type result = Batcher.result
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
+type swap = CommonTypes.Types.swap
+type exchange_rate = CommonTypes.Types.exchange_rate
 
 
 let token_USDT = {
@@ -79,6 +81,13 @@ let make_order (side : side) (tolerance : tolerance) (swap : nat -> CommonTypes.
   }
   in
   order
+
+let make_exchange_rate (swap : swap) (rate : nat): exchange_rate =
+  {
+    swap = swap;
+    rate = rate;
+    when = Tezos.get_now ()
+  }
 
 let originate (level: Breath.Logger.level) =
   Breath.Contract.originate
