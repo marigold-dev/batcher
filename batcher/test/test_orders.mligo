@@ -140,6 +140,68 @@ let filter_plus_orderbook =
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
 
+let one_total_partial_match_orders =
+  Breath.Model.case
+  "match_orders"
+  "The second order can completely fill the first one, so we get a couple (total,partial)"
+  (fun (_level: Breath.Logger.level) ->
+    let (_,(alice,bob,_)) = Breath.Context.init_default () in
+
+    let alice_order = Util.make_order BUY PLUS Util.default_swap 50n alice.address in
+    let bob_order = Util.make_order SELL MINUS Util.default_swap 130n bob.address in
+    let remaining_bob_order = Order.make_new_order bob_order 30n in
+    (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
+      for initiate/create a exchange_rate ? *)
+    let rate = Util.make_exchange_rate (Util.default_swap 0n) 2n in
+    
+    let expected = (Total, Partial remaining_bob_order) in
+    let computed = 
+      Order.match_orders alice_order bob_order rate in
+
+    Breath.Assert.is_true "should be equal" (expected = computed)
+  )
+
+let one_partial_total_match_orders =
+  Breath.Model.case
+  "match_orders"
+  "The first order can completely fill the second one, so we get a couple (partial,total)"
+  (fun (_level: Breath.Logger.level) ->
+    let (_,(alice,bob,_)) = Breath.Context.init_default () in
+
+    let alice_order = Util.make_order BUY PLUS Util.default_swap 70n alice.address in
+    let bob_order = Util.make_order SELL MINUS Util.default_swap 130n bob.address in
+    let remaining_alice_order = Order.make_new_order alice_order 5n in
+    (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
+      for initiate/create a exchange_rate ? *)
+    let rate = Util.make_exchange_rate (Util.default_swap 0n) 2n in
+    
+    let expected = (Partial remaining_alice_order, Total) in
+    let computed = 
+      Order.match_orders alice_order bob_order rate in
+
+    Breath.Assert.is_true "should be equal" (expected = computed)
+  )
+
+let one_total_match_orders =
+  Breath.Model.case
+  "match_orders"
+  "Both orders are equal in term of amount, so they fill each other up totally"
+  (fun (_level: Breath.Logger.level) ->
+    let (_,(alice,bob,_)) = Breath.Context.init_default () in
+
+    let alice_order = Util.make_order BUY PLUS Util.default_swap 50n alice.address in
+    let bob_order = Util.make_order SELL MINUS Util.default_swap 100n bob.address in
+    (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
+      for initiate/create a exchange_rate ? *)
+    let rate = Util.make_exchange_rate (Util.default_swap 0n) 2n in
+    
+    let expected = (Total, Total) in
+    let computed = 
+      Order.match_orders alice_order bob_order rate in
+
+    Breath.Assert.is_true "should be equal" (expected = computed)
+  )
+
 let () = 
   Breath.Model.run_suites Void [
     Breath.Model.suite "Suite for the orders matching component" [
@@ -148,6 +210,9 @@ let () =
       filter_empty_orderbook;
       filter_minus_orderbook;
       filter_exact_orderbook;
-      filter_plus_orderbook
+      filter_plus_orderbook;
+      one_total_partial_match_orders;
+      one_partial_total_match_orders;
+      one_total_match_orders
     ]
   ]
