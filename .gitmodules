@@ -1,3 +1,6 @@
 [submodule "breathalyzer"]
 	path = breathalyzer
 	url = https://github.com/marigold-dev/breathalyzer.git
+[submodule "math-lib-cameligo"]
+	path = math-lib-cameligo
+	url = git@github.com:ligolang/math-lib-cameligo.git
