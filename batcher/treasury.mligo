@@ -128,25 +128,33 @@ module Utils = struct
     let t = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
     treasury
 
+  let deposit_into_treasury_holding
+    (address : address)
+    (token_name : string)
+    (token_holding : token_holding)
+    (treasury : treasury) : treasury_holding =
+    match Big_map.find_opt address treasury with
+    | None -> Map.literal [ (token_name, token_holding )]
+    | Some (treasury_holding) ->  (match Map.find_opt token_name treasury_holding with
+                                   | None ->  Map.add (token_name) (token_holding) (treasury_holding)
+                                   | Some (oth) -> let new_token_holding = adjust_token_holding oth INCREASE token_holding in
+                                                   Map.update (token_name) (Some(new_token_holding)) (treasury_holding))
+
+
   (* Deposit tokens into storage *)
   let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
     let token_name = Types.Utils.get_token_name_from_token_amount received_token in
     let token_holding = token_amount_to_token_holding address received_token in
-    let new_treasury_holding = (match Big_map.find_opt address treasury with
-                                | None -> Map.literal [ (token_name, Some (token_holding) )]
-                                | Some (treasury_holding) ->  (match Map.find_opt token_name treasury_holding with
-                                                               | None -> Map.add (token_name) (token_holding) (treasury_holding)
-                                                               | Some (oth) -> let new_token_holding = adjust_token_holding oth INCREASE token_holding in
-                                                                               Map.update (token_name) (Some(new_token_holding)) (treasury_holding)
-                                                               )) in
-    Big_map.update address Some (treasury_holding) treasury
+    let new_treasury_holding = deposit_into_treasury_holding address token_name token_holding treasury in
+    Big_map.update (address) (Some(new_treasury_holding)) treasury
 
 
   (* FIXME:  This needs to be more robust for cases where one token in a two token holding fails *)
   let redeem_all_tokens_from_treasury_holding
     (holder : address)
+    (treasury_vault : address)
     (th : treasury_holding) =
-    let transfer_token_holding (tkh) =
+    let transfer_token_holding (tkh : token_holding) =
       (let _ = Utils.handle_transfer treasury_vault redeem_address redeemed_token in
       ()) in
     Map.iter transfer_token_holding th
@@ -169,8 +177,6 @@ module Utils = struct
     (batches : batch_set ) : batch_set =
     let updated_previous = List.map (redeem_holdings_from_batches (holder)) batches.previous in
     { batches with previous = updated_previous }
-
-      (* let treasury = Utils.redeem_treasury deposit_address redeemed_token treasury_vault storage.treasury in *)
 
 end
 
