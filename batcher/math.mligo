@@ -1,65 +1,54 @@
-module Utils = struct
+#import "types.mligo" "CommonTypes"
+#import "../math_lib/lib/float.mligo" "Float"
 
-let min (a : nat) (b : nat) = if a <= b then a else b
+module Types = CommonTypes.Types
 
-let clearing_prices
-    (_p: nat)
-    (_x: nat) (_y: nat) (_z: nat)
-    (_r: nat) (_s: nat) (_t: nat)
-=
-    let clearing = {
-      clearing_volumes =
-                         Map.literal [
-                                      (PLUS, 0n);
-                                      (EXACT, 0n);
-                                      (MINUS, 0n)
-                                     ];
-      clearing_tolerance = EXACT;
-    } in
-    clearing
+let constant_number = Float.add (Float.new 1 0) (Float.inverse (Float.new 10 4))
 
-(*
-We have ton install the math-lib-cameligo in order to use float instead of nat
-but i don't know how to find the package name.
+let get_min_number (a : Float.t) (b : Float.t) = 
+  if Float.lte a b then a 
+  else b 
 
-remove the next comment when the package is installed, will need some change in anycase
-its more a placeholder taken from the design document than real code.
-*)
+let get_clearing_tolerance (cp_minus : Float.t) (cp_exact : Float.t) (cp_plus : Float.t) : Types.tolerance =  
+  if (Float.gte cp_minus cp_exact) && (Float.gte cp_minus cp_plus) then MINUS
+  else if (Float.gte cp_exact cp_minus) && (Float.gte cp_exact cp_plus) then EXACT
+  else if (Float.gte cp_plus cp_exact) && (Float.gte cp_plus cp_exact) then PLUS
+  else PLUS
 
-(*let clearing_prices
-    (p: nat)
-    (x: nat) (y: nat) (z: nat)
-    (r: nat) (s: nat) (t: nat)
-=
-    let cv_minus =
-        let left = x + y + z in
-        let right = r * ((1.0001)/p) in
-        min left right in
+let get_cp_minus (oracle_price : Float.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Float.t = 
+  let (buy_minus_token, buy_exact_token, buy_plus_token) = buy_side in
+  let (sell_minus_token, _, _) = sell_side in 
+  let left_number = Float.new (buy_minus_token + buy_exact_token + buy_plus_token) 0 in
+  let right_number = Float.div (Float.mul (Float.new sell_minus_token 0) constant_number) oracle_price in 
+  let min_number = get_min_number left_number right_number in 
+  min_number
 
-    let cv_exact =
-        let left = y + z in
-        let right = (r + s) * (1/p) in
-        min left right in
+let get_cp_exact (oracle_price : Float.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Float.t = 
+  let (_, buy_exact_token, buy_plus_token) = buy_side in 
+  let (sell_minus_token, sell_exact_token, _) = sell_side in 
+  let left_number = Float.new (buy_exact_token + buy_plus_token) 0 in 
+  let right_number = Float.div (Float.new (sell_minus_token + sell_exact_token) 0) oracle_price in 
+  let min_number = get_min_number left_number right_number in 
+  min_number
 
-    let cv_plus =
-        let right = (r+s+t) * (1/(p* 1.0001)) in
-        min z right in
+let get_cp_plus (oracle_price : Float.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Float.t = 
+  let (_, _, buy_plus_token) = buy_side in 
+  let (sell_minus_token, sell_exact_token, sell_plus_token) = sell_side in 
+  let left_number = Float.new buy_plus_token 0 in 
+  let right_number = Float.div (Float.new (sell_minus_token + sell_exact_token + sell_plus_token) 0) (Float.mul constant_number oracle_price) in 
+  let min_number = get_min_number left_number right_number in 
+  min_number
 
-    let clearing_tolerance =
-       let clearing_volume = max cv_plus cv_exact cv_minus in
-       let tol = PLUS in
-       let tol = if clearing_volume = cv_exact then EXACT else tol in
-       let tol = if clearing_volume = cv_minus then MINUS else tol in
-       tol
-
-    let clearing = {
-      clearing_volumes =
-                         Map.literal [
-                                      (PLUS, cv_plus);
-                                      (EXACT, cv_exact);
-                                      (MINUS, cv_minus)
-                                     ];
-      clearing_tolerance = clearing_tolerance;
-    } in
-    clearing *)
-end
+let get_clearing_price (oracle_price : Float.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Types.clearing = 
+  let cp_minus = get_cp_minus oracle_price buy_side sell_side in 
+  let cp_exact = get_cp_exact oracle_price buy_side sell_side in 
+  let cp_plus = get_cp_plus oracle_price buy_side sell_side in 
+  let clearing_volumes =
+    Map.literal [
+      (MINUS, cp_minus);
+      (EXACT, cp_exact);
+      (PLUS, cp_minus)
+    ] 
+  in
+  let clearing_tolerance = get_clearing_tolerance cp_minus cp_exact cp_plus in 
+  { clearing_volumes = clearing_volumes; clearing_tolerance = clearing_tolerance }

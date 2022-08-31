@@ -103,7 +103,7 @@ module Utils = struct
     (amount : nat) 
     (treasury_vault : address) 
     (treasury_token : treasury_token) : unit = 
-      match Big_map.get_and_update with 
+      match Big_map.get_and_update 
         token
         (None : nat) 
         treasury_token
