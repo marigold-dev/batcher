@@ -3,7 +3,16 @@
 
 module Types = CommonTypes.Types
 
-let constant_number = Float.add (Float.new 1 0) (Float.inverse (Float.new 10 4))
+let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4))
+
+(* Get the number with 0 decimal accuracy *)
+let get_rounded_number (number : Float.t) : nat = 
+  let one_decimal_number = Float.resolve number 1n in 
+  let zero_decimal_number = Float.resolve number 0n in 
+  if (one_decimal_number - zero_decimal_number * 10) < 5 then 
+    abs (zero_decimal_number)
+  else 
+    abs (zero_decimal_number + 1) 
 
 let get_min_number (a : Float.t) (b : Float.t) = 
   if Float.lte a b then a 
@@ -12,7 +21,6 @@ let get_min_number (a : Float.t) (b : Float.t) =
 let get_clearing_tolerance (cp_minus : Float.t) (cp_exact : Float.t) (cp_plus : Float.t) : Types.tolerance =  
   if (Float.gte cp_minus cp_exact) && (Float.gte cp_minus cp_plus) then MINUS
   else if (Float.gte cp_exact cp_minus) && (Float.gte cp_exact cp_plus) then EXACT
-  else if (Float.gte cp_plus cp_exact) && (Float.gte cp_plus cp_exact) then PLUS
   else PLUS
 
 let get_cp_minus (oracle_price : Float.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Float.t = 
@@ -43,11 +51,14 @@ let get_clearing_price (oracle_price : Float.t) (buy_side : Types.buy_side) (sel
   let cp_minus = get_cp_minus oracle_price buy_side sell_side in 
   let cp_exact = get_cp_exact oracle_price buy_side sell_side in 
   let cp_plus = get_cp_plus oracle_price buy_side sell_side in 
+  let rounded_cp_minus = get_rounded_number cp_minus in 
+  let rounded_cp_exact = get_rounded_number cp_exact in 
+  let rounded_cp_plus = get_rounded_number cp_plus in 
   let clearing_volumes =
     Map.literal [
-      (MINUS, cp_minus);
-      (EXACT, cp_exact);
-      (PLUS, cp_minus)
+      (MINUS, rounded_cp_minus);
+      (EXACT, rounded_cp_exact);
+      (PLUS, rounded_cp_plus)
     ] 
   in
   let clearing_tolerance = get_clearing_tolerance cp_minus cp_exact cp_plus in 

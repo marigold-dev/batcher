@@ -13,3 +13,5 @@ let not_found_token : string = "This token is not found in the triggered treasur
 let invalid_token : string = "This added token is not the same as the previous token"
 
 let invalid_tezos_address : string = "This tezos address is invalid"
+
+let not_found_clearing_level : string = "This clearing level is not found"

@@ -53,7 +53,7 @@ module Types = struct
 
 
   type clearing = {
-    clearing_volumes : (tolerance, Float.t) map;
+    clearing_volumes : (tolerance, nat) map;
     clearing_tolerance : tolerance;
   }
 
