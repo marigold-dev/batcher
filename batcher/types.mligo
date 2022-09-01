@@ -33,7 +33,7 @@ module Types = struct
   type exchange_rate = {
     [@layout:comb]
     swap : swap;
-    rate: nat;
+    rate: Float.t;
     when : timestamp;
   }
 
