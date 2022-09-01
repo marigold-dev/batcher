@@ -215,7 +215,7 @@ module Utils = struct
 end
 
 
-let treasury_vault : address = Tezos.get_self_address ()
+let get_treasury_vault () : address = Tezos.get_self_address ()
 
 let empty : treasury = Big_map.empty
 
@@ -230,10 +230,11 @@ let deposit
                                                let now : timestamp = Tezos.get_now() in
                                                let b : Batch.t = Batch.make (now) (ob) (pair) (empty) in
                                                b
-                                     | Some (cb) ->  let updated_current_batch_treasury : treasury = Utils.deposit_treasury deposit_address deposited_token cb.treasury in
-                                                     let _ = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                     let b : Batch.t = cb in
-                                                     { b with treasury = updated_current_batch_treasury }) in
+                                     | Some (cb) -> let updated_current_batch_treasury : treasury = Utils.deposit_treasury deposit_address deposited_token cb.treasury in
+                                                    let treasury_vault = get_treasury_vault () in
+                                                    let _ = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+                                                    let b : Batch.t = cb in
+                                                    { b with treasury = updated_current_batch_treasury }) in
       let updated_batches = { batches with current = Some(current_batch) } in
       { storage with batches = updated_batches }
 
