@@ -1,15 +1,17 @@
 #import "../batcher.mligo" "Batcher"
 #import "../../breathalyzer/lib/lib.mligo" "Breath"
-#import "../storage.mligo" "CommonStorage"
-#import "../types.mligo" "CommonTypes"
+#import "../storage.mligo" "Storage"
+#import "../types.mligo" "Types"
 #import "../batch.mligo" "Batch"
 #import "../orderbook.mligo" "Order"
+
+module Types = Types.Types
 
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
 type result = Batcher.result
-type order = CommonTypes.Types.swap_order
+type order = Types.swap_order
 
 
 let token_USDT = {
@@ -39,12 +41,12 @@ in review *)
   (* Jason's example seems to consider that valid_swaps are the
      swaps that the user/the DEX are allowed to make,
      but the type does not match this usage. *)
-  let valid_swaps = (Map.empty : CommonStorage.Types.valid_swaps)
+  let valid_swaps = (Map.empty : Storage.Types.valid_swaps)
   in
-  let rates_current = (Big_map.empty : CommonStorage.Types.rates_current) in
-  let rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic) in
+  let rates_current = (Big_map.empty : Storage.Types.rates_current) in
+  let rates_historic = (Big_map.empty : Storage.Types.rates_historic) in
   (* FIXME a treasury is not a big map *)
-  let treasury = (Big_map.empty : (CommonTypes.Types.treasury)) in
+  let treasury = (Big_map.empty : (Types.treasury)) in
   let batches = Batch.new_batch_set in
 
   {
@@ -64,11 +66,11 @@ let default_swap (amount : nat) = {
   to = token_USDT
 }
 
-let make_order (swap : nat -> CommonTypes.Types.swap) (amount : nat)
-  (address : address) : CommonTypes.Types.swap_order =
+let make_order (swap : nat -> Types.swap) (amount : nat)
+  (address : address) : Types.swap_order =
   let swap = swap amount in
   let now = Tezos.get_now () in
-  let order : CommonTypes.Types.swap_order = {
+  let order : Types.swap_order = {
     trader = address;
     swap = swap;
     created_at = now;
@@ -86,7 +88,7 @@ let originate (level: Breath.Logger.level) =
     initial_storage
     (0tez)
 
-let deposit (order : CommonTypes.Types.swap_order)
+let deposit (order : Types.swap_order)
   (contract : (Batcher.entrypoint, Batcher.storage) originated)
   (qty: tez)
   () =
