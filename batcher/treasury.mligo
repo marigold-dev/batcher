@@ -30,11 +30,14 @@ module Utils = struct
   (* Transferred format for tokens in FA2 standard *)
   type transfer = transfer_from list
 
+
+  (* Check that the token holding amount is greater or equal to the token amount being swapped *)
   let check_token_holding_amount
     (holding : token_holding)
     (tkh: token_holding) : token_holding =
     if (tkh.token_amount.amount >= holding.token_amount.amount) then tkh else (failwith Errors.insufficient_token_holding : token_holding)
 
+  (* Check that the a treasury holding holds the token required for the swap *)
   let check_treasury_holding
     (holding : token_holding )
     (th : treasury_holding) : token_holding =
@@ -44,6 +47,7 @@ module Utils = struct
                     tkh
     | None -> (failwith Errors.insufficient_token_holding : token_holding)
 
+  (* Check that the treasury contains a sufficient holding for the swap being proposed *)
   let has_sufficient_holding
     (holding : token_holding)
     (treasury : treasury ): treasury_holding =
@@ -76,6 +80,7 @@ module Utils = struct
         }
       ] in
       Tezos.transaction transfer 0tez transfer_entrypoint
+
   (* Transfer the XTZ to the appropriate address *)
   let transfer_xtz (receiver : address) (amount : tez) : operation =
     let received_contract : unit contract =
@@ -92,7 +97,7 @@ module Utils = struct
     | Some token_address ->
       transfer_token sender receiver token_address received_token.amount
 
-
+  (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding
     (holder : address)
     (token_amount : token_amount) : token_holding =
@@ -101,7 +106,7 @@ module Utils = struct
       token_amount = token_amount;
     }
 
-
+  (* Adjusts the token holding within the treasury.   *)
   let adjust_token_holding
     (th : token_holding)
     (adjustment : adjustment)
@@ -117,12 +122,13 @@ module Utils = struct
       let new_token_amount = { original_token_amount with amount = new_balance  } in
       { th with token_amount = new_token_amount }
 
+  (* Find the associated treasury holding and adjusts the appropriate token holding *)
   let adjust_treasury_holding
+    (token_name : string)
     (assigned_token_holder : address)
     (adjustment : adjustment)
     (token_holding : token_holding)
     (treasury_holding : treasury_holding) : treasury_holding =
-    let token_name = Types.Utils.get_token_name_from_token_holding token_holding in
     let existing_token_holding_opt = Map.find_opt token_name treasury_holding in
     match adjustment with
     | DECREASE -> (match existing_token_holding_opt with
@@ -131,10 +137,15 @@ module Utils = struct
                                   Map.update (token_name) (Some(new_holding)) treasury_holding)
     | INCREASE -> (match existing_token_holding_opt with
                    | None -> let new_holding = Types.Utils.assign_new_holder_to_token_holding assigned_token_holder token_holding in
-                             Map.add (token_name) (new_holding) (treasury_holding)
+                             Map.add token_name new_holding treasury_holding
                    | Some (th) -> let new_holding = adjust_token_holding th INCREASE token_holding in
                                   Map.update (token_name) (Some(new_holding)) (treasury_holding))
 
+
+  (*
+  Swaps the tokens by first reducing the token holding for each user of the appropriate token
+  and then increasing the holding of the opposing token and assining the new holder.
+  *)
   let atomic_swap
     (this_token_holding : token_holding)
     (this_treasury_holding : treasury_holding)
@@ -143,10 +154,12 @@ module Utils = struct
     (treasury : treasury) : treasury =
     let this_holder_address = this_token_holding.holder in
     let with_that_holder_address = with_that_token_holding.holder in
-    let this_h = adjust_treasury_holding this_holder_address DECREASE this_token_holding this_treasury_holding in
-    let that_h = adjust_treasury_holding with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
-    let this_h = adjust_treasury_holding this_holder_address INCREASE with_that_token_holding this_treasury_holding in
-    let that_h = adjust_treasury_holding with_that_holder_address INCREASE this_token_holding with_that_treasury_holding in
+    let this_token_name = Types.Utils.get_token_name_from_token_holding this_token_holding in
+    let with_that_token_name = Types.Utils.get_token_name_from_token_holding with_that_token_holding in
+    let this_h = adjust_treasury_holding this_token_name this_holder_address DECREASE this_token_holding this_treasury_holding in
+    let that_h = adjust_treasury_holding with_that_token_name with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
+    let this_h = adjust_treasury_holding with_that_token_name this_holder_address INCREASE with_that_token_holding this_treasury_holding in
+    let that_h = adjust_treasury_holding this_token_name with_that_holder_address INCREASE this_token_holding with_that_treasury_holding in
     let t = Big_map.update (this_holder_address) (Some(this_h)) treasury in
     let t = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
     treasury
