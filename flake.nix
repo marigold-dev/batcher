@@ -4,31 +4,26 @@
   nixConfig.bash-promt = "batcher-nix-develop$ ";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nix-filter = {
-      url = "github:numtide/nix-filter";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
-    ligolang = {
-      url = "gitlab:ligolang/ligo/0.48.1";
-      flake = false;
-    };
+    nixpkgs.url = "github:anmonteiro/nix-overlays";
+    flake-utils.url = "github:numtide/flake-utils";
+    nix-filter.url = "github:numtide/nix-filter";
 
     tezos.url = "github:marigold-dev/tezos-nix";
     tezos.inputs = {
       nixpkgs.follows = "nixpkgs";
-      flake-utils.follows = "nixpkgs";
+      flake-utils.follows = "flake-utils";
     };
 
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-filter, tezos, ligolang }@inputs:
+  outputs = { self, nixpkgs, flake-utils, nix-filter, tezos }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
         };
+        ligo = pkgs.callPackage ./nix/ligo.nix { };
       in {
         devShells.${system}.default  = pkgs.mkShell {
           name = "batcher";
@@ -37,7 +32,7 @@
             glibc
             nixfmt
             tezos
-            ligolang
+            ligo
           ];
           shellHook = ''
             alias lv="ligo version"
@@ -66,8 +61,7 @@
               glibc
               ligo
               nixfmt
-              #tezos
-              #ligolang
+              tezos
             ];
 
             buildPhase = ''
