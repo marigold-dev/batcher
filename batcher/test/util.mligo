@@ -3,8 +3,6 @@
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
 #import "../batch.mligo" "Batch"
-#import "../math.mligo" "Math"
-#import "../../math_lib/lib/float.mligo" "Float"
 
 type originated = Breath.Contract.originated
 
@@ -68,8 +66,3 @@ let deposit (order : CommonTypes.Types.swap_order)
   () =
   let deposit = Deposit order in
   Breath.Contract.transfert_to contract deposit qty
-
-
-
-
-
