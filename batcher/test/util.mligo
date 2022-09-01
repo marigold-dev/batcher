@@ -48,13 +48,11 @@ in review *)
   (* FIXME a treasury is not a big map *)
   let treasury = (Big_map.empty : (Types.treasury)) in
   let batches = Batch.new_batch_set in
-
   {
     valid_tokens = valid_tokens;
     valid_swaps = valid_swaps;
     rates_current = rates_current;
     rates_historic = rates_historic;
-    treasury = treasury;
     batches = batches;
   }
 
