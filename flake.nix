@@ -31,8 +31,7 @@
             cmake
             glibc
             nixfmt
-            tezos
-            ligo
+            #ligo
           ];
           shellHook = ''
             alias lv="ligo version"
@@ -61,7 +60,6 @@
               glibc
               ligo
               nixfmt
-              tezos
             ];
 
             buildPhase = ''
