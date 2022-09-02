@@ -43,15 +43,15 @@ let test_detect_minus_clearing_price =
   (fun (level : Breath.Logger.level) -> 
     let (_,(alice,_,_)) = Breath.Context.init_default () in
     let math_contract = Utils.originate_math level in
-    let buy_side = (45, 55, 100) in 
-    let sell_side = (900, 1000, 1900) in 
-    let rate = Float.new 19 (-1) in 
+    let buy_side = (1, 2, 1) in 
+    let sell_side = (600000, 1200000, 500000) in 
+    let rate = Float.new 21703 0 in 
     let parameter = (rate, buy_side, sell_side) in 
     let calculation_by_alice = Breath.Context.act_as alice (Utils.calculate_clearing_price parameter math_contract) in 
     let storage = Breath.Contract.storage_of math_contract in 
     Breath.Result.reduce [
       calculation_by_alice;
-      Breath.Assert.is_equal "minus_clearing_price" 200n storage
+      Breath.Assert.is_equal "minus_clearing_price" 4n storage
     ]
   )
 
@@ -62,15 +62,15 @@ let test_detect_exact_clearing_price =
   (fun (level : Breath.Logger.level) -> 
     let (_,(alice,_,_)) = Breath.Context.init_default () in
     let math_contract = Utils.originate_math level in
-    let buy_side = (50, 101, 50) in 
-    let sell_side = (95, 190, 95) in 
-    let rate = Float.new 19 (-1) in 
+    let buy_side = (5, 5, 10) in 
+    let sell_side = (250000, 100000, 100000) in 
+    let rate = Float.new 21703 0 in 
     let parameter = (rate, buy_side, sell_side) in 
     let calculation_by_alice = Breath.Context.act_as alice (Utils.calculate_clearing_price parameter math_contract) in 
     let storage = Breath.Contract.storage_of math_contract in 
     Breath.Result.reduce [
       calculation_by_alice;
-      Breath.Assert.is_equal "exact_clearing_price" 150n storage
+      Breath.Assert.is_equal "exact_clearing_price" 15n storage
     ]
   )
 
@@ -81,15 +81,15 @@ let test_detect_plus_clearing_price =
   (fun (level : Breath.Logger.level) -> 
     let (_,(alice,_,_)) = Breath.Context.init_default () in
     let math_contract = Utils.originate_math level in
-    let buy_side = (50, 50, 101) in 
-    let sell_side = (95, 95, 190) in 
-    let rate = Float.new 19 (-1) in 
+    let buy_side = (50, 100, 50) in 
+    let sell_side = (200000, 400000, 100000) in 
+    let rate = Float.new 21703 0 in 
     let parameter = (rate, buy_side, sell_side) in 
     let calculation_by_alice = Breath.Context.act_as alice (Utils.calculate_clearing_price parameter math_contract) in 
     let storage = Breath.Contract.storage_of math_contract in 
     Breath.Result.reduce [
       calculation_by_alice;
-      Breath.Assert.is_equal "plus_clearing_price" 101n storage
+      Breath.Assert.is_equal "plus_clearing_price" 32n storage
     ]
   )
 
