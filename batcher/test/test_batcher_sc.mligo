@@ -1,6 +1,6 @@
 #import "../batcher.mligo" "Batcher"
 #import "../types.mligo" "CommonTypes"
-#import "../../breathalyzer/lib/lib.mligo" "Breath"
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "util.mligo" "Util"
 
 type level = Breath.Logger.level
@@ -110,7 +110,7 @@ let test_append_order_pair_matches =
       ])
 
 let () =
-  Breath.Model.run_suites Trace [
+  Breath.Model.run_suites Void [
     Breath.Model.suite "Suite for Batcher" [
       test_first_deposit_starts_period;
       test_append_order_pair_matches

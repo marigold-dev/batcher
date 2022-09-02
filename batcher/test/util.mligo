@@ -1,5 +1,5 @@
 #import "../batcher.mligo" "Batcher"
-#import "../../breathalyzer/lib/lib.mligo" "Breath"
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
 #import "../batch.mligo" "Batch"
