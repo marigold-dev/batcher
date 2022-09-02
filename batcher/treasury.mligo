@@ -106,6 +106,13 @@ module Utils = struct
       token_amount = token_amount;
     }
 
+  (* asserts that the holdings held in a treasury holding match the holder address *)
+  let assert_holdings_are_coherent
+    (holder: address)
+    (treasury_holding : treasury_holding) : unit =
+    let is_coherent = fun (_s,th : string * token_holding) -> assert (th.holder = holder) in
+    Map.iter is_coherent treasury_holding
+
   (* Adjusts the token holding within the treasury.   *)
   let adjust_token_holding
     (th : token_holding)
@@ -160,6 +167,8 @@ module Utils = struct
     let that_h = adjust_treasury_holding with_that_token_name with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
     let this_h = adjust_treasury_holding with_that_token_name this_holder_address INCREASE with_that_token_holding this_treasury_holding in
     let that_h = adjust_treasury_holding this_token_name with_that_holder_address INCREASE this_token_holding with_that_treasury_holding in
+    let _ = assert_holdings_are_coherent this_holder_address this_h in
+    let _ = assert_holdings_are_coherent this_holder_address that_h in
     let t = Big_map.update (this_holder_address) (Some(this_h)) treasury in
     let t = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
     treasury
@@ -182,23 +191,27 @@ module Utils = struct
     let token_name = Types.Utils.get_token_name_from_token_amount received_token in
     let token_holding = token_amount_to_token_holding address received_token in
     let new_treasury_holding = deposit_into_treasury_holding address token_name token_holding treasury in
+    let _ = assert_holdings_are_coherent address new_treasury_holding in
     Big_map.update (address) (Some(new_treasury_holding)) treasury
 
 
   (* FIXME:  This needs to be more robust for cases where one token in a two token holding fails *)
   let redeem_all_tokens_from_treasury_holding
+    (holder : address)
     (treasury_vault : address)
     (th : treasury_holding) =
+    let _ = assert_holdings_are_coherent holder th in
     let transfer_token_holding = (fun (n,tkh : string * token_holding) -> let _ = handle_transfer treasury_vault tkh.holder tkh.token_amount in
                                                                           ()) in
     Map.iter transfer_token_holding th
 
   let redeem_holdings_from_single_batch
     (holder : address)
+    (treasury_vault : address)
     (batch : Batch.t ) : Batch.t =
     match batch.status with
     | Cleared _ -> (match Big_map.find_opt holder batch.treasury with
-                  | Some (th) -> let _ = redeem_all_tokens_from_treasury_holding holder th in
+                  | Some (th) -> let _ = redeem_all_tokens_from_treasury_holding holder treasury_vault th in
                                  let updated_treasury = Big_map.remove holder batch.treasury in
                                  { batch with treasury =updated_treasury }
                   | None -> batch)
@@ -208,9 +221,13 @@ module Utils = struct
 
   let redeem_holdings_from_batches
     (holder : address)
+    (treasury_vault : address)
     (batches : Batch.batch_set ) : Batch.batch_set =
-    let updated_previous = List.map (redeem_holdings_from_single_batch (holder)) batches.previous in
+    let updated_previous = List.map (redeem_holdings_from_single_batch (holder) (treasury_vault)) batches.previous in
     { batches with previous = updated_previous }
+
+
+
 
 end
 
@@ -241,7 +258,8 @@ let deposit
 let redeem
     (redeem_address : address)
     (storage : storage) : storage =
-      let updated_batches = Utils.redeem_holdings_from_batches redeem_address  storage.batches in
+      let treasury_vault = get_treasury_vault () in
+      let updated_batches = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
       { storage with batches = updated_batches }
 
 let swap
