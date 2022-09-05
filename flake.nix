@@ -1,14 +1,17 @@
 {
   description = "batcher development environment";
 
-  nixConfig.bash-promt = "batcher-nix-develop$ ";
+  nixConfig = {
+    extra-substituters = ["https://tezos.nix-cache.workers.dev"];
+    extra-trusted-public-keys = ["tezos-nix-cache.marigold.dev-1:4nS7FPPQPKJIaNQcbwzN6m7kylv16UCWWgjeZZr2wXA="];
+    bash-promt = "batcher-nix$ ";
+  };
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nix-filter = {
-      url = "github:numtide/nix-filter";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+
+    nixpkgs.url = "github:anmonteiro/nix-overlays";
+    flake-utils.url = "github:numtide/flake-utils";
+    nix-filter.url = "github:numtide/nix-filter";
 
     tezos.url = "github:marigold-dev/tezos-nix";
     tezos.inputs = {
@@ -23,19 +26,19 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          #overlays = [ tezos.overlays.default ];
         };
+        ligo = pkgs.callPackage ./nix/ligo.nix { };
       in {
         devShells.${system}.default  = pkgs.mkShell {
           name = "batcher";
           buildInputs = with pkgs; with ocamlPackages; [
             cmake
             glibc
-            ligo
             nixfmt
-            docker
+            ligo
           ];
           shellHook = ''
+            alias lv="ligo version"
             alias lcc="ligo compile contract"
             alias lce="ligo compile expression"
             alias lcp="ligo compile parameter"
@@ -48,16 +51,20 @@
         };
 
         packages = let
+          ligo-compiler-version=0.49.0;
+          tezos-protocol="jakarta";
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
             buildDir = "$src/build";
 
 
-            buildInputs = with pkgs; [
+            buildInputs = with pkgs; with ocamlPackages; [
+              cmake
+              glibc
               ligo
-              docker
-          ];
+              nixfmt
+            ];
 
             buildPhase = ''
               mkdir -p $out
