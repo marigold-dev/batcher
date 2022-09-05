@@ -1,5 +1,7 @@
 #import "constants.mligo" "Constants"
 #import "errors.mligo" "Errors"
+#import "../math_lib/lib/float.mligo" "Float"
+
 
 module Types = struct
 
@@ -39,7 +41,7 @@ module Types = struct
   type exchange_rate = {
     [@layout:comb]
     swap : swap;
-    rate: nat;
+    rate: Float.t;
     when : timestamp;
   }
 
@@ -54,7 +56,7 @@ module Types = struct
   type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type clearing = {
-    clearing_volumes : (tolerance, nat)  map;
+    clearing_volumes : (tolerance, nat) map;
     clearing_tolerance : tolerance;
   }
 
@@ -63,6 +65,18 @@ module Types = struct
   type treasury_holding = (string, token_holding) map
 
   type treasury = (address, treasury_holding) big_map
+
+  (* These types are used in math module *)
+  type buy_minus_token = int
+  type buy_exact_token = int
+  type buy_plus_token = int
+  type buy_side = buy_minus_token * buy_exact_token * buy_plus_token
+
+  type sell_minus_token = int 
+  type sell_exact_token = int 
+  type sell_plus_token = int
+  type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
+
 end
 
 module Utils = struct
