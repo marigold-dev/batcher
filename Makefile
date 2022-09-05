@@ -10,6 +10,8 @@ endef
 
 test:
 	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
-	
+	$(call test_ligo,batcher/test/test_orders.mligo)
+
 test-math: 
 	$(call test_ligo,batcher/test/test_math.mligo)
+

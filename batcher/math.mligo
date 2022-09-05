@@ -5,6 +5,7 @@ module Types = CommonTypes.Types
 
 let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4))
 
+
 (* Get the number with 0 decimal accuracy *)
 let get_rounded_number (number : Float.t) : nat = 
   let one_decimal_number = Float.resolve number 1n in 
@@ -13,6 +14,7 @@ let get_rounded_number (number : Float.t) : nat =
     abs (zero_decimal_number)
   else 
     abs (zero_decimal_number + 1) 
+
 
 let get_min_number (a : Float.t) (b : Float.t) = 
   if Float.lte a b then a 

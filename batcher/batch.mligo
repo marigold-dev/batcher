@@ -1,5 +1,6 @@
 #import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
+#import "orderbook.mligo" "Orderbook"
 
 module Types = CommonTypes.Types
 
@@ -12,7 +13,7 @@ type batch_status =
 type t = {
   status : batch_status;
   treasury : Types.treasury;
-  orders : Types.swap_order list;
+  orderbook : Orderbook.t;
   pair : Types.token * Types.token;
 }
 
@@ -24,18 +25,22 @@ type batch_set = {
   previous : t list;
 }
 
-let make (timestamp : timestamp) (orders : Types.swap_order list)
-  (pair : Types.token * Types.token) (treasury : Types.treasury) : t =
+let make
+  (timestamp : timestamp)
+  (orderbook : Orderbook.t)
+  (pair : Types.token * Types.token)
+  (treasury : Types.treasury) : t =
   {
     status = Open { start_time = timestamp } ;
-    orders = orders;
+    orderbook = orderbook;
     treasury = treasury;
     pair = pair;
   }
 
 (* Append an order to a batch *withouth checks* *)
 let append_order (order : Types.swap_order) (batch : t) : t =
-  { batch with orders = order :: batch.orders }
+  let new_orderbook = Orderbook.push_order order batch.orderbook in
+  { batch with orderbook = new_orderbook }
 
 let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
   (rate : Types.exchange_rate) : t =
@@ -68,22 +73,33 @@ let should_be_closed (batch : t) (current_time : timestamp) : bool =
       current_time > start_time + Constants.deposit_time_window
     | _ -> false
 
-let should_be_cleared (batch : t) (current_time : timestamp) : bool =
+let should_be_cleared
+  (batch : t)
+  (current_time : timestamp) : bool =
   match batch.status with
     | Closed { start_time = _; closing_time } ->
       current_time > closing_time + Constants.price_wait_window
     | _ -> false
 
-let should_open_new (batches : batch_set) (_current_time : timestamp) : bool =
+let should_open_new
+  (batches : batch_set)
+  (_current_time : timestamp) : bool =
   match batches.current with
     | None -> true
     | Some batch ->
       is_cleared batch
 
-let start_period (order : Types.swap_order) (batches : batch_set)
-  (current_time : timestamp) (treasury : Types.treasury) : batch_set =
+
+let make_new_treasury : CommonTypes.Types.treasury = Big_map.empty
+
+let start_period
+  (order : Types.swap_order)
+  (batches : batch_set)
+  (current_time : timestamp) : batch_set =
+    let treasury : CommonTypes.Types.treasury = make_new_treasury in
     let pair = CommonTypes.Utils.pair_of_swap order.swap in
-    let new_batch = make current_time [order] pair treasury in
+    let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
+    let new_batch = make current_time orderbook pair treasury in
     match batches.current with
       | None ->
         { batches with current = Some new_batch }
@@ -93,8 +109,8 @@ let start_period (order : Types.swap_order) (batches : batch_set)
 let close (batch : t) (current_time : timestamp) : t =
   match batch.status with
     | Open { start_time } ->
-      { batch with status = Closed { start_time = start_time;
-        closing_time = current_time } }
+      let new_status = Closed { start_time = start_time; closing_time = current_time } in
+      { batch with status = new_status }
     | _ -> failwith "Trying to close a batch which is not open"
 
 let finalize (batch : t) (current_time : timestamp)
