@@ -1,7 +1,8 @@
 #import "../batcher.mligo" "Batcher"
-#import "../../breathalyzer/lib/lib.mligo" "Breath"
-#import "../storage.mligo" "Storage"
-#import "../types.mligo" "Types"
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath"
+#import "../storage.mligo" "CommonStorage"
+#import "../types.mligo" "CommonTypes"
+
 #import "../batch.mligo" "Batch"
 #import "../orderbook.mligo" "Order"
 

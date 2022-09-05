@@ -1,6 +1,6 @@
 #import "../batcher.mligo" "Batcher"
 #import "../types.mligo" "CommonTypes"
-#import "../../breathalyzer/lib/lib.mligo" "Breath"
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "util.mligo" "Util"
 
 type level = Breath.Logger.level
