@@ -1,3 +1,0 @@
-[submodule "math_lib"]
-	path = math_lib
-	url = git@github.com:ligolang/math-lib-cameligo.git
