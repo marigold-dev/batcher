@@ -1,4 +1,7 @@
 #import "constants.mligo" "Constants"
+#import "errors.mligo" "Errors"
+#import "../math_lib/lib/float.mligo" "Float"
+
 
 module Types = struct
 
@@ -22,6 +25,12 @@ module Types = struct
      amount : nat;
   }
 
+  (* A token amount 'held' by a specific address *)
+  type token_holding = {
+    [@layout:comb]
+    holder: address;
+    token_amount : token_amount;
+  }
 
   type swap = {
    from : token_amount;
@@ -32,7 +41,7 @@ module Types = struct
   type exchange_rate = {
     [@layout:comb]
     swap : swap;
-    rate: nat;
+    rate: Float.t;
     when : timestamp;
   }
 
@@ -47,13 +56,27 @@ module Types = struct
   type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type clearing = {
-    clearing_volumes : (tolerance, nat)  map;
+    clearing_volumes : (tolerance, nat) map;
     clearing_tolerance : tolerance;
   }
 
   type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
 
-  type treasury = (address, token_amount) big_map
+  type treasury_holding = (string, token_holding) map
+
+  type treasury = (address, treasury_holding) big_map
+
+  (* These types are used in math module *)
+  type buy_minus_token = int
+  type buy_exact_token = int
+  type buy_plus_token = int
+  type buy_side = buy_minus_token * buy_exact_token * buy_plus_token
+
+  type sell_minus_token = int 
+  type sell_exact_token = int 
+  type sell_plus_token = int
+  type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
+
 end
 
 module Utils = struct
@@ -75,5 +98,29 @@ module Utils = struct
 
   let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
     (order.from.token, order.to)
+
+  let get_token_name_from_token_amount
+    (ta : Types.token_amount) : string =
+    ta.token.name
+
+  let get_token_name_from_token_holding
+    (th : Types.token_holding) : string =
+    th.token_amount.token.name
+
+  let assign_new_holder_to_token_holding
+    (new_holder : address)
+    (token_holding : Types.token_holding) : Types.token_holding =
+    { token_holding with holder = new_holder}
+
+  let check_token_equality
+    (this : Types.token_amount)
+    (that : Types.token_amount) : Types.token_amount =
+    if this.token.name = that.token.name then
+      if this.token.address = that.token.address then
+        that
+      else
+        (failwith Errors.tokens_do_not_match : Types.token_amount )
+    else
+      (failwith Errors.tokens_do_not_match : Types.token_amount )
 end
 

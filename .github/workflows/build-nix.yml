@@ -1,4 +1,4 @@
-name: "Build 0-slip Contracts"
+name: "Build Batcher Contracts"
 on:
   push: {}
   workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
@@ -14,6 +14,6 @@ jobs:
     - name: Store Artefact
       uses: actions/upload-artifact@v2
       with:
-          name: 0-slip-contracts
+          name: batcher-contracts
           path: ./result/*
           retention-days: 1

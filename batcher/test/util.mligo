@@ -2,8 +2,11 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
+
 #import "../batch.mligo" "Batch"
 #import "../orderbook.mligo" "Order"
+
+module Types = Types.Types
 
 type originated = Breath.Contract.originated
 
@@ -43,12 +46,12 @@ in review *)
   (* Jason's example seems to consider that valid_swaps are the
      swaps that the user/the DEX are allowed to make,
      but the type does not match this usage. *)
-  let valid_swaps = (Map.empty : CommonStorage.Types.valid_swaps)
+  let valid_swaps = (Map.empty : Storage.Types.valid_swaps)
   in
-  let rates_current = (Big_map.empty : CommonStorage.Types.rates_current) in
-  let rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic) in
+  let rates_current = (Big_map.empty : Storage.Types.rates_current) in
+  let rates_historic = (Big_map.empty : Storage.Types.rates_historic) in
   (* FIXME a treasury is not a big map *)
-  let treasury = (Big_map.empty : (CommonTypes.Types.treasury)) in
+  let treasury = (Big_map.empty : (Types.treasury)) in
   let batches = Batch.new_batch_set in
 
   {
@@ -56,7 +59,6 @@ in review *)
     valid_swaps = valid_swaps;
     rates_current = rates_current;
     rates_historic = rates_historic;
-    treasury = treasury;
     batches = batches;
   }
 
@@ -97,7 +99,7 @@ let originate (level: Breath.Logger.level) =
     initial_storage
     (0tez)
 
-let deposit (order : CommonTypes.Types.swap_order)
+let deposit (order : Types.swap_order)
   (contract : (Batcher.entrypoint, Batcher.storage) originated)
   (qty: tez)
   () =
