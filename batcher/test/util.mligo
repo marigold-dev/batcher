@@ -96,28 +96,6 @@ let make_order (side : side) (tolerance : tolerance) (swap : nat -> CommonTypes.
   in
   order
 
-let default_swap (amount : nat) = {
-  from = {
-    token = token_tzBTC;
-    amount = amount
-  };
-  to = token_USDT
-}
-
-let make_order (swap : nat -> Types.swap) (amount : nat)
-  (address : address) : Types.swap_order =
-  let swap = swap amount in
-  let now = Tezos.get_now () in
-  let order : Types.swap_order = {
-    trader = address;
-    swap = swap;
-    created_at = now;
-    side = BUY;
-    tolerance = EXACT
-  }
-  in
-  order
-
 let make_exchange_rate (swap : swap) (rate : nat): exchange_rate =
   {
     swap = swap;
