@@ -84,66 +84,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
-        "nixpkgs": "nixpkgs",
-        "tezos": "tezos"
-      }
-    },
-    "tezos": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "tezos_release": "tezos_release",
-        "tezos_trunk": "tezos_trunk"
-      },
-      "locked": {
-        "lastModified": 1656683762,
-        "narHash": "sha256-ckZYVPgyCTuwJZqPRptMMX2nBo3zMSh7Nx7enJfOJ7g=",
-        "owner": "marigold-dev",
-        "repo": "tezos-nix",
-        "rev": "cb59263407a451eeb4b8e4064c8837bccf4c2e4e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "marigold-dev",
-        "repo": "tezos-nix",
-        "type": "github"
-      }
-    },
-    "tezos_release": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1651744524,
-        "narHash": "sha256-AEY/m3c+6Yo/gqzO+4vzExQ20ICleIUsSFO1qWTO/OI=",
-        "owner": "tezos",
-        "repo": "tezos",
-        "rev": "cb9f439e58c761e76ade589d1cdbd2abb737dc68",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "tezos",
-        "ref": "v13.0",
-        "repo": "tezos",
-        "type": "gitlab"
-      }
-    },
-    "tezos_trunk": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1656577193,
-        "narHash": "sha256-k1wzmuXVY7rm45zkNznLEXeaqM8v789Kzam0xaoXvlI=",
-        "owner": "tezos",
-        "repo": "tezos",
-        "rev": "3829de24b026457d4e6995c21484849e1972f26d",
-        "type": "gitlab"
-      },
-      "original": {
-        "owner": "tezos",
-        "repo": "tezos",
-        "type": "gitlab"
+        "nixpkgs": "nixpkgs"
       }
     }
   },
