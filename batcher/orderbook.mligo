@@ -3,6 +3,7 @@
 #import "types.mligo" "CommonTypes"
 #import "math.mligo" "Math"
 #import "../math_lib/lib/float.mligo" "Float"
+(**DEPENDENCY CYCLE #import "treasury.mligo" "Treasury"**)
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
@@ -39,12 +40,18 @@ let make_new_order (order : order) (amt: nat) : order =
   it is mandatory that one of the two orders will be totally executed, 
   and the other one, partially.
 *)
-let match_orders (ord_1 : order) (ord_2 : order) (exchange_rate : CommonTypes.Types.exchange_rate) : matching * matching =
+let match_orders 
+  (ord_1 : order) 
+  (ord_2 : order) 
+  (exchange_rate : CommonTypes.Types.exchange_rate) 
+  (_treasury : CommonTypes.Types.treasury) : matching * matching =
   let float_of_ord1_amount = Float.new (int ord_1.swap.from.amount) 0 in
   let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
   if ord_2.swap.from.amount > ord_1_swap_amount then
     let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
     (* SHOULD UPDATE THE LEDGER HERE *)
+    (* NOT SURE ABOUT THIS *)
+    (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
     Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
   else
     if ord_2.swap.from.amount < ord_1_swap_amount then
@@ -52,9 +59,13 @@ let match_orders (ord_1 : order) (ord_2 : order) (exchange_rate : CommonTypes.Ty
       let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount exchange_rate.rate) in
       let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
       (* SHOULD UPDATE THE LEDGER HERE *)
+      (* NOT SURE ABOUT THIS *)
+      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
       Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
     else
       (* SHOULD UPDATE THE LEDGER HERE *)
+      (* NOT SURE ABOUT THIS *)
+      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
       Total, Total
 
 (*This function push orders auxording to a pro-rata "model"*)
@@ -104,7 +115,11 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
 (*
   rem = remaining
 *)
-let orders_execution (orderbook : t) (clearing : clearing) (exchange_rate : CommonTypes.Types.exchange_rate) : t =
+let orders_execution 
+  (orderbook : t) 
+  (clearing : clearing) 
+  (exchange_rate : CommonTypes.Types.exchange_rate) 
+  (treasury : CommonTypes.Types.treasury ): t =
   let rec aux
     (bids, asks, rem_bids, rem_asks : 
      order list * order list * order list * order list)
@@ -117,7 +132,7 @@ let orders_execution (orderbook : t) (clearing : clearing) (exchange_rate : Comm
    | [], ask::asks ->
      aux (([] : order list),asks,rem_bids,(ask::rem_asks))
    | bid::bids, ask::asks ->
-     (match (match_orders bid ask exchange_rate) with
+     (match (match_orders bid ask exchange_rate treasury) with
       | Total, Partial new_ask ->
         aux (bids,(new_ask::asks),rem_bids,rem_asks)
       | Partial new_bid, Total ->
