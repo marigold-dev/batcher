@@ -1,6 +1,14 @@
+import { TezosToolkit } from "@taquito/taquito";
+import {
+  NetworkType
+} from "@airgap/beacon-sdk";
 import { Dispatch, SetStateAction } from "react";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
+import {
+  Button
+} from "reactstrap";
+
 interface ButtonProps {
   wallet: BeaconWallet | null;
   setUserAddress: Dispatch<SetStateAction<string>>;
@@ -27,11 +35,9 @@ const DisconnectButton = ({
   };
 
   return (
-    <div className="buttons">
-      <button className="button" onClick={disconnectWallet}>
-        <i className="fas fa-times"></i>&nbsp; Disconnect wallet
-      </button>
-    </div>
+      <Button className="btn-danger" color="primary" onClick={disconnectWallet}>
+        Disconnect wallet
+      </Button>
   );
 };
 

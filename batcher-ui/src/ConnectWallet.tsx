@@ -8,17 +8,7 @@ import {
 
 // reactstrap components
 import {
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  CardText,
-  FormGroup,
-  Form,
-  Input,
-  Row,
-  Col
+  Button
 } from "reactstrap";
 
 type ButtonProps = {
@@ -83,7 +73,7 @@ const ConnectButton = ({
   }, []);
 
   return (
-      <Button className="btn-fill" color="primary" onClick={connectWallet}>
+      <Button className="btn-danger" color="primary" onClick={connectWallet}>
           Connect wallet
       </Button>
   );
