@@ -1,9 +1,25 @@
 import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
+import './App.css';
 import {
   NetworkType
 } from "@airgap/beacon-sdk";
+
+// reactstrap components
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  CardText,
+  FormGroup,
+  Form,
+  Input,
+  Row,
+  Col
+} from "reactstrap";
 
 type ButtonProps = {
   Tezos: TezosToolkit;
@@ -67,13 +83,9 @@ const ConnectButton = ({
   }, []);
 
   return (
-    <div className="buttons">
-      <button className="button" onClick={connectWallet}>
-        <span>
-          <i className="fas fa-wallet"></i>&nbsp; Connect with wallet
-        </span>
-      </button>
-    </div>
+      <Button className="btn-fill" color="primary" onClick={connectWallet}>
+          Connect wallet
+      </Button>
   );
 };
 

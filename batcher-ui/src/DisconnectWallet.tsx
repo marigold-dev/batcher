@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { BeaconWallet } from "@taquito/beacon-wallet";
-
+import './App.css';
 interface ButtonProps {
   wallet: BeaconWallet | null;
   setUserAddress: Dispatch<SetStateAction<string>>;
