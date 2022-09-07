@@ -163,14 +163,14 @@ module Utils = struct
     let with_that_holder_address = with_that_token_holding.holder in
     let this_token_name = Types.Utils.get_token_name_from_token_holding this_token_holding in
     let with_that_token_name = Types.Utils.get_token_name_from_token_holding with_that_token_holding in
-    let this_h = adjust_treasury_holding this_token_name this_holder_address DECREASE this_token_holding this_treasury_holding in
-    let that_h = adjust_treasury_holding with_that_token_name with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
+    let _ = adjust_treasury_holding this_token_name this_holder_address DECREASE this_token_holding this_treasury_holding in
+    let _ = adjust_treasury_holding with_that_token_name with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
     let this_h = adjust_treasury_holding with_that_token_name this_holder_address INCREASE with_that_token_holding this_treasury_holding in
     let that_h = adjust_treasury_holding this_token_name with_that_holder_address INCREASE this_token_holding with_that_treasury_holding in
     let _ = assert_holdings_are_coherent this_holder_address this_h in
     let _ = assert_holdings_are_coherent this_holder_address that_h in
-    let t = Big_map.update (this_holder_address) (Some(this_h)) treasury in
-    let t = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
+    let _ = Big_map.update (this_holder_address) (Some(this_h)) treasury in
+    let _ = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
     treasury
 
   let deposit_into_treasury_holding
@@ -201,7 +201,7 @@ module Utils = struct
     (treasury_vault : address)
     (th : treasury_holding) =
     let _ = assert_holdings_are_coherent holder th in
-    let transfer_token_holding = (fun (n,tkh : string * token_holding) -> let _ = handle_transfer treasury_vault tkh.holder tkh.token_amount in
+    let transfer_token_holding = (fun (_,tkh : string * token_holding) -> let _ = handle_transfer treasury_vault tkh.holder tkh.token_amount in
                                                                           ()) in
     Map.iter transfer_token_holding th
 

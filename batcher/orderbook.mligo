@@ -1,6 +1,8 @@
 #import "types.mligo" "CommonTypes"
 #import "utils.mligo" "Utils"
 #import "types.mligo" "CommonTypes"
+#import "math.mligo" "Math"
+#import "../math_lib/lib/float.mligo" "Float"
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
@@ -38,19 +40,21 @@ let make_new_order (order : order) (amt: nat) : order =
   and the other one, partially.
 *)
 let match_orders (ord_1 : order) (ord_2 : order) (exchange_rate : CommonTypes.Types.exchange_rate) : matching * matching =
-  (*let ord_1_swap_amount = ord_1.swap.from.amount * exchange_rate.rate in
+  let float_of_ord1_amount = Float.new (int ord_1.swap.from.amount) 0 in
+  let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
   if ord_2.swap.from.amount > ord_1_swap_amount then
     let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
     (* SHOULD UPDATE THE LEDGER HERE *)
     Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
   else
     if ord_2.swap.from.amount < ord_1_swap_amount then
-      let ord_2_swap_amount = ord_2.swap.from.amount / exchange_rate.rate in
+      let float_of_ord2_amount = Float.new (int ord_2.swap.from.amount) 0 in
+      let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount exchange_rate.rate) in
       let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
       (* SHOULD UPDATE THE LEDGER HERE *)
       Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
     else
-      (* SHOULD UPDATE THE LEDGER HERE *)*)
+      (* SHOULD UPDATE THE LEDGER HERE *)
       Total, Total
 
 (*This function push orders auxording to a pro-rata "model"*)

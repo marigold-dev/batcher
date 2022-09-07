@@ -49,7 +49,6 @@ in review *)
   let rates_current = (Big_map.empty : CommonStorage.Types.rates_current) in
   let rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic) in
   (* FIXME a treasury is not a big map *)
-  let treasury = (Big_map.empty : (CommonTypes.Types.treasury)) in
   let batches = Batch.new_batch_set in
   {
     valid_tokens = valid_tokens;

@@ -80,7 +80,7 @@ let filter_empty_orderbook =
   Breath.Model.case
   "push_order"
   "Trying to push an order into the orderbook and check that the orderbook isn't empty anymore"
-  (fun (level: Breath.Logger.level) ->
+  (fun (_level: Breath.Logger.level) ->
     let expected = ([] : Order.order list) in
     let computed = Order.filter_orders ([] : Order.order list) (fun (_: Order.order) -> true) in
 
@@ -174,7 +174,7 @@ let one_partial_total_match_orders =
     let remaining_alice_order = Order.make_new_order alice_order 5n in
     (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
       for initiate/create a exchange_rate ? *)
-    let rate = Util.make_exchange_rate (Util.default_swap 0n) 2n in
+    let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
     
     let expected = (Partial remaining_alice_order, Total) in
     let computed = 
@@ -194,7 +194,7 @@ let one_total_match_orders =
     let bob_order = Util.make_order SELL MINUS Util.default_swap 100n bob.address in
     (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
       for initiate/create a exchange_rate ? *)
-    let rate = Util.make_exchange_rate (Util.default_swap 0n) 2n in
+    let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
     
     let expected = (Total, Total) in
     let computed = 
