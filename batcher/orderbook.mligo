@@ -1,5 +1,6 @@
 #import "types.mligo" "CommonTypes"
 #import "utils.mligo" "Utils"
+#import "types.mligo" "CommonTypes"
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
@@ -16,7 +17,6 @@ type key = side
 (*
   A bid : the price a buyer is willing to pay for an asset
   A ask : the price a seller is willing to auxept for an asset
-
   Here, the orderbook is a list of bids orders and asks orders
 *)
 type t = {
@@ -37,16 +37,21 @@ let make_new_order (order : order) (amt: nat) : order =
   it is mandatory that one of the two orders will be totally executed, 
   and the other one, partially.
 *)
-let match_orders (_ord_1 : order) (_ord_2 : order) : matching * matching =
-    (*let ord1_new_amount = ord1.from_amount - ord2.from_amount in
-    let ord2_new_amount = ord2.from_amount - ord1.from_amount in
-    if ord1_new_amount = 0 && ord2_new_amount = 0 then
-      Total
+let match_orders (ord_1 : order) (ord_2 : order) (exchange_rate : CommonTypes.Types.exchange_rate) : matching * matching =
+  (*let ord_1_swap_amount = ord_1.swap.from.amount * exchange_rate.rate in
+  if ord_2.swap.from.amount > ord_1_swap_amount then
+    let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
+    (* SHOULD UPDATE THE LEDGER HERE *)
+    Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
+  else
+    if ord_2.swap.from.amount < ord_1_swap_amount then
+      let ord_2_swap_amount = ord_2.swap.from.amount / exchange_rate.rate in
+      let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
+      (* SHOULD UPDATE THE LEDGER HERE *)
+      Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
     else
-    if ord1_new_amount > 0 then Partial { ord1 with from_amount = (abs ord2_new_amount) }
-    else
-      Partial { ord2 with from_amount = (abs ord2_new_amount) }*)
-    Total, Total
+      (* SHOULD UPDATE THE LEDGER HERE *)*)
+      Total, Total
 
 (*This function push orders auxording to a pro-rata "model"*)
 let push_order (order : order) (orderbook : t) : t = 
@@ -95,7 +100,7 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
 (*
   rem = remaining
 *)
-let orders_execution (orderbook : t) (clearing : clearing) : t =
+let orders_execution (orderbook : t) (clearing : clearing) (exchange_rate : CommonTypes.Types.exchange_rate) : t =
   let rec aux
     (bids, asks, rem_bids, rem_asks : 
      order list * order list * order list * order list)
@@ -108,7 +113,7 @@ let orders_execution (orderbook : t) (clearing : clearing) : t =
    | [], ask::asks ->
      aux (([] : order list),asks,rem_bids,(ask::rem_asks))
    | bid::bids, ask::asks ->
-     (match (match_orders bid ask) with
+     (match (match_orders bid ask exchange_rate) with
       | Total, Partial new_ask ->
         aux (bids,(new_ask::asks),rem_bids,rem_asks)
       | Partial new_bid, Total ->
@@ -124,5 +129,3 @@ let orders_execution (orderbook : t) (clearing : clearing) : t =
   (*what do i do with the remaining bids and asks ? redeem them all ?
     just put them in a new orderbook ?*)
   {orderbook with bids = rem_bids; asks = rem_asks}
-  
-  
