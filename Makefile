@@ -14,7 +14,3 @@ test:
 
 test-math: 
 	$(call test_ligo,batcher/test/test_math.mligo)
-
-test-view: 
-	$(call test_ligo,batcher/test/test_on_chain_view.mligo)
-
