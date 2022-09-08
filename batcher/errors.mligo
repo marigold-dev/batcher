@@ -28,3 +28,5 @@ let tokens_do_not_match = "Tokens under comparison do not match"
 
 let not_found_clearing_level : string = "This clearing level is not found"
 
+let not_open_batch : string = "This current batch is not open"
+

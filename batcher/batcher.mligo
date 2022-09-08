@@ -9,9 +9,9 @@
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
 
-
 type storage  = Storage.Types.t
 type result = (operation list) * storage
+type order = Types.Types.swap_order
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -111,6 +111,47 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
 let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
+
+let filter_orders_by_user 
+  (user : address) 
+  (orders : order list) 
+  (new_orders : order list) : order list = 
+    let filter (new_orders, order : order list * order) : order list = 
+      if order.trader = user then 
+        order :: new_orders
+      else 
+        new_orders
+    in 
+    List.fold_left filter new_orders orders 
+
+[@view]
+let should_start_deposit_time ((), storage : unit * storage) : bool = 
+  let current_time = Tezos.get_now () in 
+  Batch.should_open_new storage.batches current_time
+    
+[@view]
+let get_order_books ((), storage : unit * storage) : Orderbook.t = 
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> current_batch.orderbook
+
+[@view]
+let get_current_orders_by_user (user, storage : address * storage) : order list =
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> 
+    let new_orders = filter_orders_by_user user current_batch.orderbook.bids ([] : order list) in 
+    let new_orders = filter_orders_by_user user current_batch.orderbook.asks new_orders in 
+    new_orders
+
+[@view]
+let get_previous_orders_by_user (user, storage : address * storage) : order list = 
+  let filter (new_orders, batch : order list * Batch.t) : order list = 
+    let new_orders = filter_orders_by_user user batch.orderbook.bids ([] : order list) in 
+    let new_orders = filter_orders_by_user user batch.orderbook.asks new_orders in 
+    new_orders
+  in 
+  List.fold_left filter ([] : order list) storage.batches.previous
 
 let main
   (action, storage : entrypoint * storage) : result =

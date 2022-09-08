@@ -40,3 +40,10 @@ result
 
 # Ligo files
 # .ligoproject
+
+# Esy
+_esy
+esy.lock
+
+# Ligo
+.ligo
