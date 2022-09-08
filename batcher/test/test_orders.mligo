@@ -216,10 +216,191 @@ let one_total_match_orders =
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
 
+let trigger_filtering_orders_minus =
+  Breath.Model.case
+  "trigger_filtering_orders"
+  "trigger a filtering orders with a clearing tolerance set to minus"
+  (fun (level: Breath.Logger.level) ->
+    let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
+    let batcher = Util.originate level in
+
+    let order1 = Util.make_order BUY MINUS Util.default_swap 150n alice.address in
+    let order2 = Util.make_order BUY EXACT Util.default_swap 67n bob.address in
+    let order3 = Util.make_order BUY PLUS Util.default_swap 89n hakim.address in
+
+    let order4 = Util.make_order SELL MINUS Util.default_swap 10n alice.address in
+    let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
+    let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
+
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+
+    let batcher_storage = Breath.Contract.storage_of batcher in
+    let filtered_orderbook = 
+      Breath.Assert.is_some_and
+        "The current batch should be some and the orderbook should contain only the alice order"
+        (fun (batch : Batch.t) ->
+          let orderbook = batch.orderbook in 
+          let clearing_volumes = (Map.empty : (CommonTypes.Types.tolerance, nat) map) in
+          let clearing_tolerance = MINUS in
+          let clearing = {
+            clearing_volumes = clearing_volumes;
+            clearing_tolerance = clearing_tolerance
+          } in
+
+          let computed = 
+            Orderbook.trigger_filtering_orders orderbook clearing in
+
+          let expected_orderbook : Orderbook.t = {
+            bids = [order1;order2;order3];
+            asks = [order4]
+          } in
+
+          Breath.Assert.is_true "should be equal" (computed = expected_orderbook)
+        )
+        batcher_storage.batches.current
+    in
+    Breath.Result.reduce [
+      ord1_deposit;
+      ord2_deposit;
+      ord3_deposit;
+      ord4_deposit;
+      ord5_deposit;
+      ord6_deposit;
+      filtered_orderbook
+    ]
+  )
+
+let trigger_filtering_orders_exact =
+  Breath.Model.case
+  "trigger_filtering_orders"
+  "trigger a filtering orders with a clearing tolerance set to exact"
+  (fun (level: Breath.Logger.level) ->
+    let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
+    let batcher = Util.originate level in
+
+    let order1 = Util.make_order BUY MINUS Util.default_swap 150n alice.address in
+    let order2 = Util.make_order BUY EXACT Util.default_swap 67n bob.address in
+    let order3 = Util.make_order BUY PLUS Util.default_swap 89n hakim.address in
+
+    let order4 = Util.make_order SELL MINUS Util.default_swap 10n alice.address in
+    let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
+    let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
+
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+
+    let batcher_storage = Breath.Contract.storage_of batcher in
+    let filtered_orderbook = 
+      Breath.Assert.is_some_and
+        "The current batch should be some and the orderbook should contain only the alice order"
+        (fun (batch : Batch.t) ->
+          let orderbook = batch.orderbook in 
+          let clearing_volumes = (Map.empty : (CommonTypes.Types.tolerance, nat) map) in
+          let clearing_tolerance = EXACT in
+          let clearing = {
+            clearing_volumes = clearing_volumes;
+            clearing_tolerance = clearing_tolerance
+          } in
+
+          let computed = 
+            Orderbook.trigger_filtering_orders orderbook clearing in
+
+          let expected_orderbook : Orderbook.t = {
+            bids = [order2;order3];
+            asks = [order4;order5]
+          } in
+
+          Breath.Assert.is_true "should be equal" (computed = expected_orderbook)
+        )
+        batcher_storage.batches.current
+    in
+    Breath.Result.reduce [
+      ord1_deposit;
+      ord2_deposit;
+      ord3_deposit;
+      ord4_deposit;
+      ord5_deposit;
+      ord6_deposit;
+      filtered_orderbook
+    ]
+  )
+
+let trigger_filtering_orders_plus =
+  Breath.Model.case
+  "trigger_filtering_orders"
+  "trigger a filtering orders with a clearing tolerance set to plus"
+  (fun (level: Breath.Logger.level) ->
+    let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
+    let batcher = Util.originate level in
+
+    let order1 = Util.make_order BUY MINUS Util.default_swap 150n alice.address in
+    let order2 = Util.make_order BUY EXACT Util.default_swap 67n bob.address in
+    let order3 = Util.make_order BUY PLUS Util.default_swap 89n hakim.address in
+
+    let order4 = Util.make_order SELL MINUS Util.default_swap 10n alice.address in
+    let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
+    let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
+
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+
+    let batcher_storage = Breath.Contract.storage_of batcher in
+    let filtered_orderbook = 
+      Breath.Assert.is_some_and
+        "The current batch should be some and the orderbook should contain only the alice order"
+        (fun (batch : Batch.t) ->
+          let orderbook = batch.orderbook in 
+          let clearing_volumes = (Map.empty : (CommonTypes.Types.tolerance, nat) map) in
+          let clearing_tolerance = PLUS in
+          let clearing = {
+            clearing_volumes = clearing_volumes;
+            clearing_tolerance = clearing_tolerance
+          } in
+
+          let computed = 
+            Orderbook.trigger_filtering_orders orderbook clearing in
+
+          let expected_orderbook : Orderbook.t = {
+            bids = [order3];
+            asks = [order4;order5;order6]
+          } in
+
+          Breath.Assert.is_true "should be equal" (computed = expected_orderbook)
+        )
+        batcher_storage.batches.current
+    in
+    Breath.Result.reduce [
+      ord1_deposit;
+      ord2_deposit;
+      ord3_deposit;
+      ord4_deposit;
+      ord5_deposit;
+      ord6_deposit;
+      filtered_orderbook
+    ]
+  )
+
+
 let () = 
   Breath.Model.run_suites Void [
     Breath.Model.suite "Suite for the orders matching component" [
-      make_new_order_not_null;
+      make_new_order_with_not_null_amount;
       one_push_order;
       many_push_order;
       filter_empty_orderbook;
@@ -228,6 +409,9 @@ let () =
       filter_plus_orderbook;
       one_total_partial_match_orders;
       one_partial_total_match_orders;
-      one_total_match_orders
+      one_total_match_orders;
+      trigger_filtering_orders_minus;
+      trigger_filtering_orders_exact;
+      trigger_filtering_orders_plus
     ]
   ]
