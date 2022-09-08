@@ -15,6 +15,7 @@ type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
 type swap = CommonTypes.Types.swap
 type exchange_rate = CommonTypes.Types.exchange_rate
+type treasury = CommonTypes.Types.treasury
 
 
 let token_USDT = {

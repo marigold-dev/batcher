@@ -2,10 +2,23 @@
 #import "util.mligo" "Util"
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "../types.mligo" "CommonTypes"
-#import "../orderbook.mligo" "Order"
+#import "../orderbook.mligo" "Orderbook"
 #import "../batch.mligo" "Batch"
 #import "../../math_lib/lib/float.mligo" "Float"
 
+
+let make_new_order_with_not_null_amount =
+  Breath.Model.case
+  "make_new_order"
+  "Trying to make a new order with an amount > 0"
+  (fun (_level: Breath.Logger.level) ->
+    let (_,(alice,_,_)) = Breath.Context.init_default () in
+    let alice_order = Util.make_order BUY EXACT Util.default_swap 50n alice.address in
+    let expected = Util.make_order BUY EXACT Util.default_swap 10n alice.address in
+    let computed = Orderbook.make_new_order alice_order 10n in
+
+    Breath.Assert.is_true "should be equal" (expected = computed)
+  )
 
 let one_push_order =
   Breath.Model.case
@@ -20,7 +33,7 @@ let one_push_order =
 
     let expected_storage 
       (storage : Batcher.storage) 
-      (order : Order.order) =
+      (order : Orderbook.order) =
         Breath.Assert.is_some_and
           "The current batch should be some and the orderbook should contain only the alice order"
           (fun (batch : Batch.t) ->
@@ -55,8 +68,8 @@ let many_push_order =
 
     let expected_storage 
       (storage : Batcher.storage) 
-      (bids : Order.order list)
-      (asks : Order.order list) =
+      (bids : Orderbook.order list)
+      (asks : Orderbook.order list) =
         Breath.Assert.is_some_and
           "The current batch should be some and the orderbook should contain only the alice order"
           (fun (batch : Batch.t) ->
@@ -78,18 +91,18 @@ let many_push_order =
 
 let filter_empty_orderbook =
   Breath.Model.case
-  "push_order"
+  "filter_orders"
   "Trying to push an order into the orderbook and check that the orderbook isn't empty anymore"
   (fun (_level: Breath.Logger.level) ->
-    let expected = ([] : Order.order list) in
-    let computed = Order.filter_orders ([] : Order.order list) (fun (_: Order.order) -> true) in
+    let expected = ([] : Orderbook.order list) in
+    let computed = Orderbook.filter_orders ([] : Orderbook.order list) (fun (_: Orderbook.order) -> true) in
 
     Breath.Assert.is_true "should be equal (empty lists)" (expected = computed)
   )
 
 let filter_minus_orderbook =
   Breath.Model.case
-  "push_order"
+  "filter_orders"
   "Trying to push an order into the orderbook and check that the orderbook isn't empty anymore"
   (fun (_level: Breath.Logger.level) ->
     let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
@@ -98,16 +111,16 @@ let filter_minus_orderbook =
     let bob_order = Util.make_order SELL MINUS Util.default_swap 40n bob.address in
     let hakim_order = Util.make_order BUY MINUS Util.default_swap 32n hakim.address in
     
-    let expected = ([alice_order] : Order.order list) in
+    let expected = ([alice_order] : Orderbook.order list) in
     let computed = 
-      Order.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Order.order) -> order.tolerance <> MINUS) in
+      Orderbook.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Orderbook.order) -> order.tolerance <> MINUS) in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
 
 let filter_exact_orderbook =
   Breath.Model.case
-  "push_order"
+  "filter_orders"
   "Trying to push an order into the orderbook and check that the orderbook isn't empty anymore"
   (fun (_level: Breath.Logger.level) ->
     let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
@@ -116,16 +129,16 @@ let filter_exact_orderbook =
     let bob_order = Util.make_order SELL EXACT Util.default_swap 40n bob.address in
     let hakim_order = Util.make_order BUY MINUS Util.default_swap 32n hakim.address in
     
-    let expected = ([hakim_order] : Order.order list) in
+    let expected = ([hakim_order] : Orderbook.order list) in
     let computed = 
-      Order.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Order.order) -> order.tolerance <> EXACT) in
+      Orderbook.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Orderbook.order) -> order.tolerance <> EXACT) in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
 
 let filter_plus_orderbook =
   Breath.Model.case
-  "push_order"
+  "filter_orders"
   "Trying to push an order into the orderbook and check that the orderbook isn't empty anymore"
   (fun (_level: Breath.Logger.level) ->
     let (_,(alice,bob,hakim)) = Breath.Context.init_default () in
@@ -134,9 +147,9 @@ let filter_plus_orderbook =
     let bob_order = Util.make_order SELL MINUS Util.default_swap 40n bob.address in
     let hakim_order = Util.make_order BUY PLUS Util.default_swap 32n hakim.address in
     
-    let expected = ([bob_order] : Order.order list) in
+    let expected = ([bob_order] : Orderbook.order list) in
     let computed = 
-      Order.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Order.order) -> order.tolerance <> PLUS) in
+      Orderbook.filter_orders [alice_order;hakim_order;bob_order] (fun (order : Orderbook.order) -> order.tolerance <> PLUS) in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
@@ -150,14 +163,14 @@ let one_total_partial_match_orders =
 
     let alice_order = Util.make_order BUY PLUS Util.default_swap 50n alice.address in
     let bob_order = Util.make_order SELL MINUS Util.default_swap 130n bob.address in
-    let remaining_bob_order = Order.make_new_order bob_order 30n in
+    let remaining_bob_order = Orderbook.make_new_order bob_order 30n in
     (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
-    
+    let treasury = (Big_map.empty : Util.treasury) in
     let expected = (Total, Partial remaining_bob_order) in
     let computed = 
-      Order.match_orders alice_order bob_order rate in
+      Orderbook.match_orders alice_order bob_order rate treasury in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
@@ -171,14 +184,14 @@ let one_partial_total_match_orders =
 
     let alice_order = Util.make_order BUY PLUS Util.default_swap 70n alice.address in
     let bob_order = Util.make_order SELL MINUS Util.default_swap 130n bob.address in
-    let remaining_alice_order = Order.make_new_order alice_order 5n in
+    let remaining_alice_order = Orderbook.make_new_order alice_order 5n in
     (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
-    
+    let treasury = (Big_map.empty : Util.treasury) in
     let expected = (Partial remaining_alice_order, Total) in
     let computed = 
-      Order.match_orders alice_order bob_order rate in
+      Orderbook.match_orders alice_order bob_order rate treasury in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
@@ -195,10 +208,10 @@ let one_total_match_orders =
     (* very weird to have a token_amount in a swap, and a swap in a exchange_rate, what amount are we supposed to give ?
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
-    
+    let treasury = (Big_map.empty : Util.treasury) in
     let expected = (Total, Total) in
     let computed = 
-      Order.match_orders alice_order bob_order rate in
+      Orderbook.match_orders alice_order bob_order rate treasury in
 
     Breath.Assert.is_true "should be equal" (expected = computed)
   )
@@ -206,6 +219,7 @@ let one_total_match_orders =
 let () = 
   Breath.Model.run_suites Void [
     Breath.Model.suite "Suite for the orders matching component" [
+      make_new_order_not_null;
       one_push_order;
       many_push_order;
       filter_empty_orderbook;
