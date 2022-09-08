@@ -56,10 +56,10 @@ function App() {
             <Card className="card-chart">
               <CardHeader>
                   <Col className="text-left float-left" sm="4">
-                    <CardTitle tag="h1"><img src={logo} height="200" alt="logo"/></CardTitle>
+                    <CardTitle tag="h1"><img src={logo} height="150" alt="logo"/></CardTitle>
                   </Col>
                   <Col className="text-right float-right" sm="4">
-                    <CardTitle tag="h1"><img src={marigoldlogo} height="200" alt="logo"/></CardTitle>
+                    <CardTitle tag="h1"><img src={marigoldlogo} height="150" alt="logo"/></CardTitle>
                     </Col>
                 </CardHeader>
                 <CardBody>
@@ -72,7 +72,7 @@ function App() {
           <Col md="7">
             <Card>
               <CardHeader>
-                <h3 className="title">TZBTC / USDT</h3>
+                <h3 className="title">PAIR: tzBTC / USDT</h3>
               </CardHeader>
               <CardBody>
                  <Row>
