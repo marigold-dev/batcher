@@ -3,47 +3,39 @@
 #import "types.mligo" "CommonTypes"
 #import "math.mligo" "Math"
 #import "../math_lib/lib/float.mligo" "Float"
-(**DEPENDENCY CYCLE #import "treasury.mligo" "Treasury"**)
+#import "treasury.mligo" "Treasury"
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
 type clearing = CommonTypes.Types.clearing
+type t = CommonTypes.Types.orderbook
 
-(*This type represent a result of a match computation, 
+(*This type represent a result of a match computation,
   we can partially or totally match two order, and if the volume of token we can use is
   equal to 0 there is no match*)
 type matching = Total | Partial of order
 
 type key = side
 
-(*
-  A bid : the price a buyer is willing to pay for an asset
-  A ask : the price a seller is willing to auxept for an asset
-  Here, the orderbook is a list of bids orders and asks orders
-*)
-type t = {
-  bids : order list;
-  asks : order list
-}
 
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
 let make_new_order (order : order) (amt: nat) : order =
-  let new_token_amount = 
+  let new_token_amount =
     {order.swap.from with amount = amt} in
   let new_swap = {order.swap with from = new_token_amount} in
   {order with swap = new_swap}
 
 (*
   Here we actually match order, and call transfer function when necessary
-  it is mandatory that one of the two orders will be totally executed, 
+  it is mandatory that one of the two orders will be totally executed,
   and the other one, partially.
 *)
-let match_orders 
-  (ord_1 : order) 
-  (ord_2 : order) 
-  (exchange_rate : CommonTypes.Types.exchange_rate) 
+let match_orders
+  (ord_1 : order)
+  (ord_2 : order)
+  (exchange_rate : CommonTypes.Types.exchange_rate)
   (_treasury : CommonTypes.Types.treasury) : matching * matching =
   let float_of_ord1_amount = Float.new (int ord_1.swap.from.amount) 0 in
   let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
@@ -69,7 +61,7 @@ let match_orders
       Total, Total
 
 (*This function push orders auxording to a pro-rata "model"*)
-let push_order (order : order) (orderbook : t) : t = 
+let push_order (order : order) (orderbook : t) : t =
   match order.side with
     | BUY ->  {orderbook with bids = (order :: orderbook.bids)}
     | SELL -> {orderbook with asks = (order :: orderbook.asks)}
@@ -80,7 +72,7 @@ let push_order (order : order) (orderbook : t) : t =
    when we compute the clearing level and want to trigger the orders_execution.
    in fact, when we push order in the orderbook, we have to inverse
    the lists to get the right queues with whom we can trigger
-   the orders_execution. Thats why i use Fold.left instead of 
+   the orders_execution. Thats why i use Fold.left instead of
    putting List.rev everywhere like the previous design.
 *)
 let filter_orders (orders: order list) (f : order -> bool) : order list =
@@ -99,9 +91,9 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
        ((fun (_: order) -> true),
        (fun (order : order) -> order.tolerance = MINUS))
      | EXACT ->
-       ((fun (order : order) -> 
+       ((fun (order : order) ->
          order.tolerance = EXACT || order.tolerance = PLUS),
-        (fun (order : order) -> 
+        (fun (order : order) ->
          order.tolerance = MINUS || order.tolerance = EXACT))
      | PLUS ->
        ((fun (order : order) -> order.tolerance = PLUS),
@@ -115,19 +107,19 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
 (*
   rem = remaining
 *)
-let orders_execution 
-  (orderbook : t) 
-  (clearing : clearing) 
-  (exchange_rate : CommonTypes.Types.exchange_rate) 
+let orders_execution
+  (orderbook : t)
+  (clearing : clearing)
+  (exchange_rate : CommonTypes.Types.exchange_rate)
   (treasury : CommonTypes.Types.treasury ): t =
   let rec aux
-    (bids, asks, rem_bids, rem_asks : 
+    (bids, asks, rem_bids, rem_asks :
      order list * order list * order list * order list)
     : order list * order list
-  = 
+  =
   match bids, asks with
    | [],[] -> rem_bids,rem_asks
-   | bid::bids, [] -> 
+   | bid::bids, [] ->
      aux (bids,([] : order list),(bid::rem_bids),rem_asks)
    | [], ask::asks ->
      aux (([] : order list),asks,rem_bids,(ask::rem_asks))
@@ -139,7 +131,7 @@ let orders_execution
         aux ((new_bid::bids),asks,rem_bids,rem_asks)
       | _ -> failwith "never suppose to happen")
   in
-  let filtered_orderbook = 
+  let filtered_orderbook =
     trigger_filtering_orders orderbook clearing in
   let bids = filtered_orderbook.bids in
   let asks = filtered_orderbook.asks in
