@@ -87,6 +87,7 @@ module Types = struct
     asks : swap_order list
   }
 
+
   type batch_status =
     | Open of { start_time : timestamp }
     | Closed of { start_time : timestamp ; closing_time : timestamp }

@@ -69,8 +69,8 @@
             buildPhase = ''
               mkdir -p $out
               ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz
-              INITSTORAGE=$(<$src/batcher/storage/storage.mligo)
-              ligo compile storage $src/slip/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
+              INITSTORAGE=$(<$src/batcher/storage/intial_storage.mligo)
+              ligo compile storage $src/batcher/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
             '';
 
           };

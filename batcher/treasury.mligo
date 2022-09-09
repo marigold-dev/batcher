@@ -230,7 +230,6 @@ let empty : treasury = Big_map.empty
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (pair : pair)
     (storage : storage) : storage =
       let batches = storage.batches in
       let current_batch  = (match batches.current with

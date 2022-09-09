@@ -1,3 +1,4 @@
+#import "../storage.mligo" "CommonStorage"
 {
   valid_tokens = [
     {
@@ -28,8 +29,8 @@
   rates_current = (Big_map.empty : CommonStorage.Types.rates_current);
   rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic);
   batches = {
-     current = None;
-	 previous = [];
+     current = (None : CommonStorage.Types.batch);
+   	 previous = ([] : CommonStorage.Types.batch list);
   };
 }
 
