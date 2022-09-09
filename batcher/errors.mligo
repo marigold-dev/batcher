@@ -30,3 +30,5 @@ let not_found_clearing_level : string = "This clearing level is not found"
 
 let not_open_batch : string = "This current batch is not open"
 
+let not_previous_batches : string = "This previous batches are not included"
+
