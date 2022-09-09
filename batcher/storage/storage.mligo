@@ -14,16 +14,6 @@
     }
   ];
   valid_swaps = Map.literal [
-    ("XTZ/USDT", {
-      to =     {
-       name = "XTZ";
-       address = (None : address option);
-    };
-    from = {
-      name = "USDT";
-      address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
-    }
-    } );
     ("USDT/tzBTC", {
       to = {
       name = "USDT";
@@ -37,4 +27,10 @@
   ];
   rates_current = (Big_map.empty : CommonStorage.Types.rates_current);
   rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic);
+  batches = {
+     current = None;
+	 previous = [];
+  };
 }
+
+
