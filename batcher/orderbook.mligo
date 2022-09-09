@@ -43,9 +43,12 @@ let right_partial_match
   (ord_2 : order)
   (exchange_rate : CommonTypes.Types.exchange_rate)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
+    (* Here we get the amount that is remaining after the swap is done that will remain to be matched to another swap *)
     let ord_2_remaining_token = ord_2.swap.from.amount - equivalent_ord_1_amount in
+    (*  We need to create a new token amount that can be swapped for the partial amount *)
+    let new_token_amount_1 = { ord_2.swap.from with amount = equivalent_ord_1_amount } in
     let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader new_token_amount_1 in
     let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
     updated_treasury, Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
 
