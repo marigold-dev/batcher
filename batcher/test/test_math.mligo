@@ -1,6 +1,6 @@
 #import "../math.mligo" "Math"
 #import "../../math_lib/lib/float.mligo" "Float"
-#import "../../breathalyzer/lib/lib.mligo" "Breath" 
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath" 
 #import "../types.mligo" "CommonTypes"
 #import "../errors.mligo" "CommonErrors"
 
