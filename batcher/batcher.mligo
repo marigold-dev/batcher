@@ -103,9 +103,9 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
         if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
           let cleared_infos = Batch.get_status_when_its_cleared batch in
-          let new_orderbook =
+          let updated_treasury, new_orderbook =
             Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate batch.treasury in
-          let new_batch = {batch with orderbook = new_orderbook} in
+          let new_batch = {batch with orderbook = new_orderbook; treasury = updated_treasury} in
           { storage.batches with current = Some new_batch }
         else
           storage.batches

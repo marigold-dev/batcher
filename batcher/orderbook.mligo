@@ -9,6 +9,8 @@ type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
 type clearing = CommonTypes.Types.clearing
+type treasury = CommonTypes.Types.treasury
+type exchange_rate = CommonTypes.Types.exchange_rate
 type t = CommonTypes.Types.orderbook
 
 (*This type represent a result of a match computation,
@@ -18,6 +20,7 @@ type matching = Total | Partial of order
 
 type key = side
 
+type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
@@ -26,6 +29,54 @@ let make_new_order (order : order) (amt: nat) : order =
     {order.swap.from with amount = amt} in
   let new_swap = {order.swap with from = new_token_amount} in
   {order with swap = new_swap}
+
+let get_match_type (equivalent_ord_1_amount : nat) (ord_2 : order)  : match_calculation_type =
+    if (ord_2.swap.from.amount > equivalent_ord_1_amount) then RIGHT_PARTIAL else
+      if (ord_2.swap.from.amount < equivalent_ord_1_amount) then
+        LEFT_PARTIAL
+      else
+        EXACT_MATCH
+
+let right_partial_match
+  (equivalent_ord_1_amount : nat)
+  (ord_1 : order)
+  (ord_2 : order)
+  (exchange_rate : CommonTypes.Types.exchange_rate)
+  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
+    let ord_2_remaining_token = ord_2.swap.from.amount - equivalent_ord_1_amount in
+    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
+    let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
+    updated_treasury, Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
+
+
+let left_partial_match
+  (equivalent_ord_1_amount : nat)
+  (ord_1 : order)
+  (ord_2 : order)
+  (exchange_rate : CommonTypes.Types.exchange_rate)
+  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
+      let float_of_ord2_amount = Float.new (int ord_2.swap.from.amount) 0 in
+      let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount exchange_rate.rate) in
+      let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
+      (* SHOULD UPDATE THE LEDGER HERE *)
+      (* NOT SURE ABOUT THIS *)
+      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
+      treasury, Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
+
+
+let total_match
+  (equivalent_ord_1_amount : nat)
+  (ord_1 : order)
+  (ord_2 : order)
+  (exchange_rate : CommonTypes.Types.exchange_rate)
+  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
+      (* SHOULD UPDATE THE LEDGER HERE *)
+      (* NOT SURE ABOUT THIS *)
+      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
+      treasury, Total, Total
+
+
 
 (*
   Here we actually match order, and call transfer function when necessary
@@ -36,29 +87,14 @@ let match_orders
   (ord_1 : order)
   (ord_2 : order)
   (exchange_rate : CommonTypes.Types.exchange_rate)
-  (_treasury : CommonTypes.Types.treasury) : matching * matching =
+  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
   let float_of_ord1_amount = Float.new (int ord_1.swap.from.amount) 0 in
-  let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
-  if ord_2.swap.from.amount > ord_1_swap_amount then
-    let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
-    (* SHOULD UPDATE THE LEDGER HERE *)
-    (* NOT SURE ABOUT THIS *)
-    (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
-    Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
-  else
-    if ord_2.swap.from.amount < ord_1_swap_amount then
-      let float_of_ord2_amount = Float.new (int ord_2.swap.from.amount) 0 in
-      let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount exchange_rate.rate) in
-      let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
-      (* SHOULD UPDATE THE LEDGER HERE *)
-      (* NOT SURE ABOUT THIS *)
-      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
-      Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
-    else
-      (* SHOULD UPDATE THE LEDGER HERE *)
-      (* NOT SURE ABOUT THIS *)
-      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
-      Total, Total
+  let equivalent_ord_1_amount : nat  = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
+  let match_calculation = (match get_match_type equivalent_ord_1_amount ord_2 with
+                            | RIGHT_PARTIAL -> right_partial_match
+                            | LEFT_PARTIAL -> left_partial_match
+                            | EXACT_MATCH -> total_match) in
+  match_calculation equivalent_ord_1_amount ord_1 ord_2 exchange_rate treasury
 
 (*This function push orders auxording to a pro-rata "model"*)
 let push_order (order : order) (orderbook : t) : t =
@@ -111,32 +147,30 @@ let orders_execution
   (orderbook : t)
   (clearing : clearing)
   (exchange_rate : CommonTypes.Types.exchange_rate)
-  (treasury : CommonTypes.Types.treasury ): t =
+  (treasury : CommonTypes.Types.treasury ): treasury * t =
   let rec aux
-    (bids, asks, rem_bids, rem_asks :
-     order list * order list * order list * order list)
-    : order list * order list
+    (t, bids, asks, rem_bids, rem_asks :
+     treasury * order list * order list * order list * order list)
+    : treasury * order list * order list
   =
-  match bids, asks with
-   | [],[] -> rem_bids,rem_asks
-   | bid::bids, [] ->
-     aux (bids,([] : order list),(bid::rem_bids),rem_asks)
-   | [], ask::asks ->
-     aux (([] : order list),asks,rem_bids,(ask::rem_asks))
-   | bid::bids, ask::asks ->
-     (match (match_orders bid ask exchange_rate treasury) with
-      | Total, Partial new_ask ->
-        aux (bids,(new_ask::asks),rem_bids,rem_asks)
-      | Partial new_bid, Total ->
-        aux ((new_bid::bids),asks,rem_bids,rem_asks)
+  match t, bids, asks with
+   | tr, [],[] -> tr, rem_bids,rem_asks
+   | tr, bid::bids, [] ->
+     aux (tr, bids,([] : order list),(bid::rem_bids),rem_asks)
+   | tr, [], ask::asks ->
+     aux (tr, ([] : order list),asks,rem_bids,(ask::rem_asks))
+   | tr, bid::bids, ask::asks ->
+     (match (match_orders bid ask exchange_rate tr) with
+      | nt, Total, Partial new_ask ->
+        aux (nt,bids,(new_ask::asks),rem_bids,rem_asks)
+      | nt, Partial new_bid, Total ->
+        aux (nt, (new_bid::bids),asks,rem_bids,rem_asks)
       | _ -> failwith "never suppose to happen")
   in
   let filtered_orderbook =
     trigger_filtering_orders orderbook clearing in
   let bids = filtered_orderbook.bids in
   let asks = filtered_orderbook.asks in
-  let (rem_bids, rem_asks) =
-    aux (bids, asks, ([] : order list ),([] : order list)) in
-  (*what do i do with the remaining bids and asks ? redeem them all ?
-    just put them in a new orderbook ?*)
-  {orderbook with bids = rem_bids; asks = rem_asks}
+  let (ft, rem_bids, rem_asks) =
+    aux (treasury, bids, asks, ([] : order list ),([] : order list)) in
+  ft, {orderbook with bids = rem_bids; asks = rem_asks}
