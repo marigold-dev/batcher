@@ -71,10 +71,10 @@ let total_match
   (ord_2 : order)
   (exchange_rate : CommonTypes.Types.exchange_rate)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-      (* SHOULD UPDATE THE LEDGER HERE *)
-      (* NOT SURE ABOUT THIS *)
-      (* Treasury.swap (token_amount_to_token_holding ord_1) (token_amount_to_token_holding ord_2) treasury *)
-      treasury, Total, Total
+    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
+    let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
+    updated_treasury, Total, Total
 
 
 
