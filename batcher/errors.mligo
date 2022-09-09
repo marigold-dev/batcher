@@ -34,3 +34,5 @@ let not_previous_batches : string = "This previous batches are not included"
 
 let not_open_status : string = "This batch is not in open status"
 
+let not_found_rate_name : string = "This current rate for these token pairs is not found"
+
