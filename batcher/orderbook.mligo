@@ -45,8 +45,11 @@ let match_orders
   (ord_2 : order) 
   (exchange_rate : CommonTypes.Types.exchange_rate) 
   (_treasury : CommonTypes.Types.treasury) : matching * matching =
+  let bases_differences = ord_1.swap.from.token.decimals - ord_2.swap.from.token.decimals in
+  let float_bd = Float.new 1 bases_differences in
+  let adjusted_rate = Float.mul exchange_rate.rate float_bd in
   let float_of_ord1_amount = Float.new (int ord_1.swap.from.amount) 0 in
-  let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount exchange_rate.rate) in
+  let ord_1_swap_amount = Math.get_rounded_number (Float.mul float_of_ord1_amount adjusted_rate) in
   if ord_2.swap.from.amount > ord_1_swap_amount then
     let ord_2_remaining_token = ord_2.swap.from.amount - ord_1_swap_amount in
     (* SHOULD UPDATE THE LEDGER HERE *)
@@ -56,7 +59,7 @@ let match_orders
   else
     if ord_2.swap.from.amount < ord_1_swap_amount then
       let float_of_ord2_amount = Float.new (int ord_2.swap.from.amount) 0 in
-      let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount exchange_rate.rate) in
+      let ord_2_swap_amount = Math.get_rounded_number (Float.div float_of_ord2_amount adjusted_rate) in
       let ord_1_remaining_token = ord_1.swap.from.amount - ord_2_swap_amount in
       (* SHOULD UPDATE THE LEDGER HERE *)
       (* NOT SURE ABOUT THIS *)

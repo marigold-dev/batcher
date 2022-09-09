@@ -10,6 +10,7 @@ module Types = struct
     [@layout:comb]
     name : string;
     address : address option;
+    decimals : int
   }
 
   (* Side of an order, either BUY side or SELL side  *)
