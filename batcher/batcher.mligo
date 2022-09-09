@@ -147,7 +147,7 @@ let get_current_orders_by_user (user, storage : address * storage) : order list 
 [@view]
 let get_previous_orders_by_user (user, storage : address * storage) : order list = 
   let filter (new_orders, batch : order list * Batch.t) : order list = 
-    let new_orders = filter_orders_by_user user batch.orderbook.bids ([] : order list) in 
+    let new_orders = filter_orders_by_user user batch.orderbook.bids new_orders in 
     let new_orders = filter_orders_by_user user batch.orderbook.asks new_orders in 
     new_orders
   in 
