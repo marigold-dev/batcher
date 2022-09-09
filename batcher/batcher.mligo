@@ -125,9 +125,15 @@ let filter_orders_by_user
     List.fold_left filter new_orders orders 
 
 [@view]
-let should_start_deposit_time ((), storage : unit * storage) : bool = 
-  let current_time = Tezos.get_now () in 
-  Batch.should_open_new storage.batches current_time
+let get_deposit_starting_time ((), storage : unit * storage) : timestamp =
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> 
+    let start_time =
+      match current_batch.status with 
+      | Open { start_time } -> start_time
+      | _ -> failwith Errors.not_open_status in 
+    start_time
     
 [@view]
 let get_order_books ((), storage : unit * storage) : Orderbook.t = 
