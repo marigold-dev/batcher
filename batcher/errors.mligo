@@ -28,3 +28,11 @@ let tokens_do_not_match = "Tokens under comparison do not match"
 
 let not_found_clearing_level : string = "This clearing level is not found"
 
+let not_open_batch : string = "This current batch is not open"
+
+let not_previous_batches : string = "This previous batches are not included"
+
+let not_open_status : string = "This batch is not in open status"
+
+let not_found_rate_name : string = "This current rate for these token pairs is not found"
+

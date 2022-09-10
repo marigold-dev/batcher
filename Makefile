@@ -14,4 +14,3 @@ test:
 
 test-math: 
 	$(call test_ligo,batcher/test/test_math.mligo)
-

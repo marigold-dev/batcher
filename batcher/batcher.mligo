@@ -9,9 +9,9 @@
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
 
-
 type storage  = Storage.Types.t
 type result = (operation list) * storage
+type order = Types.Types.swap_order
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -111,6 +111,66 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
 let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
+
+let filter_orders_by_user 
+  (user : address) 
+  (orders : order list) 
+  (new_orders : order list) : order list = 
+    let filter (new_orders, order : order list * order) : order list = 
+      if order.trader = user then 
+        order :: new_orders
+      else 
+        new_orders
+    in 
+    List.fold_left filter new_orders orders 
+
+[@view]
+let get_deposit_starting_time ((), storage : unit * storage) : timestamp =
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> 
+    let start_time =
+      match current_batch.status with 
+      | Open { start_time } -> start_time
+      | _ -> failwith Errors.not_open_status in 
+    start_time
+    
+[@view]
+let get_order_books ((), storage : unit * storage) : Orderbook.t = 
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> current_batch.orderbook
+
+[@view]
+let get_current_orders_by_user (user, storage : address * storage) : order list =
+  match storage.batches.current with 
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> 
+    let new_orders = filter_orders_by_user user current_batch.orderbook.bids ([] : order list) in 
+    let new_orders = filter_orders_by_user user current_batch.orderbook.asks new_orders in 
+    new_orders
+
+[@view]
+let get_previous_orders_by_user (user, storage : address * storage) : order list = 
+  match storage.batches.previous with 
+  | [] -> failwith Errors.not_previous_batches
+  | _ -> 
+    let filter (new_orders, batch : order list * Batch.t) : order list = 
+      let new_orders = filter_orders_by_user user batch.orderbook.bids new_orders in 
+      let new_orders = filter_orders_by_user user batch.orderbook.asks new_orders in 
+      new_orders
+    in 
+    List.fold_left filter ([] : order list) storage.batches.previous
+
+[@view]
+let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Types.exchange_rate = 
+  match Big_map.get_and_update 
+    rate_name
+    (None : Types.Types.exchange_rate option) 
+    storage.rates_current 
+  with 
+  | (None, _rates_current) -> failwith Errors.not_found_rate_name
+  | (Some current_rate, _rates_current) -> current_rate
 
 let main
   (action, storage : entrypoint * storage) : result =

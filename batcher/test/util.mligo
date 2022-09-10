@@ -2,17 +2,15 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "../storage.mligo" "CommonStorage"
 #import "../types.mligo" "CommonTypes"
-
 #import "../batch.mligo" "Batch"
 #import "../orderbook.mligo" "Order"
 
-module Types = Types.Types
+module Types = CommonTypes.Types
 
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
 type result = Batcher.result
-type order = Types.swap_order
 
 
 let token_USDT = {
@@ -42,12 +40,12 @@ in review *)
   (* Jason's example seems to consider that valid_swaps are the
      swaps that the user/the DEX are allowed to make,
      but the type does not match this usage. *)
-  let valid_swaps = (Map.empty : Storage.Types.valid_swaps)
+  let valid_swaps = (Map.empty : CommonStorage.Types.valid_swaps)
   in
-  let rates_current = (Big_map.empty : Storage.Types.rates_current) in
-  let rates_historic = (Big_map.empty : Storage.Types.rates_historic) in
+  let rates_current = (Big_map.empty : CommonStorage.Types.rates_current) in
+  let rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic) in
   (* FIXME a treasury is not a big map *)
-  let treasury = (Big_map.empty : (Types.treasury)) in
+  let _treasury = (Big_map.empty : (Types.treasury)) in
   let batches = Batch.new_batch_set in
   {
     valid_tokens = valid_tokens;
