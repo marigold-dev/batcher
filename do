@@ -3,7 +3,7 @@ set +x
 
 OP=$1
 ADDROROP=$2
-NAME="0slip"
+NAME="batcher"
 BUILDDIR="out"
 
 usage(){
@@ -35,14 +35,14 @@ make_out_dir(){
 build_storage() {
     echo "Compiling $NAME storage"
     make_out_dir
-    ligo compile contract slip/$NAME.mligo -e  main -s cameligo -o $BUILDDIR/$NAME.tz
+    ligo compile contract batcher/$NAME.mligo -e  main -s cameligo -o $BUILDDIR/$NAME.tz
 }
 
 build_contract(){
     echo "Compiling $NAME contract"
     make_out_dir
-    INITSTORAGE=$(<slip/storage/storage.mligo)
-    ligo compile storage slip/$NAME.mligo "$INITSTORAGE" -s cameligo  -e main -o $BUILDDIR/$NAME-storage.tz
+    INITSTORAGE=$(<batcher/storage/initial_storage.mligo)
+    ligo compile storage batcher/$NAME.mligo "$INITSTORAGE" -s cameligo  -e main -o $BUILDDIR/$NAME-storage.tz
 }
 
 build(){
@@ -53,15 +53,15 @@ build(){
 
 dryrun(){
  echo "Executing dry-run of contract"
- INITSTORAGE=$(<contract/src/storage/storage.mligo)
- ligo run dry-run slip/$NAME.mligo "$ADDROROP" "$INITSTORAGE" -s cameligo  -e  main
+ INITSTORAGE=$(<batcher/storage/initial_storage.mligo)
+ ligo run dry-run batcher/$NAME.mligo "$ADDROROP" "$INITSTORAGE" -s cameligo  -e  main
 
 }
 
 deploy(){
 
 echo "Deploying contract"
-INITSTORAGE=$(<slip/storage/storage.mligo)
+INITSTORAGE=$(<batcher/storage/initial_storage.mligostorage.mligo)
 tezos-client originate contract "" for "$ADDR" transferring 0tez from $ADDR running $NAME.tz --init "$INITSTORAGE" --burn-cap 2
 
 }

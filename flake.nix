@@ -51,8 +51,6 @@
         };
 
         packages = let
-          ligo-compiler-version=0.49.0;
-          tezos-protocol="jakarta";
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
