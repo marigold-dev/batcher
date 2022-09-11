@@ -6,6 +6,8 @@
 #import "../orderbook.mligo" "Order"
 #import "../../math_lib/lib/float.mligo" "Float"
 
+module Types = CommonTypes.Types
+
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
@@ -16,7 +18,6 @@ type tolerance = CommonTypes.Types.tolerance
 type swap = CommonTypes.Types.swap
 type exchange_rate = CommonTypes.Types.exchange_rate
 type treasury = CommonTypes.Types.treasury
-
 
 let token_USDT = {
   name = "USDT";

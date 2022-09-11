@@ -1,1 +1,7 @@
-{ "dependencies": { "ligo-breathalyzer": "^1.0.0" } }
+{
+  "name": "batcher",
+  "version": "1.0.0",
+  "author": "batcher <marigold@dev.com>",
+  "description": "Batcher for exchanging tokens",
+  "dependencies": { "ligo-breathalyzer": "^1.0.0" }
+}
