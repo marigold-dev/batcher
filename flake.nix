@@ -56,8 +56,6 @@
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
-            buildDir = "$src/build";
-
 
             buildInputs = with pkgs; with ocamlPackages; [
               cmake

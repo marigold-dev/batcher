@@ -1,4 +1,3 @@
-#import "../storage.mligo" "CommonStorage"
 {
   valid_tokens = [
     {
@@ -16,22 +15,25 @@
   ];
   valid_swaps = Map.literal [
     ("USDT/tzBTC", {
-      to = {
-      name = "USDT";
-      address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
-      } ;
-      from = {
-       name = "tzBTC";
-       address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+        from = {
+          token = {
+            name = "tzBTC";
+            address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+          };
+          amount = 10n;
+        };
+        to = {
+          name = "USDT";
+          address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+        }
       }
-    } )
+    )
   ];
-  rates_current = (Big_map.empty : CommonStorage.Types.rates_current);
-  rates_historic = (Big_map.empty : CommonStorage.Types.rates_historic);
+  rates_current = (Big_map.empty : Storage.Types.rates_current);
+  rates_historic = (Big_map.empty : Storage.Types.rates_historic);
   batches = {
-     current = (None : CommonStorage.Types.batch);
-   	 previous = ([] : CommonStorage.Types.batch list);
+     current = (None : Storage.Types.batch option);
+   	 previous = ([] : Storage.Types.batch list);
   };
 }
-
 
