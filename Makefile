@@ -8,9 +8,9 @@ define test_ligo
   $(LIGO_DOCKER) run test $(1) --protocol $(TEZOS_PROTOCOL)
 endef
 
-test:
+test-batcher:
 	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
+test-orders:
 	$(call test_ligo,batcher/test/test_orders.mligo)
-
 test-math: 
 	$(call test_ligo,batcher/test/test_math.mligo)

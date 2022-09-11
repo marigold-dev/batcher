@@ -39,11 +39,9 @@ result
 .*.sw?
 
 # Ligo files
-# .ligoproject
+.ligoproject
+.ligo/
 
-# Esy
-_esy
-esy.lock
-
-# Ligo
-.ligo
+# ESY files
+_esy/
+esy.lock/

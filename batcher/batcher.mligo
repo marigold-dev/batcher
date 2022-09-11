@@ -83,7 +83,9 @@ let deposit (order: Types.Types.swap_order) (storage : storage) : result =
       try_to_append_order order storage.batches
   in
   let storage = { storage with batches = updated_batches } in
-  no_op (storage)
+  (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
+  let storage_after_treasury_update = Treasury.deposit order.trader order.swap.from storage in
+  no_op (storage_after_treasury_update)
 
 let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
@@ -102,7 +104,11 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
         let current_time = Tezos.get_now () in
         if Batch.should_be_cleared current_batch current_time then
           let batch = finalize current_batch storage current_time in
-          { storage.batches with current = Some batch }
+          let cleared_infos = Batch.get_status_when_its_cleared batch in
+          let updated_treasury, new_orderbook =
+            Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate batch.treasury in
+          let new_batch = {batch with orderbook = new_orderbook; treasury = updated_treasury} in
+          { storage.batches with current = Some new_batch }
         else
           storage.batches
       in

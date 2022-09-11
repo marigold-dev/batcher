@@ -51,13 +51,9 @@
         };
 
         packages = let
-          ligo-compiler-version=0.49.0;
-          tezos-protocol="jakarta";
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
-            buildDir = "$src/build";
-
 
             buildInputs = with pkgs; with ocamlPackages; [
               cmake
@@ -69,8 +65,8 @@
             buildPhase = ''
               mkdir -p $out
               ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz
-              INITSTORAGE=$(<$src/batcher/storage/storage.mligo)
-              ligo compile storage $src/slip/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
+              INITSTORAGE=$(<$src/batcher/storage/intial_storage.mligo)
+              ligo compile storage $src/batcher/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
             '';
 
           };
