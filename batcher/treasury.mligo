@@ -1,8 +1,6 @@
 #import "types.mligo" "Types"
 #import "storage.mligo" "Storage"
 #import "errors.mligo" "Errors"
-#import "batch.mligo" "Batch"
-#import "orderbook.mligo" "Orderbook"
 
 type storage = Storage.Types.t
 type treasury = Types.Types.treasury
@@ -11,6 +9,8 @@ type token = Types.Types.token
 type treasury_holding = Types.Types.treasury_holding
 type token_holding = Types.Types.token_holding
 type pair = Types.Types.token * Types.Types.token
+type batch = Types.Types.batch
+type batch_set = Types.Types.batch_set
 
 module Utils = struct
   type adjustment = INCREASE | DECREASE
@@ -97,15 +97,6 @@ module Utils = struct
     | Some token_address ->
       transfer_token sender receiver token_address received_token.amount
 
-  (* Converts a token_amount to a token holding by assigning a holder address *)
-  let token_amount_to_token_holding
-    (holder : address)
-    (token_amount : token_amount) : token_holding =
-    {
-      holder =  holder;
-      token_amount = token_amount;
-    }
-
   (* asserts that the holdings held in a treasury holding match the holder address *)
   let assert_holdings_are_coherent
     (holder: address)
@@ -189,7 +180,7 @@ module Utils = struct
   (* Deposit tokens into storage *)
   let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
     let token_name = Types.Utils.get_token_name_from_token_amount received_token in
-    let token_holding = token_amount_to_token_holding address received_token in
+    let token_holding = Types.Utils.token_amount_to_token_holding address received_token in
     let new_treasury_holding = deposit_into_treasury_holding address token_name token_holding treasury in
     let _ = assert_holdings_are_coherent address new_treasury_holding in
     Big_map.update (address) (Some(new_treasury_holding)) treasury
@@ -208,7 +199,7 @@ module Utils = struct
   let redeem_holdings_from_single_batch
     (holder : address)
     (treasury_vault : address)
-    (batch : Batch.t ) : Batch.t =
+    (batch : batch ) : batch =
     match batch.status with
     | Cleared _ -> (match Big_map.find_opt holder batch.treasury with
                   | Some (th) -> let _ = redeem_all_tokens_from_treasury_holding holder treasury_vault th in
@@ -222,7 +213,7 @@ module Utils = struct
   let redeem_holdings_from_batches
     (holder : address)
     (treasury_vault : address)
-    (batches : Batch.batch_set ) : Batch.batch_set =
+    (batches : batch_set ) : batch_set =
     let updated_previous = List.map (redeem_holdings_from_single_batch (holder) (treasury_vault)) batches.previous in
     { batches with previous = updated_previous }
 
@@ -239,19 +230,15 @@ let empty : treasury = Big_map.empty
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (pair : pair)
     (storage : storage) : storage =
       let batches = storage.batches in
-      let current_batch : Batch.t = (match batches.current with
-                                     | None -> let ob : Orderbook.t = Orderbook.empty () in
-                                               let now : timestamp = Tezos.get_now() in
-                                               let b : Batch.t = Batch.make (now) (ob) (pair) (empty) in
-                                               b
+      let current_batch  = (match batches.current with
+                                     | None -> (* We should never get here without a current batch *)
+                                               (failwith Errors.no_current_batch_available : batch)
                                      | Some (cb) -> let updated_current_batch_treasury : treasury = Utils.deposit_treasury deposit_address deposited_token cb.treasury in
                                                     let treasury_vault = get_treasury_vault () in
                                                     let _ = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                    let b : Batch.t = cb in
-                                                    { b with treasury = updated_current_batch_treasury }) in
+                                                    { cb with treasury = updated_current_batch_treasury }) in
       let updated_batches = { batches with current = Some(current_batch) } in
       { storage with batches = updated_batches }
 

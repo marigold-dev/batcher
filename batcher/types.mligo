@@ -72,11 +72,42 @@ module Types = struct
   type buy_plus_token = int
   type buy_side = buy_minus_token * buy_exact_token * buy_plus_token
 
-  type sell_minus_token = int 
-  type sell_exact_token = int 
+  type sell_minus_token = int
+  type sell_exact_token = int
   type sell_plus_token = int
   type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
 
+  (*
+    A bid : the price a buyer is willing to pay for an asset
+    A ask : the price a seller is willing to auxept for an asset
+    Here, the orderbook is a list of bids orders and asks orders
+  *)
+  type orderbook = {
+    bids : swap_order list;
+    asks : swap_order list
+  }
+
+
+  type batch_status =
+    | Open of { start_time : timestamp }
+    | Closed of { start_time : timestamp ; closing_time : timestamp }
+    | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
+
+  (* Batch of orders for the same pair of tokens *)
+  type batch = {
+    status : batch_status;
+    treasury : treasury;
+    orderbook : orderbook;
+    pair : token * token;
+  }
+
+  (* Set of batches, containing the current batch and the previous (finalized) batches.
+     The current batch can be open for deposits, closed for deposits (awaiting clearing) or
+     finalized, as we wait for a new deposit to start a new batch *)
+  type batch_set = {
+    current : batch option;
+    previous : batch list;
+  }
 end
 
 module Utils = struct
@@ -122,5 +153,19 @@ module Utils = struct
         (failwith Errors.tokens_do_not_match : Types.token_amount )
     else
       (failwith Errors.tokens_do_not_match : Types.token_amount )
+
+
+  (* Converts a token_amount to a token holding by assigning a holder address *)
+  let token_amount_to_token_holding
+    (holder : address)
+    (token_amount : Types.token_amount) : Types.token_holding =
+    {
+      holder =  holder;
+      token_amount = token_amount;
+    }
+
+
+
+
 end
 
