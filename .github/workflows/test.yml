@@ -5,7 +5,13 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        test:
+          - test-batcher
+          - test-orders
+          - test-math
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2.4.0
-    - run: make test-batcher
+    - run: make ${{ matrix.test }}
