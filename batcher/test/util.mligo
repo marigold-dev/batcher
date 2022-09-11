@@ -6,6 +6,8 @@
 #import "../orderbook.mligo" "Order"
 #import "../../math_lib/lib/float.mligo" "Float"
 
+module Types = CommonTypes.Types
+
 type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
