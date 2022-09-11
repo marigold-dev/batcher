@@ -21,17 +21,20 @@ type treasury = CommonTypes.Types.treasury
 let token_USDT = {
   name = "USDT";
   address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+   decimals = 6;
 }
 
 let token_XTZ = {
    name = "XTZ";
    address = (None : address option);
+   decimals = 6;
 }
 
 (* Not used in v1 *)
 let token_tzBTC = {
    name = "tzBTC";
    address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+   decimals = 8;
 }
 
 let initial_storage : Batcher.storage =

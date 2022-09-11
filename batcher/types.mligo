@@ -10,6 +10,7 @@ module Types = struct
     [@layout:comb]
     name : string;
     address : address option;
+    decimals : int;
   }
 
   (* Side of an order, either BUY side or SELL side  *)
@@ -86,7 +87,6 @@ module Types = struct
     bids : swap_order list;
     asks : swap_order list
   }
-
 
   type batch_status =
     | Open of { start_time : timestamp }
