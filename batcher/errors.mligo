@@ -36,3 +36,14 @@ let not_previous_batches : nat = 116n
 let not_open_status : nat = 117n
 
 let not_found_rate_name : nat = 118n
+
+let batch_should_be_cleared : nat = 119n
+
+let trying_to_close_batch_which_is_not_open : nat = 120n
+
+let trying_to_finalize_batch_which_is_not_closed : nat = 121n
+
+
+
+
+
