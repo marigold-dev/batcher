@@ -28,7 +28,7 @@ let token_USDT = {
 let token_XTZ = {
    name = "XTZ";
    address = (None : address option);
-   decimals = 0 (*whatever*)
+   decimals = 6
 }
 
 let token_USDT = {
