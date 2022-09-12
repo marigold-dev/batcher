@@ -18,7 +18,7 @@ type orders = order list
 type buy_side = CommonTypes.Types.buy_side
 type sell_side = CommonTypes.Types.sell_side
 
-
+[@inline]
 let get_distribution_of
   (side, tolerance : side * tolerance) (orderbook : orderbook) : nat
 =
@@ -30,7 +30,6 @@ let get_distribution_of
   let collect (acc, o : nat * order) : nat = 
     (if tolerance = o.tolerance then (acc + o.swap.from.amount) else acc)  in
   List.fold collect side_orders 0n
-
 
 let compute_clearing_prices
   (rate: CommonTypes.Types.exchange_rate)
