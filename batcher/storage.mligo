@@ -10,9 +10,6 @@ module Types = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, CommonTypes.Types.exchange_rate) big_map
 
-  (* Historical rates for the contract - this can be a limited set after the PoC. i.e. last day or week *)
-  type rates_historic = (string, CommonTypes.Types.exchange_rate list) big_map
-
   type batch_set = CommonTypes.Types.batch_set
 
   type batch = CommonTypes.Types.batch
@@ -21,7 +18,6 @@ module Types = struct
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
-    rates_historic : rates_historic;
     batches : batch_set;
   }
 
