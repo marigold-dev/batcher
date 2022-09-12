@@ -179,7 +179,7 @@ let orders_execution
         aux (nt,bids,(new_ask::asks),rem_bids,rem_asks)
       | nt, Partial new_bid, Total ->
         aux (nt, (new_bid::bids),asks,rem_bids,rem_asks)
-      | _ -> failwith "never suppose to happen")
+      | _ -> aux (nt,bids,asks,rem_bids,rem_asks)
   in
   let filtered_orderbook =
     trigger_filtering_orders orderbook clearing in
