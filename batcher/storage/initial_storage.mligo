@@ -1,4 +1,4 @@
-{
+let f(_:unit) = {
   valid_tokens = [
     {
        name = "tzBTC";
