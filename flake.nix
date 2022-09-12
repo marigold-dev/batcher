@@ -54,6 +54,7 @@
           contract = pkgs.stdenv.mkDerivation {
             name = "batcher";
             src = ./.;
+            protocol = "jakarta";
 
             buildInputs = with pkgs; with ocamlPackages; [
               cmake
@@ -64,9 +65,8 @@
 
             buildPhase = ''
               mkdir -p $out
-              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz
-              INITSTORAGE=$(<$src/batcher/storage/intial_storage.mligo)
-              ligo compile storage $src/batcher/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
+              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz --protocol $protocol
+              ligo compile expression cameligo --michelson-format text --init-file $src/batcher/storage/initial_storage.mligo 'f()' > $out/batcher_storage.tz
             '';
 
           };
