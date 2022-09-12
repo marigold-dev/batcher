@@ -18,6 +18,7 @@ module Types = struct
   type batch = CommonTypes.Types.batch
 
   type t = {
+    [@layout:comb]
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;

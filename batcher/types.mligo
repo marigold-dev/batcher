@@ -14,10 +14,15 @@ module Types = struct
   }
 
   (* Side of an order, either BUY side or SELL side  *)
-  type side = BUY | SELL
+  type side =
+    [@layout:comb]
+    BUY
+    | SELL
 
   (* Tolerance of the order against the oracle price  *)
-  type tolerance = PLUS | EXACT | MINUS
+  type tolerance =
+    [@layout:comb]
+    PLUS | EXACT | MINUS
 
   (* A token value ascribes an amount to token metadata *)
   type token_amount = {
@@ -34,6 +39,7 @@ module Types = struct
   }
 
   type swap = {
+   [@layout:comb]
    from : token_amount;
    to : token;
   }
@@ -47,6 +53,7 @@ module Types = struct
   }
 
   type swap_order = {
+    [@layout:comb]
     trader : address;
     swap  : swap;
     created_at : timestamp;
@@ -54,14 +61,19 @@ module Types = struct
     tolerance : tolerance;
   }
 
-  type batch_status  = NOT_OPEN | OPEN | CLOSED | FINALIZED
+  type batch_status  =
+    [@layout:comb]
+    NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type clearing = {
+    [@layout:comb]
     clearing_volumes : (tolerance, nat) map;
     clearing_tolerance : tolerance;
   }
 
-  type treasury_item_status = DEPOSITED | EXCHANGED | CLAIMED
+  type treasury_item_status =
+    [@layout:comb]
+    DEPOSITED | EXCHANGED | CLAIMED
 
   type treasury_holding = (string, token_holding) map
 
@@ -84,6 +96,7 @@ module Types = struct
     Here, the orderbook is a list of bids orders and asks orders
   *)
   type orderbook = {
+    [@layout:comb]
     bids : swap_order list;
     asks : swap_order list
   }
@@ -96,6 +109,7 @@ module Types = struct
 
   (* Batch of orders for the same pair of tokens *)
   type batch = {
+    [@layout:comb]
     status : batch_status;
     treasury : treasury;
     orderbook : orderbook;
@@ -106,6 +120,7 @@ module Types = struct
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
+    [@layout:comb]
     current : batch option;
     previous : batch list;
   }
