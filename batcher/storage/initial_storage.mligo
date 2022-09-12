@@ -1,3 +1,4 @@
+#import "../storage.mligo" "Storage"
 let f(_:unit) = {
   valid_tokens = [
     {

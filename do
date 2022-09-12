@@ -42,7 +42,7 @@ build_contract() {
 build_storage(){
     echo "Compiling $NAME storage"
     make_out_dir
-    ligo compile expression cameligo --michelson-format text --init-file $src/batcher/storage/initial_storage.mligo 'f()' > $BUILDDIR/$NAME_storage.tz
+    ligo compile expression cameligo --michelson-format text --init-file $src/batcher/storage/initial_storage.mligo 'f()' > $BUILDDIR/${NAME}_storage.tz
 }
 
 build(){
@@ -68,6 +68,10 @@ tezos-client originate contract "" for "$ADDR" transferring 0tez from $ADDR runn
 case $OP in
   "build")
     build;;
+  "build_contract")
+    build_contract;;
+  "build_storage")
+    build_storage;;
   "dryrun")
     dryrun;;
    "deploy")
