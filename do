@@ -32,14 +32,14 @@ make_out_dir(){
 }
 
 
-build_storage() {
-    echo "Compiling $NAME storage"
+build_contract() {
+    echo "Compiling $NAME contract"
     make_out_dir
     ligo compile contract batcher/$NAME.mligo -e  main -s cameligo -o $BUILDDIR/$NAME.tz
 }
 
-build_contract(){
-    echo "Compiling $NAME contract"
+build_storage(){
+    echo "Compiling $NAME storage"
     make_out_dir
     INITSTORAGE=$(<batcher/storage/initial_storage.mligo)
     ligo compile storage batcher/$NAME.mligo "$INITSTORAGE" -s cameligo  -e main -o $BUILDDIR/$NAME-storage.tz
