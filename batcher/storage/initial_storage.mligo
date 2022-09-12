@@ -1,5 +1,6 @@
 #import "../storage.mligo" "Storage"
-let f(_:unit) = {
+
+let f (_:unit) = {
   valid_tokens = [
     {
        name = "tzBTC";
