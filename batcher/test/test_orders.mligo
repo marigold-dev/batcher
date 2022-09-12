@@ -168,7 +168,7 @@ let one_total_partial_match_orders =
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
     let treasury = (Big_map.empty : Util.treasury) in
-    let expected = (Total, Partial remaining_bob_order) in
+    let expected = (treasury, Total, Partial remaining_bob_order) in
     let computed = 
       Orderbook.match_orders alice_order bob_order rate treasury in
 
@@ -189,7 +189,7 @@ let one_partial_total_match_orders =
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
     let treasury = (Big_map.empty : Util.treasury) in
-    let expected = (Partial remaining_alice_order, Total) in
+    let expected = (treasury, Partial remaining_alice_order, Total) in
     let computed = 
       Orderbook.match_orders alice_order bob_order rate treasury in
 
@@ -209,7 +209,7 @@ let one_total_match_orders =
       for initiate/create a exchange_rate ? *)
     let rate = Util.make_exchange_rate (Util.default_swap 0n) (Float.new 2 0) in
     let treasury = (Big_map.empty : Util.treasury) in
-    let expected = (Total, Total) in
+    let expected = (treasury, Total, Total) in
     let computed = 
       Orderbook.match_orders alice_order bob_order rate treasury in
 
