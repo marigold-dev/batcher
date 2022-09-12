@@ -61,7 +61,7 @@ dryrun(){
 deploy(){
 
 echo "Deploying contract"
-INITSTORAGE=$(<batcher/storage/initial_storage.mligostorage.mligo)
+INITSTORAGE=$(<batcher/storage/initial_storage..mligo)
 tezos-client originate contract "" for "$ADDR" transferring 0tez from $ADDR running $NAME.tz --init "$INITSTORAGE" --burn-cap 2
 
 }
