@@ -24,12 +24,14 @@ type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
+[@inline]
 let make_new_order (order : order) (amt: nat) : order =
   let new_token_amount =
     {order.swap.from with amount = amt} in
   let new_swap = {order.swap with from = new_token_amount} in
   {order with swap = new_swap}
 
+[@inline]
 let get_match_type (equivalent_ord_1_amount : nat) (ord_2 : order)  : match_calculation_type =
     if (ord_2.swap.from.amount > equivalent_ord_1_amount) then RIGHT_PARTIAL else
       if (ord_2.swap.from.amount < equivalent_ord_1_amount) then
@@ -110,6 +112,7 @@ let match_orders
                             | EXACT_MATCH -> total_match) in
   match_calculation equivalent_ord_1_amount ord_1 ord_2 treasury
 
+[@inline]
 (*This function push orders auxording to a pro-rata "model"*)
 let push_order (order : order) (orderbook : t) : t =
   match order.side with
@@ -125,6 +128,7 @@ let push_order (order : order) (orderbook : t) : t =
    the orders_execution. Thats why i use Fold.left instead of
    putting List.rev everywhere like the previous design.
 *)
+[@inline]
 let filter_orders (orders: order list) (f : order -> bool) : order list =
   let aux (new_odb, order : order list * order) : order list =
     if f order then order :: new_odb
@@ -134,6 +138,7 @@ let filter_orders (orders: order list) (f : order -> bool) : order list =
   in
   List.fold_left aux ([] : order list) orders
 
+[@inline]
 let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
   let (f_bids,f_asks) =
     match clearing.clearing_tolerance with
@@ -179,7 +184,7 @@ let orders_execution
         aux (nt,bids,(new_ask::asks),rem_bids,rem_asks)
       | nt, Partial new_bid, Total ->
         aux (nt, (new_bid::bids),asks,rem_bids,rem_asks)
-      | _ -> failwith "never suppose to happen")
+      | nt, _, _ -> aux (nt,bids,asks,rem_bids,rem_asks))
   in
   let filtered_orderbook =
     trigger_filtering_orders orderbook clearing in

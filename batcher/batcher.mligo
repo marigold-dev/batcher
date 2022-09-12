@@ -118,6 +118,7 @@ let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
 
+[@inline]
 let filter_orders_by_user 
   (user : address) 
   (orders : order list) 
