@@ -37,7 +37,6 @@ let f(_:unit) = {
     )
   ];
   rates_current = (Big_map.empty : Storage.Types.rates_current);
-  rates_historic = (Big_map.empty : Storage.Types.rates_historic);
   batches = {
      current = (None : Storage.Types.batch option);
    	 previous = ([] : Storage.Types.batch list);
