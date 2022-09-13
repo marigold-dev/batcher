@@ -5,14 +5,17 @@ let f(_:unit) = {
     {
        name = "tzBTC";
        address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+       decimals = 8;
     };
     {
       name = "USDT";
       address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+       decimals = 6;
     };
     {
        name = "XTZ";
        address = (None : address option);
+       decimals = 6;
     }
   ];
   valid_swaps = Map.literal [
@@ -21,12 +24,14 @@ let f(_:unit) = {
           token = {
             name = "tzBTC";
             address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+            decimals = 8;
           };
           amount = 10n;
         };
         to = {
           name = "USDT";
           address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+          decimals = 6;
         }
       }
     )
