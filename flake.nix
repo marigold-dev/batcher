@@ -36,6 +36,7 @@
             glibc
             nixfmt
             ligo
+            tezos.tezos-client
           ];
           shellHook = ''
             alias lv="ligo version"
