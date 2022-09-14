@@ -45,3 +45,11 @@ result
 # ESY files
 _esy/
 esy.lock/
+
+# Generated michelson files
+batcher.tz
+batcher-storage.tz
+tzBTC_token.tz
+tzBTC_token_storage.tz
+USDT_token.tz
+USDT_token_storage.tz
