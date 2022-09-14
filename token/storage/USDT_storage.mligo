@@ -1,6 +1,6 @@
 let f (_:unit) = {
   ledger = Big_map.literal [
-    ((("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address), 0n), 100000000n)
+    ((("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address), 0n), 100000000000000n)
   ];
   token_metadata = Big_map.literal [
     (0n, {
