@@ -70,7 +70,7 @@ let test_transfer_tokens =
     let (_, (alice, bob, jago)) = Breath.Context.init_default () in
     let token_contract = Utils.originate_token level alice.address in 
     
-    (* The sender is not included in ledger - FALSE *)
+    (* The sender is not the owner or operator - FALSE *)
     let action1 = Breath.Context.act_as jago (Utils.transfer_token (alice.address, bob.address, 150n) token_contract) in 
     (* The sender transfers the larger tokens - FALSE *)
     let action2 = Breath.Context.act_as alice (Utils.transfer_token (alice.address, bob.address, 1500n) token_contract) in 
@@ -96,7 +96,7 @@ let test_update_operators =
     let (_, (alice, bob, jago)) = Breath.Context.init_default () in
     let token_contract = Utils.originate_token level alice.address in 
 
-    (* Add a new operator by a malicious owner *) 
+    (* The sender and the owner is not the same - FALSE *) 
     let action1 = 
       let operator = {
         owner = jago.address;
@@ -105,7 +105,7 @@ let test_update_operators =
       } in 
       Breath.Context.act_as alice (Utils.update_operators (Add_operator operator) token_contract) in 
 
-    (* Add a new operator by a honest owner *)
+    (* The sender adds a new operator - TRUE *)
     let action2 = 
       let operator = {
         owner = alice.address;
@@ -114,7 +114,7 @@ let test_update_operators =
       } in  
       Breath.Context.act_as alice (Utils.update_operators (Add_operator operator) token_contract) in 
 
-    (* Remove the existing operator by a honest owner *)
+    (* The sender removed the existing operator - TRUE *)
     let action3 = 
       let operator = {
         owner = jago.address;
