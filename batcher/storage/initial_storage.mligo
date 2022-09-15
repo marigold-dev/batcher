@@ -4,12 +4,12 @@ let f(_:unit) = {
   valid_tokens = [
     {
        name = "tzBTC";
-       address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+       address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
        decimals = 8;
     };
     {
       name = "USDT";
-      address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+      address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
        decimals = 6;
     };
     {
@@ -23,14 +23,14 @@ let f(_:unit) = {
         from = {
           token = {
             name = "tzBTC";
-            address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+            address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
             decimals = 8;
           };
           amount = 10n;
         };
         to = {
           name = "USDT";
-          address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+          address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
           decimals = 6;
         }
       }
