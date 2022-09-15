@@ -32,3 +32,5 @@ test-orders:
 	$(call test_ligo,batcher/test/test_orders.mligo)
 test-math:
 	$(call test_ligo,batcher/test/test_math.mligo)
+test-tokens: 
+	$(call test_ligo,batcher/test/test_tokens.mligo)
