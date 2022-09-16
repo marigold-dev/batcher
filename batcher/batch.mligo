@@ -103,7 +103,7 @@ let start_period
   (batches : batch_set)
   (current_time : timestamp) : batch_set =
     let treasury : CommonTypes.Types.treasury = make_new_treasury in
-    let pair = CommonTypes.Utils.pair_of_swap order.swap in
+    let pair = CommonTypes.Utils.pair_of_swap order in
     let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
     let new_batch = make current_time orderbook pair treasury in
     match batches.current with
