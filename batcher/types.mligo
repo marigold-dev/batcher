@@ -143,11 +143,12 @@ module Utils = struct
     let base_name = r.swap.from.token.name in
     quote_name ^ "/" ^ base_name
 
-  let pair_of_swap (order : Types.swap) : (Types.token * Types.token) =
+  let pair_of_swap (order : Types.swap_order) : (Types.token * Types.token) =
     (* Note:  we assume left-handedness - i.e. direction is buy side*)
+    let swap = order.swap in
     match order.side with
-    | BUY -> (order.from.token, order.to)
-    | SELL -> (order.to.token, order.from.token)
+    | BUY -> (swap.from.token, swap.to)
+    | SELL -> (swap.to.token, swap.from.token)
 
   let get_token_name_from_token_amount
     (ta : Types.token_amount) : string =

@@ -64,7 +64,7 @@ let try_to_append_order (order : Types.Types.swap_order)
         failwith Errors.append_an_order_to_a_non_open_batch
       else
         let current_pair = current.pair in
-        let order_pair = Types.Utils.pair_of_swap order.swap in
+        let order_pair = Types.Utils.pair_of_swap order in
         if current_pair <> order_pair then
           failwith Errors.order_pair_doesnt_match
         else
