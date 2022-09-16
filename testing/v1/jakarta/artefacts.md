@@ -7,7 +7,8 @@ Testing artefacts for v1 testing on Jakartanet.
 |--- | --- |
 | tzBTC token | KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr |
 | USDT token | KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF |
-| Batcher Contract | KT1E3ko6CkKZSa9R3ZC1QfPCzAebEY2WbkNr |
+| Batcher Contract | KT1PyZqjjEJrorcxUg7mNnHeE2ZwNVApCniz |
+
 
 ## Test Accounts
 
