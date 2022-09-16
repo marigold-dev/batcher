@@ -43,7 +43,8 @@ let trying_to_close_batch_which_is_not_open : nat = 120n
 
 let trying_to_finalize_batch_which_is_not_closed : nat = 121n
 
+let append_an_order_to_a_non_open_batch : nat = 122n
 
-
+let append_an_order_with_no_current_batch : nat = 123n
 
 

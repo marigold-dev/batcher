@@ -58,10 +58,10 @@ let try_to_append_order (order : Types.Types.swap_order)
   (batches : Batch.batch_set) : Batch.batch_set =
   match batches.current with
     | None ->
-      failwith "Append an order with no current batch" (* FIXME: make this impossible *)
+      failwith Errors.append_an_order_with_no_current_batch (* FIXME: make this impossible *)
     | Some current ->
       if not (Batch.is_open current) then
-        failwith "Append an order to a non open batch"
+        failwith Errors.append_an_order_to_a_non_open_batch
       else
         let current_pair = current.pair in
         let order_pair = Types.Utils.pair_of_swap order.swap in
