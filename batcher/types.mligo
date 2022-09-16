@@ -148,7 +148,7 @@ module Utils = struct
     let swap = order.swap in
     match order.side with
     | BUY -> (swap.from.token, swap.to)
-    | SELL -> (swap.to.token, swap.from.token)
+    | SELL -> (swap.to, swap.from.token)
 
   let get_token_name_from_token_amount
     (ta : Types.token_amount) : string =
