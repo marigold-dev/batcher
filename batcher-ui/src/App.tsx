@@ -8,6 +8,7 @@ import DisconnectButton from './DisconnectWallet';
 import { Contract, ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import classNames from "classnames";
 import { Nav, NavLink as ReactstrapNavLink } from "reactstrap";
+import { format, formatDistance, formatRelative, subDays, parseISO, add, sub, differenceInMilliseconds, differenceInMinutes } from 'date-fns'
 import './App.css';
 // reactstrap components
 import {
@@ -33,6 +34,7 @@ import {
 
   UncontrolledTooltip
 } from "reactstrap";
+import { time } from 'console';
 
 
 function App() {
@@ -41,16 +43,12 @@ function App() {
   class token {
    name!: string;
    address!: string;
-   decimals!:BigInt; 
-  }
-
-  class side {
-
+   decimals!:number; 
   }
 
   class token_amount {
     token!: token;
-    amount!: BigInt;
+    amount!: number;
   }
 
   class swap {
@@ -58,18 +56,34 @@ function App() {
      to!: token; 
   }
 
+  class float_t {
+    pow!: number;
+    val!: number;
+  }
+
   class exchange_rate {
      swap!: swap;
-     rate!: number;
+     rate!: float_t;
      when!: string;
   }
+
+ interface Tolerance {
+  eXACT?: EXact
+  mINUS?: MInus
+  pLUS?: PLus
+}
+
+ interface EXact {}
+ interface MInus {}
+ interface PLus {}
+
 
   class swap_order {
     trader!: string;
     swap!: swap;
     created_at!: string;
     side!: string;
-    tolerance!: string;
+    tolerance!: Tolerance;
   }
 
   class order_book {
@@ -82,8 +96,13 @@ function App() {
     token_amount!: token_amount;
 
   }
+
+  class batch_status {
+     open!: string;
+  }
+
   class batch {
-      status!: string;
+      status!: batch_status;
       treasury!: MichelsonMap<string, Map<string, token_holding>>;
       orderbook!: order_book;
       pair!: [token, token];
@@ -106,9 +125,10 @@ function App() {
   const [userBalance, setUserBalance] = useState<number>(0);
   const mainPanelRef = React.useRef(null);
   const sidebarRef = React.useRef(null);
-  const [exchangeRate, setExchangeRate] = useState<exchange_rate | undefined>();
+  const [exchangeRate, setExchangeRate] = useState<number | undefined>();
   const [stringStorage, setStringStorage] = useState<string>("");
-
+  const [remaining, setRemaining] = useState<string>("");
+  const [orderBook, setOrderBook] = useState<order_book | undefined>();
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
   const [storage, setStorage] = useState<ContractStorage | undefined>();
@@ -119,16 +139,41 @@ function App() {
   const tokenBTCaddress: string = "KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr"
   const tokenUSDTaddress: string = "KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF"
   const pair = "tzBTC/USDT"
+  const inverted_pair = "USDT/tzBTC"
 
+  const rationalise_rate  = ( rate : number , base_decimals :  number, quote_decimals : number) => {
+     let scale =10 ** (base_decimals - quote_decimals);
+     return rate * scale
+  }
 
+  const get_time_left_in_batch = (staus:batch_status) => {
+    let batch_open = staus.open;
+    let now = new Date();
+    let open = parseISO(batch_open);
+    let batch_close = add(open,{ minutes: 10})
+    let diff = differenceInMinutes(batch_close, now);
+     return ""+diff+" minutes" ;
+  } 
 
   const update_from_storage = async () => {
     const tcontract =  await Tezos.contract.at(contractAddress);
-    const cstorage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
-    const rates = await contractsService.getBigMapByName( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } );
-    const storage = cstorage.storage;
-   // const storage:ContractStorage= await contract.storage();
-    setStringStorage(JSON.stringify(storage));
+    const storage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
+    const rates_map = await contractsService.getBigMapByName( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } );
+    const rates_map_keys = await contractsService.getBigMapByNameKeys( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } )
+    const exchange_rate : exchange_rate = rates_map_keys.filter(r => r.key == inverted_pair)[0].value;
+    const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
+    setExchangeRate(scaled_rate);
+
+    const current_batch_status:batch_status = await storage.batches.current.status;
+    const time_remaining = get_time_left_in_batch(current_batch_status);
+    setRemaining(time_remaining);
+
+    const order_book : order_book = await storage.batches.current.orderbook;
+    setOrderBook(order_book);
+    setStringStorage(JSON.stringify(order_book));
+    setNumberOrBids(order_book.bids.length);
+    setNumberOrAsks(order_book.asks.length);
+
     setStorage(storage);
 
   };
@@ -144,7 +189,7 @@ function App() {
     }
   };
 
-
+  updateValues();
 
   return (
           <div className="wrapper">
@@ -178,11 +223,11 @@ function App() {
                  <Row>
                    <Col sm="2">
                       <h4 className="title d-inline">Oracle Price</h4>
-                      <p className="description bold">{ exchangeRate?.when }</p>
+                      <p className="description bold">{ exchangeRate } USDT / tzBTC </p>
                      </Col>
                    <Col sm="2">
                       <h4 className="title d-inline">Time Remaining in Current Batch</h4>
-                      <p className="description bold">2 mins</p>
+                      <p className="description bold"> { remaining} </p>
                      </Col>
                    <Col sm="2">
                       <h4 className="title d-inline">Buy Orders in Current Batch</h4>
@@ -251,17 +296,19 @@ function App() {
             <Row>
             <Card>
               <CardHeader>
-                <h3 className="title">Exchange Rates</h3>
+                <h3 className="title">Order Book</h3>
               </CardHeader>
               <CardBody>
                  <Row>
-                   <Col sm="4">
+                   <Col sm="2">
+                    <h4 className="title d-inline">Bids</h4>
+                    <Table size="sm">
                    { 
-                  
-                  }
-                
+                     orderBook?.bids.map(b => <tr>{b.tolerance.toString()}</tr>) 
+                    }
+                   </Table>
                       
-                     </Col>
+                   </Col>
                  </Row>
               </CardBody>
               <CardFooter>
