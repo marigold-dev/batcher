@@ -171,13 +171,12 @@ let get_previous_orders_by_user (user, storage : address * storage) : order list
 
 [@view]
 let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Types.exchange_rate =
-  match Big_map.get_and_update
+  match Big_map.find_opt
     rate_name
-    (None : Types.Types.exchange_rate option)
     storage.rates_current
   with
-  | (None, _rates_current) -> failwith Errors.not_found_rate_name
-  | (Some current_rate, _rates_current) -> current_rate
+  | None -> failwith Errors.not_found_rate_name
+  | Some current_rate -> current_rate
 
 let main
   (action, storage : entrypoint * storage) : result =
