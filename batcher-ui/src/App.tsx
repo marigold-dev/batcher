@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
 import marigoldlogo from './marigoldlogo.png';
-import { useState, useEffect } from 'react';
 import ConnectButton from './ConnectWallet';
 import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
 import { Tzip12Module } from '@taquito/tzip12';
