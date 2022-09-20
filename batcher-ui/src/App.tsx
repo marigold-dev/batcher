@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import logo from './logo.svg';
 import marigoldlogo from './marigoldlogo.png';
 import { useState } from 'react';
@@ -128,7 +128,7 @@ function App() {
   const [exchangeRate, setExchangeRate] = useState<number | undefined>();
   const [stringStorage, setStringStorage] = useState<string>("");
   const [remaining, setRemaining] = useState<string>("");
-  const [orderBook, setOrderBook] = useState<order_book | undefined>();
+  const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
   const [storage, setStorage] = useState<ContractStorage | undefined>();
@@ -155,6 +155,20 @@ function App() {
      return ""+diff+" minutes" ;
   } 
 
+  const get_token_by_side = (tolerance : string, order_sides : Array<swap_order>) => {
+    let token_name = order_sides[0].swap.from.token.name;
+
+    let amount = order_sides.reduce((previousAmount, order) => {
+      if (Object.keys(order.tolerance)[0] === tolerance) {
+        previousAmount += Number(order.swap.from.amount);
+      } 
+       
+      return previousAmount;
+    }, 0);
+
+    return token_name.concat(" : ", Number(amount).toString());
+  }
+
   const update_from_storage = async () => {
     const tcontract =  await Tezos.contract.at(contractAddress);
     const storage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
@@ -178,8 +192,6 @@ function App() {
 
   };
 
-
-
   const updateValues = async (): Promise<void> => {
     try {
       await update_from_storage();
@@ -189,7 +201,9 @@ function App() {
     }
   };
 
-  updateValues();
+  useEffect(() => {
+    updateValues();
+  }, []);
 
   return (
           <div className="wrapper">
@@ -300,12 +314,39 @@ function App() {
               </CardHeader>
               <CardBody>
                  <Row>
-                   <Col sm="2">
+                   <Col>
                     <h4 className="title d-inline">Bids</h4>
                     <Table size="sm">
-                   { 
-                     orderBook?.bids.map(b => <tr>{b.tolerance.toString()}</tr>) 
-                    }
+                      <Row>
+                        <Col className="col-3"><h6 className="title d-inline">MINUS</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("mINUS", orderBook?.bids!)}</Col>
+                      </Row>
+                      <Row>
+                        <Col className="col-3"><h6 className="title d-inline">EXACT</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("eXACT", orderBook?.bids!)}</Col>
+                      </Row>
+                      <Row>
+                        <Col className="col-3"><h6 className="title d-inline">PLUS</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("pLUS", orderBook?.bids!)}</Col>
+                      </Row>
+                   </Table>
+                      
+                   </Col>
+                   <Col>
+                    <h4 className="title d-inline">Asks</h4>
+                    <Table size="sm">
+                    <Row>
+                        <Col className="col-3"><h6 className="title d-inline">MINUS</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("mINUS", orderBook?.asks!)}</Col>
+                      </Row>
+                      <Row>
+                        <Col className="col-3"><h6 className="title d-inline">EXACT</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("eXACT", orderBook?.asks!)}</Col>
+                      </Row>
+                      <Row>
+                        <Col className="col-3"><h6 className="title d-inline">PLUS</h6></Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("pLUS", orderBook?.asks!)}</Col>
+                      </Row>
                    </Table>
                       
                    </Col>
