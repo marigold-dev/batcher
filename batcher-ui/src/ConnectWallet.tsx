@@ -31,6 +31,7 @@ const ConnectButton = ({
     setUserAddress(userAddress);
     // updates balance
     const balance = await Tezos.tz.getBalance(userAddress);
+    
     setUserBalance(balance.toNumber());
   };
 

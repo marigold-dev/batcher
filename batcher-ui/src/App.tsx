@@ -1,15 +1,17 @@
 import React from 'react';
 import logo from './logo.svg';
 import marigoldlogo from './marigoldlogo.png';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ConnectButton from './ConnectWallet';
 import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
+import { Tzip12Module } from '@taquito/tzip12';
+import { Tzip16Module } from '@taquito/tzip16';
 import DisconnectButton from './DisconnectWallet';
-import { Contract, ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
-import classNames from "classnames";
-import { Nav, NavLink as ReactstrapNavLink } from "reactstrap";
-import { format, formatDistance, formatRelative, subDays, parseISO, add, sub, differenceInMilliseconds, differenceInMinutes } from 'date-fns'
+import DepositButton from './Deposit';
+import { Contract, ContractsService, MichelineFormat, AccountsService, HeadService } from '@dipdup/tzkt-api';
+import { parseISO, add, differenceInMinutes } from 'date-fns'
 import './App.css';
+import { Helmet } from 'react-helmet';
 // reactstrap components
 import {
   Button,
@@ -43,7 +45,7 @@ function App() {
   class token {
    name!: string;
    address!: string;
-   decimals!:number; 
+   decimals!:number;
   }
 
   class token_amount {
@@ -53,7 +55,7 @@ function App() {
 
   class swap {
      from!: token_amount;
-     to!: token; 
+     to!: token;
   }
 
   class float_t {
@@ -121,7 +123,7 @@ function App() {
   }
 
   const [wallet, setWallet] = useState<any>(null);
-  const [userAddress, setUserAddress] = useState<string>("");
+  const [userAddress, setUserAddress] = useState<string>("No Wallet Connected");
   const [userBalance, setUserBalance] = useState<number>(0);
   const mainPanelRef = React.useRef(null);
   const sidebarRef = React.useRef(null);
@@ -132,14 +134,21 @@ function App() {
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
   const [storage, setStorage] = useState<ContractStorage | undefined>();
+  const [contractAddress, setContractAddress] = useState<string>("KT1PyZqjjEJrorcxUg7mNnHeE2ZwNVApCniz");
+  const [baseTokenName, setBaseTokenName] = useState<string>("tzBTC");
+  const [baseTokenAddress, setBaseTokenAddress] = useState<string>("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr");
+  const [quoteTokenName, setQuoteTokenName] = useState<string>("USDT");
+  const [quoteTokenAddress, setQuoteTokenAddress] = useState<string>("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF");
+  const [tokenPair, setTokenPair] = useState<string>(""+baseTokenName+"/"+quoteTokenName);
+  const [invertedTokenPair, setInvertedTokenPair] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
+  const [lastBlockHeight, setLastBlockHeight] = useState<number>(0);
+  const [tokenBalanceUri, setTokenBalanceUri] = useState<string>("");
    //tzkt
-  const contractsService = new ContractsService( {baseUrl: "https://api.jakartanet.tzkt.io" , version : "", withCredentials : false});
-  
-  const contractAddress: string = "KT1PyZqjjEJrorcxUg7mNnHeE2ZwNVApCniz";
-  const tokenBTCaddress: string = "KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr"
-  const tokenUSDTaddress: string = "KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF"
-  const pair = "tzBTC/USDT"
-  const inverted_pair = "USDT/tzBTC"
+   //
+  const chain_api_url = "https://api.jakartanet.tzkt.io"
+  const contractsService = new ContractsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
+  const accountsService = new AccountsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
+  const headService = new HeadService( {baseUrl: chain_api_url , version : "", withCredentials : false});
 
   const rationalise_rate  = ( rate : number , base_decimals :  number, quote_decimals : number) => {
      let scale =10 ** (base_decimals - quote_decimals);
@@ -153,14 +162,20 @@ function App() {
     let batch_close = add(open,{ minutes: 10})
     let diff = differenceInMinutes(batch_close, now);
      return ""+diff+" minutes" ;
-  } 
+  }
+
 
   const update_from_storage = async () => {
-    const tcontract =  await Tezos.contract.at(contractAddress);
+
+  
+
+    console.log(contractAddress);
+    //const tcontract =  await Tezos.contract.at(contractAddress);
     const storage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
     const rates_map = await contractsService.getBigMapByName( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } );
     const rates_map_keys = await contractsService.getBigMapByNameKeys( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } )
-    const exchange_rate : exchange_rate = rates_map_keys.filter(r => r.key == inverted_pair)[0].value;
+    console.log(rates_map_keys);
+    const exchange_rate : exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
     const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
     setExchangeRate(scaled_rate);
 
@@ -170,15 +185,22 @@ function App() {
 
     const order_book : order_book = await storage.batches.current.orderbook;
     setOrderBook(order_book);
-    setStringStorage(JSON.stringify(order_book));
     setNumberOrBids(order_book.bids.length);
     setNumberOrAsks(order_book.asks.length);
 
+    const last_head = await headService.get();
+
+    setLastBlockHeight(last_head.quoteLevel || 0);
+
+    const balances = await accountsService.getBalanceAtLevel({ address : userAddress, level: lastBlockHeight});
+
+    setTokenBalanceUri(""+ chain_api_url + "/v1/tokens/balances?account=" + userAddress);
+
+
+    setStringStorage(JSON.stringify(balances));
     setStorage(storage);
 
   };
-
-
 
   const updateValues = async (): Promise<void> => {
     try {
@@ -189,13 +211,25 @@ function App() {
     }
   };
 
-  updateValues();
+
+
+  useEffect(() => {
+    (async () => updateValues())();
+  }, [10]);
 
   return (
+
+
           <div className="wrapper">
             <div className="main-panel" ref={mainPanelRef} >
 
+            <Helmet>
+                <meta charSet="utf-8" />
+                <title>Batcher</title>
+                <link rel="canonical" href="http://batcher.marigold.dev" />
+            </Helmet>
       <div className="content">
+        <Col sm="15">
         <Row>
           <Col xs="11">
             <Card className="card-chart">
@@ -214,8 +248,9 @@ function App() {
           </Row>
 
         <Row>
-          <Col md="7">
-            <Card>
+          <Col sm="7">
+            <Row>
+              <Card>
               <CardHeader>
                 <h3 className="title">PAIR: tzBTC / USDT</h3>
               </CardHeader>
@@ -252,43 +287,63 @@ function App() {
                 <Button className="btn-danger" color="primary">
                   Redeem
                 </Button>
-               <Button className="btn-danger" color="primary" onClick={updateValues}>
-                   Update
-               </Button>
+               {/*
+                 *<Button className="btn-danger" color="primary" onClick={updateValues}>
+                 *    Update
+                 *</Button>
+                 */}
               </CardFooter>
             </Card>
-          </Col>
-          <Col md="4">
+            </Row>
             <Row>
-            <Card className="card-user">
+            <DepositButton
+                Tezos={Tezos}
+                setWallet={setWallet}
+                setUserAddress={setUserAddress}
+                setUserBalance={setUserBalance}
+                tokenName={baseTokenName}
+                tokenAddress={baseTokenAddress}
+                contractAddress={contractAddress}
+                tokenBalanceUri={tokenBalanceUri}
+                wallet={wallet}
+            />
+             <DepositButton
+                Tezos={Tezos}
+                setWallet={setWallet}
+                setUserAddress={setUserAddress}
+                setUserBalance={setUserBalance}
+                tokenName={quoteTokenName}
+                tokenAddress={quoteTokenAddress}
+                contractAddress={contractAddress}
+                tokenBalanceUri={tokenBalanceUri}
+                wallet={wallet}
+            />
+            </Row>
+          </Col>
+          <Col sm="1"></Col>
+          <Col sm="2">
+            <Row>
+            <Card>
+              <CardHeader>
+                 <h3 className="title">{userAddress}</h3>
+              </CardHeader>
               <CardBody>
-                <CardText />
-                <div className="author">
-                  <div className="block block-one" />
-                  <div className="block block-two" />
-                  <div className="block block-three" />
-                  <div className="block block-four" />
-                  <p className="description">{userAddress}</p>
-                </div>
-                <div className="card-description">
-                  {userBalance}
-                </div>
+                <ConnectButton
+                  Tezos={Tezos}
+                  setWallet={setWallet}
+                  setUserAddress={setUserAddress}
+                  setUserBalance={setUserBalance}
+                  wallet={wallet}
+                />
+               <DisconnectButton
+               wallet={wallet}
+               setUserAddress={setUserAddress}
+               setUserBalance={setUserBalance}
+               setWallet={setWallet}
+               />
               </CardBody>
               <CardFooter>
                 <div className="button-container">
-        <ConnectButton
-        Tezos={Tezos}
-        setWallet={setWallet}
-        setUserAddress={setUserAddress}
-        setUserBalance={setUserBalance}
-        wallet={wallet}
-        />
-      <DisconnectButton
-      wallet={wallet}
-      setUserAddress={setUserAddress}
-      setUserBalance={setUserBalance}
-      setWallet={setWallet}
-      />
                 </div>
               </CardFooter>
             </Card>
@@ -303,30 +358,23 @@ function App() {
                    <Col sm="2">
                     <h4 className="title d-inline">Bids</h4>
                     <Table size="sm">
-                   { 
-                     orderBook?.bids.map(b => <tr>{b.tolerance.toString()}</tr>) 
+                   {
+                     orderBook?.bids.map(b => <tr>{b.tolerance.toString()}</tr>)
                     }
                    </Table>
-                      
+
                    </Col>
                  </Row>
               </CardBody>
               <CardFooter>
-                <Button className="btn-danger" color="primary" >
-                        Deposit
-                </Button>
-                <Button className="btn-danger" color="primary">
-                  Redeem
-                </Button>
-               <Button className="btn-danger" color="primary" onClick={updateValues}>
-                   Update
-               </Button>
               </CardFooter>
             </Card>
             </Row>
+            <Row>
+            </Row>
           </Col>
         </Row>
-
+        </Col>
  </div>      </div>
             </div>
 
