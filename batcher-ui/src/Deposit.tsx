@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
+import *  as model from "./Model";
 import {
   NetworkType
 } from "@airgap/beacon-sdk";
@@ -10,6 +11,7 @@ import {
 
 import {
   Button,
+  ButtonGroup,
   Card,
   CardHeader,
   CardBody,
@@ -17,6 +19,7 @@ import {
   Col,
   CardFooter,
   CardText,
+  Input,
 } from "reactstrap";
 
 type ButtonProps = {
@@ -24,8 +27,12 @@ type ButtonProps = {
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
   setUserBalance: Dispatch<SetStateAction<number>>
+  setTokenBalance: Dispatch<SetStateAction<number>>
+  setTokenTolerance: Dispatch<SetStateAction<model.selected_tolerance>>
   tokenName: string;
   tokenAddress: string;
+  tokenBalance: number;
+  tokenTolerance: model.selected_tolerance;
   contractAddress: string;
   tokenBalanceUri:string;
   wallet: BeaconWallet;
@@ -36,43 +43,16 @@ const DepositButton = ({
   setWallet,
   setUserAddress,
   setUserBalance,
+  setTokenBalance,
+  setTokenTolerance,
   tokenName,
   tokenAddress,
+  tokenBalance,
+  tokenTolerance,
   contractAddress,
   tokenBalanceUri,
   wallet
 }: ButtonProps): JSX.Element => {
-
-  class AddressData {
-     address!: string;
-  }
-
-  class TokenMetaData {
-    name!: string;
-    symbol!: string;
-    decimals!: string;
-  }
-
-  class TokenData {
-    id!: number;
-    contract!: AddressData;
-    tokenId!: string;
-    standard!: string;
-    totalSupply!: string;
-    metadata!: TokenMetaData;
-  }
-
-  class ApiTokenBalanceData {
-    id!: number;
-    account!: AddressData;
-    token!: TokenData;
-    balance!: string;
-    transfersCount!: number;
-    firstLevel!: number;
-    firstTime!: string;
-    lastLevel!: number;
-    lastTime!: string;
-  }
 
   class TokenBalance {
    address:string;
@@ -90,8 +70,15 @@ const DepositButton = ({
 
   const depositToken = async (): Promise<void> => {
     try {
-      
+
+
+
+       //Call Deposit endpoint
+       const contract  = await Tezos.contract.at(contractAddress);
+       const methods = await contract.methods
+
        console.log("Debug:"+tokenBalanceResult);
+       console.log("Debug:"+methods);
     } catch (error) {
       console.log(error);
     }
@@ -101,43 +88,90 @@ const DepositButton = ({
   const [tokenBalanceResult, setTokenBalanceResult] = useState<TokenBalance>();
 
   const api = async () => {
+    console.log("TOKENURI:" + tokenBalanceUri);
     const data = await fetch(tokenBalanceUri, {
       method: "GET"
     });
     const jsonData = await data.json();
-    const tokenBalances = jsonData as Array<ApiTokenBalanceData>;
+    const tokenBalances = jsonData as Array<model.ApiTokenBalanceData>;
     console.log(jsonData);
-    const tokenbal : ApiTokenBalanceData = tokenBalances.filter((p:ApiTokenBalanceData)  => p.token.contract.address === tokenAddress)[0];
+    const tokenbal : model.ApiTokenBalanceData = tokenBalances.filter((p:model.ApiTokenBalanceData)  => p.token.contract.address === tokenAddress)[0];
     const rationalisedBal = parseInt(tokenbal.balance) / (10 ** parseInt(tokenbal.token.metadata.decimals) )
-    setTokenBalanceResult(new TokenBalance(tokenbal.token.contract.address,tokenbal.token.metadata.symbol,parseInt(tokenbal.token.metadata.decimals),rationalisedBal));
+    const tkBal = (new TokenBalance(tokenbal.token.contract.address,tokenbal.token.metadata.symbol,parseInt(tokenbal.token.metadata.decimals),rationalisedBal));
+    setTokenBalanceResult(tkBal);
+    setTokenBalance(tkBal.balance);
+
   };
 
   useEffect(() => {
     console.log(tokenBalanceUri);
-   
-    api();
+
+      (async () => api())();
     const interval=setInterval(()=>{
-      api()
+      (async () => api())();
      },10000)
 
      return()=>clearInterval(interval)
 
 
-  }, []);
+  }, [tokenBalanceUri]);
 
+
+  const setTolerance = (selected:number) => {
+     if (selected === 0){
+       setTokenTolerance(model.selected_tolerance.minus)
+     } else if (selected == 1) {
+       setTokenTolerance(model.selected_tolerance.exact)
+     } else {
+       setTokenTolerance(model.selected_tolerance.plus)
+     }
+  };
+  
 
   return (
-       <Col sm="4">
+       <Col sm="5">
             <Card>
               <CardHeader>
-                <h3 className="title">{tokenName}</h3>
+                <h4>Balance : {tokenBalance}  {tokenName}</h4>
               </CardHeader>
               <CardBody>
-                <h3 className="title">{tokenBalanceResult?.balance}</h3>
+                 <Input
+      id="amount"
+      name="amount"
+      placeholder="Enter amount to deposit"
+      type="text"
+    />
+                    <ButtonGroup vertical>
+        <Button
+          color="primary"
+          outline
+          onClick={() => setTolerance(0)}
+          active={tokenTolerance === model.selected_tolerance.minus}
+        >
+          -10bps
+        </Button>
+        <Button
+          color="primary"
+          outline
+          onClick={() => setTolerance(1)}
+          active={tokenTolerance === model.selected_tolerance.exact}
+        >
+          Exact Price
+        </Button>
+        <Button
+          color="primary"
+          outline
+          onClick={() => setTolerance(2)}
+          active={tokenTolerance === model.selected_tolerance.plus}
+        >
+          +10bps
+        </Button>
+      </ButtonGroup>
+                    
               </CardBody>
               <CardFooter>
-                <Button className="btn-danger" color="primary" onClick={depositToken} >
-                        Deposit
+                <Button block className="btn-danger" color="primary" onClick={depositToken} >
+                        Depost {tokenName}
                 </Button>
               </CardFooter>
             </Card>
