@@ -121,6 +121,33 @@ let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
 
+let parse_side (order_side : nat) : side =
+  match order_side with
+  | 0n ->  BUY
+  | 1n -> SELL
+  | _ -> failwith Errors.unable_to_parse_side_from_external_order
+
+
+let parse_tolerance (tolerance : nat) : tolerance =
+  match tolerance with
+  | 0n -> MINUS
+  | 1n -> EXACT
+  | 2n -> PLUS
+  | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
+
+let convert_order (order: external_swap_order) :swap_order =
+  let side = parse_side(order.side) in
+  let tolerance = parse_tolerance(order.tolerance) in
+  let converted_swap : swap_order =
+  {
+    trader : order.trader;
+    swap  : order.swap;
+    created_at : order.created_at;
+    side : side;
+    tolerance : tolerance;
+  } in
+  convert_order
+
 [@inline]
 let filter_orders_by_user
   (user : address)
@@ -181,29 +208,6 @@ let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Ty
   | None -> failwith Errors.not_found_rate_name
   | Some current_rate -> current_rate
 
-let parse_side (side:string) : Types.Types.side =
-   match side with
-   | "BUY" -> Types.Types.side.BUY
-   | "SELL" -> Types.Types.side.SELL
-   | _ ->  failwith Errors.unable_to_parse_side_from_external_order
-
-let parse_tolerance (tolerance:string) : tolerance =
-   match tolerance with
-   | "MINUS" -> tolerance.MINUS
-   | "EXACT" -> tolerance.EXACT
-   | "PLUS" -> tolerance.PLUS
-   | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
-
-let convert_order (order: external_swap_order) :swap_order =
-  let side = parse_side(order.side) in
-  let tolerance = parse_tolerance(order.tolerance) in
-  {
-    trader : order.trader;
-    swap  : order.swap;
-    created_at : order.created_at;
-    side : side;
-    tolerance : tolerance;
-  }
 
 let main
   (action, storage : entrypoint * storage) : result =

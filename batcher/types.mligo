@@ -66,8 +66,8 @@ module Types = struct
     trader : address;
     swap  : swap;
     created_at : timestamp;
-    side : string;
-    tolerance : string;
+    side : nat;
+    tolerance : nat;
   }
 
   type batch_status  =
