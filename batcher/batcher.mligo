@@ -12,6 +12,9 @@
 type storage  = Storage.Types.t
 type result = (operation list) * storage
 type order = Types.Types.swap_order
+type external_order = Types.Types.external_swap_order
+type side = Types.Types.side
+type tolerance = Types.Types.tolerance
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -184,14 +187,14 @@ let parse_side (side:string) : Types.Types.side =
    | "SELL" -> Types.Types.side.SELL
    | _ ->  failwith Errors.unable_to_parse_side_from_external_order
 
-let parse_tolerance (tolerance:string) : Types.Types.tolerance =
+let parse_tolerance (tolerance:string) : tolerance =
    match tolerance with
-   | "MINUS" -> Types.Types.tolerance.MINUS
-   | "EXACT" -> Types.Types.tolerance.EXACT
-   | "PLUS" -> Types.Types.tolerance.PLUS
+   | "MINUS" -> tolerance.MINUS
+   | "EXACT" -> tolerance.EXACT
+   | "PLUS" -> tolerance.PLUS
    | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
 
-let convert_order (order: Types.Types.external_swap_order) :swap_order =
+let convert_order (order: external_swap_order) :swap_order =
   let side = parse_side(order.side) in
   let tolerance = parse_tolerance(order.tolerance) in
   {
