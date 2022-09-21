@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   NetworkType
 } from "@airgap/beacon-sdk";
@@ -33,6 +34,7 @@ const ConnectButton = ({
     const balance = await Tezos.tz.getBalance(userAddress);
     
     setUserBalance(balance.toNumber());
+    toast.success('Wallet for address ' + userAddress + ' connected')
   };
 
   const connectWallet = async (): Promise<void> => {

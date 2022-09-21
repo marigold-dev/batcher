@@ -12,6 +12,7 @@ import { parseISO, add, differenceInMinutes } from 'date-fns'
 import './App.css';
 import *  as model from "./Model";
 import { Helmet } from 'react-helmet';
+import toast, { Toaster } from 'react-hot-toast';
 // reactstrap components
 import {
   Button,
@@ -44,7 +45,6 @@ function App() {
   const [Tezos, setTezos] = useState<TezosToolkit>(new TezosToolkit("https://jakartanet.tezos.marigold.dev"));
 
 
-
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("No Wallet Connected");
   const [userBalance, setUserBalance] = useState<number>(0);
@@ -57,6 +57,7 @@ function App() {
   const [orderBook, setOrderBook] = useState<model.order_book | undefined>(undefined);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
+
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
   const [contractAddress, setContractAddress] = useState<string>("KT1PyZqjjEJrorcxUg7mNnHeE2ZwNVApCniz");
   const [baseTokenName, setBaseTokenName] = useState<string>("tzBTC");
@@ -83,6 +84,19 @@ function App() {
      return rate * scale
   }
 
+
+  const extract_contract_schema = async () => {
+
+Tezos.contract
+  .at(contractAddress)
+  .then((c) => {
+    let methods = c.parameterSchema.ExtractSignatures();
+    setStringStorage(JSON.stringify(methods, null, 2));
+  })
+  .catch((error) => console.log(`Error: ${error}`));
+
+  };
+
   const get_time_left_in_batch = (staus:model.batch_status) => {
     let batch_open = staus.open;
     let now = new Date();
@@ -94,6 +108,7 @@ function App() {
 
 
   const get_token_by_side = (tolerance : string, order_sides : Array<model.swap_order>) => {
+    try{
     let token_name = order_sides[0].swap.from.token.name;
 
     let amount = order_sides.reduce((previousAmount, order) => {
@@ -105,6 +120,10 @@ function App() {
     }, 0);
 
     return token_name.concat(" : ", Number(amount).toString());
+  }
+  catch (error){
+    return "No orders";
+  }
   }
 
   const update_from_storage = async () => {
@@ -138,8 +157,7 @@ function App() {
     const balances = await accountsService.getBalanceAtLevel({ address : userAddress, level: lastBlockHeight});
 
 
-
-    setStringStorage(JSON.stringify(tokenBalanceUri));
+    const _updateStrings = await extract_contract_schema();
 
   };
 
@@ -194,7 +212,6 @@ function App() {
                 <link rel="canonical" href="http://batcher.marigold.dev" />
             </Helmet>
       <div className="content">
-        <Col sm="15">
         <Row>
           <Col xs="11">
             <Card className="card-chart">
@@ -213,7 +230,7 @@ function App() {
           </Row>
 
         <Row>
-          <Col sm="7">
+          <Col sm="8">
             <Row>
               <Card>
               <CardHeader>
@@ -283,7 +300,6 @@ function App() {
             />
             </Row>
           </Col>
-          <Col className="col-1"></Col>
           <Col sm="3">
             <Row>
             <Card>
@@ -366,7 +382,6 @@ function App() {
             </Row>
           </Col>
         </Row>
-        </Col>
  </div>      </div>
             </div>
 

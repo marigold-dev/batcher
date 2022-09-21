@@ -5,6 +5,7 @@ import {
 import { Dispatch, SetStateAction } from "react";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   Button
 } from "reactstrap";
@@ -23,7 +24,7 @@ const DisconnectButton = ({
   setWallet,
 }: ButtonProps): JSX.Element => {
   const disconnectWallet = async (): Promise<void> => {
-    setUserAddress("");
+    setUserAddress("No Wallet Connected");
     setUserBalance(0);
     setWallet(null);
     console.log("disconnecting wallet");

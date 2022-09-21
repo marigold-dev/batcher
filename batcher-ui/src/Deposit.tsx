@@ -1,8 +1,9 @@
-import { Dispatch, SetStateAction, useState, useEffect } from "react";
+import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
 import *  as model from "./Model";
+import toast, { Toaster } from 'react-hot-toast';
 import {
   NetworkType
 } from "@airgap/beacon-sdk";
@@ -19,8 +20,13 @@ import {
   Col,
   CardFooter,
   CardText,
+  FormGroup,
+  Form,
   Input,
+  Label,
+  Row,
 } from "reactstrap";
+import { StringParameter } from "@dipdup/tzkt-api";
 
 type ButtonProps = {
   Tezos: TezosToolkit;
@@ -68,24 +74,70 @@ const DepositButton = ({
    }
   }
 
+  const [tokenBalanceResult, setTokenBalanceResult] = useState<TokenBalance>();
+  const [depositAmount, setDepositAmount] = useState<number>(0);
+
+  const transferToken = async (
+      tokenAddress:string,
+      fromAddress: string,
+      toAddress: string,
+      token_id: number,
+      amount: number
+  ) : Promise<void> => {
+        const tokenWalletContract = await Tezos.wallet.at(tokenAddress);
+        const transfer_params = [
+              {
+                from_: fromAddress,
+                tx : [
+                  {
+                    to_:toAddress,
+                    token_id:token_id,
+                    amount: amount 
+                  }
+                ]
+              }
+           ];
+           const token_transfer_op = await tokenWalletContract.methods.transfer(transfer_params).send();
+           const confirm = await token_transfer_op.confirmation();
+           if(!confirm.completed)
+               throw Error("Failed to transfer token");
+
+  };
+
   const depositToken = async (): Promise<void> => {
     try {
 
+      if(!wallet) {
+          toast.error("Please connect a wallet before depositing");
+      } else {
+        const toastId = 'depositing';
+        toast.loading('Attempting to place swap order for ' + tokenName, {id: toastId} ) ;  
+        Tezos.setWalletProvider(wallet);   
+        const userAddress = await wallet.getPKH();
+        if(!userAddress){
+          await wallet.requestPermissions();
+        }
+        const batcherContract  = await Tezos.contract.at(contractAddress);
 
+        const rationalised_amount = depositAmount;
 
-       //Call Deposit endpoint
-       const contract  = await Tezos.contract.at(contractAddress);
-       const methods = await contract.methods
-
-       console.log("Debug:"+tokenBalanceResult);
-       console.log("Debug:"+methods);
+         const tempAddress = 'tz1RjnEAwwVHwuDC6dnCgWPqKJ9HPRBALFHh';
+        
+        toast.loading('Depositing ' + depositAmount + " of " + tokenName + " from " + tempAddress + " to batcher contract " + contractAddress, {id: toastId } ) ; 
+        
+        try {
+            await transferToken(tokenAddress,userAddress,contractAddress,0,rationalised_amount);
+            toast.success('Deposit of ' + tokenName + ' successful', {id: toastId});
+        } catch (error:any) {
+         toast.error("Transfer error : " + error.message); 
+        }
+      }
     } catch (error) {
       console.log(error);
     }
   };
 
 
-  const [tokenBalanceResult, setTokenBalanceResult] = useState<TokenBalance>();
 
   const api = async () => {
     console.log("TOKENURI:" + tokenBalanceUri);
@@ -128,37 +180,50 @@ const DepositButton = ({
   };
   
 
+  const setDepositValue = (event:ChangeEvent<HTMLInputElement>) => {
+    setDepositAmount(event.target.valueAsNumber); 
+  };
+
   return (
-       <Col sm="5">
-            <Card>
-              <CardHeader>
+    <Col sm="5.5">
+      <Card>
+         <CardHeader> 
                 <h4>Balance : {tokenBalance}  {tokenName}</h4>
-              </CardHeader>
-              <CardBody>
-                 <Input
-      id="amount"
-      name="amount"
-      placeholder="Enter amount to deposit"
-      type="text"
-    />
-                    <ButtonGroup vertical>
-        <Button
-          color="primary"
-          outline
-          onClick={() => setTolerance(0)}
-          active={tokenTolerance === model.selected_tolerance.minus}
-        >
-          -10bps
-        </Button>
-        <Button
-          color="primary"
-          outline
-          onClick={() => setTolerance(1)}
-          active={tokenTolerance === model.selected_tolerance.exact}
-        >
-          Exact Price
-        </Button>
-        <Button
+         </CardHeader>
+         <CardBody>
+             <Form>
+               <Row className="row-cols-lg-auto g-3 align-items-center">
+                <Col>
+                  <Input
+                    id="amount"
+                    name="amount"
+                    placeholder="Amount"
+                    type="number"
+                    onChange={ (e) => setDepositValue(e)}
+                  />
+                </Col>
+                <Col>
+                   <Button
+                    color="green"
+                    outline
+                    onClick={() => setTolerance(0)}
+                    active={tokenTolerance === model.selected_tolerance.minus}
+                  >
+                    -10bps
+                  </Button>
+                </Col>
+                <Col>
+                <Button
+                  color="primary"
+                  outline
+                  onClick={() => setTolerance(1)}
+                  active={tokenTolerance === model.selected_tolerance.exact}
+                  >
+                  Exact
+                </Button>
+                </Col> 
+                <Col>
+                <Button
           color="primary"
           outline
           onClick={() => setTolerance(2)}
@@ -166,16 +231,19 @@ const DepositButton = ({
         >
           +10bps
         </Button>
-      </ButtonGroup>
-                    
-              </CardBody>
-              <CardFooter>
+                </Col>
+               </Row> 
+             </Form>
+         </CardBody>
+            <CardFooter>
                 <Button block className="btn-danger" color="primary" onClick={depositToken} >
-                        Depost {tokenName}
+                        Swap {tokenName}
                 </Button>
               </CardFooter>
-            </Card>
-        </Col>
+      </Card>
+    </Col>
+
+
   );
 };
 
