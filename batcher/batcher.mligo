@@ -16,7 +16,7 @@ type order = Types.Types.swap_order
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
-  | Deposit of Types.Types.swap_order
+  | Deposit of Types.Types.external_swap_order
   | Post of Types.Types.exchange_rate
   | Tick
   | Redeem
@@ -178,10 +178,34 @@ let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Ty
   | None -> failwith Errors.not_found_rate_name
   | Some current_rate -> current_rate
 
+let parse_side (side:string) : Types.Types.side =
+   match side with
+   | "BUY" -> Types.Types.side.BUY
+   | "SELL" -> Types.Types.side.SELL
+   | _ ->  failwith Errors.unable_to_parse_side_from_external_order
+
+let parse_tolerance (tolerance:string) : Types.Types.tolerance =
+   match tolerance with
+   | "MINUS" -> Types.Types.tolerance.MINUS
+   | "EXACT" -> Types.Types.tolerance.EXACT
+   | "PLUS" -> Types.Types.tolerance.PLUS
+   | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
+
+let convert_order (order: Types.Types.external_swap_order) :swap_order =
+  let side = parse_side(order.side) in
+  let tolerance = parse_tolerance(order.tolerance) in
+  {
+    trader : order.trader;
+    swap  : order.swap;
+    created_at : order.created_at;
+    side : side;
+    tolerance : tolerance;
+  }
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
-   | Deposit order -> deposit order storage
+   | Deposit order -> deposit convert(order) storage
    | Post new_rate -> post_rate new_rate storage
    | Tick -> tick storage
    | Redeem -> redeem storage

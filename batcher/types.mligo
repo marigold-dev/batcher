@@ -61,6 +61,15 @@ module Types = struct
     tolerance : tolerance;
   }
 
+  type external_swap_order = {
+    [@layout:comb]
+    trader : address;
+    swap  : swap;
+    created_at : timestamp;
+    side : string;
+    tolerance : string;
+  }
+
   type batch_status  =
     [@layout:comb]
     NOT_OPEN | OPEN | CLOSED | FINALIZED
