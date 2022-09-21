@@ -76,7 +76,8 @@ let try_to_append_order (order : Types.Types.swap_order)
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
-let deposit (order: Types.Types.swap_order) (storage : storage) : result =
+let deposit (external_order: Types.Types.swap_order) (storage : storage) : result =
+  let order = convert_order external_order in
   let storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batches =
@@ -121,31 +122,17 @@ let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
 
-let parse_side (order_side : nat) : side =
-  match order_side with
-  | 0n ->  BUY
-  | 1n -> SELL
-  | _ -> failwith Errors.unable_to_parse_side_from_external_order
-
-
-let parse_tolerance (tolerance : nat) : tolerance =
-  match tolerance with
-  | 0n -> MINUS
-  | 1n -> EXACT
-  | 2n -> PLUS
-  | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
-
 let convert_order (order: external_swap_order) :swap_order =
-  let side = parse_side(order.side) in
-  let tolerance = parse_tolerance(order.tolerance) in
+  let side = Types.Utils.parse_side(order.side) in
+  let tolerance = Types.Utils.parse_tolerance(order.tolerance) in
   let converted_swap : swap_order =
-  {
-    trader : order.trader;
-    swap  : order.swap;
-    created_at : order.created_at;
-    side : side;
-    tolerance : tolerance;
-  } in
+    {
+      trader = order.trader;
+      swap  = order.swap;
+      created_at = order.created_at;
+      side = side;
+      tolerance = tolerance;
+    } in
   convert_order
 
 [@inline]
@@ -212,7 +199,7 @@ let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Ty
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
-   | Deposit order -> deposit convert(order) storage
+   | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Tick -> tick storage
    | Redeem -> redeem storage
