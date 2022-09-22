@@ -90,17 +90,17 @@ let convert_order (order: external_order) : Types.Types.swap_order =
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (external_order: Types.Types.external_swap_order) (storage : storage) : result =
   let order = convert_order external_order in
-  let storage = tick_current_batches storage in
+  let ticked_storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batches =
-    if Batch.should_open_new storage.batches current_time then
-      Batch.start_period order storage.batches current_time
+    if Batch.should_open_new ticked_storage.batches current_time then
+      Batch.start_period order ticked_storage.batches current_time
     else
-      try_to_append_order order storage.batches
+      try_to_append_order order ticked_storage.batches
   in
-  let storage = { storage with batches = updated_batches } in
+  let updated_storage = { ticked_storage with batches = updated_batches } in
   (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
-  let storage_after_treasury_update = Treasury.deposit order.trader order.swap.from storage in
+  let storage_after_treasury_update = Treasury.deposit order.trader order.swap.from updated_storage in
   no_op (storage_after_treasury_update)
 
 let redeem (storage : storage) : result =
