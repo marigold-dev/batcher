@@ -118,7 +118,7 @@ let move_current_to_previous_if_finalized (storage : storage) : storage =
        let previous = batches.previous in
        let new_previous = current_batch :: previous in
        let new_current : Types.Types.batch option= None in 
-       let new_batches = { batches with current = new_current, previous = new_previous } in
+       let new_batches = { batches with current = new_current; previous = new_previous } in
        { storage with batches = new_batches }
      else
        storage
