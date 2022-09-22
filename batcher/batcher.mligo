@@ -21,7 +21,6 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 type entrypoint =
   | Deposit of Types.Types.external_swap_order
   | Post of Types.Types.exchange_rate
-  | Tick
   | Redeem
 
 
@@ -39,21 +38,21 @@ let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
   let updated_batches =
     match batches.current with
-      | None ->
-        batches
-      | Some batch ->
+      | None -> batches
+      | Some current_batch ->
         let current_time = Tezos.get_now () in
-        let batch =
-          if Batch.should_be_closed batch current_time then
-            Batch.close batch current_time
-          else if Batch.should_be_cleared batch current_time then
-            (* Finalize the current batch, but does not open a new one before we receive
-               a new deposit *)
-            finalize batch storage current_time
+        let updated_batch =
+          if Batch.should_be_closed current_batch current_time then
+            Batch.close current_batch current_time
+          else if Batch.should_be_cleared current_batch current_time then
+            let finalized_batch = finalize current_batch storage current_time in
+            let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
+            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing cleared_infos.rate finalized_batch.treasury in
+            {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
-            batch
+            current_batch
         in
-        { batches with current = Some batch }
+        { batches with current = Some updated_batch }
   in
   { storage with batches = updated_batches }
 
@@ -109,31 +108,29 @@ let redeem (storage : storage) : result =
   no_op(Treasury.redeem holder storage)
 
 
+let move_current_to_previous_if_finalized (storage : storage) : storage = 
+  let batches = storage.batches in
+  let current = batches.current in
+  match current with
+  | None -> storage
+  | Some current_batch -> 
+     if (Batch.is_cleared current_batch) then
+       let previous = batches.previous in
+       let new_previous = current_batch :: previous in
+       let new_current : Types.Types.batch option= None in 
+       let new_batches = { batches with current = new_current; previous = new_previous } in
+       { storage with batches = new_batches }
+     else
+       storage
+
+
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared.
    TODO: actually update the rate *)
 let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate rate storage in
-  match storage.batches.current with
-    (* TODO: find a way to remove these tests? *)
-    | None -> no_op (updated_rate_storage)
-    | Some current_batch ->
-      let updated_batches =
-        let current_time = Tezos.get_now () in
-        if Batch.should_be_cleared current_batch current_time then
-          let batch = finalize current_batch storage current_time in
-          let cleared_infos = Batch.get_status_when_its_cleared batch in
-          let updated_treasury, new_orderbook =
-            Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate batch.treasury in
-          let new_batch = {batch with orderbook = new_orderbook; treasury = updated_treasury} in
-          { storage.batches with current = Some new_batch }
-        else
-          storage.batches
-      in
-        no_op ({ updated_rate_storage with batches = updated_batches } )
-
-let tick (storage : storage) : result =
-  let updated_storage = tick_current_batches storage in
-  no_op (updated_storage)
+  let ticked_storage = tick_current_batches updated_rate_storage in
+  let moved_storage = move_current_to_previous_if_finalized ticked_storage in
+  no_op (moved_storage)
 
 [@inline]
 let filter_orders_by_user
@@ -201,6 +198,5 @@ let main
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
-   | Tick -> tick storage
    | Redeem -> redeem storage
 
