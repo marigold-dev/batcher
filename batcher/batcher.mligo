@@ -56,19 +56,6 @@ let tick_current_batches (storage : storage) : storage =
   in
   { storage with batches = updated_batches }
 
-  match ticked_storage.batches.current with
-    (* TODO: find a way to remove these tests? *)
-    | None -> no_op (ticked_storage)
-    | Some current_batch ->
-      let updated_batches =
-        let current_time = Tezos.get_now () in
-        if Batch.should_be_cleared current_batch current_time then
-  
-        else
-          ticked_storage.batches
-      in
-        no_op ({ ticked_storage with batches = updated_batches } )
-
 let try_to_append_order (order : Types.Types.swap_order)
   (batches : Batch.batch_set) : Batch.batch_set =
   match batches.current with
@@ -121,12 +108,25 @@ let redeem (storage : storage) : result =
   no_op(Treasury.redeem holder storage)
 
 
+let move_current_to_previous_if_finalized (storage : storage) : storage = 
+  let batches = storage.batches in
+  let current = batches.current in
+  if (Batch.is_cleared current) then
+    let previous = batches.previous in
+    let new_previous = current :: previous in
+    let new_batches = { batches with current = None, previous = new_previous } in
+    { storage with batches = new_batches }
+  else
+    storage
+
+
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared.
    TODO: actually update the rate *)
 let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate rate storage in
   let ticked_storage = tick_current_batches updated_rate_storage in
-  no_op (ticked_storage)
+  let moved_storage = move_current_to_previous_if_finalized ticked_storage in
+  no_op (moved_storage)
 
 [@inline]
 let filter_orders_by_user
