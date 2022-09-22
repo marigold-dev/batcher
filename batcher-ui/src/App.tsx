@@ -53,13 +53,13 @@ function App() {
   const sidebarRef = React.useRef(null);
   const [exchangeRate, setExchangeRate] = useState<number | undefined>();
   const [stringStorage, setStringStorage] = useState<string>("");
-  const [remaining, setRemaining] = useState<string>("");
+  const [remaining, setRemaining] = useState<string>("No open batch");
   const [orderBook, setOrderBook] = useState<model.order_book | undefined>(undefined);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
-
+  
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
-  const [contractAddress, setContractAddress] = useState<string>("KT1PyZqjjEJrorcxUg7mNnHeE2ZwNVApCniz");
+  const [contractAddress, setContractAddress] = useState<string>("KT1CQw5Yo7cecCu496noAZDngeCUxhtHv5jC");
   const [baseTokenName, setBaseTokenName] = useState<string>("tzBTC");
   const [baseTokenAddress, setBaseTokenAddress] = useState<string>("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr");
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
