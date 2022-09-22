@@ -1,6 +1,7 @@
 #import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
 #import "orderbook.mligo" "Orderbook"
+#import "errors.mligo" "Errors"
 
 module Types = CommonTypes.Types
 
@@ -52,6 +53,11 @@ let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
     }
   }
 
+let get_status_when_its_cleared (batch : t) =
+  match batch.status with
+    | Cleared infos -> infos
+    | _ -> failwith Errors.batch_should_be_cleared
+
 let is_open (batch : t) : bool =
   match batch.status with
     | Open _ -> true
@@ -97,7 +103,7 @@ let start_period
   (batches : batch_set)
   (current_time : timestamp) : batch_set =
     let treasury : CommonTypes.Types.treasury = make_new_treasury in
-    let pair = CommonTypes.Utils.pair_of_swap order.swap in
+    let pair = CommonTypes.Utils.pair_of_swap order in
     let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
     let new_batch = make current_time orderbook pair treasury in
     match batches.current with
@@ -111,14 +117,14 @@ let close (batch : t) (current_time : timestamp) : t =
     | Open { start_time } ->
       let new_status = Closed { start_time = start_time; closing_time = current_time } in
       { batch with status = new_status }
-    | _ -> failwith "Trying to close a batch which is not open"
+    | _ -> failwith Errors.trying_to_close_batch_which_is_not_open
 
 let finalize (batch : t) (current_time : timestamp)
   (clearing : Types.clearing) (rate : Types.exchange_rate) : t =
   match batch.status with
     | Closed _ ->
       finalize batch current_time clearing rate
-    | _ -> failwith "Trying to finalize a batch which is not closed"
+    | _ -> failwith Errors.trying_to_finalize_batch_which_is_not_closed
 
 let new_batch_set : batch_set =
   { current = None; previous = [] }

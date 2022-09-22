@@ -1,6 +1,6 @@
 #import "../math.mligo" "Math"
 #import "../../math_lib/lib/float.mligo" "Float"
-#import "../../breathalyzer/lib/lib.mligo" "Breath" 
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath" 
 #import "../types.mligo" "CommonTypes"
 #import "../errors.mligo" "CommonErrors"
 
@@ -14,13 +14,12 @@ module Utils = struct
     let (rate, buy_side, sell_side) = parameters in 
     let clearing = Math.get_clearing_price rate buy_side sell_side in 
     let { clearing_volumes; clearing_tolerance } = clearing in 
-    match Map.get_and_update
+    match Map.find_opt
       clearing_tolerance 
-      (None : nat option)
       clearing_volumes 
     with 
-    | (Some clearing_price, _clearing_volumes) -> (([] : operation list), clearing_price)
-    | (None, _clearing_volumes) -> failwith CommonErrors.not_found_clearing_level
+    | Some clearing_price -> (([] : operation list), clearing_price)
+    | None -> failwith CommonErrors.not_found_clearing_level
 
   (* Originate math module *)
   type originated = Breath.Contract.originated

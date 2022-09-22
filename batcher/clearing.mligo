@@ -15,10 +15,10 @@ type order = CommonTypes.Types.swap_order
 type orderbook = Order.t
 
 type orders = order list
-type buy_side = CommonType.Types.buy_side
-type sell_side = CommonType.Types.sell_side
+type buy_side = CommonTypes.Types.buy_side
+type sell_side = CommonTypes.Types.sell_side
 
-
+[@inline]
 let get_distribution_of
   (side, tolerance : side * tolerance) (orderbook : orderbook) : nat
 =
@@ -30,7 +30,6 @@ let get_distribution_of
   let collect (acc, o : nat * order) : nat = 
     (if tolerance = o.tolerance then (acc + o.swap.from.amount) else acc)  in
   List.fold collect side_orders 0n
-
 
 let compute_clearing_prices
   (rate: CommonTypes.Types.exchange_rate)
@@ -45,13 +44,13 @@ let compute_clearing_prices
   let orderbook = current_batch.orderbook in
 
 
-  let sell_cp_minus = int (get_distribution_of (SELL,MINUS) orders) in
-  let sell_cp_exact = int (get_distribution_of (SELL,EXACT) orders) in
-  let sell_cp_plus = int (get_distribution_of (SELL,PLUS) orders) in
+  let sell_cp_minus = int (get_distribution_of (SELL,MINUS) orderbook) in
+  let sell_cp_exact = int (get_distribution_of (SELL,EXACT) orderbook) in
+  let sell_cp_plus = int (get_distribution_of (SELL,PLUS) orderbook) in
 
-  let buy_cp_minus = int (get_distribution_of (BUY,MINUS) orders) in
-  let buy_cp_exact = int (get_distribution_of (BUY,EXACT) orders) in
-  let buy_cp_plus = int (get_distribution_of (BUY,PLUS) orders) in
+  let buy_cp_minus = int (get_distribution_of (BUY,MINUS) orderbook) in
+  let buy_cp_exact = int (get_distribution_of (BUY,EXACT) orderbook) in
+  let buy_cp_plus = int (get_distribution_of (BUY,PLUS) orderbook) in
 
 
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in 

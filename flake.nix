@@ -29,6 +29,7 @@
       in {
         devShells.${system}.default = pkgs.mkShell {
           name = "batcher";
+
           buildInputs = with pkgs;
             with ocamlPackages;
             with nodePackages; [
@@ -39,8 +40,10 @@
               npm
               yarn
               node2nix
+               tezos.tezos-client
 
             ];
+
           shellHook = ''
             alias lv="ligo version"
             alias lcc="ligo compile contract"
@@ -69,11 +72,11 @@
                 nixfmt
               ];
 
+
             buildPhase = ''
               mkdir -p $out
-              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz
-              INITSTORAGE=$(<$src/batcher/storage/storage.mligo)
-              ligo compile storage $src/slip/batcher.mligo "$INITSTORAGE" -s cameligo -e main -o $out/batcher-storage.tz
+              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz --protocol $protocol
+              ligo compile expression cameligo --michelson-format text --init-file $src/batcher/storage/initial_storage.mligo 'f()' > $out/batcher_storage.tz
             '';
 
           };
