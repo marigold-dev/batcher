@@ -74,9 +74,22 @@ let try_to_append_order (order : Types.Types.swap_order)
           let current = Batch.append_order order current in
           { batches with current = Some current }
 
+let convert_order (order: external_order) : Types.Types.swap_order =
+  let side = Types.Utils.parse_side(order.side) in
+  let tolerance = Types.Utils.parse_tolerance(order.tolerance) in
+  let converted_swap : Types.Types.swap_order =
+    {
+      trader = order.trader;
+      swap  = order.swap;
+      created_at = order.created_at;
+      side = side;
+      tolerance = tolerance;
+    } in
+  converted_swap
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
-let deposit (external_order: Types.Types.swap_order) (storage : storage) : result =
+let deposit (external_order: Types.Types.external_swap_order) (storage : storage) : result =
   let order = convert_order external_order in
   let storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
@@ -121,19 +134,6 @@ let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
 let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
   no_op (updated_storage)
-
-let convert_order (order: external_swap_order) :swap_order =
-  let side = Types.Utils.parse_side(order.side) in
-  let tolerance = Types.Utils.parse_tolerance(order.tolerance) in
-  let converted_swap : swap_order =
-    {
-      trader = order.trader;
-      swap  = order.swap;
-      created_at = order.created_at;
-      side = side;
-      tolerance = tolerance;
-    } in
-  convert_order
 
 [@inline]
 let filter_orders_by_user
