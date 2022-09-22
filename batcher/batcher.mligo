@@ -50,7 +50,7 @@ let tick_current_batches (storage : storage) : storage =
             let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing cleared_infos.rate finalized_batch.treasury in
             {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
-            batch
+            current_batch
         in
         { batches with current = Some batch }
   in
