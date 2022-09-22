@@ -196,17 +196,13 @@ module Utils = struct
 
   let parse_side
     (order_side : nat) : Types.side =
-    match order_side with
-    | 0n -> Types.side.BUY
-    | _ -> Types.side.SELL
-    | _ -> failwith Errors.unable_to_parse_side_from_external_order)
+      if order_side = 0n then BUY
+      else SELL
 
-  let parse_tolerance (tolerance : nat) : tolerance =
-    match tolerance with
-    | 0n -> tolerance.MINUS
-    | 1n -> tolerance.EXACT
-    | 2n -> tolerance.PLUS
-    | _ ->  failwith Errors.unable_to_parse_tolerance_from_external_order
-
+  let parse_tolerance (tolerance : nat) : Types.tolerance =
+    if tolerance = 0n then MINUS 
+    else if tolerance = 1n then EXACT
+    else if tolerance = 2n then PLUS
+    else failwith Errors.unable_to_parse_tolerance_from_external_order
 end
 
