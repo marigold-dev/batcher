@@ -117,7 +117,7 @@ let move_current_to_previous_if_finalized (storage : storage) : storage =
      if (Batch.is_cleared current_batch) then
        let previous = batches.previous in
        let new_previous = current_batch :: previous in
-       let new_batches = { batches with current = None, previous = new_previous } in
+       let new_batches = { batches with current = (None: Types.Types.batch), previous = new_previous } in
        { storage with batches = new_batches }
      else
        storage
