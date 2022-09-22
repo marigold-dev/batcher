@@ -115,7 +115,8 @@ let start_period
 let close (batch : t) (current_time : timestamp) : t =
   match batch.status with
     | Open { start_time } ->
-      let new_status = Closed { start_time = start_time; closing_time = current_time } in
+      let batch_close_time = start_time + Constants.deposit_time_window in
+      let new_status = Closed { start_time = start_time; closing_time = batch_close_time } in
       { batch with status = new_status }
     | _ -> failwith Errors.trying_to_close_batch_which_is_not_open
 
