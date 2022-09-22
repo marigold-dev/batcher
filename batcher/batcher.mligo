@@ -52,7 +52,7 @@ let tick_current_batches (storage : storage) : storage =
           else
             current_batch
         in
-        { batches with current = Some batch }
+        { batches with current = Some updated_batch }
   in
   { storage with batches = updated_batches }
 
