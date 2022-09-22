@@ -44,7 +44,12 @@ function App() {
 
   const [Tezos, setTezos] = useState<TezosToolkit>(new TezosToolkit("https://jakartanet.tezos.marigold.dev"));
 
-
+  const baseTokenName = "tzBTC";
+  const baseTokenAddress = "KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr";
+  const baseTokenDecimals = 8;
+  const quoteTokenName ="USDT";
+  const quoteTokenAddress ="KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF";
+  const quoteTokenDecimals = 6;
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("No Wallet Connected");
   const [userBalance, setUserBalance] = useState<number>(0);
@@ -59,15 +64,13 @@ function App() {
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
   
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
-  const [contractAddress, setContractAddress] = useState<string>("KT1CQw5Yo7cecCu496noAZDngeCUxhtHv5jC");
-  const [baseTokenName, setBaseTokenName] = useState<string>("tzBTC");
-  const [baseTokenAddress, setBaseTokenAddress] = useState<string>("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr");
+  const [contractAddress, setContractAddress] = useState<string>("KT1T7q2HobgiSWbmbc3thX1798PHFMBaLyzx");
+  const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
-  const [baseTokenTolerance, setBaseTokenTolerance] = useState<model.selected_tolerance>(model.selected_tolerance.exact);
-  const [quoteTokenName, setQuoteTokenName] = useState<string>("USDT");
-  const [quoteTokenAddress, setQuoteTokenAddress] = useState<string>("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF");
+  const [baseTokenTolerance, setBaseTokenTolerance] = useState<number>(1);
+  const quoteToken :  model.token = {name : quoteTokenName, address : quoteTokenAddress, decimals : quoteTokenDecimals};
   const [quoteTokenBalance, setQuoteTokenBalance] = useState<number>(0);
-  const [quoteTokenTolerance, setQuoteTokenTolerance] = useState<model.selected_tolerance>(model.selected_tolerance.exact);
+  const [quoteTokenTolerance, setQuoteTokenTolerance] = useState<number>(1);
   const [tokenPair, setTokenPair] = useState<string>(""+baseTokenName+"/"+quoteTokenName);
   const [invertedTokenPair, setInvertedTokenPair] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
   const [lastBlockHeight, setLastBlockHeight] = useState<number>(0);
@@ -85,17 +88,6 @@ function App() {
   }
 
 
-  const extract_contract_schema = async () => {
-
-Tezos.contract
-  .at(contractAddress)
-  .then((c) => {
-    let methods = c.parameterSchema.ExtractSignatures();
-    setStringStorage(JSON.stringify(methods, null, 2));
-  })
-  .catch((error) => console.log(`Error: ${error}`));
-
-  };
 
   const get_time_left_in_batch = (staus:model.batch_status) => {
     let batch_open = staus.open;
@@ -139,26 +131,21 @@ Tezos.contract
     const exchange_rate : model.exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
     const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
     setExchangeRate(scaled_rate);
-
+    console.log("Updated Exchange Rate");
     const current_batch_status:model.batch_status = await storage.batches.current.status;
     const time_remaining = get_time_left_in_batch(current_batch_status);
     setRemaining(time_remaining);
 
+    console.log("Updated Time Remaining");
     const order_book : model.order_book = await storage.batches.current.orderbook;
     setOrderBook(order_book);
     setNumberOrBids(order_book.bids.length);
     setNumberOrAsks(order_book.asks.length);
 
-    const last_head = await headService.get();
+    console.log("Updated Order Book");
 
-    setLastBlockHeight(last_head.quoteLevel || 0);
-
-
-    const balances = await accountsService.getBalanceAtLevel({ address : userAddress, level: lastBlockHeight});
-
-
-    const _updateStrings = await extract_contract_schema();
-
+    setStringStorage("Contract Address: " + contractAddress);
+    
   };
 
 
@@ -275,12 +262,14 @@ Tezos.contract
                 setUserBalance={setUserBalance}
                 setTokenBalance={setBaseTokenBalance}
                 setTokenTolerance={setBaseTokenTolerance}
-                tokenName={baseTokenName}
+                token={baseToken}
                 tokenAddress={baseTokenAddress}
                 tokenBalance={baseTokenBalance}
                 tokenTolerance={baseTokenTolerance}
                 contractAddress={contractAddress}
                 tokenBalanceUri={tokenBalanceUri}
+                orderSide={0}
+                toToken={quoteToken}
                 wallet={wallet}
             />
              <DepositButton
@@ -290,12 +279,14 @@ Tezos.contract
                 setUserBalance={setUserBalance}
                 setTokenBalance={setQuoteTokenBalance}
                 setTokenTolerance={setQuoteTokenTolerance}
-                tokenName={quoteTokenName}
+                token={quoteToken}
                 tokenAddress={quoteTokenAddress}
                 tokenBalance={quoteTokenBalance}
                 tokenTolerance={quoteTokenTolerance}
                 contractAddress={contractAddress}
                 tokenBalanceUri={tokenBalanceUri}
+                orderSide={1}
+                toToken={baseToken}
                 wallet={wallet}
             />
             </Row>
@@ -339,7 +330,7 @@ Tezos.contract
                     <Table size="sm">
 
                       <Row>
-                        <Col className="col-4"><h6 className="title d-inline">MINUS 10bps</h6></Col>
+                        <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("mINUS", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
@@ -347,7 +338,7 @@ Tezos.contract
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("eXACT", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
-                        <Col className="col-4"><h6 className="title d-inline">PLUS 10bps</h6></Col>
+                        <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("pLUS", orderBook?.bids!)}</Col>
                       </Row>
                    </Table>
@@ -357,7 +348,7 @@ Tezos.contract
                     <h4 className="title d-inline">Asks</h4>
                     <Table size="sm">
                     <Row>
-                        <Col className="col-4"><h6 className="title d-inline">MINUS 10bps</h6></Col>
+                        <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("mINUS", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
@@ -365,7 +356,7 @@ Tezos.contract
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("eXACT", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
-                        <Col className="col-4"><h6 className="title d-inline">PLUS 10bps</h6></Col>
+                        <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side("pLUS", orderBook?.asks!)}</Col>
                       </Row>
 
