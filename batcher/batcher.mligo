@@ -111,13 +111,16 @@ let redeem (storage : storage) : result =
 let move_current_to_previous_if_finalized (storage : storage) : storage = 
   let batches = storage.batches in
   let current = batches.current in
-  if (Batch.is_cleared current) then
-    let previous = batches.previous in
-    let new_previous = current :: previous in
-    let new_batches = { batches with current = None, previous = new_previous } in
-    { storage with batches = new_batches }
-  else
-    storage
+  match current with
+  | None -> storage
+  | Some current_batch -> 
+     if (Batch.is_cleared current_batch) then
+       let previous = batches.previous in
+       let new_previous = current_batch :: previous in
+       let new_batches = { batches with current = None, previous = new_previous } in
+       { storage with batches = new_batches }
+     else
+       storage
 
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared.
