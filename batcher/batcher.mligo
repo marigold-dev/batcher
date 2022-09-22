@@ -47,7 +47,7 @@ let tick_current_batches (storage : storage) : storage =
           else if Batch.should_be_cleared current_batch current_time then
             let finalized_batch = finalize current_batch storage current_time in
             let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
-            let updated_treasury, new_orderbook = Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate finalized_batch.treasury in
+            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing cleared_infos.rate finalized_batch.treasury in
             {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
             batch
