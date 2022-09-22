@@ -46,7 +46,12 @@ let tick_current_batches (storage : storage) : storage =
           else if Batch.should_be_cleared batch current_time then
             (* Finalize the current batch, but does not open a new one before we receive
                a new deposit *)
-            finalize batch storage current_time
+            let batch = finalize batch storage current_time in
+            let cleared_infos = Batch.get_status_when_its_cleared batch in
+            let updated_treasury, new_orderbook =
+              Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate batch.treasury in
+            let new_batch = { batch with orderbook = new_orderbook; treasury = updated_treasury } in
+            new_batch
           else
             batch
         in
@@ -96,23 +101,7 @@ let redeem (storage : storage) : result =
    TODO: actually update the rate *)
 let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate rate storage in
-  match storage.batches.current with
-    (* TODO: find a way to remove these tests? *)
-    | None -> no_op (updated_rate_storage)
-    | Some current_batch ->
-      let updated_batches =
-        let current_time = Tezos.get_now () in
-        if Batch.should_be_cleared current_batch current_time then
-          let batch = finalize current_batch storage current_time in
-          let cleared_infos = Batch.get_status_when_its_cleared batch in
-          let updated_treasury, new_orderbook =
-            Orderbook.orders_execution batch.orderbook cleared_infos.clearing cleared_infos.rate batch.treasury in
-          let new_batch = {batch with orderbook = new_orderbook; treasury = updated_treasury} in
-          { storage.batches with current = Some new_batch }
-        else
-          storage.batches
-      in
-        no_op ({ updated_rate_storage with batches = updated_batches } )
+  no_op (updated_rate_storage)
 
 let tick (storage : storage) : result =
   let updated_storage = tick_current_batches storage in
