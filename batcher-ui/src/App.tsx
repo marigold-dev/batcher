@@ -239,9 +239,9 @@ function App() {
                 <link rel="canonical" href="http://batcher.marigold.dev" />
             </Helmet>
       <div className="content">
-        <Row>
-          <Col md="11">
-            <Card className="card-chart">
+        <Row  className="pr-5 mr-3">
+          <Col>
+            <Card >
               <CardHeader>
                   <Col className="text-left float-left" sm="4">
                     <CardTitle tag="h1"><img src={logo} height="150" alt="logo"/></CardTitle>
@@ -258,37 +258,53 @@ function App() {
 
         <Row>
           <Col sm="8">
-            <Row>
-              <Card>
+              <Card sm="5.5">
               <CardHeader>
-                <h3 className="title">POOL: tzBTC / USDT</h3>
+                <h4 className="title d-inline">POOL: tzBTC / USDT</h4>
               </CardHeader>
               <CardBody>
+                <h4 className="title d-inline">Current Batch</h4>
+                <Table size="md">
+                  <Row className="sm-5 sp-5">
+                  <Col>
+                  <Row>
+                    <Col className="col-4"><h6 className="title d-inline">Oracle Price</h6></Col>
+                  </Row>
                  <Row>
-                   <Col sm="2">
-                      <h4 className="title d-inline">Oracle Price</h4>
-                      <p className="description bold">{ exchangeRate } USDT / tzBTC </p>
-                     </Col>
-                   <Col sm="2">
-                      <h4 className="title d-inline">Time Remaining in Current Batch</h4>
-                      <p className="description bold"> { remaining} </p>
-                     </Col>
-                   <Col sm="2">
-                      <h4 className="title d-inline">Buy Orders in Current Batch</h4>
-                      <p className="description bold">{ numberOfBids}</p>
-                     </Col>
-                   <Col sm="2">
-                      <h4 className="title d-inline">Sell orders in Current Batch</h4>
-                      <p className="description bold"> {numberOfAsks}</p>
-                     </Col>
+                    <Col className="sm-1">{ exchangeRate } </Col>
                  </Row>
+                  </Col>
+                  <Col>
+                  <Row>
+                    <Col className="col-4"><h6 className="title d-inline">Time Remaining</h6></Col>
+                  </Row>
+                 <Row>
+                    <Col className="sm-0">{ remaining }</Col>
+                 </Row>
+                  </Col>
+                  <Col>
+                  <Row>
+                    <Col className="col-4"><h6 className="title d-inline">Bids Orders</h6></Col>
+                  </Row>
+                 <Row>
+                    <Col className="sm-0">{ numberOfBids }</Col>
+                 </Row>
+                  </Col>
+                  <Col>
+                  <Row>
+                    <Col className="col-4"><h6 className="title d-inline">Ask Orders</h6></Col>
+                  </Row>
+                 <Row>
+                    <Col className="sm-0">{ numberOfAsks }</Col>
+                 </Row>
+                  </Col>
+                  </Row>
+                </Table>
               </CardBody>
               <CardFooter>
 
               </CardFooter>
             </Card>
-            </Row>
-            <Row>
             <DepositButton
                 Tezos={Tezos}
                 setWallet={setWallet}
@@ -323,15 +339,29 @@ function App() {
                 toToken={baseToken}
                 wallet={wallet}
             />
+            <Row>
             </Row>
           </Col>
-          <Col sm="3">
+          <Col className="position-relative" sm="3">
             <Row>
             <Card>
-              <CardHeader>
-                 <h3 className="title">{userAddress}</h3>
+            <CardHeader>
+                <h4 className="title d-inline">Wallet</h4>
               </CardHeader>
               <CardBody>
+              <Table size="md">
+              <Row className="sm-5 sp-5">
+                  <Col>
+                    <Row>
+                    <Col className="col-4"><h6 className="title d-inline">User Address</h6></Col>
+                    </Row>
+                   <Row>
+                      <Col className="sm-1">{ userAddress } </Col>
+                    </Row>
+                    </Col>
+               </Row>
+              <Row className="mt-4 sp-5">
+                  <Col>
                 <ConnectButton
                   Tezos={Tezos}
                   setWallet={setWallet}
@@ -340,6 +370,8 @@ function App() {
                   userAddress={userAddress}
                   wallet={wallet}
                 />
+                  </Col>
+                  <Col>
                <DisconnectButton
                wallet={wallet}
                setUserAddress={setUserAddress}
@@ -347,17 +379,14 @@ function App() {
                userAddress={userAddress}
                setWallet={setWallet}
                />
+                  </Col>
+               </Row>
+              </Table>
               </CardBody>
-              <CardFooter>
-                <div className="button-container">
-                </div>
-              </CardFooter>
             </Card>
-            </Row>
-            <Row>
             <Card>
               <CardHeader>
-                <h3 className="title">Order Book</h3>
+                <h4 className="title">Order Book</h4>
               </CardHeader>
               <CardBody>
                  <Row>

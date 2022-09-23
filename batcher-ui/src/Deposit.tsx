@@ -247,7 +247,7 @@ const DepositButton = ({
          <CardBody>
              <Form>
                <Row className="row-cols-lg-auto g-2 align-items-center">
-                <Col>
+                <Col className="mr-3">
                   <Input
                     id="amount"
                     name="amount"
@@ -259,7 +259,8 @@ const DepositButton = ({
                 <Col>
                    <Button
                     className="btn-info"
-                    size="sm"
+                    size="md"
+                  block
                     outline
                     onClick={() => setTokenTolerance(0)}
                     active={tokenTolerance == 0 }
@@ -270,7 +271,8 @@ const DepositButton = ({
                 <Col>
                 <Button
                   className="btn-info"
-                  size="sm"
+                  size="md"
+                  block
                   outline
                   onClick={() => setTokenTolerance(1)}
                   active={tokenTolerance == 1 }
@@ -281,7 +283,8 @@ const DepositButton = ({
                 <Col>
                 <Button
                   className="btn-info"
-                  size="sm"
+                  size="md"
+                  block
                   outline
                   onClick={() => setTokenTolerance(2)}
                   active={tokenTolerance == 2 }
@@ -293,7 +296,7 @@ const DepositButton = ({
              </Form>
          </CardBody>
             <CardFooter>
-                <Button className={ orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
+                <Button block className={ orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
                        Swap {token.name}
                 </Button>
               </CardFooter>

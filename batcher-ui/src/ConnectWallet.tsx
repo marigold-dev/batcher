@@ -78,7 +78,7 @@ const ConnectButton = ({
   }, []);
 
   return (
-      <Button active={userAddress == "" ? true : false } className="btn-success" size="sm" onClick={connectWallet}>
+      <Button block active={userAddress == "" ? true : false } className="btn-success" size="sm" onClick={connectWallet}>
           Connect
       </Button>
   );
