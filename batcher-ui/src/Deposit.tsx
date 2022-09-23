@@ -80,6 +80,8 @@ const DepositButton = ({
 
   const [tokenBalanceResult, setTokenBalanceResult] = useState<TokenBalance>();
   const [depositAmount, setDepositAmount] = useState<number>(0);
+  const [depositButtonColour, setDepositButtonColour] = useState<string>("");
+  const [sideCaption, setSideCaption] = useState<string>("");
 
   const transferToken = async (
       tokenAddress:string,
@@ -140,13 +142,19 @@ const DepositButton = ({
                 side: side,
                 tolerance: tokenTolerance,
               };
-           toast.loading(JSON.stringify(swap_params));
            const swap_creation_op = await contractWallet.methodsObject.deposit(swap_params).send();
            const confirm = await swap_creation_op.confirmation();
            if(!confirm.completed){
                throw Error("Failed to call create swap order");
            }
   };
+
+
+  const  rationaliseAmount = (amount: number) => {
+     let scale =10 ** (token.decimals);
+     return amount * scale
+  };
+
 
   const depositToken = async (): Promise<void> => {
     try {
@@ -162,38 +170,38 @@ const DepositButton = ({
           await wallet.requestPermissions();
         }
 
-        const rationalised_amount = depositAmount;
-        
+        const scaled_amount = rationaliseAmount(depositAmount);
         toast.loading('Depositing ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress, {id: depositToastId } ) ; 
         
         try {
-            await transferToken(tokenAddress,userAddress,contractAddress,0,rationalised_amount);
+            await transferToken(tokenAddress,userAddress,contractAddress,0,scaled_amount);
             toast.success('Deposit of ' + token.name + ' successful', {id: depositToastId});
         } catch (error:any) {
-         toast.error("Transfer error : " + error.message); 
+         toast.error("Transfer error : " + error.message, {id: depositToastId }); 
         }
 
-
         const swapToastId = 'swap';
-
-
         toast.loading('Creating swap order for ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress+ ". Side:" + orderSide + " Tolerance:" + tokenTolerance, {id: swapToastId } ) ; 
         
         try {
-            await createSwapOrder(contractAddress,userAddress,token,toToken,rationalised_amount, orderSide);
+            await createSwapOrder(contractAddress,userAddress,token,toToken,scaled_amount, orderSide);
             toast.success('Swap order created for ' + token.name + ' successful', {id: swapToastId});
         } catch (error:any) {
-         toast.error("Swap error : " + error.message); 
+         toast.error("Swap error : " + error.message, { id: swapToastId }); 
         }
-
-
       }
     } catch (error) {
       console.log(error);
     }
   };
 
-
+  const settings = async () => {
+     if(orderSide == 0 ){
+       setDepositButtonColour("green");
+     } else {
+       setDepositButtonColour("red");
+     }
+  };
 
   const api = async () => {
     console.log("TOKENURI:" + tokenBalanceUri);
@@ -214,6 +222,7 @@ const DepositButton = ({
   useEffect(() => {
     console.log(tokenBalanceUri);
 
+      (async () => settings())();
       (async () => api())();
     const interval=setInterval(()=>{
       (async () => api())();
@@ -237,7 +246,7 @@ const DepositButton = ({
          </CardHeader>
          <CardBody>
              <Form>
-               <Row className="row-cols-lg-auto g-3 align-items-center">
+               <Row className="row-cols-lg-auto g-2 align-items-center">
                 <Col>
                   <Input
                     id="amount"
@@ -249,30 +258,33 @@ const DepositButton = ({
                 </Col>
                 <Col>
                    <Button
-                    color="green"
+                    className="btn-info"
+                    size="sm"
                     outline
                     onClick={() => setTokenTolerance(0)}
-                    active={tokenTolerance === model.selected_tolerance.minus}
+                    active={tokenTolerance == 0 }
                   >
                     -10bps
                   </Button>
                 </Col>
                 <Col>
                 <Button
-                  color="primary"
+                  className="btn-info"
+                  size="sm"
                   outline
                   onClick={() => setTokenTolerance(1)}
-                  active={tokenTolerance === model.selected_tolerance.exact}
+                  active={tokenTolerance == 1 }
                   >
                   Exact
                 </Button>
                 </Col> 
                 <Col>
                 <Button
-          color="primary"
-          outline
-          onClick={() => setTokenTolerance(2)}
-          active={tokenTolerance === model.selected_tolerance.plus}
+                  className="btn-info"
+                  size="sm"
+                  outline
+                  onClick={() => setTokenTolerance(2)}
+                  active={tokenTolerance == 2 }
         >
           +10bps
         </Button>
@@ -281,8 +293,8 @@ const DepositButton = ({
              </Form>
          </CardBody>
             <CardFooter>
-                <Button block className="btn-danger" color="primary" onClick={depositToken} >
-                        Swap {token.name}
+                <Button className={ orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
+                       Swap {token.name}
                 </Button>
               </CardFooter>
       </Card>

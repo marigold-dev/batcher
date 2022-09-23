@@ -17,6 +17,7 @@ type ButtonProps = {
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
   setUserBalance: Dispatch<SetStateAction<number>>;
+  userAddress: string;
   wallet: BeaconWallet;
 };
 
@@ -25,6 +26,7 @@ const ConnectButton = ({
   setWallet,
   setUserAddress,
   setUserBalance,
+  userAddress,
   wallet
 }: ButtonProps): JSX.Element => {
 
@@ -76,8 +78,8 @@ const ConnectButton = ({
   }, []);
 
   return (
-      <Button className="btn-danger" color="primary" onClick={connectWallet}>
-          Connect wallet
+      <Button active={userAddress == "" ? true : false } className="btn-success" size="sm" onClick={connectWallet}>
+          Connect
       </Button>
   );
 };

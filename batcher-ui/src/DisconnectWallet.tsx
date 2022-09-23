@@ -14,6 +14,7 @@ interface ButtonProps {
   wallet: BeaconWallet | null;
   setUserAddress: Dispatch<SetStateAction<string>>;
   setUserBalance: Dispatch<SetStateAction<number>>;
+  userAddress : string;
   setWallet: Dispatch<SetStateAction<any>>;
 }
 
@@ -21,6 +22,7 @@ const DisconnectButton = ({
   wallet,
   setUserAddress,
   setUserBalance,
+  userAddress,
   setWallet,
 }: ButtonProps): JSX.Element => {
   const disconnectWallet = async (): Promise<void> => {
@@ -36,8 +38,8 @@ const DisconnectButton = ({
   };
 
   return (
-      <Button className="btn-danger" color="primary" onClick={disconnectWallet}>
-        Disconnect wallet
+      <Button active={ userAddress == "" ? false : true } className="btn-danger" size="sm" onClick={disconnectWallet}>
+        Disconnect
       </Button>
   );
 };
