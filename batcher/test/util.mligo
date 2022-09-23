@@ -12,12 +12,14 @@ type originated = Breath.Contract.originated
 
 type storage  = Batcher.storage
 type result = Batcher.result
-type order = CommonTypes.Types.swap_order
+type order = CommonTypes.Types.external_swap_order
 type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
 type swap = CommonTypes.Types.swap
 type exchange_rate = CommonTypes.Types.exchange_rate
 type treasury = CommonTypes.Types.treasury
+type swap_order = CommonTypes.Types.swap_order
+type external_swap_order = CommonTypes.Types.external_swap_order
 
 
 let token_USDT = {
@@ -75,10 +77,10 @@ let default_swap (amount : nat) = {
 }
 
 let make_order (side : side) (tolerance : tolerance) (swap : nat -> CommonTypes.Types.swap) (amount : nat)
-  (address : address) : CommonTypes.Types.swap_order =
+  (address : address) : swap_order =
   let swap = swap amount in
   let now = Tezos.get_now () in
-  let order : CommonTypes.Types.swap_order = {
+  let order : swap_order = {
     trader = address;
     swap = swap;
     created_at = now;
@@ -87,6 +89,33 @@ let make_order (side : side) (tolerance : tolerance) (swap : nat -> CommonTypes.
   }
   in
   order
+
+let to_external_side (side:side) : nat = 
+    match side with
+    | BUY -> 0n
+    | SELL -> 1n
+
+let to_external_tolerance (tolerance:tolerance) : nat =
+    match tolerance with
+    | MINUS -> 0n
+    | EXACT -> 1n
+    | PLUS -> 2n
+
+let to_external_order (order: swap_order) : external_swap_order = 
+  let order : external_swap_order = {
+    trader = order.trader;
+    swap = order.swap;
+    created_at = order.created_at;
+    side = to_external_side(order.side);
+    tolerance = to_external_tolerance(order.tolerance)
+  }
+  in
+  order
+
+let make_external_order (side : side) (tolerance : tolerance) (swap : nat -> swap) (amount : nat)
+  (address : address) : external_swap_order =
+  let internal = make_order (side) (tolerance) (swap) (amount) (address) in
+  to_external_order(internal)
 
 let make_exchange_rate (swap : swap) (rate : Float.t): exchange_rate =
   {

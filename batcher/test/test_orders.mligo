@@ -28,7 +28,7 @@ let one_push_order =
     let (_,(alice,_,_)) = Breath.Context.init_default () in
     let batcher = Util.originate level in
     let alice_order = Util.make_order BUY EXACT Util.default_swap 50n alice.address in
-    let alice_deposit = Breath.Context.act_as alice (Util.deposit alice_order batcher 1tez) in
+    let alice_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order alice_order) batcher 1tez) in
     let batcher_storage = Breath.Contract.storage_of batcher in
 
     let expected_storage 
@@ -60,9 +60,9 @@ let many_push_order =
     let bob_order = Util.make_order SELL PLUS Util.default_swap 40n bob.address in
     let hakim_order = Util.make_order BUY PLUS Util.default_swap 32n hakim.address in
 
-    let alice_deposit = Breath.Context.act_as alice (Util.deposit alice_order batcher 1tez) in
-    let bob_deposit = Breath.Context.act_as bob (Util.deposit bob_order batcher 1tez) in
-    let hakim_deposit = Breath.Context.act_as hakim (Util.deposit hakim_order batcher 1tez) in
+    let alice_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order alice_order) batcher 1tez) in
+    let bob_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order bob_order) batcher 1tez) in
+    let hakim_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order hakim_order) batcher 1tez) in
 
     let batcher_storage = Breath.Contract.storage_of batcher in
 
@@ -232,13 +232,13 @@ let trigger_filtering_orders_minus =
     let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
     let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
 
-    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
-    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
-    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order1) batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order2) batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order3) batcher 1tez) in
 
-    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
-    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
-    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order4) batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order5) batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order6) batcher 1tez) in
 
     let batcher_storage = Breath.Contract.storage_of batcher in
     let filtered_orderbook = 
@@ -292,13 +292,13 @@ let trigger_filtering_orders_exact =
     let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
     let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
 
-    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
-    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
-    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order1) batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order2) batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order3) batcher 1tez) in
 
-    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
-    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
-    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order4) batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order5) batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order6) batcher 1tez) in
 
     let batcher_storage = Breath.Contract.storage_of batcher in
     let filtered_orderbook = 
@@ -352,13 +352,13 @@ let trigger_filtering_orders_plus =
     let order5 = Util.make_order SELL EXACT Util.default_swap 230n bob.address in
     let order6 = Util.make_order SELL PLUS Util.default_swap 30n hakim.address in
 
-    let ord1_deposit = Breath.Context.act_as alice (Util.deposit order1 batcher 1tez) in
-    let ord2_deposit = Breath.Context.act_as bob (Util.deposit order2 batcher 1tez) in
-    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit order3 batcher 1tez) in
+    let ord1_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order1) batcher 1tez) in
+    let ord2_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order2) batcher 1tez) in
+    let ord3_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order3) batcher 1tez) in
 
-    let ord4_deposit = Breath.Context.act_as alice (Util.deposit order4 batcher 1tez) in
-    let ord5_deposit = Breath.Context.act_as bob (Util.deposit order5 batcher 1tez) in
-    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit order6 batcher 1tez) in
+    let ord4_deposit = Breath.Context.act_as alice (Util.deposit (Util.to_external_order order4) batcher 1tez) in
+    let ord5_deposit = Breath.Context.act_as bob (Util.deposit (Util.to_external_order order5) batcher 1tez) in
+    let ord6_deposit = Breath.Context.act_as hakim (Util.deposit (Util.to_external_order order6) batcher 1tez) in
 
     let batcher_storage = Breath.Contract.storage_of batcher in
     let filtered_orderbook = 
