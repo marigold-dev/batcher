@@ -49,6 +49,7 @@ let right_partial_match
   (equivalent_ord_1_amount : nat)
   (ord_1 : order)
   (ord_2 : order)
+  (rate : Float.t)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
     (* Here we get the amount that is remaining after the swap is done that will remain to be matched to another swap *)
     let ord_2_remaining_token = ord_2.swap.from.amount - equivalent_ord_1_amount in
@@ -70,11 +71,13 @@ let left_partial_match
   (equivalent_ord_1_amount : nat)
   (ord_1 : order)
   (ord_2 : order)
+  (rate : Float.t)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
       let float_of_equivalent_ord_1_amount : Float.t = Float.new (int equivalent_ord_1_amount) 0 in
       let float_of_ord_2_amount : Float.t = Float.new (int ord_2.swap.from.amount) 0 in
-      let remaining_1_amount = Math.get_rounded_number (Float.sub (float_of_equivalent_ord_1_amount) (float_of_ord_2_amount)) in
-      let amount_of_1_to_be_swapped = abs (ord_1.swap.from.amount - remaining_1_amount) in
+      let remaining_1_amount = Math.get_rounded_number (Float.div (Float.sub (float_of_equivalent_ord_1_amount) (float_of_ord_2_amount)) rate) in
+      // let amount_of_1_to_be_swapped = abs (ord_1.swap.from.amount - remaining_1_amount) in
+      let amount_of_1_to_be_swapped = Math.get_rounded_number (Float.div float_of_ord_2_amount rate) in  
       let new_token_amount_1 = { ord_1.swap.from with amount = amount_of_1_to_be_swapped } in
       let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader new_token_amount_1 in
       let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
@@ -86,6 +89,7 @@ let total_match
   (_equivalent_ord_1_amount : nat)
   (ord_1 : order)
   (ord_2 : order)
+  (rate : Float.t)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
     let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
     let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
@@ -110,7 +114,7 @@ let match_orders
                             | RIGHT_PARTIAL -> right_partial_match
                             | LEFT_PARTIAL -> left_partial_match
                             | EXACT_MATCH -> total_match) in
-  match_calculation equivalent_ord_1_amount ord_1 ord_2 treasury
+  match_calculation equivalent_ord_1_amount ord_1 ord_2 exchange_rate.rate treasury
 
 [@inline]
 (*This function push orders auxording to a pro-rata "model"*)

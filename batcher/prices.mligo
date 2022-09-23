@@ -51,17 +51,19 @@ module Rates = struct
 
   let post_rate (rate : rate) (storage : storage) : storage =
     let rate_name = CommonTypes.Utils.get_rate_name(rate) in
-    let scaled_rate = Utils.scale_on_post rate in
+    // let scaled_rate = Utils.scale_on_post rate in
     let _ = Utils.is_valid_rate_type (rate_name) (storage.valid_swaps) in
-    let s = Utils.update_current_rate (rate_name) (scaled_rate) (storage) in
+    let s = Utils.update_current_rate (rate_name) (rate) (storage) in
     s
 
   let get_rate (swap: CommonTypes.Types.swap) (storage : storage) : rate =
     let rate_name =  CommonTypes.Utils.get_rate_name_from_swap swap in
     match Big_map.find_opt rate_name storage.rates_current with
       | None -> (failwith PriceErrors.no_rate_available_for_swap : rate)
-      | Some r -> let scaled_rate = Utils.scale_on_get r in
-                  scaled_rate
+      | Some r -> 
+        // let scaled_rate = Utils.scale_on_get r in
+        // scaled_rate
+        r
 
 end
 

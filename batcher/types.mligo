@@ -142,7 +142,7 @@ module Utils = struct
     quote_name ^ "/" ^ base_name
 
   let get_rate_name_from_pair (s : Types.token * Types.token) : string =
-    let (base, quote) = s in
+    let (quote, base) = s in
     let quote_name = quote.name in
     let base_name = base.name in
     quote_name ^ "/" ^ base_name
