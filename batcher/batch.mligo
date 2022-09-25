@@ -112,7 +112,7 @@ let start_period
       | Some old_batch ->
         { batches with current = Some new_batch ; previous = old_batch :: batches.previous }
 
-let close (batch : t) (current_time : timestamp) : t =
+let close (batch : t) : t =
   match batch.status with
     | Open { start_time } ->
       let batch_close_time = start_time + Constants.deposit_time_window in
