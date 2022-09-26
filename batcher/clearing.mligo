@@ -4,6 +4,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "orderbook.mligo" "Order"
+#import "../math_lib/lib/float.mligo" "Float"
 
 type storage  = CommonStorage.Types.t
 type side  = CommonTypes.Types.side
@@ -27,8 +28,13 @@ let get_distribution_of
       | BUY -> orderbook.bids
       | SELL -> orderbook.asks
   in
-  let collect (acc, o : nat * order) : nat = 
-    (if tolerance = o.tolerance then (acc + o.swap.from.amount) else acc)  in
+  let collect (acc, o : nat * order) : nat =
+    match (tolerance, o.tolerance) with 
+    | (MINUS, MINUS) -> acc + o.swap.from.amount 
+    | (EXACT, EXACT) -> acc + o.swap.from.amount 
+    | (PLUS, PLUS) -> acc + o.swap.from.amount 
+    | _ -> acc
+  in 
   List.fold collect side_orders 0n
 
 let compute_clearing_prices

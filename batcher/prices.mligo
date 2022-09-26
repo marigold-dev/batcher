@@ -8,9 +8,10 @@ module Utils = struct
   type rate = CommonTypes.Types.exchange_rate
 
   let is_valid_rate_type (rate_name : string) (valid_swaps : CommonStorage.Types.valid_swaps) : bool =
-        match Map.find_opt rate_name valid_swaps with
-        |  None -> (failwith PriceErrors.not_a_valid_rate_pair : bool)
-        | Some (_p)  -> true
+        // match Map.find_opt rate_name valid_swaps with
+        // |  None -> (failwith PriceErrors.not_a_valid_rate_pair : bool)
+        // | Some (_p)  -> true
+        true
 
 
 
@@ -27,19 +28,16 @@ module Utils = struct
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    let scale =pow (10) (diff) in
-    Float.new (scale) 0
-
+    Float.new 1 diff
 
   let scale_on_post (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let adjusted_rate = Float.div rate.rate scaling_rate in
+    let adjusted_rate = Float.mul rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
   let scale_on_get (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let negated = Float.new (-1) 0 in
-    let adjusted_rate = Float.mul rate.rate scaling_rate in
+    let adjusted_rate = Float.div rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
 end

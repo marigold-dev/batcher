@@ -137,20 +137,20 @@ end
 
 module Utils = struct
   let get_rate_name_from_swap (s : Types.swap) : string =
-    let quote_name = s.to.name in
     let base_name = s.from.token.name in
-    quote_name ^ "/" ^ base_name
+    let quote_name = s.to.name in
+    base_name ^ "/" ^ quote_name
 
   let get_rate_name_from_pair (s : Types.token * Types.token) : string =
     let (base, quote) = s in
-    let quote_name = quote.name in
     let base_name = base.name in
-    quote_name ^ "/" ^ base_name
+    let quote_name = quote.name in
+    base_name ^ "/" ^ quote_name
 
   let get_rate_name (r : Types.exchange_rate) : string =
-    let quote_name = r.swap.to.name in
     let base_name = r.swap.from.token.name in
-    quote_name ^ "/" ^ base_name
+    let quote_name = r.swap.to.name in
+    base_name ^ "/" ^ quote_name
 
   let pair_of_swap (order : Types.swap_order) : (Types.token * Types.token) =
     (* Note:  we assume left-handedness - i.e. direction is buy side*)

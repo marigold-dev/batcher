@@ -43,7 +43,7 @@ let tick_current_batches (storage : storage) : storage =
         let current_time = Tezos.get_now () in
         let updated_batch =
           if Batch.should_be_closed current_batch current_time then
-            Batch.close current_batch current_time
+            Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
             let finalized_batch = finalize current_batch storage current_time in
             let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
