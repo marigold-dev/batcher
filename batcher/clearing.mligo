@@ -46,7 +46,6 @@ let compute_clearing_prices
       | None -> failwith "No current batch"
       | Some batch -> batch
   in
-  let exchange_rate = Pricing.Rates.get_rate rate.swap storage in
   let orderbook = current_batch.orderbook in
 
 
@@ -62,5 +61,5 @@ let compute_clearing_prices
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in 
   let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in
 
-  let clearing = Math.get_clearing_price exchange_rate.rate buy_side sell_side in
+  let clearing = Math.get_clearing_price rate.rate buy_side sell_side in
   clearing
