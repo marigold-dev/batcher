@@ -7,6 +7,7 @@ import { Tzip12Module } from '@taquito/tzip12';
 import { Tzip16Module } from '@taquito/tzip16';
 import DisconnectButton from './DisconnectWallet';
 import DepositButton from './Deposit';
+import RedeemButton from './Redeem';
 import { Contract, ContractsService, MichelineFormat, AccountsService, HeadService } from '@dipdup/tzkt-api';
 import { parseISO, add, differenceInMinutes } from 'date-fns'
 import './App.css';
@@ -60,9 +61,10 @@ function App() {
   const [stringStorage, setStringStorage] = useState<string>("");
   const [remaining, setRemaining] = useState<string>("No open batch");
   const [orderBook, setOrderBook] = useState<model.order_book | undefined>(undefined);
+  const [previousBatches, setPreviousBatches] = useState<Array<model.batch>>([]);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
-  
+
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
   const [contractAddress, setContractAddress] = useState<string>("KT1T7q2HobgiSWbmbc3thX1798PHFMBaLyzx");
   const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
@@ -75,6 +77,7 @@ function App() {
   const [invertedTokenPair, setInvertedTokenPair] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
   const [lastBlockHeight, setLastBlockHeight] = useState<number>(0);
   const [tokenBalanceUri, setTokenBalanceUri] = useState<string>("");
+  const [bigMapByIdUri, setBigMapByIdUri] = useState<string>("");
    //tzkt
    //
   const chain_api_url = "https://api.jakartanet.tzkt.io"
@@ -91,7 +94,7 @@ function App() {
 
   const get_time_left_in_batch = ( status:string) => {
     console.log(status);
-    let statusObject = JSON.parse(status); 
+    let statusObject = JSON.parse(status);
     console.log(statusObject);
     if(status.search("closed") > -1){
         let close = parseISO(statusObject.closed.closing_time);
@@ -101,11 +104,11 @@ function App() {
       let open = parseISO(statusObject.open);
       let batch_close = add(open,{ minutes: 10})
       let diff = differenceInMinutes(batch_close, now);
-      let rem = ""; 
+      let rem = "";
       if (diff <= 0) {
-         rem = "0" 
-        } else { 
-          rem = "" + diff 
+         rem = "0"
+        } else {
+          rem = "" + diff
         };
        return ""+rem+" minutes" ;
     } else if (status.search("cleared")) {
@@ -131,8 +134,8 @@ function App() {
     let amount = order_sides.reduce((previousAmount, order) => {
       if (Object.keys(order.tolerance)[0] === tolerance) {
         previousAmount += Number(order.swap.from.amount);
-      } 
-       
+      }
+
       return previousAmount;
     }, 0);
     let corrected_amount = rationaliseAmount(amount, decimals);
@@ -167,7 +170,7 @@ function App() {
     } catch (e) {
        console.error(e);
        setRemaining("No open batch");
-    } 
+    }
 
     console.log("Updated Time Remaining");
 
@@ -185,15 +188,25 @@ function App() {
 
     console.log("Updated Order Book");
 
-    
+
+    try{
+
+      setPreviousBatches(storage.batches.previous);
+    }
+    catch(error) {
+       console.log(error)
+    }
+
+
   };
 
 
-  const updateTokenUri = async (): Promise<void> => {
+  const updateUriSettings = async (): Promise<void> => {
    try{
      console.log("Updating Token Balance URI");
     setTokenBalanceUri(""+ chain_api_url + "/v1/tokens/balances?account=" + userAddress);
      console.log(tokenBalanceUri);
+    setBigMapByIdUri(""+ chain_api_url + "/v1/bigmaps/");
    } catch (error)
    {
       console.log(error);
@@ -202,7 +215,7 @@ function App() {
   }
 
   useEffect(() => {
-      (async () => updateTokenUri())();
+      (async () => updateUriSettings())();
   }, [userAddress])
 
   const updateValues = async (): Promise<void> => {
@@ -213,7 +226,7 @@ function App() {
     }
   };
 
-    
+
 
   useEffect(() => {
 
@@ -407,7 +420,7 @@ function App() {
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
                       </Row>
                    </Table>
-                      
+
                    </Col>
                    <Col>
                     <h4 className="title d-inline">Asks</h4>
@@ -435,6 +448,19 @@ function App() {
             </Card>
             </Row>
             <Row>
+
+
+             <RedeemButton
+                Tezos={Tezos}
+                token={quoteToken}
+                previousBatches={previousBatches}
+                userAddress={userAddress}
+                toToken={baseToken}
+                wallet={wallet}
+                contractAddress={contractAddress}
+                bigMapsById={bigMapByIdUri}
+            />
+
             </Row>
           </Col>
         </Row>
