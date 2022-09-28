@@ -3,36 +3,24 @@ import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
 import *  as model from "./Model";
-import toast, { Toaster } from 'react-hot-toast';
-import {
-  NetworkType
-} from "@airgap/beacon-sdk";
-
-// reactstrap components
+import toast from 'react-hot-toast';
 
 import {
   Button,
-  ButtonGroup,
   Card,
   CardHeader,
   CardBody,
-  CardTitle,
   Col,
   CardFooter,
-  CardText,
-  FormGroup,
   Form,
   Input,
-  Label,
   Row,
 } from "reactstrap";
-import { StringParameter } from "@dipdup/tzkt-api";
 
 type ButtonProps = {
   Tezos: TezosToolkit;
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  setUserBalance: Dispatch<SetStateAction<number>>
   setTokenBalance: Dispatch<SetStateAction<number>>
   setTokenTolerance: Dispatch<SetStateAction<model.selected_tolerance>>
   token: model.token;
@@ -50,7 +38,6 @@ const DepositButton = ({
   Tezos,
   setWallet,
   setUserAddress,
-  setUserBalance,
   setTokenBalance,
   setTokenTolerance,
   token,
@@ -78,10 +65,9 @@ const DepositButton = ({
    }
   }
 
-  const [tokenBalanceResult, setTokenBalanceResult] = useState<TokenBalance>();
+  const [setTokenBalanceResult] = useState<TokenBalance>();
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [depositButtonColour, setDepositButtonColour] = useState<string>("");
-  const [sideCaption, setSideCaption] = useState<string>("");
 
   const transferToken = async (
       tokenAddress:string,
@@ -214,7 +200,6 @@ const DepositButton = ({
     const tokenbal : model.ApiTokenBalanceData = tokenBalances.filter((p:model.ApiTokenBalanceData)  => p.token.contract.address === tokenAddress)[0];
     const rationalisedBal = parseInt(tokenbal.balance) / (10 ** parseInt(tokenbal.token.metadata.decimals) )
     const tkBal = (new TokenBalance(tokenbal.token.contract.address,tokenbal.token.metadata.symbol,parseInt(tokenbal.token.metadata.decimals),rationalisedBal));
-    setTokenBalanceResult(tkBal);
     setTokenBalance(tkBal.balance);
 
   };

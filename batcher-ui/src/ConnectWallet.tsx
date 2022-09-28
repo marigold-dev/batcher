@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import {
   NetworkType
 } from "@airgap/beacon-sdk";
@@ -16,7 +16,6 @@ type ButtonProps = {
   Tezos: TezosToolkit;
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  setUserBalance: Dispatch<SetStateAction<number>>;
   userAddress: string;
   wallet: BeaconWallet;
 };
@@ -25,17 +24,12 @@ const ConnectButton = ({
   Tezos,
   setWallet,
   setUserAddress,
-  setUserBalance,
   userAddress,
   wallet
 }: ButtonProps): JSX.Element => {
 
   const setup = async (userAddress: string): Promise<void> => {
     setUserAddress(userAddress);
-    // updates balance
-    const balance = await Tezos.tz.getBalance(userAddress);
-
-    setUserBalance(balance.toNumber());
     toast.success('Wallet for address ' + userAddress + ' connected')
   };
 
@@ -45,7 +39,7 @@ const ConnectButton = ({
       await wallet.requestPermissions({
         network: {
           type: NetworkType.JAKARTANET ,
-          rpcUrl: "https://jakartanet.tezos.marigold.dev"
+          rpcUrl: process.env["TEZOS_NODE_URI"]!
         }
       });
       // gets user's address
