@@ -8,10 +8,9 @@ module Utils = struct
   type rate = CommonTypes.Types.exchange_rate
 
   let is_valid_rate_type (rate_name : string) (valid_swaps : CommonStorage.Types.valid_swaps) : bool =
-        match Map.find_opt rate_name valid_swaps with
-        |  None -> (failwith PriceErrors.not_a_valid_rate_pair : bool)
-        | Some (_p)  -> true
-
+    match Map.find_opt rate_name valid_swaps with
+    | None -> false
+    | Some (_p)  -> true
 
 
   let update_current_rate (rate_name : string) (rate : CommonTypes.Types.exchange_rate) (storage : CommonStorage.Types.t) =
@@ -27,19 +26,16 @@ module Utils = struct
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    let scale =pow (10) (diff) in
-    Float.new (scale) 0
-
+    Float.new 1 diff
 
   let scale_on_post (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let adjusted_rate = Float.div rate.rate scaling_rate in
+    let adjusted_rate = Float.mul rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
   let scale_on_get (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let negated = Float.new (-1) 0 in
-    let adjusted_rate = Float.mul rate.rate scaling_rate in
+    let adjusted_rate = Float.div rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
 end
@@ -50,11 +46,19 @@ module Rates = struct
   type storage = CommonStorage.Types.t
   type rate = CommonTypes.Types.exchange_rate
   type swap_order = CommonTypes.Types.swap_order
+  type token = CommonTypes.Types.token
 
   let post_rate (rate : rate) (storage : storage) : storage =
     let rate_name = CommonTypes.Utils.get_rate_name(rate) in
     let scaled_rate = Utils.scale_on_post rate in
-    let _ = Utils.is_valid_rate_type (rate_name) (storage.valid_swaps) in
+    let _ =
+      let inverse_token_pair : token * token = (rate.swap.to, rate.swap.from.token) in 
+      let inverse_rate_name = CommonTypes.Utils.get_rate_name_from_pair inverse_token_pair in 
+      let valid_rate_type = Utils.is_valid_rate_type (rate_name) (storage.valid_swaps) in
+      let valid_inverse_type = Utils.is_valid_rate_type (inverse_rate_name) (storage.valid_swaps) in
+      if (valid_rate_type || valid_inverse_type) then true
+      else (failwith PriceErrors.not_a_valid_rate_pair : bool)
+    in 
     let s = Utils.update_current_rate (rate_name) (scaled_rate) (storage) in
     s
 

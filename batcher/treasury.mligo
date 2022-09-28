@@ -159,9 +159,9 @@ module Utils = struct
     let this_h = adjust_treasury_holding with_that_token_name this_holder_address INCREASE with_that_token_holding this_h in
     let that_h = adjust_treasury_holding this_token_name with_that_holder_address INCREASE this_token_holding that_h in
     let _ = assert_holdings_are_coherent this_holder_address this_h in
-    let _ = assert_holdings_are_coherent this_holder_address that_h in
-    let _ = Big_map.update (this_holder_address) (Some(this_h)) treasury in
-    let _ = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
+    let _ = assert_holdings_are_coherent with_that_holder_address that_h in
+    let treasury = Big_map.update (this_holder_address) (Some(this_h)) treasury in
+    let treasury = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
     treasury
 
   let deposit_into_treasury_holding

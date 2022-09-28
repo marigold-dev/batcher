@@ -19,14 +19,14 @@ let f(_:unit) = {
     }
   ];
   valid_swaps = Map.literal [
-    ("USDT/tzBTC", {
+    ("tzBTC/USDT", {
         from = {
+          amount = 1n;
           token = {
             name = "tzBTC";
             address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
             decimals = 8;
           };
-          amount = 10n;
         };
         to = {
           name = "USDT";

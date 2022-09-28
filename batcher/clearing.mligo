@@ -4,6 +4,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "orderbook.mligo" "Order"
+#import "../math_lib/lib/float.mligo" "Float"
 
 type storage  = CommonStorage.Types.t
 type side  = CommonTypes.Types.side
@@ -27,8 +28,13 @@ let get_distribution_of
       | BUY -> orderbook.bids
       | SELL -> orderbook.asks
   in
-  let collect (acc, o : nat * order) : nat = 
-    (if tolerance = o.tolerance then (acc + o.swap.from.amount) else acc)  in
+  let collect (acc, o : nat * order) : nat =
+    match (tolerance, o.tolerance) with 
+    | (MINUS, MINUS) -> acc + o.swap.from.amount 
+    | (EXACT, EXACT) -> acc + o.swap.from.amount 
+    | (PLUS, PLUS) -> acc + o.swap.from.amount 
+    | _ -> acc
+  in 
   List.fold collect side_orders 0n
 
 let compute_clearing_prices
@@ -40,7 +46,6 @@ let compute_clearing_prices
       | None -> failwith "No current batch"
       | Some batch -> batch
   in
-  let exchange_rate = Pricing.Rates.get_rate rate.swap storage in
   let orderbook = current_batch.orderbook in
 
 
@@ -56,5 +61,5 @@ let compute_clearing_prices
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in 
   let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in
 
-  let clearing = Math.get_clearing_price exchange_rate.rate buy_side sell_side in
+  let clearing = Math.get_clearing_price rate.rate buy_side sell_side in
   clearing
