@@ -34,7 +34,7 @@ const ConnectButton = ({
     setUserAddress(userAddress);
     // updates balance
     const balance = await Tezos.tz.getBalance(userAddress);
-    
+
     setUserBalance(balance.toNumber());
     toast.success('Wallet for address ' + userAddress + ' connected')
   };
@@ -60,7 +60,7 @@ const ConnectButton = ({
     // creates a wallet instance if not exists
     if(!wallet){
       wallet = new BeaconWallet({
-      name: "training",
+      name: "batcher",
       preferredNetwork: NetworkType.JAKARTANET
     });}
     Tezos.setWalletProvider(wallet);
