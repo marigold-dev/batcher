@@ -64,7 +64,7 @@ function App() {
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
   
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
-  const [contractAddress, setContractAddress] = useState<string>("KT1T7q2HobgiSWbmbc3thX1798PHFMBaLyzx");
+  const [contractAddress, setContractAddress] = useState<string>("KT1REBju6wdPNZ6xux2qnFuitAjZQsaW2eRm");
   const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
   const [baseTokenTolerance, setBaseTokenTolerance] = useState<number>(1);
@@ -90,7 +90,7 @@ function App() {
 
 
   const get_time_left_in_batch = ( status:string) => {
-    console.log(status);
+    console.log("53333 ", status);
     let statusObject = JSON.parse(status); 
     console.log(statusObject);
     if(status.search("closed") > -1){
@@ -153,15 +153,15 @@ function App() {
     //const tcontract =  await Tezos.contract.at(contractAddress);
     const storage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
     const rates_map_keys = await contractsService.getBigMapByNameKeys( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } )
-    console.log(rates_map_keys);
-    const exchange_rate : model.exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
-    const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
-    setExchangeRate(scaled_rate);
-    console.log("Updated Exchange Rate");
-
-
-    try{
-       const current_batch_status= await storage.batches.current.status;
+    if (rates_map_keys.length != 0) {
+      const exchange_rate : model.exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
+      const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
+      setExchangeRate(scaled_rate);
+      console.log("Updated Exchange Rate");
+    }
+    
+    try {
+       const current_batch_status = await storage.batches.current.status;
        let time_remaining = get_time_left_in_batch(JSON.stringify(current_batch_status));
        setRemaining(time_remaining);
     } catch (e) {

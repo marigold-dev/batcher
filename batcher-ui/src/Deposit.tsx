@@ -83,32 +83,56 @@ const DepositButton = ({
   const [depositButtonColour, setDepositButtonColour] = useState<string>("");
   const [sideCaption, setSideCaption] = useState<string>("");
 
-  const transferToken = async (
-      tokenAddress:string,
-      fromAddress: string,
-      toAddress: string,
-      token_id: number,
-      amount: number
-  ) : Promise<void> => {
-        const tokenWalletContract = await Tezos.wallet.at(tokenAddress);
-        const transfer_params = [
-              {
-                from_: fromAddress,
-                tx : [
-                  {
-                    to_:toAddress,
-                    token_id:token_id,
-                    amount: amount 
-                  }
-                ]
-              }
-           ];
-           const token_transfer_op = await tokenWalletContract.methods.transfer(transfer_params).send();
-           const confirm = await token_transfer_op.confirmation();
-           if(!confirm.completed)
-               throw Error("Failed to transfer token");
+  // const transferToken = async (
+  //     tokenAddress:string,
+  //     fromAddress: string,
+  //     toAddress: string,
+  //     token_id: number,
+  //     amount: number
+  // ) : Promise<void> => {
+  //       const tokenWalletContract = await Tezos.wallet.at(tokenAddress);
+  //       const transfer_params = [
+  //             {
+  //               from_: fromAddress,
+  //               tx : [
+  //                 {
+  //                   to_:toAddress,
+  //                   token_id:token_id,
+  //                   amount: amount 
+  //                 }
+  //               ]
+  //             }
+  //          ];
+  //          const token_transfer_op = await tokenWalletContract.methods.transfer(transfer_params).send();
+  //          const confirm = await token_transfer_op.confirmation();
+  //          if(!confirm.completed)
+  //              throw Error("Failed to transfer token");
 
-  };
+  // };
+
+  const updateOperators = async (
+    tokenAddress : string,
+    fromAddress : string,
+    toAddress : string,
+    token_id : number
+  ) : Promise<void> => {
+    const tokenWalletContract = await Tezos.wallet.at(tokenAddress);
+    const operatorParams = [
+      {
+        add_operator: {
+          owner: fromAddress,
+          operator : toAddress,
+          token_id : token_id
+        }
+      }
+    ];
+    const tokenUpdateOperators = await tokenWalletContract.methods.update_operators(operatorParams).send();
+    const confirm = await tokenUpdateOperators.confirmation();
+
+    if (!confirm.completed) {
+      throw Error ("Failed to update operators");
+    }
+  }
 
 
   const createSwapOrder = async (
@@ -174,10 +198,10 @@ const DepositButton = ({
         toast.loading('Depositing ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress, {id: depositToastId } ) ; 
         
         try {
-            await transferToken(tokenAddress,userAddress,contractAddress,0,scaled_amount);
-            toast.success('Deposit of ' + token.name + ' successful', {id: depositToastId});
+            await updateOperators(tokenAddress, userAddress, contractAddress, 0);
+            toast.success('Updating the batcher contract ' + contractAddress + 'to the operator of' + userAddress, { id : depositToastId });
         } catch (error:any) {
-         toast.error("Transfer error : " + error.message, {id: depositToastId }); 
+         toast.error('Updating operators error : ' + error.message, {id: depositToastId }); 
         }
 
         const swapToastId = 'swap';
