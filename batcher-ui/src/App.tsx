@@ -35,7 +35,6 @@ import {
   CardFooter,
   CardText,
   Form,
-
   UncontrolledTooltip
 } from "reactstrap";
 import { time } from 'console';
@@ -66,7 +65,7 @@ function App() {
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
 
   const [storage, setStorage] = useState<model.ContractStorage | undefined>();
-  const [contractAddress, setContractAddress] = useState<string>("KT1T7q2HobgiSWbmbc3thX1798PHFMBaLyzx");
+  const [contractAddress, setContractAddress] = useState<string>("KT1PTF8Bo6pRhk3Asb3CJxHXGUTu8rSGT6C3");
   const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
   const [baseTokenTolerance, setBaseTokenTolerance] = useState<number>(1);
@@ -203,10 +202,11 @@ function App() {
 
   const updateUriSettings = async (): Promise<void> => {
    try{
-     console.log("Updating Token Balance URI");
-    setTokenBalanceUri(""+ chain_api_url + "/v1/tokens/balances?account=" + userAddress);
-     console.log(tokenBalanceUri);
-    setBigMapByIdUri(""+ chain_api_url + "/v1/bigmaps/");
+      console.log("Updating Token Balance URI");
+      if (userAddress != "No Wallet Connected") {
+        setTokenBalanceUri("" + chain_api_url + "/v1/tokens/balances?account=" + userAddress);
+        setBigMapByIdUri("" + chain_api_url + "/v1/bigmaps/");
+      }
    } catch (error)
    {
       console.log(error);
@@ -277,7 +277,6 @@ function App() {
               </CardHeader>
               <CardBody>
                 <h4 className="title d-inline">Current Batch</h4>
-                <Table size="md">
                   <Row className="sm-5 sp-5">
                   <Col>
                   <Row>
@@ -312,7 +311,6 @@ function App() {
                  </Row>
                   </Col>
                   </Row>
-                </Table>
               </CardBody>
               <CardFooter>
 
@@ -362,7 +360,6 @@ function App() {
                 <h4 className="title d-inline">Wallet</h4>
               </CardHeader>
               <CardBody>
-              <Table size="md">
               <Row className="sm-5 sp-5">
                   <Col>
                     <Row>
@@ -394,7 +391,6 @@ function App() {
                />
                   </Col>
                </Row>
-              </Table>
               </CardBody>
             </Card>
             <Card>
@@ -405,8 +401,6 @@ function App() {
                  <Row>
                    <Col>
                     <h4 className="title d-inline">Bids</h4>
-                    <Table size="sm">
-
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
@@ -419,12 +413,10 @@ function App() {
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
                       </Row>
-                   </Table>
 
                    </Col>
                    <Col>
                     <h4 className="title d-inline">Asks</h4>
-                    <Table size="sm">
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
@@ -437,8 +429,6 @@ function App() {
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"pLUS", orderBook?.asks!)}</Col>
                       </Row>
-
-                   </Table>
 
                    </Col>
                  </Row>

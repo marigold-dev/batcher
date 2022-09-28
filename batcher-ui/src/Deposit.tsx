@@ -204,7 +204,10 @@ const DepositButton = ({
   };
 
   const api = async () => {
-    console.log("TOKENURI:" + tokenBalanceUri);
+    if (tokenBalanceUri == "") {
+      return null;
+    }
+
     const data = await fetch(tokenBalanceUri, {
       method: "GET"
     });
