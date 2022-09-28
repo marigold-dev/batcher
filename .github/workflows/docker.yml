@@ -8,6 +8,9 @@ on:
 
 jobs:
   ui:
+    strategy:
+      matrix:
+        network: [ghostnet, jakartanet]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.0
@@ -33,12 +36,13 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
           context: "batcher-ui"
           # Only push when on main
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: |
-            ghcr.io/marigold-dev/batcher:latest
-            ghcr.io/marigold-dev/batcher:stable
-            ghcr.io/marigold-dev/batcher:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:latest
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
