@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: ./batcher-ui/Dockerfile.${{ matrix.network }}
-          context: "batcher-ui"
+          context: ./batcher-ui/
           # Only push when on main
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: |
