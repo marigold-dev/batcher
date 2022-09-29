@@ -2,135 +2,15 @@
 
 set -e
 
-RPC_NODE=http://localhost:20000
+RPC_NODE=https://ghostnet.tezos.marigold.dev/
 
-tezos-client () {
-  docker exec -t 0_slip_flextesa tezos-client "$@"
-}
-
-ligo-client () {
-  docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.47.0 "$@"
-}
-
-deploy_contract () {
-  echo "Deploying new $1 contract"
-
-  # Compiles an initial storage for a given contract to a Michelson expression.
-  # The resulting Michelson expression can be passed as an argument in a transaction which originates a contract.
-  storage=$(ligo-client compile storage "$2" "$3")
-
-  # Compiles a contract to Michelson code.
-  # Expects a source file and an entrypoint function.
-  contract=$(ligo-client compile contract "$2")
-
-  echo "Originating $1 contract"
-  sleep 2
-  tezos-client --endpoint $RPC_NODE originate contract "$1" \
-    transferring 0 from bob \
-    running "$contract" \
-    --init "$storage" \
-    --burn-cap 2 \
-    --force
-}
-
-deploy_treasury_contract () {
-  treasury="treasury/main.mligo"
-
-  # Get the treasury storage for a seperate module.
-  storage_dir="data/treasury/storage.mligo"
-  treasury_storage=$(cat "$storage_dir")
-
-  deploy_contract "treasury" "$treasury" "$treasury_storage"
-}
-
-deposit_treasury_contract () {
-  deposit_address=$(jq '.deposited_token.address' $1 | xargs)
-  deposit_token_name=$(jq '.deposited_token.name' $1 | xargs)
-  deposit_value=$(jq '.deposited_token.value' $1 | xargs)
-
-  base_token_address=$(jq '.exchange_rate.base.address' $1 | xargs)
-  base_token_name=$(jq '.exchange_rate.base.name' $1 | xargs)
-  base_token_value=$(jq '.exchange_rate.base.value' $1 | xargs)
-  base_token_timestamp=$(jq '.exchange_rate.base.timestamp' $1 | xargs)
-
-  quote_token_address=$(jq '.exchange_rate.quote.address' $1 | xargs)
-  quote_token_name=$(jq '.exchange_rate.quote.name' $1 | xargs)
-  quote_token_value=$(jq '.exchange_rate.quote.value' $1 | xargs)
-  quote_token_timestamp=$(jq '.exchange_rate.quote.timestamp' $1 | xargs)
- 
-  deposited_token="Pair (Pair \"$deposit_address\" \"$deposit_token_name\") $deposit_value"
-
-  base_value="Pair (Pair (Pair \"$base_token_address\" \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
-  quote_value="Pair (Pair (Pair \"$quote_token_address\" \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
-  exchange_rate="Pair ($base_value) ($quote_value)"
-
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
-  --entrypoint deposit --arg "Pair ($deposited_token) ($exchange_rate) " \
-  --burn-cap 2
-}
-
-redeem_treasury_contract () {
-  redeem_address=$(jq '.redeemed_token.address' $1 | xargs)
-  redeem_token_name=$(jq '.redeemed_token.name' $1 | xargs)
-  redeem_value=$(jq '.redeemed_token.value' $1 | xargs)
-
-  base_token_address=$(jq '.exchange_rate.base.address' $1 | xargs)
-  base_token_name=$(jq '.exchange_rate.base.name' $1 | xargs)
-  base_token_value=$(jq '.exchange_rate.base.value' $1 | xargs)
-  base_token_timestamp=$(jq '.exchange_rate.base.timestamp' $1 | xargs)
-
-  quote_token_address=$(jq '.exchange_rate.quote.address' $1 | xargs)
-  quote_token_name=$(jq '.exchange_rate.quote.name' $1 | xargs)
-  quote_token_value=$(jq '.exchange_rate.quote.value' $1 | xargs)
-  quote_token_timestamp=$(jq '.exchange_rate.quote.timestamp' $1 | xargs)
- 
-  redeemed_token="Pair (Pair \"$redeem_address\" \"$redeem_token_name\") $redeem_value"
-
-  base_value="Pair (Pair (Pair \"$base_token_address\" \"$base_token_name\") $base_token_value) \"$base_token_timestamp\""
-  quote_value="Pair (Pair (Pair \"$quote_token_address\" \"$quote_token_name\") $quote_token_value) \"$quote_token_timestamp\""
-  exchange_rate="Pair ($base_value) ($quote_value)"
-
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to treasury \
-  --entrypoint redeem --arg "Pair ($exchange_rate) ($redeemed_token)" \
-  --burn-cap 2
-}
-
-deploy_token_contract () {
-  token="token/main.mligo"
-
-  # Get the token storage for a seperate module.
-  token_dir="data/token/storage.mligo"
-  token_storage=$(cat "$token_dir")
-
-  deploy_contract "token" "$token" "$token_storage"
-}
-
-transfer_token_contract () {
-  tezos-client --endpoint $RPC_NODE transfer 0 from jago to token \
-  --entrypoint transfer --arg '{ Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" { Pair "tz1VSUr8wwNhLAzempoch5d6hLRiTh8Cjcjb" (Pair 0 50) } }' \
-  --burn-cap 2
-}
-
-update_operators_token_contract () {
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to token \
-  --entrypoint update_operators --arg '{ Right (Pair "tz1aSkwEot3L2kmUvcoxzjMomb9mvBNuzFK6" (Pair "tz1cppweGFj4ZyrTqbkNCcSsCkgWp5UekxVd" 0)) }' \
-  --burn-cap 2
-}
-  
-post_rate_batcher_contract () {
-  swap_value="Pair (Pair $deposit_amount (Pair (Some \"$deposit_address\") \"$deposit_token\")) (Pair (Some \"$swap_address\") \"$swap_token\")"
-
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to batcher \
-  --entrypoint post --arg "Pair $1 (Pair ($swap_value) \"$2\")"
-}
-
-get_oracle_price () {
+post_rate_contract () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
 
   timestamp=$(echo $quote_data | jq '.timestamp' | xargs)
 
   xtz_usdt_price=$(echo $quote_data | jq '.usd' | xargs)
-  xtz_btc_price=$(echo $quote_data | jq '.btc' | xargs)
+  xtz_tzBTC_price=$(echo $quote_data | jq '.btc' | xargs)
 
   # Regrex for the scientific notation. I.e, 1.2E-05
   notation_regrex="E|e"
@@ -139,39 +19,40 @@ get_oracle_price () {
     xtz_usdt_price=$(echo "$xtz_usdt_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
   fi 
 
-  if [[ "xtz_btc_price" =~ $notation_regrex ]]; then 
-    xtz_btc_price=$(echo "$xtz_btc_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+  if [[ "$xtz_tzBTC_price" =~ $notation_regrex ]]; then 
+    xtz_tzBTC_price=$(echo "$xtz_tzBTC_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
   fi 
 
-  # The USDT/XTZ price is caculated with 5 decimals accuracy
-  round_btc_usdt_price=$(echo "scale=5; $xtz_usdt_price / $xtz_btc_price" | bc)
 
-  # Update the oracle prices
-  post_rate_batcher_contract $round_btc_usdt_price $timestamp
+  round_tzBTC_usdt_price=$(echo "scale=8; $xtz_tzBTC_price * 100000000 / $xtz_usdt_price" | bc)
+  echo $round_tzBTC_usdt_price
+  # Get current exchange pair
+
+  current_exchange_pair=$(tezos-client run view get_current_exchange_pair on contract $1)
+
+  # Compute exchange rate and post this rate to the batcher contract
+  tzBTC_token="Pair (Pair (Some \"KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG\") 8) \"tzBTC\""
+  USDT_token="Pair (Pair (Some \"KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm\") 6) \"USDT\""
+  timestamp=$(date +%s)
+
+  if [[ "$current_exchange_pair" =~ "tzBTC/USDT" ]]; then 
+    round_tzBTC_usdt_price=$(echo "scale=0; $xtz_usdt_price * 100000000 / $xtz_tzBTC_price" | bc)
+    tezos-client --endpoint $RPC_NODE transfer 0 from bob to $1 \
+      --entrypoint post \
+      --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
+      --burn-cap 2
+  elif [[ "$current_exchange_pair" =~ "USDT/tzBTC" ]]; then
+    round_usdt_tzBTC_price=$(echo "scale=0; $xtz_tzBTC_price * 100000000 / $xtz_usdt_price" | bc)
+    tezos-client --endpoint $RPC_NODE transfer 0 from bob to $1 \
+      --entrypoint post \
+      --arg "Pair (Pair (Pair -8 $round_usdt_tzBTC_price) (Pair (Pair 1 ($USDT_token)) ($tzBTC_token))) $timestamp" \
+      --burn-cap 2
+  fi 
 }
 
 case "$1" in
-deploy-treasury-contract)
-  deploy_treasury_contract 
-  ;;
-deposit-treasury-contract)
-  deposit_data="data/treasury/deposit.json"
-  deposit_treasury_contract $deposit_data
-  ;;
-redeem-treasury-contract)
-  redeem_data="data/treasury/redeem.json"
-  redeem_treasury_contract $redeem_data
-  ;;
-deploy-token-contract)
-  deploy_token_contract
-  ;;
-transfer-token-contract)
-  transfer_token_contract
-  ;;
-update-operators-token-contract)
-  update_operators_token_contract
-  ;;
-get-oracle-price)
-  get_oracle_price
+post-rate-contract)
+  contract=$2
+  post_rate_contract $contract
   ;;
 esac   
