@@ -184,13 +184,11 @@ let get_previous_orders_by_user (user, storage : address * storage) : order list
     List.fold_left filter ([] : order list) storage.batches.previous
 
 [@view]
-let get_current_exchange_rate (rate_name, storage : string * storage) : Types.Types.exchange_rate =
-  match Big_map.find_opt
-    rate_name
-    storage.rates_current
-  with
-  | None -> failwith Errors.not_found_rate_name
-  | Some current_rate -> current_rate
+let get_current_exchange_pair ((), storage : unit * storage) : string =
+  match storage.batches.current with
+  | None -> failwith Errors.not_open_batch
+  | Some current_batch -> 
+    Types.Utils.get_rate_name_from_pair current_batch.pair
 
 
 let main

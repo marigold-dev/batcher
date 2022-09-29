@@ -145,8 +145,6 @@ const RedeemButton = ({
                 <h4 className="title">Redeemable Holdings</h4>
          </CardHeader>
          <CardBody>
-           <Row>
-                    <Table size="sm">
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">{token.name} holdings</h6></Col>
                         <Col className="px-sm-0">{ baseTokenRedeemableHoldings } {token.name}</Col>
@@ -154,8 +152,6 @@ const RedeemButton = ({
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">{toToken.name} holdings</h6></Col>
                         <Col className="px-sm-0">{ quoteTokenRedeemableHoldings} {toToken.name}</Col>
-                      </Row>
-                      </Table>
                       </Row>
          </CardBody>
             <CardFooter>
