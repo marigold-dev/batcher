@@ -11,7 +11,7 @@ jobs:
   ui:
     strategy:
       matrix:
-        network: [ghostnet ]
+        network: [ghostnet, jakartanet ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.0
