@@ -9,6 +9,7 @@ RUN npm install
 COPY ./config-overrides.js ./tsconfig.json ./
 COPY ./src ./src
 COPY ./public ./public
+COPY ./.env.ghostnet ./.env.ghostnet
 
 RUN npm run build:ghostnet
 
