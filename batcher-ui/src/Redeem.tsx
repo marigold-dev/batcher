@@ -1,31 +1,20 @@
-import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "react";
+import {  useState, useEffect } from "react";
 import { TezosToolkit } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import { JSONPath } from "jsonpath-plus";
-import { Contract, ContractsService, MichelineFormat, AccountsService, HeadService } from '@dipdup/tzkt-api';
 import './App.css';
 import *  as model from "./Model";
-import toast, { Toaster } from 'react-hot-toast';
-import {
-  NetworkType
-} from "@airgap/beacon-sdk";
+import toast from 'react-hot-toast';
 
 // reactstrap components
 
 import {
   Button,
-  ButtonGroup,
   Card,
   CardHeader,
   CardBody,
-  CardTitle,
   Col,
   CardFooter,
-  CardText,
-  FormGroup,
-  Form,
-  Input,
-  Label,
   Row,
   Table,
 } from "reactstrap";
@@ -135,11 +124,16 @@ const RedeemButton = ({
 
 
   const redeemHoldings = async () : Promise<void> => {
-         const contractWallet = await Tezos.wallet.at(contractAddress);
-         const redeem_op = await contractWallet.methodsObject.redeem().send();
-         const confirm = await redeem_op.confirmation();
+        const redeemToastId = 'redeem';
+        toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ; 
+        const contractWallet = await Tezos.wallet.at(contractAddress);
+        const redeem_op = await contractWallet.methodsObject.redeem().send();
+        const confirm = await redeem_op.confirmation();
          if(!confirm.completed){
+            toast.error('Failed to redeem holdings', {id: redeemToastId } ) ; 
              throw Error("Failed to redeem holdings");
+         } else {
+            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ; 
          }
 };
 

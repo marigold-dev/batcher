@@ -2,87 +2,60 @@ import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
 import marigoldlogo from './marigoldlogo.png';
 import ConnectButton from './ConnectWallet';
-import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
-import { Tzip12Module } from '@taquito/tzip12';
-import { Tzip16Module } from '@taquito/tzip16';
+import { TezosToolkit } from '@taquito/taquito';
 import DisconnectButton from './DisconnectWallet';
 import DepositButton from './Deposit';
 import RedeemButton from './Redeem';
-import { Contract, ContractsService, MichelineFormat, AccountsService, HeadService } from '@dipdup/tzkt-api';
+import {  ContractsService, MichelineFormat, AccountsService, HeadService } from '@dipdup/tzkt-api';
 import { parseISO, add, differenceInMinutes } from 'date-fns'
 import './App.css';
 import *  as model from "./Model";
 import { Helmet } from 'react-helmet';
-import toast, { Toaster } from 'react-hot-toast';
 // reactstrap components
 import {
-  Button,
-  ButtonGroup,
   Card,
   CardHeader,
   CardBody,
   CardTitle,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  UncontrolledDropdown,
-  Label,
-  FormGroup,
-  Input,
   Table,
   Row,
   Col,
   CardFooter,
-  CardText,
-  Form,
-  UncontrolledTooltip
 } from "reactstrap";
 import { time } from 'console';
 
 
 function App() {
 
-  const [Tezos, setTezos] = useState<TezosToolkit>(new TezosToolkit("https://jakartanet.tezos.marigold.dev"));
-
+  const [Tezos ] = useState<TezosToolkit>(new TezosToolkit(process.env.TEZOS_NODE_URI!));
+  const chain_api_url = process.env["TZKT_API_URI"]!;
   const baseTokenName = "tzBTC";
-  const baseTokenAddress = "KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr";
+  const baseTokenAddress = process.env["TZBTC_HASH"]!;
   const baseTokenDecimals = 8;
   const quoteTokenName ="USDT";
-  const quoteTokenAddress ="KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF";
+  const quoteTokenAddress = process.env["USDT_HASH"]!;
   const quoteTokenDecimals = 6;
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("No Wallet Connected");
-  const [userBalance, setUserBalance] = useState<number>(0);
-  const [refreshRate, setRefreshRate] = useState<number>(10000);
+  const [refreshRate ] = useState<number>(10000);
   const mainPanelRef = React.useRef(null);
-  const sidebarRef = React.useRef(null);
   const [exchangeRate, setExchangeRate] = useState<number | undefined>();
-  const [stringStorage, setStringStorage] = useState<string>("");
   const [remaining, setRemaining] = useState<string>("No open batch");
   const [orderBook, setOrderBook] = useState<model.order_book | undefined>(undefined);
   const [previousBatches, setPreviousBatches] = useState<Array<model.batch>>([]);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
-
-  const [storage, setStorage] = useState<model.ContractStorage | undefined>();
-  const [contractAddress, setContractAddress] = useState<string>("KT1PTF8Bo6pRhk3Asb3CJxHXGUTu8rSGT6C3");
+  const [contractAddress] = useState<string>(process.env["BATCHER_CONTRACT_HASH"]!);
   const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
   const [baseTokenTolerance, setBaseTokenTolerance] = useState<number>(1);
   const quoteToken :  model.token = {name : quoteTokenName, address : quoteTokenAddress, decimals : quoteTokenDecimals};
   const [quoteTokenBalance, setQuoteTokenBalance] = useState<number>(0);
   const [quoteTokenTolerance, setQuoteTokenTolerance] = useState<number>(1);
-  const [tokenPair, setTokenPair] = useState<string>(""+baseTokenName+"/"+quoteTokenName);
-  const [invertedTokenPair, setInvertedTokenPair] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
-  const [lastBlockHeight, setLastBlockHeight] = useState<number>(0);
+  const [invertedTokenPair ] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
   const [tokenBalanceUri, setTokenBalanceUri] = useState<string>("");
   const [bigMapByIdUri, setBigMapByIdUri] = useState<string>("");
-   //tzkt
-   //
-  const chain_api_url = "https://api.jakartanet.tzkt.io"
   const contractsService = new ContractsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
-  const accountsService = new AccountsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
-  const headService = new HeadService( {baseUrl: chain_api_url , version : "", withCredentials : false});
 
   const rationalise_rate  = ( rate : number , base_decimals :  number, quote_decimals : number) => {
      let scale =10 ** (base_decimals - quote_decimals);
@@ -320,7 +293,6 @@ function App() {
                 Tezos={Tezos}
                 setWallet={setWallet}
                 setUserAddress={setUserAddress}
-                setUserBalance={setUserBalance}
                 setTokenBalance={setBaseTokenBalance}
                 setTokenTolerance={setBaseTokenTolerance}
                 token={baseToken}
@@ -337,7 +309,6 @@ function App() {
                 Tezos={Tezos}
                 setWallet={setWallet}
                 setUserAddress={setUserAddress}
-                setUserBalance={setUserBalance}
                 setTokenBalance={setQuoteTokenBalance}
                 setTokenTolerance={setQuoteTokenTolerance}
                 token={quoteToken}
@@ -376,7 +347,6 @@ function App() {
                   Tezos={Tezos}
                   setWallet={setWallet}
                   setUserAddress={setUserAddress}
-                  setUserBalance={setUserBalance}
                   userAddress={userAddress}
                   wallet={wallet}
                 />
@@ -385,7 +355,6 @@ function App() {
                <DisconnectButton
                wallet={wallet}
                setUserAddress={setUserAddress}
-               setUserBalance={setUserBalance}
                userAddress={userAddress}
                setWallet={setWallet}
                />
