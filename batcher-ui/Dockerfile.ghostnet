@@ -10,7 +10,7 @@ COPY ./config-overrides.js ./tsconfig.json ./
 COPY ./src ./src
 COPY ./public ./public
 
-RUN npm run build
+RUN npm run build:ghostnet
 
 FROM nginx:latest
 
