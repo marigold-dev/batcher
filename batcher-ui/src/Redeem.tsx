@@ -53,18 +53,18 @@ const RedeemButton = ({
 
     const get_redeemable_holdings = async () => {
     try{
-
       let treasuries = previousBatches.map(th => th.treasury);
       let base_holdings = 0;
       let quote_holdings = 0;
       for(var i = 0;i<treasuries.length;i++) { 
         try{
-
            let bm_uri = bigMapsById + treasuries[i] + "/keys/" + userAddress;
+           console.log(888, bm_uri)
            const data = await fetch(bm_uri, {
               method: "GET"
             });
            const jsonData = await data.json();
+           console.log('%cRedeem.tsx line:68 object', 'color: #007acc;', jsonData);
            const amounts = JSONPath({ path: "$.value.*.token_amount", json: jsonData });
            const tokenAmounts = amounts as Array<model.token_amount>;
            try{
@@ -95,9 +95,8 @@ const RedeemButton = ({
             setBaseTokenRedeemableHoldings(base_holdings);
             setQuoteTokenRedeemableHoldings(quote_holdings);
 
-        } catch 
-        {
-
+        } catch (error) {
+          console.log(error);
         }
    
 
