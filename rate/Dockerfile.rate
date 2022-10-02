@@ -1,0 +1,11 @@
+FROM tezos/tezos
+USER 0
+RUN apk add curl jq
+
+USER 1000
+
+COPY ./config.rate /home/tezos/.tezos-client/config
+COPY ./sandbox.sh ./sandbox.sh
+
+
+

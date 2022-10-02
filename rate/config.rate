@@ -1,0 +1,2 @@
+{ "base_dir": "/home/tezos/.tezos-client",
+  "endpoint": "https://ghostnet.tezos.marigold.dev/", "web_port": 8080, "confirmations": 0 }
