@@ -52,7 +52,6 @@ const RedeemButton = ({
 
 
   const get_redeemable_holdings = async () => {
-    console.log(3333)
     let treasuries = previousBatches.map(th => th.treasury);
     let base_holdings = 0;
     let quote_holdings = 0;
