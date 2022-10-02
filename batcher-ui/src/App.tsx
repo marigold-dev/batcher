@@ -114,7 +114,7 @@ function App() {
     return token_name.concat(" : ", Number(corrected_amount).toString());
   }
   catch (error){
-    return "No orders";
+    return 0;
   }
   }
 
@@ -220,7 +220,7 @@ function App() {
 
         <Row>
           <Col sm="8">
-              <Card sm="5.5">
+              <Card>
               <CardHeader>
                 <h4 className="title d-inline">POOL: tzBTC / USDT</h4>
               </CardHeader>
@@ -229,7 +229,7 @@ function App() {
                   <Row className="sm-5 sp-5">
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Oracle Price</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Oracle Price</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-1">{ exchangeRate } </Col>
@@ -237,7 +237,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Time Remaining</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Time Remaining</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ remaining }</Col>
@@ -245,7 +245,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Bids Orders</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Bids Orders</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ numberOfBids }</Col>
@@ -253,7 +253,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Ask Orders</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Ask Orders</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ numberOfAsks }</Col>
@@ -302,7 +302,7 @@ function App() {
           </Col>
           <Col className="position-relative" sm="3">
             <Row>
-            <Card>
+            <Card sm="5.5">
             <CardHeader>
                 <h4 className="title d-inline">Wallet</h4>
               </CardHeader>
@@ -348,15 +348,15 @@ function App() {
                     <h4 className="title d-inline">Bids</h4>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"eXACT", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals,"eXACT", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
                       </Row>
 
                    </Col>
@@ -364,15 +364,15 @@ function App() {
                     <h4 className="title d-inline">Asks</h4>
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"eXACT", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"eXACT", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"pLUS", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"pLUS", orderBook?.asks!)}</Col>
                       </Row>
 
                    </Col>

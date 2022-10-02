@@ -51,67 +51,44 @@ const RedeemButton = ({
  };
 
 
-    const get_redeemable_holdings = async () => {
-    try{
-      let treasuries = previousBatches.map(th => th.treasury);
-      let base_holdings = 0;
-      let quote_holdings = 0;
-      for(var i = 0;i<treasuries.length;i++) { 
-        try{
-           let bm_uri = bigMapsById + treasuries[i] + "/keys/" + userAddress;
-           console.log(888, bm_uri)
-           const data = await fetch(bm_uri, {
-              method: "GET"
-            });
-           const jsonData = await data.json();
-           console.log('%cRedeem.tsx line:68 object', 'color: #007acc;', jsonData);
-           const amounts = JSONPath({ path: "$.value.*.token_amount", json: jsonData });
-           const tokenAmounts = amounts as Array<model.token_amount>;
-           try{
-              base_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
-                if (token_amount.token.name == token.name){
-                  previousAmount += rationaliseAmount(token_amount.amount, token.decimals);
-                }
-                return previousAmount;
-              }, 0)
-            }     
-            catch (error){  
-              console.log("Error getting base holdings:" + error);
-            }
-            
-            try{
-              quote_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
-                if (token_amount.token.name == toToken.name){
-                  previousAmount += rationaliseAmount(token_amount.amount, toToken.decimals);
-                }
-                return previousAmount;
-              }, 0)
-            } catch(error) {
+  const get_redeemable_holdings = async () => {
+    console.log(3333)
+    let treasuries = previousBatches.map(th => th.treasury);
+    let base_holdings = 0;
+    let quote_holdings = 0;
 
-              console.log("Error getting quote holdings:" + error);
-
-            }
-
-            setBaseTokenRedeemableHoldings(base_holdings);
-            setQuoteTokenRedeemableHoldings(quote_holdings);
-
-        } catch (error) {
-          console.log(error);
+    for (var i = 0; i < treasuries.length; i++) {
+      let bm_uri = bigMapsById + treasuries.at(i) + "/keys/" + userAddress;
+      const data = await fetch(bm_uri, {
+        method: "GET"
+      });
+      const jsonData = await data.json();
+      const amounts = JSONPath({ path: "$.value.*.token_amount", json: jsonData });
+      const tokenAmounts = amounts as Array<model.token_amount>;
+      base_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
+        if (token_amount.token.name == token.name){
+          previousAmount += rationaliseAmount(token_amount.amount, token.decimals);
         }
-   
+        return previousAmount;
+      }, 0);
 
+      quote_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
+        if (token_amount.token.name == toToken.name){
+          previousAmount += rationaliseAmount(token_amount.amount, toToken.decimals);
+        }
+        return previousAmount;
+      }, 0);
 
-      }
-  }
-  catch (error){
-     console.log("Unable to get holdings" + error);
-     return 0;
-  }
-};
+      setBaseTokenRedeemableHoldings(base_holdings);
+      setQuoteTokenRedeemableHoldings(quote_holdings);
+    }
+
+    return null;
+  };
 
   useEffect(() => {
-
-      (async () => get_redeemable_holdings())();
+    console.log(userAddress);
+    (async () => get_redeemable_holdings())();
     const interval=setInterval(()=>{
       (async () => get_redeemable_holdings())();
      },20000)
