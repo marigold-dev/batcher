@@ -38,7 +38,7 @@ const ConnectButton = ({
       if(!wallet) await createWallet();
       await wallet.requestPermissions({
         network: {
-          type: NetworkType.JAKARTANET ,
+          type: NetworkType.GHOSTNET ,
           rpcUrl: process.env["TEZOS_NODE_URI"]!
         }
       });
@@ -55,7 +55,7 @@ const ConnectButton = ({
     if(!wallet){
       wallet = new BeaconWallet({
       name: "batcher",
-      preferredNetwork: NetworkType.JAKARTANET
+      preferredNetwork: NetworkType.GHOSTNET
     });}
     Tezos.setWalletProvider(wallet);
     setWallet(wallet);

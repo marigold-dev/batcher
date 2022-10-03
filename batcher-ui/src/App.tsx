@@ -27,13 +27,13 @@ import { time } from 'console';
 
 function App() {
 
-  const [Tezos ] = useState<TezosToolkit>(new TezosToolkit(process.env.TEZOS_NODE_URI!));
-  const chain_api_url = process.env["TZKT_API_URI"]!;
+  const [Tezos ] = useState<TezosToolkit>(new TezosToolkit(process.env["REACT_APP_TEZOS_NODE_URI"]!));
+  const chain_api_url = process.env["REACT_APP_TZKT_URI_API"]!;
   const baseTokenName = "tzBTC";
-  const baseTokenAddress = process.env["TZBTC_HASH"]!;
+  const baseTokenAddress = process.env["REACT_APP_TZBTC_HASH"]!;
   const baseTokenDecimals = 8;
   const quoteTokenName ="USDT";
-  const quoteTokenAddress = process.env["USDT_HASH"]!;
+  const quoteTokenAddress = process.env["REACT_APP_USDT_HASH"]!;
   const quoteTokenDecimals = 6;
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("No Wallet Connected");
@@ -45,21 +45,21 @@ function App() {
   const [previousBatches, setPreviousBatches] = useState<Array<model.batch>>([]);
   const [numberOfBids, setNumberOrBids] = useState<number>(0);
   const [numberOfAsks, setNumberOrAsks] = useState<number>(0);
-  const [contractAddress] = useState<string>(process.env["BATCHER_CONTRACT_HASH"]!);
+  const [contractAddress] = useState<string>(process.env["REACT_APP_BATCHER_CONTRACT_HASH"]!);
   const baseToken :  model.token = {name : baseTokenName, address : baseTokenAddress, decimals : baseTokenDecimals};
   const [baseTokenBalance, setBaseTokenBalance] = useState<number>(0);
   const [baseTokenTolerance, setBaseTokenTolerance] = useState<number>(1);
   const quoteToken :  model.token = {name : quoteTokenName, address : quoteTokenAddress, decimals : quoteTokenDecimals};
   const [quoteTokenBalance, setQuoteTokenBalance] = useState<number>(0);
   const [quoteTokenTolerance, setQuoteTokenTolerance] = useState<number>(1);
-  const [invertedTokenPair ] = useState<string>(""+quoteTokenName+"/"+baseTokenName);
+  const [invertedTokenPair ] = useState<string>(""+baseTokenName+"/"+quoteTokenName);
   const [tokenBalanceUri, setTokenBalanceUri] = useState<string>("");
   const [bigMapByIdUri, setBigMapByIdUri] = useState<string>("");
   const contractsService = new ContractsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
 
-  const rationalise_rate  = ( rate : number , base_decimals :  number, quote_decimals : number) => {
-     let scale =10 ** (base_decimals - quote_decimals);
-     return rate * scale
+  const rationalise_rate = (rate: number, pow: number, baseDecimals: number, quoteDecimals: number) => {
+    let scale = Number(pow) + Number(baseDecimals) - Number(quoteDecimals);
+    return Number(rate) * Math.pow(10, scale);
   }
 
 
@@ -114,62 +114,38 @@ function App() {
     return token_name.concat(" : ", Number(corrected_amount).toString());
   }
   catch (error){
-    return "No orders";
+    return 0;
   }
   }
 
 
 
   const update_from_storage = async () => {
-
-
     console.log("Updating storage");
-    console.log(contractAddress);
-    //const tcontract =  await Tezos.contract.at(contractAddress);
     const storage = await contractsService.getStorage( { address : contractAddress, level: 0, path: null } );
     const rates_map_keys = await contractsService.getBigMapByNameKeys( { address : contractAddress, name: "rates_current", micheline: MichelineFormat.JSON } )
     console.log(rates_map_keys);
-    const exchange_rate : model.exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
-    const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.swap.to.decimals, exchange_rate.swap.from.token.decimals);
-    setExchangeRate(scaled_rate);
-    console.log("Updated Exchange Rate");
-
-
-    try{
-       const current_batch_status= await storage.batches.current.status;
-       let time_remaining = get_time_left_in_batch(JSON.stringify(current_batch_status));
-       setRemaining(time_remaining);
-    } catch (e) {
-       console.error(e);
-       setRemaining("No open batch");
+    if (rates_map_keys.length != 0) {
+      const exchange_rate : model.exchange_rate = rates_map_keys.filter(r => r.key == invertedTokenPair)[0].value;
+      const scaled_rate = rationalise_rate(exchange_rate.rate.val, exchange_rate.rate.pow, exchange_rate.swap.from.token.decimals, exchange_rate.swap.to.decimals);
+      setExchangeRate(scaled_rate);
+      console.log("Updated Exchange Rate");
     }
 
-    console.log("Updated Time Remaining");
+    if (storage.batches.current) {
+      const current_batch_status = storage.batches.current.status;
+      let time_remaining = get_time_left_in_batch(JSON.stringify(current_batch_status));
+      setRemaining(time_remaining);
 
-    try{
-      const order_book : model.order_book = await storage.batches.current.orderbook;
+      const order_book : model.order_book = storage.batches.current.orderbook;
       setOrderBook(order_book);
       setNumberOrBids(order_book.bids.length);
       setNumberOrAsks(order_book.asks.length);
-    } catch {
-      let empty_order = new model.order_book();
-      setOrderBook(empty_order);
-      setNumberOrBids(0);
-      setNumberOrAsks(0);
     }
 
-    console.log("Updated Order Book");
-
-
-    try{
-
+    if (storage.batches.previous) {
       setPreviousBatches(storage.batches.previous);
     }
-    catch(error) {
-       console.log(error)
-    }
-
-
   };
 
 
@@ -244,7 +220,7 @@ function App() {
 
         <Row>
           <Col sm="8">
-              <Card sm="5.5">
+              <Card>
               <CardHeader>
                 <h4 className="title d-inline">POOL: tzBTC / USDT</h4>
               </CardHeader>
@@ -253,7 +229,7 @@ function App() {
                   <Row className="sm-5 sp-5">
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Oracle Price</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Oracle Price</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-1">{ exchangeRate } </Col>
@@ -261,7 +237,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Time Remaining</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Time Remaining</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ remaining }</Col>
@@ -269,7 +245,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Bids Orders</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Bids Orders</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ numberOfBids }</Col>
@@ -277,7 +253,7 @@ function App() {
                   </Col>
                   <Col>
                   <Row>
-                    <Col className="col-4"><h6 className="title d-inline">Ask Orders</h6></Col>
+                    <Col className="sm-0"><h6 className="title d-inline">Ask Orders</h6></Col>
                   </Row>
                  <Row>
                     <Col className="sm-0">{ numberOfAsks }</Col>
@@ -326,7 +302,7 @@ function App() {
           </Col>
           <Col className="position-relative" sm="3">
             <Row>
-            <Card>
+            <Card sm="5.5">
             <CardHeader>
                 <h4 className="title d-inline">Wallet</h4>
               </CardHeader>
@@ -372,15 +348,15 @@ function App() {
                     <h4 className="title d-inline">Bids</h4>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"eXACT", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals,"eXACT", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals,"pLUS", orderBook?.bids!)}</Col>
                       </Row>
 
                    </Col>
@@ -388,15 +364,15 @@ function App() {
                     <h4 className="title d-inline">Asks</h4>
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"eXACT", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"eXACT", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">+10bps</h6></Col>
-                        <Col className="px-sm-0">{(orderBook == undefined) ? null : get_token_by_side(quoteToken.decimals,"pLUS", orderBook?.asks!)}</Col>
+                        <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"pLUS", orderBook?.asks!)}</Col>
                       </Row>
 
                    </Col>
