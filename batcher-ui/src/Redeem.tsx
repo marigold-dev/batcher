@@ -95,7 +95,7 @@ const RedeemButton = ({
      return()=>clearInterval(interval)
 
 
-  }, [userAddress]);
+  }, [userAddress, previousBatches]);
 
 
   const redeemHoldings = async () : Promise<void> => {
