@@ -9,7 +9,7 @@ RUN npm install
 COPY ./config-overrides.js ./tsconfig.json ./
 COPY ./src ./src
 COPY ./public ./public
-COPY ./.env.jakartanet ./.env.jakartanet
+COPY ./.env.kathmandunet ./.env.kathmandunet
 
 RUN npm run build:kathmandunet
 
