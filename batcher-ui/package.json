@@ -33,9 +33,11 @@
   "scripts": {
     "start": "react-app-rewired start",
     "start:jakartanet": "env-cmd -f .env.jakartanet react-app-rewired start",
+    "start:kathmandunet": "env-cmd -f .env.kathmandunet react-app-rewired start",
     "start:ghostnet": "env-cmd -f .env.ghostnet react-app-rewired start",
     "build": "react-app-rewired build",
     "build:jakartanet": "env-cmd -f .env.jakartanet react-app-rewired build",
+    "build:kathmandunet": "env-cmd -f .env.kathmandunet react-app-rewired build",
     "build:ghostnet": "env-cmd -f .env.ghostnet react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject"
