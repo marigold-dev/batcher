@@ -35,7 +35,7 @@ const ConnectButton = ({
   };
 
   const getNetworkType = () => {
-    const network = process.env["TEZOS_NODE_URI"];
+    const network = process.env["REACT_APP_NETWORK_TARGET"];
     if(network?.includes("KATHMANDUNET"))
      { 
        return NetworkType.KATHMANDUNET; 
