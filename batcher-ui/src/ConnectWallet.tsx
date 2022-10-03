@@ -11,6 +11,7 @@ import {
 import {
   Button
 } from "reactstrap";
+import { isThisTypeNode } from "typescript";
 
 type ButtonProps = {
   Tezos: TezosToolkit;
@@ -33,12 +34,27 @@ const ConnectButton = ({
     toast.success('Wallet for address ' + userAddress + ' connected')
   };
 
+  const getNetworkType = () => {
+    const network = process.env["TEZOS_NODE_URI"];
+    if(network?.includes("KATHMANDUNET"))
+     { 
+       return NetworkType.KATHMANDUNET; 
+      }
+    else if(network?.includes("JAKARTANET")) {
+       return NetworkType.JAKARTANET;
+      }
+    else 
+     {
+        return NetworkType.GHOSTNET;
+      }
+  }
+
   const connectWallet = async (): Promise<void> => {
     try {
       if(!wallet) await createWallet();
       await wallet.requestPermissions({
         network: {
-          type: NetworkType.GHOSTNET ,
+          type: getNetworkType() ,
           rpcUrl: process.env["TEZOS_NODE_URI"]!
         }
       });
