@@ -27,7 +27,7 @@ let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 [@inline]
 let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat = 
   let float_amount = Float.new (int (order.swap.from.amount)) 0 in 
-  if order.swap.from.token = exchange_rate.swap.from.token then 
+  if order.swap.from.token.name = exchange_rate.swap.from.token.name then 
     Math.get_rounded_number (Float.mul float_amount exchange_rate.rate) 
   else 
     Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
