@@ -84,7 +84,7 @@ const DepositButton = ({
                   {
                     to_:toAddress,
                     token_id:token_id,
-                    amount: amount 
+                    amount: amount
                   }
                 ]
               }
@@ -149,31 +149,31 @@ const DepositButton = ({
           toast.error("Please connect a wallet before depositing");
       } else {
         const depositToastId = 'depositing';
-        toast.loading('Attempting to place swap order for ' + token.name, {id: depositToastId} ) ;  
-        Tezos.setWalletProvider(wallet);   
+        toast.loading('Attempting to place swap order for ' + token.name, {id: depositToastId} ) ;
+        Tezos.setWalletProvider(wallet);
         const userAddress = await wallet.getPKH();
         if(!userAddress){
           await wallet.requestPermissions();
         }
 
         const scaled_amount = rationaliseAmount(depositAmount);
-        toast.loading('Depositing ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress, {id: depositToastId } ) ; 
-        
+        toast.loading('Depositing ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress, {id: depositToastId } ) ;
+
         try {
             await transferToken(tokenAddress,userAddress,contractAddress,0,scaled_amount);
             toast.success('Deposit of ' + token.name + ' successful', {id: depositToastId});
         } catch (error:any) {
-         toast.error("Transfer error : " + error.message, {id: depositToastId }); 
+         toast.error("Transfer error : " + error.message, {id: depositToastId });
         }
 
         const swapToastId = 'swap';
-        toast.loading('Creating swap order for ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress+ ". Side:" + orderSide + " Tolerance:" + tokenTolerance, {id: swapToastId } ) ; 
-        
+        toast.loading('Creating swap order for ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress+ ". Side:" + orderSide + " Tolerance:" + tokenTolerance, {id: swapToastId } ) ;
+
         try {
             await createSwapOrder(contractAddress,userAddress,token,toToken,scaled_amount, orderSide);
             toast.success('Swap order created for ' + token.name + ' successful', {id: swapToastId});
         } catch (error:any) {
-         toast.error("Swap error : " + error.message, { id: swapToastId }); 
+         toast.error("Swap error : " + error.message, { id: swapToastId });
         }
       }
     } catch (error) {
@@ -223,13 +223,13 @@ const DepositButton = ({
 
 
   const setDepositValue = (event:ChangeEvent<HTMLInputElement>) => {
-    setDepositAmount(event.target.valueAsNumber); 
+    setDepositAmount(event.target.valueAsNumber);
   };
 
   return (
     <Col sm="5.5">
       <Card>
-         <CardHeader> 
+         <CardHeader>
                 <h4>Balance : {tokenBalance}  {token.name}</h4>
          </CardHeader>
          <CardBody>
@@ -267,7 +267,7 @@ const DepositButton = ({
                   >
                   Exact
                 </Button>
-                </Col> 
+                </Col>
                 <Col>
                 <Button
                   className="btn-info"
@@ -280,12 +280,12 @@ const DepositButton = ({
           +10bps
         </Button>
                 </Col>
-               </Row> 
+               </Row>
              </Form>
          </CardBody>
             <CardFooter>
                 <Button block className={ orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
-                       Swap {token.name}
+                       Swap {token.name} for {toToken.name}
                 </Button>
               </CardFooter>
       </Card>
