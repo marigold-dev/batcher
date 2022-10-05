@@ -143,6 +143,10 @@ function App() {
       setNumberOrAsks(order_book.asks.length);
     }
 
+    if (!storage.batches.current) {
+      setRemaining("No open batch");
+    } 
+
     if (storage.batches.previous) {
       setPreviousBatches(storage.batches.previous);
     }

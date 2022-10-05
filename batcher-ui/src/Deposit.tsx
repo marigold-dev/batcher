@@ -172,6 +172,8 @@ const DepositButton = ({
         try {
             await createSwapOrder(contractAddress,userAddress,token,toToken,scaled_amount, orderSide);
             toast.success('Swap order created for ' + token.name + ' successful', {id: swapToastId});
+            setDepositAmount(0);
+            
         } catch (error:any) {
          toast.error("Swap error : " + error.message, { id: swapToastId });
         }
@@ -221,11 +223,6 @@ const DepositButton = ({
 
   }, [tokenBalanceUri]);
 
-
-  const setDepositValue = (event:ChangeEvent<HTMLInputElement>) => {
-    setDepositAmount(event.target.valueAsNumber);
-  };
-
   return (
     <Col sm="5.5">
       <Card>
@@ -241,7 +238,8 @@ const DepositButton = ({
                     name="amount"
                     placeholder="Amount"
                     type="number"
-                    onChange={ (e) => setDepositValue(e)}
+                    value={depositAmount == 0 ? "" : depositAmount}
+                    onChange={ (e) => setDepositAmount(e.target.valueAsNumber)}
                   />
                 </Col>
                 <Col>
