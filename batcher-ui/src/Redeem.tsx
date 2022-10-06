@@ -114,7 +114,6 @@ const RedeemButton = ({
 
 
   return (
-    <Col>
       <Card>
          <CardHeader>
                 <h4 className="title">Redeemable Holdings</h4>
@@ -135,8 +134,6 @@ const RedeemButton = ({
                 </Button>
               </CardFooter>
       </Card>
-    </Col>
-
 
   );
 };
