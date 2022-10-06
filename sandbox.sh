@@ -27,8 +27,8 @@ post_rate_contract () {
   round_tzBTC_usdt_price=$(echo "scale=0; $xtz_usdt_price * 100000000 / $xtz_tzBTC_price" | bc)
 
   # Compute exchange rate and post this rate to the batcher contract
-  tzBTC_token="Pair (Pair (Some \"KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG\") 8) \"tzBTC\""
-  USDT_token="Pair (Pair (Some \"KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm\") 6) \"USDT\""
+  tzBTC_token="Pair (Pair (Some \"KT1EGB9ZquErCN3dNvPurmNBuKCAi8pc1ce7\") 8) \"tzBTC\""
+  USDT_token="Pair (Pair (Some \"KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF\") 6) \"USDT\""
   timestamp=$(date +%s)
 
   tezos-client --endpoint $RPC_NODE transfer 0 from bob to $1 \
