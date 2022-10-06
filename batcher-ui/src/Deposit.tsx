@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "react";
-import { TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit, OpKind } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
 import *  as model from "./Model";
@@ -69,72 +69,6 @@ const DepositButton = ({
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [depositButtonColour, setDepositButtonColour] = useState<string>("");
 
-  const transferToken = async (
-      tokenAddress:string,
-      fromAddress: string,
-      toAddress: string,
-      token_id: number,
-      amount: number
-  ) : Promise<void> => {
-        const tokenWalletContract = await Tezos.wallet.at(tokenAddress);
-        const transfer_params = [
-              {
-                from_: fromAddress,
-                tx : [
-                  {
-                    to_:toAddress,
-                    token_id:token_id,
-                    amount: amount
-                  }
-                ]
-              }
-           ];
-           const token_transfer_op = await tokenWalletContract.methods.transfer(transfer_params).send();
-           const confirm = await token_transfer_op.confirmation();
-           if(!confirm.completed)
-               throw Error("Failed to transfer token");
-
-  };
-
-
-  const createSwapOrder = async (
-      contractAddress:string,
-      userAddress : string,
-      fromToken: model.token,
-      toToken: model.token,
-      amount: number,
-      side: number,
-  ) : Promise<void> => {
-        const contractWallet = await Tezos.wallet.at(contractAddress);
-        const swap_params =
-              {
-                trader: userAddress,
-                swap : {
-                  from:{
-                    token: {
-                      name: fromToken.name,
-                      address: fromToken.address,
-                      decimals: fromToken.decimals
-                    },
-                    amount: amount
-                  },
-                  to: {
-                      name: toToken.name,
-                      address: toToken.address,
-                      decimals: toToken.decimals
-                  }
-                },
-                created_at : new Date(),
-                side: side,
-                tolerance: tokenTolerance,
-              };
-           const swap_creation_op = await contractWallet.methodsObject.deposit(swap_params).send();
-           const confirm = await swap_creation_op.confirmation();
-           if(!confirm.completed){
-               throw Error("Failed to call create swap order");
-           }
-  };
-
 
   const  rationaliseAmount = (amount: number) => {
      let scale =10 ** (token.decimals);
@@ -148,8 +82,8 @@ const DepositButton = ({
       if(!wallet) {
           toast.error("Please connect a wallet before depositing");
       } else {
-        const depositToastId = 'depositing';
-        toast.loading('Attempting to place swap order for ' + token.name, {id: depositToastId} ) ;
+        const swapId = 'swap';
+        toast.loading('Attempting to place swap order for ' + token.name, {id: swapId} ) ;
         Tezos.setWalletProvider(wallet);
         const userAddress = await wallet.getPKH();
         if(!userAddress){
@@ -157,23 +91,64 @@ const DepositButton = ({
         }
 
         const scaled_amount = rationaliseAmount(depositAmount);
-        toast.loading('Depositing ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress, {id: depositToastId } ) ;
 
         try {
-            await transferToken(tokenAddress,userAddress,contractAddress,0,scaled_amount);
-            toast.success('Deposit of ' + token.name + ' successful', {id: depositToastId});
-        } catch (error:any) {
-         toast.error("Transfer error : " + error.message, {id: depositToastId });
-        }
+        const tokenWalletContract = await Tezos.wallet.at(token.address);
+        const contractWallet = await Tezos.wallet.at(contractAddress);
 
-        const swapToastId = 'swap';
-        toast.loading('Creating swap order for ' + depositAmount + " of " + token.name + " from " + userAddress + " to batcher contract " + contractAddress+ ". Side:" + orderSide + " Tolerance:" + tokenTolerance, {id: swapToastId } ) ;
+        const transfer_params = [
+              {
+                from_: userAddress,
+                tx : [
+                  {
+                    to_:contractAddress,
+                    token_id:0,
+                    amount: scaled_amount
+                  }
+                ]
+              }
+           ];
 
-        try {
-            await createSwapOrder(contractAddress,userAddress,token,toToken,scaled_amount, orderSide);
-            toast.success('Swap order created for ' + token.name + ' successful', {id: swapToastId});
+
+        const swap_params =
+              {
+                trader: userAddress,
+                swap : {
+                  from:{
+                    token: {
+                      name: token.name,
+                      address: token.address,
+                      decimals: token.decimals
+                    },
+                    amount: scaled_amount
+                  },
+                  to: {
+                      name: toToken.name,
+                      address: toToken.address,
+                      decimals: toToken.decimals
+                  }
+                },
+                created_at : new Date(),
+                side: orderSide,
+                tolerance: tokenTolerance,
+              };
+
+
+
+
+           const order_batch_op = await Tezos.wallet.batch()
+             .withContractCall(tokenWalletContract.methods.transfer(transfer_params))
+             .withContractCall(contractWallet.methodsObject.deposit(swap_params))
+            .send();
+
+           const confirm = await order_batch_op.confirmation();
+           if(!confirm.completed)
+               throw Error("Failed to transfer token");
+
+         toast.success("Swap order successfully placed : " + confirm.currentConfirmation, {id: swapId });
+
         } catch (error:any) {
-         toast.error("Swap error : " + error.message, { id: swapToastId });
+         toast.error("Unable to create swap order.", {id: swapId });
         }
       }
     } catch (error) {

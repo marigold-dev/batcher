@@ -100,16 +100,20 @@ const RedeemButton = ({
 
   const redeemHoldings = async () : Promise<void> => {
         const redeemToastId = 'redeem';
-        toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ; 
+        toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ;
+        try{
         const contractWallet = await Tezos.wallet.at(contractAddress);
         const redeem_op = await contractWallet.methodsObject.redeem().send();
         const confirm = await redeem_op.confirmation();
          if(!confirm.completed){
-            toast.error('Failed to redeem holdings', {id: redeemToastId } ) ; 
+            toast.error('Failed to redeem holdings', {id: redeemToastId } ) ;
              throw Error("Failed to redeem holdings");
          } else {
-            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ; 
+            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ;
          }
+        } catch (error:any) {
+          toast.error("Unable to redeem holdings : " + error.message, {id: redeemToastId });
+        }
 };
 
 
