@@ -196,11 +196,6 @@ const DepositButton = ({
 
   }, [tokenBalanceUri]);
 
-
-  const setDepositValue = (event:ChangeEvent<HTMLInputElement>) => {
-    setDepositAmount(event.target.valueAsNumber);
-  };
-
   return (
     <Col sm="5.5">
       <Card>
@@ -216,7 +211,8 @@ const DepositButton = ({
                     name="amount"
                     placeholder="Amount"
                     type="number"
-                    onChange={ (e) => setDepositValue(e)}
+                    value={depositAmount == 0 ? "" : depositAmount}
+                    onChange={ (e) => setDepositAmount(e.target.valueAsNumber)}
                   />
                 </Col>
                 <Col>
