@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "react";
-import { TezosToolkit } from "@taquito/taquito";
+import { TezosToolkit, OpKind } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
 import *  as model from "./Model";
@@ -72,6 +72,7 @@ const DepositButton = ({
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [depositButtonColour, setDepositButtonColour] = useState<string>("");
 
+
   const transferToken = async (
     tokenAddress: string,
     fromAddress: string,
@@ -96,8 +97,6 @@ const DepositButton = ({
     const confirm = await token_transfer_op.confirmation();
     if (!confirm.completed)
       throw Error("Failed to transfer token");
-
-  };
 
 
   const createSwapOrder = async (
@@ -179,6 +178,7 @@ const DepositButton = ({
 
         } catch (error: any) {
           toast.error("Swap error : " + error.message, { id: swapToastId });
+
         }
       }
     } catch (error) {
