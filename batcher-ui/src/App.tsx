@@ -13,6 +13,7 @@ import *  as model from "./Model";
 import { Helmet } from 'react-helmet';
 // reactstrap components
 import {
+  Button,
   Card,
   CardHeader,
   CardBody,
@@ -56,7 +57,7 @@ function App() {
   const [tokenBalanceUri, setTokenBalanceUri] = useState<string>("");
   const [bigMapByIdUri, setBigMapByIdUri] = useState<string>("");
   const contractsService = new ContractsService( {baseUrl: chain_api_url , version : "", withCredentials : false});
-
+  const [baseTokenSelected, setBaseTokenSelected] = useState<Boolean>(true);
   const rationalise_rate = (rate: number, pow: number, baseDecimals: number, quoteDecimals: number) => {
     let scale = Number(pow) + Number(baseDecimals) - Number(quoteDecimals);
     return Number(rate) * Math.pow(10, scale);
@@ -145,7 +146,7 @@ function App() {
 
     if (!storage.batches.current) {
       setRemaining("No open batch");
-    } 
+    }
 
     if (storage.batches.previous) {
       setPreviousBatches(storage.batches.previous);
@@ -269,36 +270,57 @@ function App() {
 
               </CardFooter>
             </Card>
+
+    <Col sm="5.5">
+      <Card>
+            <CardHeader>
+                <h4 className="title d-inline">Choose Token to Swap</h4>
+              </CardHeader>
+         <CardBody>
+           <Row>
+                <Col>
+                   <Button
+                    className="btn-success"
+                    size="md"
+                    block
+                    outline
+                    onClick={() => setBaseTokenSelected(true)}
+                    active={baseTokenSelected == true }
+                    >
+                    {baseToken.name}
+                     </Button>
+                </Col>
+                <Col>
+                <Button
+                  className="btn-danger"
+                  size="md"
+                  block
+                  outline
+                  onClick={() => setBaseTokenSelected(false)}
+                  active={baseTokenSelected == false }
+                  >
+                  {quoteToken.name}
+                </Button>
+                </Col>
+                </Row>
+         </CardBody>
+      </Card>
+    </Col>
+
             <DepositButton
                 Tezos={Tezos}
                 setWallet={setWallet}
                 setUserAddress={setUserAddress}
-                setTokenBalance={setBaseTokenBalance}
-                setTokenTolerance={setBaseTokenTolerance}
-                token={baseToken}
-                tokenAddress={baseTokenAddress}
-                tokenBalance={baseTokenBalance}
-                tokenTolerance={baseTokenTolerance}
+                setTokenBalance={ baseTokenSelected ?  setBaseTokenBalance :  setQuoteTokenBalance}
+                setTokenTolerance={baseTokenSelected?  setBaseTokenTolerance : setQuoteTokenTolerance  }
+                token={baseTokenSelected ?  baseToken : quoteToken}
+                tokenAddress={baseTokenSelected ?  baseTokenAddress : quoteTokenAddress }
+                tokenBalance={baseTokenSelected ?  baseTokenBalance : quoteTokenBalance }
+                tokenTolerance={baseTokenSelected ? baseTokenTolerance : quoteTokenTolerance}
                 contractAddress={contractAddress}
                 tokenBalanceUri={tokenBalanceUri}
-                orderSide={0}
-                toToken={quoteToken}
-                wallet={wallet}
-            />
-             <DepositButton
-                Tezos={Tezos}
-                setWallet={setWallet}
-                setUserAddress={setUserAddress}
-                setTokenBalance={setQuoteTokenBalance}
-                setTokenTolerance={setQuoteTokenTolerance}
-                token={quoteToken}
-                tokenAddress={quoteTokenAddress}
-                tokenBalance={quoteTokenBalance}
-                tokenTolerance={quoteTokenTolerance}
-                contractAddress={contractAddress}
-                tokenBalanceUri={tokenBalanceUri}
-                orderSide={1}
-                toToken={baseToken}
+                orderSide={baseTokenSelected ? 0 : 1 }
+                toToken={baseTokenSelected ? quoteToken : baseToken}
                 wallet={wallet}
             />
             <Row>
