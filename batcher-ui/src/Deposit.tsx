@@ -284,7 +284,7 @@ const DepositButton = ({
              </Form>
          </CardBody>
             <CardFooter>
-                <Button block className={ orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
+                <Button block className={ orderSide == 0 ? "btn-success" : "btn-success btn btn-secondary btn-block"} onClick={depositToken} >
                        Swap {token.name}
                 </Button>
               </CardFooter>
