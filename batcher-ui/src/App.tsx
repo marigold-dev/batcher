@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
-import marigoldlogo from './marigoldlogo.png';
+import marigoldlogo from './marigold-white.png';
 import ConnectButton from './ConnectWallet';
 import { TezosToolkit } from '@taquito/taquito';
 import DisconnectButton from './DisconnectWallet';
@@ -195,8 +195,17 @@ function App() {
   }, [tokenBalanceUri])
 
   return (
-
-
+          
+          <>
+            <Card >
+              <CardHeader style={{height:"45px", background:"#605f69"}}>
+                  <Col className="text-left float-left" sm="4">
+                    <CardTitle style={{ display:"flex", fontSize:"15px", fontWeight:"2", alignItems:"center"}} tag="h1"><img src={logo} height="35" style={{ padding:"0 0.8em 0 2.5em"}} alt="logo"/> Batch clearing dex</CardTitle>
+                  </Col>
+                  <Col className="text-right float-right" sm="4">
+                    </Col>
+                </CardHeader>
+              </Card>
           <div className="wrapper">
             <div className="main-panel" ref={mainPanelRef} >
 
@@ -206,31 +215,15 @@ function App() {
                 <link rel="canonical" href="http://batcher.marigold.dev" />
             </Helmet>
       <div className="content">
-        <Row  className="pr-5 mr-3">
-          <Col>
-            <Card >
-              <CardHeader>
-                  <Col className="text-left float-left" sm="4">
-                    <CardTitle tag="h1"><img src={logo} height="150" alt="logo"/></CardTitle>
-                  </Col>
-                  <Col className="text-right float-right" sm="4">
-                    <CardTitle tag="h1"><img src={marigoldlogo} height="150" alt="logo"/></CardTitle>
-                    </Col>
-                </CardHeader>
-                <CardBody>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
 
         <Row>
           <Col sm="8">
               <Card>
               <CardHeader>
-                <h4 className="title d-inline">POOL: tzBTC / USDT</h4>
+                <h5 className="title d-inline">POOL: tzBTC / USDT</h5>
               </CardHeader>
               <CardBody>
-                <h4 className="title d-inline">Current Batch</h4>
+                <h5 className="title d-inline">Current Batch</h5>
                   <Row className="sm-5 sp-5">
                   <Col>
                   <Row>
@@ -266,9 +259,6 @@ function App() {
                   </Col>
                   </Row>
               </CardBody>
-              <CardFooter>
-
-              </CardFooter>
             </Card>
 
     <Col sm="5.5">
@@ -330,9 +320,9 @@ function App() {
             <Row>
             <Card sm="5.5">
             <CardHeader>
-                <h4 className="title d-inline">Wallet</h4>
+                <h5 className="title d-inline">Wallet</h5>
               </CardHeader>
-              <CardBody>
+              <CardBody style={{marginBottom:"0.6em"}}>
               <Row className="sm-5 sp-5">
                   <Col>
                     <Row>
@@ -366,18 +356,18 @@ function App() {
             </Card>
             <Card>
               <CardHeader>
-                <h4 className="title">Order Book</h4>
+                <h5 className="title">Order Book</h5>
               </CardHeader>
-              <CardBody>
+              <CardBody style={{marginBottom:"1em"}}>
                  <Row>
                    <Col>
-                    <h4 className="title d-inline">Bids</h4>
+                    <h5 className="title d-inline">Bids</h5>
                       <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals, "mINUS", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
-                        <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
+                        <Col className="col-4"><h6 style={{color:"white"}} className="title d-inline">Exact</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(baseToken.decimals,"eXACT", orderBook?.bids!)}</Col>
                       </Row>
                       <Row>
@@ -387,13 +377,13 @@ function App() {
 
                    </Col>
                    <Col>
-                    <h4 className="title d-inline">Asks</h4>
+                    <h5 className="title d-inline">Asks</h5>
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">-10bps</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"mINUS", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
-                        <Col className="col-4"><h6 className="title d-inline">EXACT</h6></Col>
+                        <Col className="col-4"><h6 className="title d-inline">Exact</h6></Col>
                         <Col className="px-sm-0">{(orderBook == undefined) ? 0 : get_token_by_side(quoteToken.decimals,"eXACT", orderBook?.asks!)}</Col>
                       </Row>
                       <Row>
@@ -404,14 +394,8 @@ function App() {
                    </Col>
                  </Row>
               </CardBody>
-              <CardFooter>
-              </CardFooter>
             </Card>
-            </Row>
-            <Row>
-
-
-             <RedeemButton
+            <RedeemButton
                 Tezos={Tezos}
                 token={quoteToken}
                 previousBatches={previousBatches}
@@ -421,12 +405,21 @@ function App() {
                 contractAddress={contractAddress}
                 bigMapsById={bigMapByIdUri}
             />
-
             </Row>
           </Col>
         </Row>
  </div>      </div>
             </div>
+            <Card style={{ marginBottom:"0"}} >
+            <CardFooter style={{ padding:"15px 25px", height:"32px", background:"#605f69"}}>
+                <Col className="text-center float-center" sm="3">
+                  <CardTitle style={{ display:"flex", fontSize:"15px", fontWeight:"2", alignItems:"center"}} tag="h1"><img src={marigoldlogo} height="30" style={{ padding:"0 0.6em 0 2.5em"}} alt="logo"/> By Marigold</CardTitle>
+                </Col>
+                <Col className="text-right float-right" sm="4">
+                  </Col>
+              </CardFooter>
+            </Card>
+            </>
 
 
   );
