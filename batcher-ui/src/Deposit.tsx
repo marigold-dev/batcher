@@ -322,43 +322,15 @@ const DepositButton = ({
                     onChange={(e) => setDepositAmount(e.target.valueAsNumber)}
                   />
                 </Row>
-                <Row>
                   <Button block className={orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
                     Swap {token.name} for {toToken.name}
                   </Button>
 
                 </Col>
-                <Col>
-                <Button
-                  className="btn-info"
-                  size="md"
-                  block
-                  outline
-                  onClick={() => setTokenTolerance(1)}
-                  active={tokenTolerance == 1 }
-                  >
-                  Exact
-                </Button>
-                </Col> 
-                <Col>
-                <Button
-                  className="btn-info"
-                  size="md"
-                  block
-                  outline
-                  onClick={() => setTokenTolerance(2)}
-                  active={tokenTolerance == 2 }
-        >
-          +10bps
-        </Button>
-                </Col>
                </Row> 
              </Form>
          </CardBody>
             <CardFooter>
-                <Button block className={ orderSide == 0 ? "btn-success" : "btn-success btn btn-secondary btn-block"} onClick={depositToken} >
-                       Swap {token.name}
-                </Button>
               </CardFooter>
 
       </Card>
