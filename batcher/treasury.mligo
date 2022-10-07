@@ -1,6 +1,7 @@
 #import "types.mligo" "Types"
 #import "storage.mligo" "Storage"
 #import "errors.mligo" "Errors"
+#include "utils.mligo"
 
 type storage = Storage.Types.t
 type treasury = Types.Types.treasury
@@ -29,7 +30,6 @@ module Utils = struct
 
   (* Transferred format for tokens in FA2 standard *)
   type transfer = transfer_from list
-
 
   (* Check that the token holding amount is greater or equal to the token amount being swapped *)
   let check_token_holding_amount
@@ -139,7 +139,6 @@ module Utils = struct
                    | Some (th) -> let new_holding = adjust_token_holding th INCREASE token_holding in
                                   Map.update (token_name) (Some(new_holding)) (treasury_holding))
 
-
   (*
   Swaps the tokens by first reducing the token holding for each user of the appropriate token
   and then increasing the holding of the opposing token and assining the new holder.
@@ -176,7 +175,6 @@ module Utils = struct
                                    | Some (oth) -> let new_token_holding = adjust_token_holding oth INCREASE token_holding in
                                                    Map.update (token_name) (Some(new_token_holding)) (treasury_holding))
 
-
   (* Deposit tokens into storage *)
   let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
     let token_name = Types.Utils.get_token_name_from_token_amount received_token in
@@ -185,41 +183,49 @@ module Utils = struct
     let _ = assert_holdings_are_coherent address new_treasury_holding in
     Big_map.update (address) (Some(new_treasury_holding)) treasury
 
-
   (* FIXME:  This needs to be more robust for cases where one token in a two token holding fails *)
   let redeem_all_tokens_from_treasury_holding
     (holder : address)
     (treasury_vault : address)
-    (th : treasury_holding) =
+    (th : treasury_holding) : operation list =
     let _ = assert_holdings_are_coherent holder th in
-    let transfer_token_holding = (fun (_,tkh : string * token_holding) -> let _ = handle_transfer treasury_vault tkh.holder tkh.token_amount in
-                                                                          ()) in
-    Map.iter transfer_token_holding th
+    let make_transfer_op = 
+      fun (ops, (_, tkh) : operation list * (string * token_holding)) ->
+        let op = handle_transfer treasury_vault tkh.holder tkh.token_amount in
+        op :: ops
+    in
+    Map.fold make_transfer_op th ([] : operation list)
 
   let redeem_holdings_from_single_batch
     (holder : address)
     (treasury_vault : address)
-    (batch : batch ) : batch =
+    (batch : batch ):  operation list * batch =
     match batch.status with
     | Cleared _ -> (match Big_map.find_opt holder batch.treasury with
-                  | Some (th) -> let _ = redeem_all_tokens_from_treasury_holding holder treasury_vault th in
+                  | Some (th) -> let transfer_operations = redeem_all_tokens_from_treasury_holding holder treasury_vault th in
                                  let updated_treasury = Big_map.remove holder batch.treasury in
-                                 { batch with treasury =updated_treasury }
-                  | None -> batch)
-    | Open _ -> batch
-    | Closed _  -> batch
+                                 (transfer_operations, { batch with treasury =updated_treasury })
+                  | None -> (([] : operation list) , batch))
+    | Open _ -> (([] : operation list) , batch)
+    | Closed _  -> (([] : operation list) , batch)
+
+  let post_process_redeem_holdings_from_batches
+    (data : (operation list * Storage.Types.batch) list)
+    : operation list * Storage.Types.batch list =
+    let f =
+      fun (((ops,batch),(all_ops,batches)) : (operation list * Storage.Types.batch ) * (operation list * Storage.Types.batch list)) ->
+        (concat ops all_ops, batch :: batches)
+    in
+    List.fold_right f data (([] : operation list),([] : Storage.Types.batch list))
 
 
   let redeem_holdings_from_batches
     (holder : address)
     (treasury_vault : address)
-    (batches : batch_set ) : batch_set =
+    (batches : batch_set ) : operation list * batch_set =
     let updated_previous = List.map (redeem_holdings_from_single_batch (holder) (treasury_vault)) batches.previous in
-    { batches with previous = updated_previous }
-
-
-
-
+    let (ops, up) = post_process_redeem_holdings_from_batches updated_previous in
+    (ops, { batches with previous = up })
 end
 
 
@@ -230,24 +236,24 @@ let empty : treasury = Big_map.empty
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (storage : storage) : storage =
+    (storage : storage) : operation * storage =
       let batches = storage.batches in
-      let current_batch  = (match batches.current with
+      let (op, current_batch)  = (match batches.current with
                                      | None -> (* We should never get here without a current batch *)
-                                               (failwith Errors.no_current_batch_available : batch)
+                                               (failwith Errors.no_current_batch_available : operation * batch)
                                      | Some (cb) -> let updated_current_batch_treasury : treasury = Utils.deposit_treasury deposit_address deposited_token cb.treasury in
                                                     let treasury_vault = get_treasury_vault () in
-                                                    let _ = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                    { cb with treasury = updated_current_batch_treasury }) in
+                                                    let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+                                                    (transfer_operation, { cb with treasury = updated_current_batch_treasury })) in
       let updated_batches = { batches with current = Some(current_batch) } in
-      { storage with batches = updated_batches }
+      (op, { storage with batches = updated_batches })
 
 let redeem
     (redeem_address : address)
-    (storage : storage) : storage =
+    (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let updated_batches = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
-      { storage with batches = updated_batches }
+      let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
+      (ops, { storage with batches = updated_batches })
 
 let swap
     (this : token_holding)

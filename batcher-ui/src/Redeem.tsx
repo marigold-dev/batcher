@@ -56,12 +56,20 @@ const RedeemButton = ({
     let base_holdings = 0;
     let quote_holdings = 0;
 
+    setBaseTokenRedeemableHoldings(base_holdings);
+    setQuoteTokenRedeemableHoldings(quote_holdings);
+    
+    console.log("Treasuries: " + treasuries);
     for (var i = 0; i < treasuries.length; i++) {
+      try{
+
       let bm_uri = bigMapsById + treasuries.at(i) + "/keys/" + userAddress;
+      console.log("Treasury uri:" + bm_uri);
       const data = await fetch(bm_uri, {
         method: "GET"
       });
       const jsonData = await data.json();
+      console.log(jsonData);
       const amounts = JSONPath({ path: "$.value.*.token_amount", json: jsonData });
       const tokenAmounts = amounts as Array<model.token_amount>;
       base_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
@@ -80,6 +88,10 @@ const RedeemButton = ({
 
       setBaseTokenRedeemableHoldings(base_holdings);
       setQuoteTokenRedeemableHoldings(quote_holdings);
+
+      } catch (error : any) {
+         console.log(error);
+      }
     }
 
     return null;
@@ -100,16 +112,20 @@ const RedeemButton = ({
 
   const redeemHoldings = async () : Promise<void> => {
         const redeemToastId = 'redeem';
-        toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ; 
+        toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ;
+        try{
         const contractWallet = await Tezos.wallet.at(contractAddress);
         const redeem_op = await contractWallet.methodsObject.redeem().send();
         const confirm = await redeem_op.confirmation();
          if(!confirm.completed){
-            toast.error('Failed to redeem holdings', {id: redeemToastId } ) ; 
+            toast.error('Failed to redeem holdings', {id: redeemToastId } ) ;
              throw Error("Failed to redeem holdings");
          } else {
-            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ; 
+            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ;
          }
+        } catch (error:any) {
+          toast.error("Unable to redeem holdings : " + error.message, {id: redeemToastId });
+        }
 };
 
 
@@ -134,7 +150,6 @@ const RedeemButton = ({
                 </Button>
               </CardFooter>
       </Card>
-
 
   );
 };

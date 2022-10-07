@@ -8,6 +8,7 @@
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
+#import "../math_lib/lib/float.mligo" "Float"
 
 type storage  = Storage.Types.t
 type result = (operation list) * storage
@@ -15,6 +16,8 @@ type order = Types.Types.swap_order
 type external_order = Types.Types.external_swap_order
 type side = Types.Types.side
 type tolerance = Types.Types.tolerance
+type exchange_rate = Types.Types.exchange_rate
+type inverse_exchange_rate = exchange_rate
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -23,16 +26,35 @@ type entrypoint =
   | Post of Types.Types.exchange_rate
   | Redeem
 
+let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate = 
+  match Big_map.find_opt rate_name current_rate with 
+  | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
+  | Some r ->  
+      let base_token = r.swap.from.token in 
+      let quote_token = r.swap.to in
+      let new_base_token = { r.swap.from with token = quote_token } in 
+      let new_quote_token = base_token in  
+      let inverse_rate : inverse_exchange_rate = {
+        swap = { from = new_base_token; to = new_quote_token };
+        rate = Float.inverse r.rate;
+        when = r.when;
+      } in 
+      (inverse_rate, r)
 
-let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : Batch.t =
-  let rate_name = Types.Utils.get_rate_name_from_pair batch.pair in
-  let rate =
-    match Big_map.find_opt rate_name storage.rates_current with
-        | None -> (failwith Pricing.PriceErrors.no_rate_available_for_swap : Types.Types.exchange_rate)
-        | Some r -> r
+let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : (inverse_exchange_rate * Batch.t) =
+  let (inverse_rate, rate) = 
+    if Big_map.mem (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current then 
+      match Big_map.find_opt (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current with
+      | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
+      | Some r -> (r, r) 
+    else if Big_map.mem (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current then 
+      get_inverse_exchange_rate (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current
+    else 
+      failwith Pricing.PriceErrors.no_rate_available_for_swap
   in
-  let clearing = Clearing.compute_clearing_prices rate storage in
-  Batch.finalize batch current_time clearing rate
+  let clearing = Clearing.compute_clearing_prices inverse_rate storage in
+  let batch = Batch.finalize batch current_time clearing rate in 
+  (inverse_rate, batch)
 
 let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
@@ -45,9 +67,9 @@ let tick_current_batches (storage : storage) : storage =
           if Batch.should_be_closed current_batch current_time then
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
-            let finalized_batch = finalize current_batch storage current_time in
+            let (inverse_rate, finalized_batch) = finalize current_batch storage current_time in
             let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
-            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing cleared_infos.rate finalized_batch.treasury in
+            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing inverse_rate finalized_batch.treasury in
             {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
             current_batch
@@ -100,12 +122,13 @@ let deposit (external_order: Types.Types.external_swap_order) (storage : storage
   in
   let updated_storage = { ticked_storage with batches = updated_batches } in
   (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
-  let storage_after_treasury_update = Treasury.deposit order.trader order.swap.from updated_storage in
-  no_op (storage_after_treasury_update)
+  let (_tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
+  no_op storage_after_treasury_update
 
 let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  no_op(Treasury.redeem holder storage)
+  let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
+  (tokens_transfer_ops, new_storage)
 
 
 let move_current_to_previous_if_finalized (storage : storage) : storage = 
