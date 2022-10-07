@@ -97,6 +97,7 @@ const DepositButton = ({
     const confirm = await token_transfer_op.confirmation();
     if (!confirm.completed)
       throw Error("Failed to transfer token");
+  };
 
 
   const createSwapOrder = async (
