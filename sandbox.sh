@@ -31,15 +31,14 @@ post_rate_contract () {
   USDT_token="Pair (Pair (Some \"KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF\") 6) \"USDT\""
   timestamp=$(date +%s)
 
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to $1 \
+  docker exec -t batcher_node_1 tezos-client --endpoint $RPC_NODE transfer 0 from jago to $1 \
     --entrypoint post \
     --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
     --burn-cap 2
 }
 
-case "$1" in
-post-rate-contract)
-  contract=$2
-  post_rate_contract $contract
-  ;;
-esac   
+while true
+do
+	post_rate_contract KT1FCUp4kN9DziLmiRLMqDnuhBbGSwwoYHD4
+	sleep 5
+done

@@ -1,13 +1,19 @@
-version: "2"
-services:
+version: "3"
 
+volumes:
+  client_data:
+  node_data:
+
+services:
   node:
-    image: oxheadalpha/flextesa:latest
+    image: tezos/tezos:latest
     hostname: node
-    network_mode: "host"
-    command: jakartabox start
+    command: tezos-node
     ports:
-      - 20000:20000
+      - 9732:9732
     expose:
-      - '20000'
+      - '8732'
+    volumes:
+      - node_data:/var/run/tezos/node
+      - client_data:/var/run/tezos/client
     restart: on-failure
