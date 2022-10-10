@@ -31,7 +31,7 @@ post_rate_contract () {
   USDT_token="Pair (Pair (Some \"KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF\") 6) \"USDT\""
   timestamp=$(date +%s)
 
-  docker exec -t batcher_node_1 tezos-client --endpoint $RPC_NODE transfer 0 from jago to $1 \
+  tezos-client transfer 0 from bob to $1 \
     --entrypoint post \
     --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
     --burn-cap 2

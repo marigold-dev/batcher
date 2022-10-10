@@ -1,19 +1,13 @@
 version: "3"
 
-volumes:
-  client_data:
-  node_data:
-
 services:
-  node:
-    image: tezos/tezos:latest
-    hostname: node
-    command: tezos-node
-    ports:
-      - 9732:9732
-    expose:
-      - '8732'
+  client: 
+    container_name: batcher_client
+    build: 
+      context: .
+      dockerfile: Dockerfile.price
+    command: /etc/run/sandbox.sh
     volumes:
-      - node_data:/var/run/tezos/node
-      - client_data:/var/run/tezos/client
-    restart: on-failure
+      - .:/etc/run
+    restart: always
+  
