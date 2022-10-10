@@ -2,9 +2,14 @@
 
 set -e
 
-USDT_address=KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF
-tzBTC_address=KT1EGB9ZquErCN3dNvPurmNBuKCAi8pc1ce7
-batcher_address=KT1FCUp4kN9DziLmiRLMqDnuhBbGSwwoYHD4
+while getopts u:t:b: flag
+do
+  case "${flag}" in
+    u) USDT_address=${OPTARG};;
+    t) tzBTC_address=${OPTARG};;
+    b) batcher_address=${OPTARG};;
+  esac
+done
 
 post_rate_contract () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)

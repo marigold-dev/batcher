@@ -5,9 +5,6 @@ services:
     container_name: batcher_client
     build: 
       context: .
-      dockerfile: Dockerfile.price
-    command: /etc/run/sandbox.sh
-    volumes:
-      - .:/etc/run
+      dockerfile: Dockerfile.price.kathmandunet
     restart: always
   

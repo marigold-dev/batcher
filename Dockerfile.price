@@ -1,7 +1,0 @@
-FROM oxheadalpha/flextesa:latest
-
-RUN apk update &&\
-    apk add bash &&\ 
-    apk add curl &&\
-    apk add jq &&\
-    tezos-client --endpoint https://kathmandunet.tezos.marigold.dev config update
