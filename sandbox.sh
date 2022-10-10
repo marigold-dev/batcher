@@ -2,7 +2,14 @@
 
 set -e
 
-RPC_NODE=https://kathmandunet.tezos.marigold.dev
+while getopts u:t:b: flag
+do
+  case "${flag}" in
+    u) USDT_address=${OPTARG};;
+    t) tzBTC_address=${OPTARG};;
+    b) batcher_address=${OPTARG};;
+  esac
+done
 
 post_rate_contract () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
@@ -27,19 +34,18 @@ post_rate_contract () {
   round_tzBTC_usdt_price=$(echo "scale=0; $xtz_usdt_price * 100000000 / $xtz_tzBTC_price" | bc)
 
   # Compute exchange rate and post this rate to the batcher contract
-  tzBTC_token="Pair (Pair (Some \"KT1EGB9ZquErCN3dNvPurmNBuKCAi8pc1ce7\") 8) \"tzBTC\""
-  USDT_token="Pair (Pair (Some \"KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF\") 6) \"USDT\""
+  tzBTC_token="Pair (Pair (Some \"$tzBTC_address\") 8) \"tzBTC\""
+  USDT_token="Pair (Pair (Some \"$USDT_address\") 6) \"USDT\""
   timestamp=$(date +%s)
 
-  tezos-client --endpoint $RPC_NODE transfer 0 from bob to $1 \
+  tezos-client transfer 0 from bob to $1 \
     --entrypoint post \
     --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
     --burn-cap 2
 }
 
-case "$1" in
-post-rate-contract)
-  contract=$2
-  post_rate_contract $contract
-  ;;
-esac   
+while true
+do
+	post_rate_contract $batcher_address
+	sleep 5
+done
