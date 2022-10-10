@@ -115,13 +115,28 @@ const RedeemButton = ({
         toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ;
         try{
         const contractWallet = await Tezos.wallet.at(contractAddress);
+        const tokenWalletContract = await Tezos.wallet.at(token.address);
+        const operator_params = [
+          {
+            remove_operator: {
+              owner:userAddress,
+              operator:contractAddress,
+              token_id:0
+            }
+          }
+        ];
         const redeem_op = await contractWallet.methodsObject.redeem().send();
         const confirm = await redeem_op.confirmation();
          if(!confirm.completed){
             toast.error('Failed to redeem holdings', {id: redeemToastId } ) ;
              throw Error("Failed to redeem holdings");
          } else {
-            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ;
+            toast.success('Successfully redeemed holdings', {id: redeemToastId });
+            const remove_op = await tokenWalletContract.methods.update_operators(operator_params);
+            const confirm = await remove_op.confirmation();
+            if(!confirm.completed){
+              toast.error('Batcher contract was not an operator of') ;
+            }
          }
         } catch (error:any) {
           toast.error("Unable to redeem holdings : " + error.message, {id: redeemToastId });
