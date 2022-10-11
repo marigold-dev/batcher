@@ -132,7 +132,7 @@ const RedeemButton = ({
              throw Error("Failed to redeem holdings");
          } else {
             toast.success('Successfully redeemed holdings', {id: redeemToastId });
-            const remove_op = await tokenWalletContract.methods.update_operators(operator_params);
+            const remove_op = await tokenWalletContract.methods.update_operators(operator_params).send();
             const confirm = await remove_op.confirmation();
             if(!confirm.completed){
               toast.error('Batcher contract was not an operator of') ;
