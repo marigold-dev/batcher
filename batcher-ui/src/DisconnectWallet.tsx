@@ -31,7 +31,7 @@ const DisconnectButton = ({
   };
 
   return (
-      <Button block active={ userAddress == "" ? false : true } className="btn-danger" size="sm" onClick={disconnectWallet}>
+      <Button block active={ userAddress == "" ? false : true } className="btn-success" size="sm" onClick={disconnectWallet}>
         Disconnect
       </Button>
   );

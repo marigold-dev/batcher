@@ -115,13 +115,28 @@ const RedeemButton = ({
         toast.loading('Attempting to redeem holdings....', {id: redeemToastId } ) ;
         try{
         const contractWallet = await Tezos.wallet.at(contractAddress);
+        const tokenWalletContract = await Tezos.wallet.at(token.address);
+        const operator_params = [
+          {
+            remove_operator: {
+              owner:userAddress,
+              operator:contractAddress,
+              token_id:0
+            }
+          }
+        ];
         const redeem_op = await contractWallet.methodsObject.redeem().send();
         const confirm = await redeem_op.confirmation();
          if(!confirm.completed){
             toast.error('Failed to redeem holdings', {id: redeemToastId } ) ;
              throw Error("Failed to redeem holdings");
          } else {
-            toast.success('Successfully redeemed holdings', {id: redeemToastId } ) ;
+            toast.success('Successfully redeemed holdings', {id: redeemToastId });
+            const remove_op = await tokenWalletContract.methods.update_operators(operator_params).send();
+            const confirm = await remove_op.confirmation();
+            if(!confirm.completed){
+              toast.error('Batcher contract was not an operator of') ;
+            }
          }
         } catch (error:any) {
           toast.error("Unable to redeem holdings : " + error.message, {id: redeemToastId });
@@ -132,9 +147,9 @@ const RedeemButton = ({
   return (
       <Card>
          <CardHeader>
-                <h4 className="title">Redeemable Holdings</h4>
+                <h5 className="title">Redeemable Holdings</h5>
          </CardHeader>
-         <CardBody>
+         <CardBody style={{marginBottom:"0.6em"}}>
                     <Row>
                         <Col className="col-4"><h6 className="title d-inline">{token.name} holdings</h6></Col>
                         <Col className="px-sm-0">{ baseTokenRedeemableHoldings } {token.name}</Col>
@@ -144,7 +159,7 @@ const RedeemButton = ({
                         <Col className="px-sm-0">{ quoteTokenRedeemableHoldings} {toToken.name}</Col>
                       </Row>
          </CardBody>
-            <CardFooter>
+            <CardFooter style={{paddingBottom:"1.4em"}}>
                 <Button block className="btn-success" onClick={redeemHoldings} >
                      Redeem Holdings
                 </Button>

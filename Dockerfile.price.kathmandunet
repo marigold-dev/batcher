@@ -1,0 +1,13 @@
+FROM oxheadalpha/flextesa:latest
+
+RUN apk update &&\
+    apk add bash &&\
+    apk add curl &&\
+    apk add jq &&\
+    tezos-client --endpoint https://kathmandunet.tezos.marigold.dev config update
+
+WORKDIR /etc/run
+
+COPY ./sandbox.sh /etc/run/
+
+CMD [ "/etc/run/sandbox.sh", "-u", "KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF", "-t", "KT1EGB9ZquErCN3dNvPurmNBuKCAi8pc1ce7", "-b", "KT1HSqwch8u3AfNVzNCTqUsFpbLDhyBR6Nw3" ]

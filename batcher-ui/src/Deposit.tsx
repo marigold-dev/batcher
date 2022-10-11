@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "reac
 import { TezosToolkit, OpKind } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import './App.css';
-import *  as model from "./Model";
+import * as model from "./Model";
 import toast from 'react-hot-toast';
 
 import {
@@ -99,20 +99,16 @@ const DepositButton = ({
         const tokenWalletContract = await Tezos.wallet.at(token.address);
         const contractWallet = await Tezos.wallet.at(contractAddress);
 
-        const transfer_params = [
-              {
-                from_: userAddress,
-                tx : [
-                  {
-                    to_:contractAddress,
-                    token_id:0,
-                    amount: scaled_amount
-                  }
-                ]
-              }
-           ];
-
-
+        const operator_params = [
+          {
+            add_operator: {
+              owner:userAddress,
+              operator:contractAddress,
+              token_id:0
+            }
+          }
+        ];
+        
         const swap_params =
               {
                 trader: userAddress,
@@ -136,11 +132,8 @@ const DepositButton = ({
                 tolerance: tokenTolerance,
               };
 
-
-
-
            const order_batch_op = await Tezos.wallet.batch()
-             .withContractCall(tokenWalletContract.methods.transfer(transfer_params))
+             .withContractCall(tokenWalletContract.methods.update_operators(operator_params))
              .withContractCall(contractWallet.methodsObject.deposit(swap_params))
             .send();
 
@@ -322,17 +315,17 @@ const DepositButton = ({
                     onChange={(e) => setDepositAmount(e.target.valueAsNumber)}
                   />
                 </Row>
-                <Row>
                   <Button block className={orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
                     Swap {token.name} for {toToken.name}
                   </Button>
-                </Row>
-              </Col>
-            </Row>
-          </Form>
-        </CardBody>
-        <CardFooter>
-        </CardFooter>
+
+                </Col>
+               </Row> 
+             </Form>
+         </CardBody>
+            <CardFooter>
+              </CardFooter>
+
       </Card>
     </Col>
 

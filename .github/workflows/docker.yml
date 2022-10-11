@@ -12,13 +12,13 @@ jobs:
   ui:
     strategy:
       matrix:
-        network: [ghostnet, kathmandunet, jakartanet ]
+        network: [ghostnet, kathmandunet ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.0
         with:
           submodules: true
-          
+
       - name: Set outputs
         id: vars
         run: |
@@ -49,6 +49,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push rate oracle
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v3
+        with:
+          file: ./Dockerfile.price.${{ matrix.network }}
+          # Only push when on main
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: |
+            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:latest
+            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build and push release version
         if: ${{ github.ref == 'refs/heads/release' }}
         uses: docker/build-push-action@v3
@@ -59,5 +72,17 @@ jobs:
           tags: |
             ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
             ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push rate oracle release version
+        if: ${{ github.ref == 'refs/heads/release' }}
+        uses: docker/build-push-action@v3
+        with:
+          file: ./Dockerfile.price.${{ matrix.network }}
+          push: true
+          tags: |
+            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -1,13 +1,10 @@
-version: "2"
-services:
+version: "3"
 
-  node:
-    image: oxheadalpha/flextesa:latest
-    hostname: node
-    network_mode: "host"
-    command: jakartabox start
-    ports:
-      - 20000:20000
-    expose:
-      - '20000'
-    restart: on-failure
+services:
+  client: 
+    container_name: batcher_client
+    build: 
+      context: .
+      dockerfile: Dockerfile.price.kathmandunet
+    restart: always
+  
