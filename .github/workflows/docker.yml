@@ -54,7 +54,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: ./Dockerfile.price.${{ matrix.network }}
-          context: ./.
           # Only push when on main
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: |
@@ -81,7 +80,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: ./Dockerfile.price.${{ matrix.network }}
-          context: ./.
           push: true
           tags: |
             ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:stable
