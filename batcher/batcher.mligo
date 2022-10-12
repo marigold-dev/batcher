@@ -122,8 +122,8 @@ let deposit (external_order: Types.Types.external_swap_order) (storage : storage
   in
   let updated_storage = { ticked_storage with batches = updated_batches } in
   (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
-  let (_tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
-  no_op storage_after_treasury_update
+  let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
+  ([ tokens_transfer_op ], storage_after_treasury_update)
 
 let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
