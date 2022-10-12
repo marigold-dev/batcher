@@ -69,7 +69,11 @@ const RedeemButton = ({
         method: "GET"
       });
       const jsonData = await data.json();
-      console.log(jsonData);
+      
+      if (!jsonData.active) {
+        break;
+      }
+
       const amounts = JSONPath({ path: "$.value.*.token_amount", json: jsonData });
       const tokenAmounts = amounts as Array<model.token_amount>;
       base_holdings = tokenAmounts.reduce((previousAmount, token_amount) => {
