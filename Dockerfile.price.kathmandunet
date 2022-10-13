@@ -4,7 +4,7 @@ RUN apk update &&\
     apk add bash &&\
     apk add curl &&\
     apk add jq &&\
-    tezos-client --endpoint https://kathmandunet.tezos.marigold.dev config update
+    tezos-client --endpoint https://kathmandunet.ecadinfra.com config update
 
 WORKDIR /etc/run
 
