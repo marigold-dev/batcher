@@ -107,5 +107,6 @@ let deposit (order : order)
   (contract : (Batcher.entrypoint, Batcher.storage) originated)
   (qty: tez)
   () =
-  let deposit = Deposit order in
+  let converted_order = Batcher.order_to_external order in
+  let deposit = Deposit converted_order in
   Breath.Contract.transfert_to contract deposit qty
