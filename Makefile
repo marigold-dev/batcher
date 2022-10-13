@@ -1,6 +1,6 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.52.0
+LIGO_COMPILER_VERSION:=0.53.0
 TEZOS_PROTOCOL:=kathmandu
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
