@@ -183,51 +183,61 @@ module Utils = struct
     let _ = assert_holdings_are_coherent address new_treasury_holding in
     Big_map.update (address) (Some(new_treasury_holding)) treasury
 
-  (* FIXME:  This needs to be more robust for cases where one token in a two token holding fails *)
-  let redeem_all_tokens_from_treasury_holding
+  let accumulate_holdings_from_single_batch 
+    (holder : address) 
+    (batch : batch) 
+    (redeemed_holding : treasury_holding) : (treasury_holding * batch) = 
+      match batch.status with
+      | Cleared _ -> (
+        match Big_map.find_opt holder batch.treasury with
+        | None -> (redeemed_holding, batch) 
+        | Some th -> 
+          let accumulate (redeemed_holding, (token_name, token_holding) : treasury_holding * (string * token_holding)) : treasury_holding = 
+            match Map.find_opt token_name redeemed_holding with 
+            | None -> Map.add token_name token_holding redeemed_holding
+            | Some old_token_holding -> 
+              let updated_amount = old_token_holding.token_amount.amount + token_holding.token_amount.amount in 
+              let updated_token_amount = { token_holding.token_amount with amount = updated_amount } in 
+              let updated_token_holding = { token_holding with token_amount = updated_token_amount } in 
+              Map.update token_name (Some updated_token_holding) redeemed_holding
+          in 
+          let redeemed_holding = Map.fold accumulate th redeemed_holding in 
+          let updated_treasury = Big_map.remove holder batch.treasury in 
+          let updated_batch = { batch with treasury = updated_treasury } in 
+          (redeemed_holding, updated_batch)) 
+      | Open _ -> (redeemed_holding, batch)
+      | Closed _  -> (redeemed_holding, batch)
+
+  let get_updated_previous_batches (holder : address) (previous_batches : batch list) : batch list = 
+    let filter (batch : batch) : batch = 
+      let (_, updated_batch) = accumulate_holdings_from_single_batch holder batch (Map.empty : treasury_holding) in 
+      updated_batch
+    in 
+    List.map filter previous_batches 
+
+  let accumulate_holdings_previous_batches (holder : address) (previous_batches : batch list) : treasury_holding = 
+    let filter (redeemed_holding, batch : treasury_holding * batch) : treasury_holding = 
+      let (redeemed_holding, _) = accumulate_holdings_from_single_batch holder batch redeemed_holding in
+      redeemed_holding
+    in 
+    List.fold filter previous_batches (Map.empty : treasury_holding)
+
+  let transfer_holdings (treasury_vault : address) (redeemed_holding : treasury_holding) : operation list = 
+    let atomic_transfer (operations, (_, token_holding) : operation list * (string * token_holding)) : operation list = 
+      let op = handle_transfer treasury_vault token_holding.holder token_holding.token_amount in
+      op :: operations
+    in 
+    Map.fold atomic_transfer redeemed_holding ([] : operation list)
+    
+  let redeem_holdings_from_batches 
     (holder : address)
     (treasury_vault : address)
-    (th : treasury_holding) : operation list =
-    let _ = assert_holdings_are_coherent holder th in
-    let make_transfer_op = 
-      fun (ops, (_, tkh) : operation list * (string * token_holding)) ->
-        let op = handle_transfer treasury_vault tkh.holder tkh.token_amount in
-        op :: ops
-    in
-    Map.fold make_transfer_op th ([] : operation list)
-
-  let redeem_holdings_from_single_batch
-    (holder : address)
-    (treasury_vault : address)
-    (batch : batch ):  operation list * batch =
-    match batch.status with
-    | Cleared _ -> (match Big_map.find_opt holder batch.treasury with
-                  | Some (th) -> let transfer_operations = redeem_all_tokens_from_treasury_holding holder treasury_vault th in
-                                 let updated_treasury = Big_map.remove holder batch.treasury in
-                                 (transfer_operations, { batch with treasury =updated_treasury })
-                  | None -> (([] : operation list) , batch))
-    | Open _ -> (([] : operation list) , batch)
-    | Closed _  -> (([] : operation list) , batch)
-
-  let post_process_redeem_holdings_from_batches
-    (data : (operation list * Storage.Types.batch) list)
-    : operation list * Storage.Types.batch list =
-    let f =
-      fun (((ops,batch),(all_ops,batches)) : (operation list * Storage.Types.batch ) * (operation list * Storage.Types.batch list)) ->
-        (concat ops all_ops, batch :: batches)
-    in
-    List.fold_right f data (([] : operation list),([] : Storage.Types.batch list))
-
-
-  let redeem_holdings_from_batches
-    (holder : address)
-    (treasury_vault : address)
-    (batches : batch_set ) : operation list * batch_set =
-    let updated_previous = List.map (redeem_holdings_from_single_batch (holder) (treasury_vault)) batches.previous in
-    let (ops, up) = post_process_redeem_holdings_from_batches updated_previous in
-    (ops, { batches with previous = up })
+    (batches : batch_set) : operation list * batch_set = 
+      let updated_previous_batches = get_updated_previous_batches holder batches.previous in 
+      let redeemed_holding = accumulate_holdings_previous_batches holder batches.previous in 
+      let operations = transfer_holdings treasury_vault redeemed_holding in 
+      (operations, { batches with previous = updated_previous_batches })
 end
-
 
 let get_treasury_vault () : address = Tezos.get_self_address ()
 
