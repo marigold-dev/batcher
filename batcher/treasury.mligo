@@ -183,15 +183,6 @@ module Utils = struct
     let _ = assert_holdings_are_coherent address new_treasury_holding in
     Big_map.update (address) (Some(new_treasury_holding)) treasury
 
-  let post_process_redeem_holdings_from_batches
-    (data : (operation list * Storage.Types.batch) list)
-    : operation list * Storage.Types.batch list =
-    let f =
-      fun (((ops,batch),(all_ops,batches)) : (operation list * Storage.Types.batch ) * (operation list * Storage.Types.batch list)) ->
-        (concat ops all_ops, batch :: batches)
-    in
-    List.fold_right f data (([] : operation list),([] : Storage.Types.batch list))
-
   let accumulate_holdings_from_single_batch 
     (holder : address) 
     (batch : batch) 
