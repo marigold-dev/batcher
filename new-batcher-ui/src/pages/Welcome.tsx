@@ -46,18 +46,20 @@ const Welcome: React.FC = () => {
               <Typography>Select the price you want to sell</Typography>
               <Row>
                 <Col span={8} style={gridStyle}>
-                  Worse price / Better fill
+                  <Typography>Worse price / Better fill</Typography>
                 </Col>
                 <Col span={8} style={gridStyle}>
-                  Oracle Price
+                  <Typography>Oracle Price</Typography>
                 </Col>
                 <Col span={8} style={gridStyle}>
-                  Better Price / Worse Fill
+                  <Typography>Better Price / Worse Fill</Typography>
                 </Col>
               </Row>
             </Space>
           </Col>
-          <Col style={gridHomeStyle}>To USDT</Col>
+          <Col style={gridHomeStyle}>
+            <Typography>To USDT</Typography>
+          </Col>
           <Button type="primary" danger>
             Try to swap
           </Button>
