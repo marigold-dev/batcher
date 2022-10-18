@@ -1,71 +1,85 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { Alert, Button, Card, InputNumber, List, Space, Typography, Col, Row } from 'antd';
+import { SwapOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
+import { Input, Button, Space, Typography, Col, Row, InputNumber } from 'antd';
 import React from 'react';
-import { FormattedMessage, useIntl } from 'umi';
 
 const Welcome: React.FC = () => {
-  const gridStyle: React.CSSProperties = {
-    textAlign: 'center',
-    border: '3px solid #7B7B7E',
-  };
-
-  const gridHomeStyle: React.CSSProperties = {
-    width: '100%',
-    textAlign: 'center',
-    border: '3px solid #7B7B7E',
-  };
-
   return (
-    <Row>
-      <Col xs={24} lg={8} style={gridStyle}>
-        <Space direction="vertical">
-          <Typography>Batcher Time Remaining</Typography>
-          <Typography>Open Batch</Typography>
-        </Space>
-      </Col>
-      <Col xs={24} lg={8} style={gridStyle}>
-        <Space direction="vertical">
-          <Typography>Balance</Typography>
-          <Typography>Address No wallet connected</Typography>
-        </Space>
-      </Col>
-      <Col xs={24} lg={8} style={gridStyle}>
-        <Space direction="vertical">
-          <Typography>Oracle Price</Typography>
-          <Typography>0 tzBTC/USDT</Typography>
-        </Space>
-      </Col>
-      <Col span={24} style={gridStyle}>
-        <Space direction="vertical">
-          <Col style={gridHomeStyle}>
-            <Space direction="vertical">
-              <Space>
-                <Typography>From tzBTC</Typography>
-                <InputNumber />
-              </Space>
-              <Typography>Select the price you want to sell</Typography>
-              <Row>
-                <Col span={8} style={gridStyle}>
-                  <Typography>Worse price / Better fill</Typography>
-                </Col>
-                <Col span={8} style={gridStyle}>
-                  <Typography>Oracle Price</Typography>
-                </Col>
-                <Col span={8} style={gridStyle}>
-                  <Typography>Better Price / Worse Fill</Typography>
-                </Col>
-              </Row>
-            </Space>
+    <div>
+      <Row className="batcher-header">
+        <Col lg={3} />
+        <Col className="br-t br-l" xs={24} lg={6}>
+          <Space direction="vertical">
+            <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
+            <Typography className="batcher-title p-13">Open Batch</Typography>
+          </Space>
+        </Col>
+        <Col className="br-t br-l" xs={24} lg={6}>
+          <Col className="br-b grid-padding" span={24}>
+            <Typography className="batcher-title p-16">Balance</Typography>
           </Col>
-          <Col style={gridHomeStyle}>
-            <Typography>To USDT</Typography>
+          <Col className="grid-padding" span={24}>
+            <Typography className="batcher-title p-13">Address No wallet connected</Typography>
           </Col>
-          <Button type="primary" danger>
-            Try to swap
-          </Button>
-        </Space>
-      </Col>
-    </Row>
+        </Col>
+        <Col className="br-t br-l br-r" xs={24} lg={6}>
+          <Space direction="vertical">
+            <Typography className="batcher-title p-16">Oracle Price</Typography>
+            <Typography className="batcher-title p-13">0 tzBTC/USDT</Typography>
+          </Space>
+        </Col>
+        <Col lg={3} />
+      </Row>
+      <Row className="batcher-content">
+        <Col lg={3} />
+        <Col className="br-t br-b br-l br-r" xs={24} lg={18}>
+          <Row>
+            <Col lg={3} />
+            <Col xs={24} lg={18} className="pd-25">
+              <Col className="base-content br-t br-b br-l br-r">
+                <Space className="batcher-price" direction="vertical">
+                  <Space size="large">
+                    <Typography className="batcher-title p-16">From tzBTC</Typography>
+                    <Input
+                      suffix={
+                        <div className="grid-display">
+                          <UpOutlined />
+                          <DownOutlined />
+                        </div>
+                      }
+                    />
+                  </Space>
+                  <Typography className="batcher-title p-13">
+                    Select the price you want to sell
+                  </Typography>
+                  <Row className="text-center">
+                    <Col className="batcher-title pd-5 br-t br-l br-b" span={8}>
+                      <Typography className="p-12">Worse price / Better fill</Typography>
+                    </Col>
+                    <Col className="batcher-title pd-5 br-t br-b br-l br-r" span={8}>
+                      <Typography className="p-12">Oracle Price</Typography>
+                    </Col>
+                    <Col className="batcher-title pd-5 br-t br-b br-r" span={8}>
+                      <Typography className="p-12">Better Price / Worse Fill</Typography>
+                    </Col>
+                  </Row>
+                </Space>
+              </Col>
+              <SwapOutlined className="exchange-button grid-padding" rotate={90} />
+              <Col className="quote-content grid-padding br-t br-b br-l br-r">
+                <Typography className="batcher-title p-16">To USDT</Typography>
+              </Col>
+              <div className="tx-align">
+                <Button className="mt-25" type="primary" danger>
+                  Try to swap
+                </Button>
+              </div>
+            </Col>
+            <Col lg={3} />
+          </Row>
+        </Col>
+        <Col lg={3} />
+      </Row>
+    </div>
   );
 };
 
