@@ -20,8 +20,8 @@ const GlobalHeaderRight: React.FC = () => {
   }
   return (
     <Space className={className}>
-      <Button>
-        <FormattedMessage id="pages.searchTable.batchDeletion" defaultMessage="Batch deletion" />
+      <Button type="primary" danger>
+        <FormattedMessage id="pages.searchTable.batchDeletion" defaultMessage="Connect Wallet" />
       </Button>
     </Space>
   );

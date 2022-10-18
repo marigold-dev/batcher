@@ -1,48 +1,69 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { Alert, Card, Typography } from 'antd';
+import { Alert, Button, Card, InputNumber, List, Space, Typography, Col, Row } from 'antd';
 import React from 'react';
 import { FormattedMessage, useIntl } from 'umi';
-import styles from './Welcome.less';
-
-const CodePreview: React.FC = ({ children }) => (
-  <pre className={styles.pre}>
-    <code>
-      <Typography.Text copyable>{children}</Typography.Text>
-    </code>
-  </pre>
-);
 
 const Welcome: React.FC = () => {
-  const intl = useIntl();
+  const gridStyle: React.CSSProperties = {
+    textAlign: 'center',
+    border: '3px solid #7B7B7E',
+  };
+
+  const gridHomeStyle: React.CSSProperties = {
+    width: '100%',
+    textAlign: 'center',
+    border: '3px solid #7B7B7E',
+  };
 
   return (
-    <PageContainer>
-      <Card>
-        <Alert
-          message={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
-            defaultMessage: 'Faster and stronger heavy-duty components have been released.',
-          })}
-          type="success"
-          showIcon
-          banner
-          style={{
-            margin: -12,
-            marginBottom: 24,
-          }}
-        />
-        <Typography.Text strong>
-          <a
-            href="https://procomponents.ant.design/components/table"
-            rel="noopener noreferrer"
-            target="__blank"
-          >
-            <FormattedMessage id="pages.welcome.link" defaultMessage="Welcome" />
-          </a>
-        </Typography.Text>
-        <CodePreview>yarn add @ant-design/pro-components</CodePreview>
-      </Card>
-    </PageContainer>
+    <Row>
+      <Col xs={24} lg={8} style={gridStyle}>
+        <Space direction="vertical">
+          <Typography>Batcher Time Remaining</Typography>
+          <Typography>Open Batch</Typography>
+        </Space>
+      </Col>
+      <Col xs={24} lg={8} style={gridStyle}>
+        <Space direction="vertical">
+          <Typography>Balance</Typography>
+          <Typography>Address No wallet connected</Typography>
+        </Space>
+      </Col>
+      <Col xs={24} lg={8} style={gridStyle}>
+        <Space direction="vertical">
+          <Typography>Oracle Price</Typography>
+          <Typography>0 tzBTC/USDT</Typography>
+        </Space>
+      </Col>
+      <Col span={24} style={gridStyle}>
+        <Space direction="vertical">
+          <Col style={gridHomeStyle}>
+            <Space direction="vertical">
+              <Space>
+                <Typography>From tzBTC</Typography>
+                <InputNumber />
+              </Space>
+              <Typography>Select the price you want to sell</Typography>
+              <Row>
+                <Col span={8} style={gridStyle}>
+                  Worse price / Better fill
+                </Col>
+                <Col span={8} style={gridStyle}>
+                  Oracle Price
+                </Col>
+                <Col span={8} style={gridStyle}>
+                  Better Price / Worse Fill
+                </Col>
+              </Row>
+            </Space>
+          </Col>
+          <Col style={gridHomeStyle}>To USDT</Col>
+          <Button type="primary" danger>
+            Try to swap
+          </Button>
+        </Space>
+      </Col>
+    </Row>
   );
 };
 

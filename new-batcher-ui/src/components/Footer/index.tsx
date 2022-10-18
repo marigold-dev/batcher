@@ -1,40 +1,31 @@
-import { GithubOutlined } from '@ant-design/icons';
-import { DefaultFooter } from '@ant-design/pro-components';
-import { useIntl } from 'umi';
+import {
+  TwitterOutlined,
+  GithubOutlined,
+  LinkedinOutlined,
+  GitlabOutlined,
+} from '@ant-design/icons';
+import { FooterToolbar } from '@ant-design/pro-components';
+import { Space, Button, Image } from 'antd';
+import React from 'react';
+import MarigoldLogo from '../../../img/marigold-logo.png';
 
 const Footer: React.FC = () => {
-  const intl = useIntl();
-  const defaultMessage = intl.formatMessage({
-    id: 'app.copyright.produced',
-    defaultMessage: '蚂蚁集团体验技术部出品',
-  });
-
-  const currentYear = new Date().getFullYear();
+  const LeftFooter = (
+    <Space>
+      <h1 style={{ marginBottom: '0', fontSize: '16px' }}>MARIGOLD</h1>
+      <Image src={MarigoldLogo}></Image>
+    </Space>
+  );
 
   return (
-    <DefaultFooter
-      copyright={`${currentYear} ${defaultMessage}`}
-      links={[
-        {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro333344444',
-          href: 'https://pro.ant.design',
-          blankTarget: true,
-        },
-        {
-          key: 'github',
-          title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
-          blankTarget: true,
-        },
-        {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
-          blankTarget: true,
-        },
-      ]}
-    />
+    <FooterToolbar extra={LeftFooter}>
+      <Space>
+        <TwitterOutlined />
+        <GithubOutlined />
+        <LinkedinOutlined />
+        <GitlabOutlined />
+      </Space>
+    </FooterToolbar>
   );
 };
 
