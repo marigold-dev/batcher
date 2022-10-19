@@ -31,7 +31,7 @@ const Welcome: React.FC = () => {
       </Row>
       <Row className="batcher-content">
         <Col lg={3} />
-        <Col className="br-t br-b br-l br-r" xs={24} lg={18}>
+        <Col className="batcher-content-outer" xs={24} lg={18}>
           <Row>
             <Col lg={3} />
             <Col xs={24} lg={18} className="pd-25">
