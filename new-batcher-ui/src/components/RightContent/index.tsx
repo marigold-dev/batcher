@@ -1,11 +1,12 @@
 import { Space, Button, Menu, Dropdown, Typography } from 'antd';
 import React, { useEffect } from 'react';
-import { useModel, FormattedMessage } from 'umi';
-import styles from './index.less';
+import { useModel } from 'umi';
+import styles from '@/components/RightContent/index.less';
 import { MenuOutlined } from '@ant-design/icons';
 import { TezosToolkit } from '@taquito/taquito';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { NetworkType } from '@/extra_utils/types';
+import '@/components/RightContent/index.less';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -95,9 +96,9 @@ const GlobalHeaderRight: React.FC = () => {
         onClick={() => connectWallet(false)}
         danger
       >
-        <FormattedMessage id="pages.searchTable.batchDeletion" defaultMessage="Connect Wallet" />
+        Connect Wallet
       </Button>
-      <Dropdown overlay={menu} placement="bottomLeft">
+      <Dropdown className="batcher-menu-outer" overlay={menu} placement="bottomLeft">
         <MenuOutlined className="batcher-menu" />
       </Dropdown>
     </Space>
