@@ -22,6 +22,8 @@ export async function getInitialState(): Promise<any> {
   history.push(loginPath);
 
   return {
+    wallet: null,
+    userAddress: null,
     settings: defaultSettings,
   };
 }
