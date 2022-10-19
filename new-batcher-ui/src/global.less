@@ -33,26 +33,58 @@ ol {
 }
 
 @media (max-width: @screen-xs) {
-  .ant-table {
-    width: 100%;
-    overflow-x: auto;
-    &-thead > tr,
-    &-tbody > tr {
-      > th,
-      > td {
-        white-space: pre;
-        > span {
-          display: block;
-        }
+  .ant-pro-basicLayout-content {
+    margin: 0;
+  }
+
+  .batcher-header {
+    .batcher-balance {
+      border-top: 2px solid #7B7B7E;
+      .batcher-balance-title {
+        padding: 10px 25px 4px;
+      }
+      .batcher-balance-amount {
+        padding: 4px 25px;
+      }
+    }
+  
+    .batcher-oracle {
+      .ant-space {
+        padding: 4px 25px 10px !important;
+        display: flex !important;
       }
     }
   }
 }
 
-// Compatible with IE11
-@media screen and(-ms-high-contrast: active), (-ms-high-contrast: none) {
-  body .ant-design-pro > .ant-layout {
-    min-height: 100vh;
+@media (min-width: @screen-lg) {
+  .batcher-header {
+    .batcher-time {
+      border-top: 2px solid #7B7B7E;
+      border-left: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+    }
+  
+    .batcher-balance {
+      border-top: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+      .batcher-balance-title {
+        border-bottom: 2px solid #7B7B7E;
+        padding: 10px 25px;
+      }
+      .batcher-balance-amount {
+        padding: 10px 25px;
+      }
+    }
+  
+    .batcher-oracle {
+      border-top: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+
+      .ant-space {
+        display: grid !important;
+      }
+    }
   }
 }
 
@@ -156,4 +188,11 @@ ol {
 
 .grid-display {
   display: grid;
+}
+
+.batcher-token {
+  background-color: #7B7B7E;
+  .ant-input {
+    background-color: #7B7B7E;
+  }
 }
