@@ -13,3 +13,14 @@ export enum NetworkType {
   KATHMANDUNET = 'kathmandunet',
   CUSTOM = 'custom',
 }
+
+type Token = {
+  name: string;
+  address: string;
+  decimal: number;
+};
+
+export type ExchangeProps = {
+  baseToken: Token;
+  quoteToken: Token;
+};

@@ -22,3 +22,10 @@ declare module 'bizcharts-plugin-slider';
 declare let ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION: 'site' | undefined;
 
 declare const REACT_APP_ENV: 'test' | 'dev' | 'pre' | false;
+
+declare const REACT_APP_NETWORK_TARGET;
+declare const REACT_APP_TEZOS_NODE_URI;
+declare const REACT_APP_TZKT_URI_API;
+declare const REACT_APP_BATCHER_CONTRACT_HASH;
+declare const REACT_APP_TZBTC_HASH;
+declare const REACT_APP_USDT_HASH;

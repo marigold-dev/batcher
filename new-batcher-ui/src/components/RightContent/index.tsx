@@ -50,12 +50,11 @@ const GlobalHeaderRight: React.FC = () => {
 
   const getNetworkType = () => {
     const network = process.env['REACT_APP_NETWORK_TARGET'];
-    if (network?.includes('KATHMANDUNET')) {
-      return NetworkType.KATHMANDUNET;
+    if (network?.includes('GHOSTNET')) {
+      return NetworkType.GHOSTNET;
     } else if (network?.includes('JAKARTANET')) {
-      return NetworkType.JAKARTANET;
+      return NetworkType.KATHMANDUNET;
     } else {
-      console.log('%cindex.tsx line:55 NetworkType.GHOSTNET', 'color: #007acc;', NetworkType);
       return NetworkType.GHOSTNET;
     }
   };

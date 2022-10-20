@@ -1,24 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row } from 'antd';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
+import { ExchangeProps } from '@/extra_utils/types';
+import { getTokenAmount } from '@/extra_utils/utils';
 
 const { Text } = Typography;
 
-const Exchange: React.FC = () => {
-  const [token, setToken] = useState({
-    base: 'tzBTC',
-    quote: 'USDT',
+const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
+  const [baseBalance, setBaseBalance] = useState({
+    name: 'tzBTC',
+    address: baseToken.address,
+    decimal: baseToken.decimal,
+    balance: null,
+  });
+  const [quoteBalance, setQuoteBalance] = useState({
+    name: 'USDT',
+    address: quoteToken.address,
+    decimal: quoteToken.decimal,
+    balance: null,
   });
 
   const { initialState } = useModel('@@initialState');
+  console.log('%cindex.tsx line:18 initialState', 'color: #007acc;-------', baseBalance);
   const { wallet, userAddress } = initialState;
 
   const inverseTokenType = () => {
-    setToken({ ...token, base: token.quote, quote: token.base });
+    const originalBaseBalance = baseBalance;
+    const originalQuoteBalance = quoteBalance;
+    setBaseBalance(originalQuoteBalance);
+    setQuoteBalance(originalBaseBalance);
   };
+
+  const getTokenBalance = async () => {
+    if (userAddress) {
+      const balanceURI =
+        'https://api.kathmandunet.tzkt.io/v1/tokens/balances?account=' + userAddress;
+      const data = await fetch(balanceURI, { method: 'GET' });
+      const balance = await data.json();
+      if (Array.isArray(balance)) {
+        const baseAmount = getTokenAmount(balance, baseBalance);
+        const quoteAmount = getTokenAmount(balance, quoteBalance);
+        setBaseBalance({ ...baseBalance, balance: baseAmount });
+        setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
+      }
+      console.log(balance);
+    }
+  };
+
+  useEffect(() => {
+    const exchangeInterval = setInterval(getTokenBalance, 2000);
+    return () => clearInterval(exchangeInterval);
+  }, [initialState]);
 
   return (
     <div>
@@ -32,8 +67,12 @@ const Exchange: React.FC = () => {
         </Col>
         <Col className="batcher-balance" xs={24} lg={6}>
           <Col className="batcher-balance-title" span={24}>
-            <Typography className="batcher-title p-16">Balance</Typography>
-            <Typography className="batcher-title p-13">Balance</Typography>
+            <Space>
+              <Typography className="batcher-title p-16">Balance</Typography>
+              <Typography className="batcher-title p-13">
+                {baseBalance.balance + ' ' + baseBalance.name}
+              </Typography>
+            </Space>
           </Col>
           <Col className="batcher-balance-amount" span={24}>
             <Space className="pd-0">
@@ -66,7 +105,9 @@ const Exchange: React.FC = () => {
                 <Space className="batcher-price" direction="vertical">
                   <Row>
                     <Col className="mr-c" span={5}>
-                      <Typography className="batcher-title p-16">From {token.base}</Typography>
+                      <Typography className="batcher-title p-16">
+                        From {baseBalance.name}
+                      </Typography>
                     </Col>
                     <Col span={14}>
                       <Input className="batcher-token" placeholder="Amount" />
@@ -94,7 +135,7 @@ const Exchange: React.FC = () => {
                 rotate={90}
               />
               <Col className="quote-content grid-padding br-t br-b br-l br-r">
-                <Typography className="batcher-title p-16">To {token.quote}</Typography>
+                <Typography className="batcher-title p-16">To {quoteBalance.name}</Typography>
               </Col>
               <div className="tx-align">
                 <Button className="mtb-25" type="primary" danger>
