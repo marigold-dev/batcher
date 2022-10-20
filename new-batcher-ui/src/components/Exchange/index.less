@@ -1,0 +1,119 @@
+@import '~antd/es/style/variable.less';
+
+@media (min-width: @screen-lg) {
+  .batcher-header {
+    .batcher-time {
+      border-top: 2px solid #7B7B7E;
+      border-left: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+    }
+  
+    .batcher-balance {
+      border-top: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+      .batcher-balance-title {
+        border-bottom: 2px solid #7B7B7E;
+        padding: 10px 25px;
+      }
+      .batcher-balance-amount {
+        padding: 10px 25px;
+      }
+    }
+  
+    .batcher-oracle {
+      border-top: 2px solid #7B7B7E;
+      border-right: 2px solid #7B7B7E;
+
+      .ant-space {
+        display: grid !important;
+      }
+    }
+  }
+
+  .batcher-content-outer {
+    border: 2px solid #7B7B7E;
+  }
+
+  .mtb-25 {
+    margin-top: 25px;
+  }
+}
+
+@media (max-width: @screen-xs) {
+  .ant-pro-basicLayout-content {
+    margin: 0;
+  }
+
+  .batcher-header {
+    .batcher-balance {
+      border-top: 2px solid #7B7B7E;
+      .batcher-balance-title {
+        padding: 10px 25px 4px;
+      }
+      .batcher-balance-amount {
+        padding: 4px 25px;
+      }
+    }
+  
+    .batcher-oracle {
+      .ant-space {
+        padding: 4px 25px 10px !important;
+        display: flex !important;
+      }
+    }
+  }
+
+  .batcher-connect-wallet {
+    display: none;
+  }
+
+  .batcher-menu {
+    display: block;
+    font-size: 30px;
+    color: #ff4d4f !important;
+  }
+
+  .ant-dropdown {
+    .ant-dropdown-menu {
+      background-color: #7B7B7E;
+    }
+  }
+
+  .batcher-content-outer {
+    border-top: 2px solid #7B7B7E;
+  }
+
+  .mtb-25 {
+    margin-top: 25px;
+    margin-bottom: 45px;
+  }
+}
+
+.batcher-title {
+  font-family: monospace;
+}
+
+.batcher-header {
+  .ant-col {
+    text-align: initial !important;
+    .ant-space {
+      display: flex;
+      padding: 10px 25px;
+    }
+  }
+}
+
+.batcher-content {
+  .batcher-price {
+    display: flex;
+    padding: 25px;
+    gap: 20px !important;
+  }
+}
+
+.exchange-button {
+  display: block !important;
+  font-size: 35px !important;
+  color: #ff4d4f !important;
+}
+
