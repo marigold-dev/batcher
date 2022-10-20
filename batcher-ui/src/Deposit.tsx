@@ -1,9 +1,15 @@
-import { Dispatch, SetStateAction, useState, useEffect, ChangeEvent } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useState,
+  useEffect,
+  ChangeEvent,
+} from "react";
 import { TezosToolkit, OpKind } from "@taquito/taquito";
 import { BeaconWallet } from "@taquito/beacon-wallet";
-import './App.css';
+import "./App.css";
 import * as model from "./Model";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 import {
   Button,
@@ -24,8 +30,8 @@ type ButtonProps = {
   Tezos: TezosToolkit;
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  setTokenBalance: Dispatch<SetStateAction<number>>
-  setTokenTolerance: Dispatch<SetStateAction<model.selected_tolerance>>
+  setTokenBalance: Dispatch<SetStateAction<number>>;
+  setTokenTolerance: Dispatch<SetStateAction<model.selected_tolerance>>;
   token: model.token;
   tokenAddress: string;
   tokenBalance: number;
@@ -51,16 +57,20 @@ const DepositButton = ({
   tokenBalanceUri,
   orderSide,
   toToken,
-  wallet
+  wallet,
 }: ButtonProps): JSX.Element => {
-
   class TokenBalance {
     address: string;
     symbol: string;
     decimals: number;
     balance: number;
 
-    constructor(address: string, symbol: string, decimals: number, balance: number) {
+    constructor(
+      address: string,
+      symbol: string,
+      decimals: number,
+      balance: number
+    ) {
       this.address = address;
       this.symbol = symbol;
       this.decimals = decimals;
@@ -72,79 +82,81 @@ const DepositButton = ({
   const [depositAmount, setDepositAmount] = useState<number>(0);
   const [depositButtonColour, setDepositButtonColour] = useState<string>("");
 
-
   const rationaliseAmount = (amount: number) => {
-    let scale = 10 ** (token.decimals);
-    return amount * scale
+    let scale = 10 ** token.decimals;
+    return amount * scale;
   };
-
 
   const depositToken = async (): Promise<void> => {
     try {
-
-      if(!wallet) {
-          toast.error("Please connect a wallet before depositing");
+      if (!wallet) {
+        toast.error("Please connect a wallet before depositing");
       } else {
-        const swapId = 'swap';
-        toast.loading('Attempting to place swap order for ' + token.name, {id: swapId} ) ;
+        const swapId = "swap";
+        toast.loading("Attempting to place swap order for " + token.name, {
+          id: swapId,
+        });
         Tezos.setWalletProvider(wallet);
         const userAddress = await wallet.getPKH();
-        if(!userAddress){
+        if (!userAddress) {
           await wallet.requestPermissions();
         }
 
         const scaled_amount = rationaliseAmount(depositAmount);
 
         try {
-        const tokenWalletContract = await Tezos.wallet.at(token.address);
-        const contractWallet = await Tezos.wallet.at(contractAddress);
+          const tokenWalletContract = await Tezos.wallet.at(token.address);
+          const contractWallet = await Tezos.wallet.at(contractAddress);
 
-        const operator_params = [
-          {
-            add_operator: {
-              owner:userAddress,
-              operator:contractAddress,
-              token_id:0
-            }
-          }
-        ];
-        
-        const swap_params =
-              {
-                trader: userAddress,
-                swap : {
-                  from:{
-                    token: {
-                      name: token.name,
-                      address: token.address,
-                      decimals: token.decimals
-                    },
-                    amount: scaled_amount
-                  },
-                  to: {
-                      name: toToken.name,
-                      address: toToken.address,
-                      decimals: toToken.decimals
-                  }
+          const operator_params = [
+            {
+              add_operator: {
+                owner: userAddress,
+                operator: contractAddress,
+                token_id: 0,
+              },
+            },
+          ];
+
+          const swap_params = {
+            trader: userAddress,
+            swap: {
+              from: {
+                token: {
+                  name: token.name,
+                  address: token.address,
+                  decimals: token.decimals,
                 },
-                created_at : new Date(),
-                side: orderSide,
-                tolerance: tokenTolerance,
-              };
+                amount: scaled_amount,
+              },
+              to: {
+                name: toToken.name,
+                address: toToken.address,
+                decimals: toToken.decimals,
+              },
+            },
+            created_at: new Date(),
+            side: orderSide,
+            tolerance: tokenTolerance,
+          };
 
-           const order_batch_op = await Tezos.wallet.batch()
-             .withContractCall(tokenWalletContract.methods.update_operators(operator_params))
-             .withContractCall(contractWallet.methodsObject.deposit(swap_params))
+          const order_batch_op = await Tezos.wallet
+            .batch()
+            .withContractCall(
+              tokenWalletContract.methods.update_operators(operator_params)
+            )
+            .withContractCall(contractWallet.methodsObject.deposit(swap_params))
             .send();
 
-           const confirm = await order_batch_op.confirmation();
-           if(!confirm.completed)
-               throw Error("Failed to transfer token");
+          const confirm = await order_batch_op.confirmation();
+          if (!confirm.completed) throw Error("Failed to transfer token");
 
-         toast.success("Swap order successfully placed : " + confirm.currentConfirmation, {id: swapId });
-
-        } catch (error:any) {
-         toast.error("Unable to create swap order.", {id: swapId });
+          toast.success(
+            "Swap order successfully placed : " + confirm.currentConfirmation,
+            { id: swapId }
+          );
+        } catch (error: any) {
+          toast.error("Unable to create swap order.", { id: swapId });
         }
       }
     } catch (error) {
@@ -165,16 +177,25 @@ const DepositButton = ({
     }
 
     const data = await fetch(tokenBalanceUri, {
-      method: "GET"
+      method: "GET",
     });
     const jsonData = await data.json();
     const tokenBalances = jsonData as Array<model.ApiTokenBalanceData>;
     console.log(jsonData);
-    const tokenbal: model.ApiTokenBalanceData = tokenBalances.filter((p: model.ApiTokenBalanceData) => p.token.contract.address === tokenAddress)[0];
-    const rationalisedBal = parseInt(tokenbal.balance) / (10 ** parseInt(tokenbal.token.metadata.decimals))
-    const tkBal = (new TokenBalance(tokenbal.token.contract.address, tokenbal.token.metadata.symbol, parseInt(tokenbal.token.metadata.decimals), rationalisedBal));
+    const tokenbal: model.ApiTokenBalanceData = tokenBalances.filter(
+      (p: model.ApiTokenBalanceData) =>
+        p.token.contract.address === tokenAddress
+    )[0];
+    const rationalisedBal =
+      parseInt(tokenbal.balance) /
+      10 ** parseInt(tokenbal.token.metadata.decimals);
+    const tkBal = new TokenBalance(
+      tokenbal.token.contract.address,
+      tokenbal.token.metadata.symbol,
+      parseInt(tokenbal.token.metadata.decimals),
+      rationalisedBal
+    );
     setTokenBalance(tkBal.balance);
-
   };
 
   useEffect(() => {
@@ -184,51 +205,37 @@ const DepositButton = ({
     (async () => api())();
     const interval = setInterval(() => {
       (async () => api())();
-    }, 10000)
+    }, 10000);
 
-    return () => clearInterval(interval)
-
-
+    return () => clearInterval(interval);
   }, [tokenBalanceUri, tokenAddress]);
 
   return (
     <Col sm="5.5">
       <Card>
         <CardHeader>
-          <h4 className="title d-inline">Balance : {tokenBalance}  {token.name}</h4>
+          <h4 className="title d-inline">
+            Balance : {tokenBalance} {token.name}
+          </h4>
         </CardHeader>
         <CardBody>
           <Form>
             <Row className="g-2 align-items-center">
               <Col className="mr-3">
-
                 <Row className="mx-5">
                   <Table borderless>
                     <tbody>
                       <tr>
                         <div className="title text-center">
-                        Better Price &gt;
+                          Better Price &gt;
                         </div>
                       </tr>
                       <tr>
-                        <Progress 
-                          multi 
-                          block
-                          >
-                          <Progress
-                            bar
-                            color="danger"
-                            value="50"
-                          >
-                            <div className="h-50 p-50">
-                            </div>
+                        <Progress multi block>
+                          <Progress bar color="danger" value="50">
+                            <div className="h-50 p-50"></div>
                           </Progress>
-                          <Progress
-                            bar
-                            color="success"
-                            value="50"
-                          >
-                          </Progress>
+                          <Progress bar color="success" value="50"></Progress>
                         </Progress>
                       </tr>
                     </tbody>
@@ -239,23 +246,13 @@ const DepositButton = ({
                     <tbody>
                       <tr>
                         <div className="title text-center">
-                         &lt; Better chance of order being filled
+                          &lt; Better chance of order being filled
                         </div>
                       </tr>
                       <tr>
                         <Progress multi>
-                          <Progress
-                            bar
-                            color="success"
-                            value="50"
-                          >
-                          </Progress>
-                          <Progress
-                            bar
-                            color="danger"
-                            value="50"
-                          >
-                          </Progress>
+                          <Progress bar color="success" value="50"></Progress>
+                          <Progress bar color="danger" value="50"></Progress>
                         </Progress>
                       </tr>
                     </tbody>
@@ -315,21 +312,20 @@ const DepositButton = ({
                     onChange={(e) => setDepositAmount(e.target.valueAsNumber)}
                   />
                 </Row>
-                  <Button block className={orderSide == 0 ? "btn-success" : "btn-danger"} onClick={depositToken} >
-                    Swap {token.name} for {toToken.name}
-                  </Button>
-
-                </Col>
-               </Row> 
-             </Form>
-         </CardBody>
-            <CardFooter>
-              </CardFooter>
-
+                <Button
+                  block
+                  className={orderSide == 0 ? "btn-success" : "btn-danger"}
+                  onClick={depositToken}
+                >
+                  Swap {token.name} for {toToken.name}
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </CardBody>
+        <CardFooter></CardFooter>
       </Card>
     </Col>
-
-
   );
 };
 
