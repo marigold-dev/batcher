@@ -1,9 +1,23 @@
 import { SwapOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row, InputNumber } from 'antd';
-import React from 'react';
+import { useEffect, useState, React } from 'react';
+import OrderBook from '@/components/OrderBook';
+import * as model from "../../model";
 
 const Welcome: React.FC = () => {
-  return (
+
+ const buyTokenName = "tzBTC";
+ const buyTokenAddress = process.env["REACT_APP_TZBTC_HASH"];
+ const buyTokenDecimals = 8;
+ const sellTokenName = "USDT";
+ const sellTokenAddress = process.env["REACT_APP_USDT_HASH"];
+ const sellTokenDecimals = 6;
+ const buyToken : model.token = {name: buyTokenName, address: buyTokenAddress, decimals: buyTokenDecimals};
+ const sellToken : model.token = {name: sellTokenName, address: sellTokenAddress, decimals: sellTokenDecimals};
+ const [contractAddress] = useState<string>(process.env["REACT_APP_BATCHER_CONTRACT_HASH"]);
+
+
+ return (
     <div>
       <Row className="batcher-header">
         <Col lg={3} />
@@ -35,6 +49,7 @@ const Welcome: React.FC = () => {
           <Row>
             <Col lg={3} />
             <Col xs={24} lg={18} className="pd-25">
+     <OrderBook contractAddress={contractAddress} buyToken={buyToken} sellToken={sellToken} />
               <Col className="base-content br-t br-b br-l br-r">
                 <Space className="batcher-price" direction="vertical">
                   <Space size="large">
