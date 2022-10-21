@@ -77,7 +77,7 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
         </Col>
         <Col className="batcher-balance" xs={24} lg={6}>
           <Col className="batcher-balance-title" span={24}>
-            <Space>
+            <Space className="pd-0">
               <Typography className="batcher-title p-16">Balance</Typography>
               <Typography className="batcher-title p-13">
                 {inversion
