@@ -43,6 +43,20 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
         setBaseBalance({ ...baseBalance, balance: baseAmount });
         setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
       }
+    } else {
+      setBaseBalance({
+        name: 'tzBTC',
+        address: baseToken.address,
+        decimal: baseToken.decimal,
+        balance: 0,
+      });
+      setQuoteBalance({
+        name: 'USDT',
+        address: quoteToken.address,
+        decimal: quoteToken.decimal,
+        balance: 0,
+      });
+      setInversion(true);
     }
   };
 

@@ -82,7 +82,7 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const disconnectWallet = async () => {
-    setInitialState({ ...initialState, wallet: null });
+    setInitialState({ ...initialState, wallet: null, userAddress: null });
   };
 
   useEffect(() => {
