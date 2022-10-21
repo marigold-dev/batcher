@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+
 export enum NetworkType {
   MAINNET = 'mainnet',
   GHOSTNET = 'ghostnet',
@@ -14,6 +16,12 @@ export enum NetworkType {
   CUSTOM = 'custom',
 }
 
+export enum ContentType {
+  SWAP = 'swap',
+  ORDER_BOOK = 'order_book',
+  REDEEM_HOLDING = 'redeem_holding',
+}
+
 type Token = {
   name: string;
   address: string;
@@ -23,4 +31,8 @@ type Token = {
 export type ExchangeProps = {
   baseToken: Token;
   quoteToken: Token;
+};
+
+export type BatcherActionProps = {
+  setContent: Dispatch<SetStateAction<ContentType>>;
 };
