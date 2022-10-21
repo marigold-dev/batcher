@@ -59,7 +59,7 @@ const GlobalHeaderRight: React.FC = () => {
     }
   };
 
-  const connectWallet = async (connectionState: boolean) => {
+  const connectWallet = async () => {
     console.log('%cindex.tsx line:63 wallet', 'color: #007acc;', wallet);
 
     if (!wallet) {
@@ -67,14 +67,12 @@ const GlobalHeaderRight: React.FC = () => {
         name: 'batcher',
         preferredNetwork: getNetworkType(),
       });
-      if (!connectionState) {
-        await updatedWallet.requestPermissions({
-          network: {
-            type: getNetworkType(),
-            rpcUrl: process.env['REACT_APP_TEZOS_NODE_URI']!,
-          },
-        });
-      }
+      await updatedWallet.requestPermissions({
+        network: {
+          type: getNetworkType(),
+          rpcUrl: process.env['REACT_APP_TEZOS_NODE_URI']!,
+        },
+      });
 
       Tezos.setWalletProvider(updatedWallet);
       const activeAccount = await updatedWallet.client.getActiveAccount();
@@ -83,8 +81,12 @@ const GlobalHeaderRight: React.FC = () => {
     }
   };
 
+  const disconnectWallet = async () => {
+    setInitialState({ ...initialState, wallet: null });
+  };
+
   useEffect(() => {
-    connectWallet(true);
+    // connectWallet(true);
   }, []);
 
   return (
@@ -92,10 +94,10 @@ const GlobalHeaderRight: React.FC = () => {
       <Button
         className="batcher-connect-wallet"
         type="primary"
-        onClick={() => connectWallet(false)}
+        onClick={!wallet ? connectWallet : disconnectWallet}
         danger
       >
-        Connect Wallet
+        {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
       </Button>
       <Dropdown className="batcher-menu-outer" overlay={menu} placement="bottomLeft">
         <MenuOutlined className="batcher-menu" />

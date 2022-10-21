@@ -10,28 +10,25 @@ import { getTokenAmount } from '@/extra_utils/utils';
 const { Text } = Typography;
 
 const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
+  const [inversion, setInversion] = useState(true);
   const [baseBalance, setBaseBalance] = useState({
     name: 'tzBTC',
     address: baseToken.address,
     decimal: baseToken.decimal,
-    balance: null,
+    balance: 0,
   });
   const [quoteBalance, setQuoteBalance] = useState({
     name: 'USDT',
     address: quoteToken.address,
     decimal: quoteToken.decimal,
-    balance: null,
+    balance: 0,
   });
 
   const { initialState } = useModel('@@initialState');
-  console.log('%cindex.tsx line:18 initialState', 'color: #007acc;-------', baseBalance);
   const { wallet, userAddress } = initialState;
 
   const inverseTokenType = () => {
-    const originalBaseBalance = baseBalance;
-    const originalQuoteBalance = quoteBalance;
-    setBaseBalance(originalQuoteBalance);
-    setQuoteBalance(originalBaseBalance);
+    setInversion(!inversion);
   };
 
   const getTokenBalance = async () => {
@@ -46,7 +43,6 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
         setBaseBalance({ ...baseBalance, balance: baseAmount });
         setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
       }
-      console.log(balance);
     }
   };
 
@@ -70,7 +66,9 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
             <Space>
               <Typography className="batcher-title p-16">Balance</Typography>
               <Typography className="batcher-title p-13">
-                {baseBalance.balance + ' ' + baseBalance.name}
+                {inversion
+                  ? baseBalance.balance + ' ' + baseBalance.name
+                  : quoteBalance.balance + ' ' + quoteBalance.name}
               </Typography>
             </Space>
           </Col>
@@ -106,7 +104,7 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
                   <Row>
                     <Col className="mr-c" span={5}>
                       <Typography className="batcher-title p-16">
-                        From {baseBalance.name}
+                        From {inversion ? baseBalance.name : quoteBalance.name}
                       </Typography>
                     </Col>
                     <Col span={14}>
@@ -135,13 +133,19 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
                 rotate={90}
               />
               <Col className="quote-content grid-padding br-t br-b br-l br-r">
-                <Typography className="batcher-title p-16">To {quoteBalance.name}</Typography>
+                <Typography className="batcher-title p-16">
+                  To {inversion ? quoteBalance.name : baseBalance.name}
+                </Typography>
               </Col>
-              <div className="tx-align">
-                <Button className="mtb-25" type="primary" danger>
-                  Try to swap
-                </Button>
-              </div>
+              {wallet ? (
+                <div className="tx-align">
+                  <Button className="mtb-25" type="primary" danger>
+                    Try to swap
+                  </Button>
+                </div>
+              ) : (
+                <div></div>
+              )}
             </Col>
             <Col lg={3} />
           </Row>
