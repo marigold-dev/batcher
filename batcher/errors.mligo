@@ -21,7 +21,7 @@ let insufficient_token_holding_for_decrease : nat = 109n
 
 let no_treasury_holding_for_address : nat = 110n
 
-let order_pair_doesnt_match = 111n
+let order_pair_doesnt_match = "Not the correct token pair"
 
 let tokens_do_not_match = 112n
 

@@ -22,8 +22,8 @@ type inverse_exchange_rate = exchange_rate
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
-  | Deposit of Types.Types.external_swap_order
-  | Post of Types.Types.exchange_rate
+  | Deposit of external_order
+  | Post of exchange_rate
   | Redeem
 
 let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate = 
@@ -78,7 +78,7 @@ let tick_current_batches (storage : storage) : storage =
   in
   { storage with batches = updated_batches }
 
-let try_to_append_order (order : Types.Types.swap_order)
+let try_to_append_order (order : order)
   (batches : Batch.batch_set) : Batch.batch_set =
   match batches.current with
     | None ->
@@ -95,10 +95,23 @@ let try_to_append_order (order : Types.Types.swap_order)
           let current = Batch.append_order order current in
           { batches with current = Some current }
 
-let convert_order (order: external_order) : Types.Types.swap_order =
-  let side = Types.Utils.parse_side(order.side) in
-  let tolerance = Types.Utils.parse_tolerance(order.tolerance) in
-  let converted_swap : Types.Types.swap_order =
+let external_to_order (order: external_order) : order =
+  let side = Types.Utils.nat_to_side(order.side) in
+  let tolerance = Types.Utils.nat_to_tolerance(order.tolerance) in
+  let converted_swap : order =
+    {
+      trader = order.trader;
+      swap  = order.swap;
+      created_at = order.created_at;
+      side = side;
+      tolerance = tolerance;
+    } in
+  converted_swap
+
+let order_to_external (order: order) : external_order =
+  let side = Types.Utils.side_to_nat(order.side) in
+  let tolerance = Types.Utils.tolerance_to_nat(order.tolerance) in
+  let converted_swap : external_order =
     {
       trader = order.trader;
       swap  = order.swap;
@@ -110,8 +123,8 @@ let convert_order (order: external_order) : Types.Types.swap_order =
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
-let deposit (external_order: Types.Types.external_swap_order) (storage : storage) : result =
-  let order = convert_order external_order in
+let deposit (external_order: external_order) (storage : storage) : result =
+  let order = external_to_order external_order in
   let ticked_storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batches =
@@ -149,7 +162,7 @@ let move_current_to_previous_if_finalized (storage : storage) : storage =
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared.
    TODO: actually update the rate *)
-let post_rate (rate : Types.Types.exchange_rate) (storage : storage) : result =
+let post_rate (rate : exchange_rate) (storage : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate rate storage in
   let ticked_storage = tick_current_batches updated_rate_storage in
   let moved_storage = move_current_to_previous_if_finalized ticked_storage in
@@ -220,4 +233,3 @@ let main
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
-
