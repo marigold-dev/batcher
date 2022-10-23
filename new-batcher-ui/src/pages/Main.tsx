@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Exchange from '@/components/Exchange';
+import BatcherInfo from '@/components/BatcherInfo';
+import BatcherAction from '@/components/BatcherAction';
+import { ContentType } from '@/extra_utils/types';
 
 const Welcome: React.FC = () => {
   const baseToken = {
@@ -13,9 +16,26 @@ const Welcome: React.FC = () => {
     decimal: 6,
   };
 
+  const [content, setContent] = useState<ContentType>(ContentType.SWAP);
+
+  const renderRightContent = (content: ContentType) => {
+    switch (content) {
+      case ContentType.SWAP:
+        return <Exchange baseToken={baseToken} quoteToken={quoteToken} />;
+      case ContentType.ORDER_BOOK:
+        return <div />;
+      case ContentType.REDEEM_HOLDING:
+        return <div />;
+      default:
+        return <Exchange baseToken={baseToken} quoteToken={quoteToken} />;
+    }
+  };
+
   return (
     <div>
-      <Exchange baseToken={baseToken} quoteToken={quoteToken} />
+      <BatcherInfo baseToken={baseToken} quoteToken={quoteToken} />
+      <BatcherAction setContent={setContent} />
+      {renderRightContent(content)}
     </div>
   );
 };
