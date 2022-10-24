@@ -4,13 +4,16 @@ import { Input, Button, Space, Typography, Col, Row } from 'antd';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps } from '@/extra_utils/types';
+import { BatcherInfoProps, ExchangeProps } from '@/extra_utils/types';
 import { getTokenAmount } from '@/extra_utils/utils';
 
 const { Text } = Typography;
 
-const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
-  const [inversion, setInversion] = useState(true);
+const BatcherInfo: React.FC<BatcherInfoProps> = ({
+  baseToken,
+  quoteToken,
+  inversion,
+}: BatcherInfoProps) => {
   const [baseBalance, setBaseBalance] = useState({
     name: 'tzBTC',
     address: baseToken.address,
@@ -51,7 +54,6 @@ const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: Exchang
         decimal: quoteToken.decimal,
         balance: 0,
       });
-      setInversion(true);
     }
   };
 

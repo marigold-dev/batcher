@@ -17,23 +17,38 @@ const Welcome: React.FC = () => {
   };
 
   const [content, setContent] = useState(ContentType.SWAP);
+  const [inversion, setInversion] = useState(true);
 
   const renderRightContent = (content: ContentType) => {
     switch (content) {
       case ContentType.SWAP:
-        return <Exchange baseToken={baseToken} quoteToken={quoteToken} />;
+        return (
+          <Exchange
+            baseToken={baseToken}
+            quoteToken={quoteToken}
+            inversion={inversion}
+            setInversion={setInversion}
+          />
+        );
       case ContentType.ORDER_BOOK:
         return <div />;
       case ContentType.REDEEM_HOLDING:
         return <div />;
       default:
-        return <Exchange baseToken={baseToken} quoteToken={quoteToken} />;
+        return (
+          <Exchange
+            baseToken={baseToken}
+            quoteToken={quoteToken}
+            inversion={inversion}
+            setInversion={setInversion}
+          />
+        );
     }
   };
 
   return (
     <div>
-      <BatcherInfo baseToken={baseToken} quoteToken={quoteToken} />
+      <BatcherInfo baseToken={baseToken} quoteToken={quoteToken} inversion={inversion} />
       <BatcherAction setContent={setContent} />
       {renderRightContent(content)}
     </div>

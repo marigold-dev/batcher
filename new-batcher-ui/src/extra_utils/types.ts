@@ -37,6 +37,14 @@ type Token = {
 export type ExchangeProps = {
   baseToken: Token;
   quoteToken: Token;
+  inversion: boolean;
+  setInversion: Dispatch<SetStateAction<boolean>>;
+};
+
+export type BatcherInfoProps = {
+  baseToken: Token;
+  quoteToken: Token;
+  inversion: boolean;
 };
 
 export type BatcherActionProps = {

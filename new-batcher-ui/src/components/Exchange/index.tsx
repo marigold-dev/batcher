@@ -11,8 +11,12 @@ import { TezosToolkit } from '@taquito/taquito';
 const { Text } = Typography;
 const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
-const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
-  const [inversion, setInversion] = useState(true);
+const Exchange: React.FC<ExchangeProps> = ({
+  baseToken,
+  quoteToken,
+  inversion,
+  setInversion,
+}: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.MINUS);
   const [amount, setAmount] = useState(0);
   const [baseBalance, setBaseBalance] = useState({
