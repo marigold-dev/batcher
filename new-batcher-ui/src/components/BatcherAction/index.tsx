@@ -13,10 +13,9 @@ const BatcherAction: React.FC<BatcherActionProps> = ({ setContent }: BatcherActi
             <Col lg={3} />
             <Col className="batcher-action-items" lg={18} xs={24}>
               <Space align="center">
+                <Button onClick={() => setContent(ContentType.SWAP)}>Swap</Button>
                 <Button onClick={() => setContent(ContentType.ORDER_BOOK)}>Order book</Button>
-                <Button onClick={() => setContent(ContentType.REDEEM_HOLDING)}>
-                  Redeem holdings
-                </Button>
+                <Button onClick={() => setContent(ContentType.REDEEM_HOLDING)}>Redeem holdings</Button>
               </Space>
             </Col>
             <Col lg={3} />
