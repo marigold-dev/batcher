@@ -29,8 +29,7 @@ const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: Exchang
 
   const getTokenBalance = async () => {
     if (userAddress) {
-      const balanceURI =
-        'https://api.kathmandunet.tzkt.io/v1/tokens/balances?account=' + userAddress;
+      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
       const data = await fetch(balanceURI, { method: 'GET' });
       const balance = await data.json();
       if (Array.isArray(balance)) {
@@ -68,7 +67,7 @@ const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: Exchang
         <Col className="batcher-time" xs={24} lg={6}>
           <Space direction="vertical">
             <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
-            <Typography className="batcher-title p-13">Open Batch</Typography>
+            <Typography className="batcher-title p-13">No open Batch</Typography>
           </Space>
         </Col>
         <Col className="batcher-balance" xs={24} lg={6}>

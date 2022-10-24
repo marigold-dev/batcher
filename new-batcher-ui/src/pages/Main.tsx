@@ -16,7 +16,7 @@ const Welcome: React.FC = () => {
     decimal: 6,
   };
 
-  const [content, setContent] = useState<ContentType>(ContentType.SWAP);
+  const [content, setContent] = useState(ContentType.SWAP);
 
   const renderRightContent = (content: ContentType) => {
     switch (content) {

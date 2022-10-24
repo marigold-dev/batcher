@@ -22,6 +22,12 @@ export enum ContentType {
   REDEEM_HOLDING = 'redeem_holding',
 }
 
+export enum ToleranceType {
+  MINUS = 0,
+  EXACT = 1,
+  PLUS = 2,
+}
+
 type Token = {
   name: string;
   address: string;
