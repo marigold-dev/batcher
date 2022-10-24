@@ -9,18 +9,18 @@ import { getTokenAmount } from '@/extra_utils/utils';
 
 const { Text } = Typography;
 
-const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
+const BatcherInfo: React.FC<ExchangeProps> = ({ buyToken, sellToken }: ExchangeProps) => {
   const [inversion, setInversion] = useState(true);
-  const [baseBalance, setBaseBalance] = useState({
+  const [buyBalance, setBuyBalance] = useState({
     name: 'tzBTC',
-    address: baseToken.address,
-    decimal: baseToken.decimal,
+    address: buyToken.address,
+    decimal: buyToken.decimal,
     balance: 0,
   });
-  const [quoteBalance, setQuoteBalance] = useState({
+  const [sellBalance, setSellBalance] = useState({
     name: 'USDT',
-    address: quoteToken.address,
-    decimal: quoteToken.decimal,
+    address: sellToken.address,
+    decimal: sellToken.decimal,
     balance: 0,
   });
 
@@ -34,22 +34,22 @@ const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: Exchang
       const data = await fetch(balanceURI, { method: 'GET' });
       const balance = await data.json();
       if (Array.isArray(balance)) {
-        const baseAmount = getTokenAmount(balance, baseBalance);
-        const quoteAmount = getTokenAmount(balance, quoteBalance);
-        setBaseBalance({ ...baseBalance, balance: baseAmount });
-        setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
+        const baseAmount = getTokenAmount(balance, buyBalance);
+        const quoteAmount = getTokenAmount(balance, sellBalance);
+        setBuyBalance({ ...buyBalance, balance: buyAmount });
+        setSellBalance({ ...sellBalance, balance: sellAmount });
       }
     } else {
-      setBaseBalance({
+      setBuyBalance({
         name: 'tzBTC',
-        address: baseToken.address,
-        decimal: baseToken.decimal,
+        address: buyToken.address,
+        decimal: buyToken.decimal,
         balance: 0,
       });
-      setQuoteBalance({
+      setSellBalance({
         name: 'USDT',
-        address: quoteToken.address,
-        decimal: quoteToken.decimal,
+        address: sellToken.address,
+        decimal: sellToken.decimal,
         balance: 0,
       });
       setInversion(true);
@@ -77,8 +77,8 @@ const BatcherInfo: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: Exchang
               <Typography className="batcher-title p-16">Balance</Typography>
               <Typography className="batcher-title p-13">
                 {inversion
-                  ? baseBalance.balance + ' ' + baseBalance.name
-                  : quoteBalance.balance + ' ' + quoteBalance.name}
+                  ? buyBalance.balance + ' ' + buyBalance.name
+                  : sellBalance.balance + ' ' + sellBalance.name}
               </Typography>
             </Space>
           </Col>

@@ -9,18 +9,14 @@ import { getTokenAmount } from '@/extra_utils/utils';
 
 const { Text } = Typography;
 
-const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangeProps) => {
+const Exchange: React.FC<ExchangeProps> = ({ buyToken, sellToken }: ExchangeProps) => {
   const [inversion, setInversion] = useState(true);
-  const [baseBalance, setBaseBalance] = useState({
-    name: 'tzBTC',
-    address: baseToken.address,
-    decimal: baseToken.decimal,
+  const [buyBalance, setBuyBalance] = useState({
+    token: buyToken,
     balance: 0,
   });
-  const [quoteBalance, setQuoteBalance] = useState({
-    name: 'USDT',
-    address: quoteToken.address,
-    decimal: quoteToken.decimal,
+  const [sellBalance, setSellBalance] = useState({
+    token: sellToken,
     balance: 0,
   });
 
@@ -38,22 +34,18 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
       const data = await fetch(balanceURI, { method: 'GET' });
       const balance = await data.json();
       if (Array.isArray(balance)) {
-        const baseAmount = getTokenAmount(balance, baseBalance);
-        const quoteAmount = getTokenAmount(balance, quoteBalance);
-        setBaseBalance({ ...baseBalance, balance: baseAmount });
-        setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
+        const baseAmount = getTokenAmount(balance, buyBalance);
+        const quoteAmount = getTokenAmount(balance, sellBalance);
+        setBuyBalance({ ...buyBalance, balance: baseAmount });
+        setSellBalance({ ...sellBalance, balance: quoteAmount });
       }
     } else {
-      setBaseBalance({
-        name: 'tzBTC',
-        address: baseToken.address,
-        decimal: baseToken.decimal,
+      setBuyBalance({
+        token: buyToken,
         balance: 0,
       });
-      setQuoteBalance({
-        name: 'USDT',
-        address: quoteToken.address,
-        decimal: quoteToken.decimal,
+      setSellBalance({
+        token: sellToken,
         balance: 0,
       });
       setInversion(true);
@@ -67,18 +59,12 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
 
   return (
     <div>
-      <Row className="batcher-content">
-        <Col lg={3} />
-        <Col className="batcher-content-outer" xs={24} lg={18}>
-          <Row>
-            <Col lg={3} />
-            <Col xs={24} lg={18} className="pd-25">
               <Col className="base-content br-t br-b br-l br-r">
                 <Space className="batcher-price" direction="vertical">
                   <Row>
                     <Col className="mr-c" span={5}>
                       <Typography className="batcher-title p-16">
-                        From {inversion ? baseBalance.name : quoteBalance.name}
+                        From {inversion ? buyBalance.token.name : sellBalance.token.name}
                       </Typography>
                     </Col>
                     <Col span={14}>
@@ -108,7 +94,7 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
               />
               <Col className="quote-content grid-padding br-t br-b br-l br-r">
                 <Typography className="batcher-title p-16">
-                  To {inversion ? quoteBalance.name : baseBalance.name}
+                  To {inversion ? sellBalance.token.name : buyBalance.token.name}
                 </Typography>
               </Col>
               {wallet ? (
@@ -120,12 +106,6 @@ const Exchange: React.FC<ExchangeProps> = ({ baseToken, quoteToken }: ExchangePr
               ) : (
                 <div></div>
               )}
-            </Col>
-            <Col lg={3} />
-          </Row>
-        </Col>
-        <Col lg={3} />
-      </Row>
     </div>
   );
 };
