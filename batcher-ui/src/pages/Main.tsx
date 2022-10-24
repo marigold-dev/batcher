@@ -14,16 +14,16 @@ import { connection, init } from '@/extra_utils/webSocketUtils';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
-  const [Tezos] = useState<TezosToolkit>(new TezosToolkit(process.env["REACT_APP_TEZOS_URI"]!));
+  const [Tezos] = useState<TezosToolkit>(new TezosToolkit(REACT_APP_TEZOS_NODE_URI));
   const buyTokenName = "tzBTC";
-  const buyTokenAddress = process.env["REACT_APP_TZBTC_HASH"];
+  const buyTokenAddress = REACT_APP_TZBTC_HASH;
   const buyTokenDecimals = 8;
   const sellTokenName = "USDT";
-  const sellTokenAddress = process.env["REACT_APP_USDT_HASH"];
+  const sellTokenAddress = REACT_APP_USDT_HASH;
   const sellTokenDecimals = 6;
   const buyToken : token = {name: buyTokenName, address: buyTokenAddress,decimals: buyTokenDecimals};
   const sellToken : token = {name: sellTokenName, address: sellTokenAddress,decimals: sellTokenDecimals};
-  const [contractAddress] = useState<string>(process.env["REACT_APP_BATCHER_CONTRACT_HASH"]!);
+  const [contractAddress] = useState<string>(REACT_APP_BATCHER_CONTRACT_HASH);
   const chain_api_url = process.env["REACT_APP_TZT_URI_API"];
   const contractsService = new ContractsService({baseUrl:chain_api_url, version:"", withCredentials:false});
   const [batches, setBatches] = useState<batch_set>();
