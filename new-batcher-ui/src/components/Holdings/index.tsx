@@ -5,7 +5,7 @@ import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
 import { HoldingsProps, batch, token_amount } from '@/extra_utils/types';
-import { rationaliseAmount } from '@/extra_utils/utils';
+import { scaleAmountDown } from '@/extra_utils/utils';
 import { JSONPath } from "jsonpath-plus";
 import toast from "react-hot-toast";
 
@@ -46,14 +46,14 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
 
        buy_holdings = tokenAmounts.reduce((prev, token_amount) => {
         if (token_amount.token.name === buyToken.name){
-          prev += rationaliseAmount(token_amount.amount, buyToken.decimals);
+          prev += scaleAmountDown(token_amount.amount, buyToken.decimals);
         }
         return prev;
        },0);
 
        sell_holdings = tokenAmounts.reduce((prev, token_amount) => {
         if (token_amount.token.name === sellToken.name){
-          prev += rationaliseAmount(token_amount.amount, sellToken.decimals);
+          prev += scaleAmountDown(token_amount.amount, sellToken.decimals);
         }
         return prev;
        },0);

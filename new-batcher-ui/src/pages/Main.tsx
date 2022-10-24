@@ -8,6 +8,9 @@ import { ContentType, token, batch, batch_set, order_book } from '@/extra_utils/
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService } from '@dipdup/tzkt-api';
 import { Col, Row} from 'antd';
+import { useModel } from 'umi';
+import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
+import { connection, init } from '@/extra_utils/webSocketUtils';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -28,7 +31,18 @@ const Welcome: React.FC = () => {
   const [bigMapsByIdUri] = useState<string>("" + chain_api_url + "/v1/bigmaps");
   const [currentBatchExists, setCurrentBatchExists] = useState<boolean>(false);
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
+  const [inversion, setInversion] = useState(true);
+  const { initialState } = useModel('@@initialState');
+  const { userAddress } = initialState;
+ const [buyBalance, setBuyBalance] = useState({
+    token: buyToken,
+    balance: 0,
+  });
 
+ const [sellBalance, setSellBalance] = useState({
+    token: sellToken,
+    balance: 0,
+  });
 
   const get_batches = async () => {
     const storage = await contractsService.getStorage({address: contractAddress, level: 0, path: null});
@@ -49,29 +63,68 @@ const Welcome: React.FC = () => {
        setOrderBook(order_book);
     }
   };
+  const handleWebsocket = () => {
+    console.log(444, buyBalance);
+    if (userAddress) {
+      connection.onclose(init);
+      connection.on('token_balances', (msg: any) => {
+        const updatedBuyBalance = getSocketTokenAmount(msg.data, userAddress, buyBalance);
+        if (updatedBuyBalance !== 0) {
+          setBuyBalance({
+            ...buyBalance,
+            balance: updatedBuyBalance,
+          });
+        }
 
+        const updatedSellBalance = getSocketTokenAmount(msg.data, userAddress, sellBalance);
+        if (updatedSellBalance !== 0) {
+          setSellBalance({
+            ...sellBalance,
+            balance: getSocketTokenAmount(msg.data, userAddress, sellBalance),
+          });
+        }
+      });
+      init(userAddress);
+    }
+  };
+
+  const getTokenBalance = async () => {
+    if (userAddress) {
+      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
+      const data = await fetch(balanceURI, { method: 'GET' });
+      const balance = await data.json();
+      if (Array.isArray(balance)) {
+        const baseAmount = getTokenAmount(balance, buyBalance);
+        const quoteAmount = getTokenAmount(balance, sellBalance);
+        setBuyBalance({ ...buyBalance, balance: baseAmount });
+        setSellBalance({ ...sellBalance, balance: quoteAmount });
+      }
+    }
+  };
 
   const renderRightContent = (content: ContentType) => {
     switch (content) {
       case ContentType.SWAP:
-        return <Exchange buyToken={buyToken} sellToken={sellToken} />;
+        return <Exchange buyBalance={buyBalance} sellBalance={sellBalance} inversion={inversion} setInversion={setInversion} />;
       case ContentType.ORDER_BOOK:
         return <OrderBook orderBookExists={currentBatchExists} orderBook={orderBook} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return <Holdings tezos={Tezos} bigMapsByIdUri={bigMapsByIdUri} contractAddress={contractAddress} previousBatches={previousBatches} buyToken={buyToken} sellToken={sellToken} />;
       default:
-        return <Exchange buyToken={buyToken} sellToken={sellToken} />;
+        return <Exchange buyBalance={buyBalance} sellBalance={sellBalance} inversion={inversion} setInversion={setInversion} />;
     }
   };
 
 useEffect(() => {
   (async () => get_batches())();
-});
+  getTokenBalance();
+  handleWebsocket();
+}, [userAddress]);
 
 
   return (
     <div>
-      <BatcherInfo buyToken={buyToken} sellToken={sellToken} />
+      <BatcherInfo buyBalance={buyBalance} sellBalance={sellBalance} inversion={inversion}/>
       <BatcherAction setContent={setContent} />
       <div>
         <Row className="batcher-content">

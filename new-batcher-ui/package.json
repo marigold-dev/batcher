@@ -46,12 +46,15 @@
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
     "@ant-design/pro-components": "1.1.1",
+    "@dipdup/tzkt-api": "^0.0.1",
+    "@microsoft/signalr": "^6.0.10",
     "@taquito/beacon-wallet": "^14.0.0",
     "@taquito/taquito": "^14.0.0",
     "@umijs/route-utils": "^2.0.0",
     "antd": "^4.20.0",
     "classnames": "^2.3.0",
     "dotenv": "^16.0.3",
+    "jsonpath-plus": "^7.2.0",
     "lodash": "^4.17.0",
     "moment": "^2.29.0",
     "omit.js": "^2.0.2",
@@ -61,6 +64,7 @@
     "react-dev-inspector": "^1.7.0",
     "react-dom": "^17.0.0",
     "react-helmet-async": "^1.2.0",
+    "react-hot-toast": "^2.4.0",
     "umi": "^3.5.0"
   },
   "devDependencies": {

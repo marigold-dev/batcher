@@ -72,6 +72,12 @@ export interface EXact {}
 export interface MInus {}
 export interface PLus {}
 
+export enum ToleranceType {
+  MINUS = 0,
+  EXACT = 1,
+  PLUS = 2,
+}
+
 
 export  class swap_order {
     trader!: string;
@@ -156,16 +162,28 @@ export type HoldingsProps = {
 };
 
 
-export type ExchangeProps = {
-  buyToken: token;
-  sellToken: token;
-};
-
 export type OrderBookProps = {
   orderBookExists: boolean;
   orderBook: order_book;
   buyToken: token;
   sellToken: token;
+};
+type TokenBalance = {
+  token: token;
+  balance: number;
+};
+
+export type ExchangeProps = {
+  buyBalance: TokenBalance;
+  sellBalance: TokenBalance;
+  inversion: boolean;
+  setInversion: Dispatch<SetStateAction<boolean>>;
+};
+
+export type BatcherInfoProps = {
+   buyBalance: TokenBalance;
+   sellBalance: TokenBalance;
+   inversion: boolean;
 };
 
 export type BatcherActionProps = {
