@@ -6,7 +6,7 @@ COPY ./package.json ./package-lock.json ./
 
 RUN npm install
 
-COPY ./config-overrides.js ./tsconfig.json ./
+COPY ./tsconfig.json ./
 COPY ./src ./src
 COPY ./public ./public
 COPY ./.env.kathmandunet ./.env.kathmandunet
