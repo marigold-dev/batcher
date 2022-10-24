@@ -5,7 +5,6 @@ import type { RunTimeLayoutConfig } from 'umi';
 import defaultSettings from '../config/defaultSettings';
 import Main from './pages/Main';
 
-require('dotenv').config();
 
 export const initialStateConfig = {
   loading: <PageLoading />,
