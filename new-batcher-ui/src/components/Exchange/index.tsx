@@ -96,7 +96,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           token: {
             name: inversion ? baseToken.name : quoteToken.name,
             address: inversion ? baseToken.address : quoteToken.address,
-            decimals: inversion ? baseToken.decimal : quoteToken.address,
+            decimals: inversion ? baseToken.decimal : quoteToken.decimal,
           },
           amount: scaled_amount,
         },
