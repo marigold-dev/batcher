@@ -48,7 +48,6 @@ const GlobalHeaderRight: React.FC = () => {
 
   const getNetworkType = () => {
     const network = REACT_APP_NETWORK_TARGET;
-    console.log('%cindex.tsx line:51 network', 'color: #007acc;', network);
     if (network?.includes('GHOSTNET')) {
       return NetworkType.GHOSTNET;
     } else {
@@ -57,8 +56,6 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const connectWallet = async () => {
-    console.log('%cindex.tsx line:63 wallet', 'color: #007acc;', wallet);
-
     if (!wallet) {
       const updatedWallet = new BeaconWallet({
         name: 'batcher',

@@ -46,6 +46,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
     "@ant-design/pro-components": "1.1.1",
+    "@microsoft/signalr": "^6.0.10",
     "@taquito/beacon-wallet": "^14.0.0",
     "@taquito/taquito": "^14.0.0",
     "@umijs/route-utils": "^2.0.0",

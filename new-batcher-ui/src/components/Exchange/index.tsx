@@ -1,36 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row, message } from 'antd';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
 import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
-import { getErrorMess, getTokenAmount, rationaliseAmount } from '@/extra_utils/utils';
+import { getErrorMess, rationaliseAmount } from '@/extra_utils/utils';
 import { TezosToolkit } from '@taquito/taquito';
 
-const { Text } = Typography;
 const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
 const Exchange: React.FC<ExchangeProps> = ({
-  baseToken,
-  quoteToken,
+  baseBalance,
+  quoteBalance,
   inversion,
   setInversion,
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.MINUS);
   const [amount, setAmount] = useState(0);
-  const [baseBalance, setBaseBalance] = useState({
-    name: 'tzBTC',
-    address: baseToken.address,
-    decimal: baseToken.decimal,
-    balance: 0,
-  });
-  const [quoteBalance, setQuoteBalance] = useState({
-    name: 'USDT',
-    address: quoteToken.address,
-    decimal: quoteToken.decimal,
-    balance: 0,
-  });
 
   const { initialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
@@ -39,45 +26,19 @@ const Exchange: React.FC<ExchangeProps> = ({
     setInversion(!inversion);
   };
 
-  const getTokenBalance = async () => {
-    if (userAddress) {
-      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
-      const data = await fetch(balanceURI, { method: 'GET' });
-      const balance = await data.json();
-      if (Array.isArray(balance)) {
-        const baseAmount = getTokenAmount(balance, baseBalance);
-        const quoteAmount = getTokenAmount(balance, quoteBalance);
-        setBaseBalance({ ...baseBalance, balance: baseAmount });
-        setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
-      }
-    } else {
-      setBaseBalance({
-        name: 'tzBTC',
-        address: baseToken.address,
-        decimal: baseToken.decimal,
-        balance: 0,
-      });
-      setQuoteBalance({
-        name: 'USDT',
-        address: quoteToken.address,
-        decimal: quoteToken.decimal,
-        balance: 0,
-      });
-      setInversion(true);
-    }
-  };
-
   const depositToken = async () => {
     if (!wallet) {
       return;
     }
 
     const batcherContract = await Tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
-    const tokenContract = await Tezos.wallet.at(inversion ? baseToken.address : quoteToken.address);
+    const tokenContract = await Tezos.wallet.at(
+      inversion ? baseBalance.address : quoteBalance.address,
+    );
 
     const scaled_amount = inversion
-      ? rationaliseAmount(amount, baseToken.decimal)
-      : rationaliseAmount(amount, quoteToken.decimal);
+      ? rationaliseAmount(amount, baseBalance.decimal)
+      : rationaliseAmount(amount, quoteBalance.decimal);
 
     const operator_params = [
       {
@@ -94,16 +55,16 @@ const Exchange: React.FC<ExchangeProps> = ({
       swap: {
         from: {
           token: {
-            name: inversion ? baseToken.name : quoteToken.name,
-            address: inversion ? baseToken.address : quoteToken.address,
-            decimals: inversion ? baseToken.decimal : quoteToken.decimal,
+            name: inversion ? baseBalance.name : quoteBalance.name,
+            address: inversion ? baseBalance.address : quoteBalance.address,
+            decimals: inversion ? baseBalance.decimal : quoteBalance.decimal,
           },
           amount: scaled_amount,
         },
         to: {
-          name: inversion ? quoteToken.name : baseToken.name,
-          address: inversion ? quoteToken.address : baseToken.address,
-          decimals: inversion ? quoteToken.decimal : baseToken.decimal,
+          name: inversion ? quoteBalance.name : baseBalance.name,
+          address: inversion ? quoteBalance.address : baseBalance.address,
+          decimals: inversion ? quoteBalance.decimal : baseBalance.decimal,
         },
       },
       created_at: new Date(),
@@ -112,7 +73,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     };
 
     const loading = message.loading(
-      'Attempting to place swap order for ' + (inversion ? baseToken.name : quoteToken.name),
+      'Attempting to place swap order for ' + (inversion ? baseBalance.name : quoteBalance.name),
       0,
     );
 
@@ -126,12 +87,12 @@ const Exchange: React.FC<ExchangeProps> = ({
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
         throw new Error(
-          'Failed to deposit ' + (inversion ? baseToken.name : quoteToken.name) + ' token',
+          'Failed to deposit ' + (inversion ? baseBalance.name : quoteBalance.name) + ' token',
         );
       } else {
         loading();
         message.success(
-          'Successfully deposit ' + (inversion ? baseToken.name : quoteToken.name) + ' token',
+          'Successfully deposit ' + (inversion ? baseBalance.name : quoteBalance.name) + ' token',
         );
       }
     } catch (error) {
@@ -139,12 +100,6 @@ const Exchange: React.FC<ExchangeProps> = ({
       message.error(getErrorMess(error));
     }
   };
-
-  useEffect(() => {
-    console.log(13333, Tezos.wallet);
-    const exchangeInterval = setInterval(getTokenBalance, 2000);
-    return () => clearInterval(exchangeInterval);
-  }, [initialState]);
 
   return (
     <div>

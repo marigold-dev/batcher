@@ -1,0 +1,26 @@
+// Tzkt Websocket
+const signalR = require('@microsoft/signalr');
+
+export const connection = new signalR.HubConnectionBuilder()
+  .withUrl(REACT_APP_TZKT_URI_API + '/v1/ws')
+  .build();
+
+export const init = async (userAddress: string) => {
+  await connection.start();
+
+  await connection.invoke('SubscribeToHead');
+
+  // Subscription to tzBTC contract
+  await connection.invoke('SubscribeToTokenBalances', {
+    account: userAddress,
+    contract: REACT_APP_TZBTC_HASH,
+    tokenId: '0',
+  });
+
+  // Subscription to USDT contract
+  await connection.invoke('SubscribeToTokenBalances', {
+    account: userAddress,
+    contract: REACT_APP_USDT_HASH,
+    tokenId: '0',
+  });
+};

@@ -1,66 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { SwapOutlined } from '@ant-design/icons';
-import { Input, Button, Space, Typography, Col, Row } from 'antd';
+import React from 'react';
+import { Space, Typography, Col, Row } from 'antd';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { BatcherInfoProps, ExchangeProps } from '@/extra_utils/types';
-import { getTokenAmount } from '@/extra_utils/utils';
+import { BatcherInfoProps } from '@/extra_utils/types';
 
 const { Text } = Typography;
 
 const BatcherInfo: React.FC<BatcherInfoProps> = ({
-  baseToken,
-  quoteToken,
+  baseBalance,
+  quoteBalance,
   inversion,
 }: BatcherInfoProps) => {
-  const [baseBalance, setBaseBalance] = useState({
-    name: 'tzBTC',
-    address: baseToken.address,
-    decimal: baseToken.decimal,
-    balance: 0,
-  });
-  const [quoteBalance, setQuoteBalance] = useState({
-    name: 'USDT',
-    address: quoteToken.address,
-    decimal: quoteToken.decimal,
-    balance: 0,
-  });
-
   const { initialState } = useModel('@@initialState');
-  const { wallet, userAddress } = initialState;
-
-  const getTokenBalance = async () => {
-    if (userAddress) {
-      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
-      const data = await fetch(balanceURI, { method: 'GET' });
-      const balance = await data.json();
-      if (Array.isArray(balance)) {
-        const baseAmount = getTokenAmount(balance, baseBalance);
-        const quoteAmount = getTokenAmount(balance, quoteBalance);
-        setBaseBalance({ ...baseBalance, balance: baseAmount });
-        setQuoteBalance({ ...quoteBalance, balance: quoteAmount });
-      }
-    } else {
-      setBaseBalance({
-        name: 'tzBTC',
-        address: baseToken.address,
-        decimal: baseToken.decimal,
-        balance: 0,
-      });
-      setQuoteBalance({
-        name: 'USDT',
-        address: quoteToken.address,
-        decimal: quoteToken.decimal,
-        balance: 0,
-      });
-    }
-  };
-
-  useEffect(() => {
-    const exchangeInterval = setInterval(getTokenBalance, 2000);
-    return () => clearInterval(exchangeInterval);
-  }, [initialState]);
+  const { userAddress } = initialState;
 
   return (
     <div>

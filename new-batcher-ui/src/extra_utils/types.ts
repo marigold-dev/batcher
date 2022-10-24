@@ -34,16 +34,23 @@ type Token = {
   decimal: number;
 };
 
+type TokenBalance = {
+  name: string;
+  address: string;
+  decimal: number;
+  balance: number;
+};
+
 export type ExchangeProps = {
-  baseToken: Token;
-  quoteToken: Token;
+  baseBalance: TokenBalance;
+  quoteBalance: TokenBalance;
   inversion: boolean;
   setInversion: Dispatch<SetStateAction<boolean>>;
 };
 
 export type BatcherInfoProps = {
-  baseToken: Token;
-  quoteToken: Token;
+  baseBalance: TokenBalance;
+  quoteBalance: TokenBalance;
   inversion: boolean;
 };
 
