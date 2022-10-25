@@ -72,7 +72,7 @@ const Welcome: React.FC = () => {
       current_batch = await storage.batches.current;
     } catch {}
 
-    setCurrentBatchExists(current_batch === undefined ? false : true);
+    setCurrentBatchExists(current_batch === undefined || current_batch === null ? false : true);
 
     if (currentBatchExists) {
       const order_book: order_book = storage.batches.current.orderbook;
