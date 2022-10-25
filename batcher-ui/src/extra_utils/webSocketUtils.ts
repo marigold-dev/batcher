@@ -23,4 +23,10 @@ export const init = async (userAddress: string) => {
     contract: REACT_APP_USDT_HASH,
     tokenId: '0',
   });
+
+  // Subscription to Batcher operations
+  await connection.invoke('SubscribeToOperations', {
+    address: REACT_APP_BATCHER_CONTRACT_HASH,
+    types: 'transaction',
+  });
 };

@@ -7,6 +7,7 @@ import '@/global.less';
 import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { TezosToolkit } from '@taquito/taquito';
+import useFormInstance from 'antd/lib/form/hooks/useFormInstance';
 
 const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
@@ -20,6 +21,8 @@ const Exchange: React.FC<ExchangeProps> = ({
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
+
+  const [form] = Form.useForm();
 
   const inverseTokenType = () => {
     setInversion(!inversion);
@@ -92,6 +95,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         );
       } else {
         loading();
+        form.resetFields();
         message.success(
           'Successfully deposit ' +
             (inversion ? buyBalance.token.name : sellBalance.token.name) +
@@ -100,13 +104,14 @@ const Exchange: React.FC<ExchangeProps> = ({
       }
     } catch (error) {
       loading();
+      form.resetFields();
       message.error(getErrorMess(error));
     }
   };
 
   return (
     <div>
-      <Form onFinish={depositToken}>
+      <Form onFinish={depositToken} form={form}>
         <Col className="base-content br-t br-b br-l br-r">
           <Space className="batcher-price" direction="vertical">
             <Form.Item
@@ -120,7 +125,7 @@ const Exchange: React.FC<ExchangeProps> = ({
               rules={[
                 { required: true, message: 'Please input your amount' },
                 { pattern: new RegExp(/^[+-]?([0-9]*[.])?[0-9]+$/), message: 'Invalid number' },
-                ({ getFieldValue }) => ({
+                () => ({
                   validator(_, value) {
                     if (inversion && Number.parseFloat(value) > buyBalance.balance) {
                       return Promise.reject('Greater than the balance');
