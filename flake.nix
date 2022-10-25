@@ -40,8 +40,8 @@
               npm
               yarn
               node2nix
-               tezos.tezos-client
-
+              tezos.tezos-client
+              nodejs-18_x
             ];
 
           shellHook = ''

@@ -11,19 +11,19 @@ import MarigoldLogo from '../../../img/marigold-logo.png';
 
 const Footer: React.FC = () => {
   const LeftFooter = (
-    <Space>
-      <h1 style={{ marginBottom: '0', fontSize: '16px', color: '#FFFFFF' }}>MARIGOLD</h1>
-      <Image src={MarigoldLogo}></Image>
-    </Space>
+        <a href="https://www.marigold.dev/">
+        <Space>
+        <h1 style={{ marginBottom: '0', fontSize: '16px', color: '#FFFFFF' }}>MARIGOLD</h1>
+        <Image preview={false} src={MarigoldLogo} />
+        </Space>
+        </a>
   );
 
   return (
     <FooterToolbar extra={LeftFooter}>
       <Space>
-        <TwitterOutlined style={{ color: '#FFFFFF' }} />
-        <GithubOutlined style={{ color: '#FFFFFF' }} />
-        <LinkedinOutlined style={{ color: '#FFFFFF' }} />
-        <GitlabOutlined style={{ color: '#FFFFFF' }} />
+       <a href="https://twitter.com/Marigold_Dev"><TwitterOutlined style={{ color: '#FFFFFF' }}/></a>
+        <a href="https://github.com/marigold-dev/batcher"><GithubOutlined style={{ color: '#FFFFFF' }} /></a>
       </Space>
     </FooterToolbar>
   );

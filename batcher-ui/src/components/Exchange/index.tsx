@@ -16,7 +16,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   inversion,
   setInversion,
 }: ExchangeProps) => {
-  const [tolerance, setTolerance] = useState(ToleranceType.MINUS);
+  const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
