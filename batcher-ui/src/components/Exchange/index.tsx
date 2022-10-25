@@ -34,8 +34,6 @@ const Exchange: React.FC<ExchangeProps> = ({
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
 
-    console.log('%cindex.tsx line:37 amount', 'color: #007acc;', amount);
-
     const scaled_amount = inversion
       ? scaleAmountUp(amount, buyBalance.token.decimals)
       : scaleAmountUp(amount, sellBalance.token.decimals);
@@ -122,11 +120,22 @@ const Exchange: React.FC<ExchangeProps> = ({
               rules={[
                 { required: true, message: 'Please input your amount' },
                 { pattern: new RegExp(/^[+-]?([0-9]*[.])?[0-9]+$/), message: 'Invalid number' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (inversion && Number.parseFloat(value) > buyBalance.balance) {
+                      return Promise.reject('Greater than the balance');
+                    } else if (!inversion && Number.parseFloat(value) > sellBalance.balance) {
+                      return Promise.reject('Greater than the balance');
+                    }
+                    return Promise.resolve();
+                  },
+                }),
               ]}
             >
               <Input
                 className="batcher-token"
                 placeholder="Amount"
+                disabled={!userAddress}
                 onChange={(e) => {
                   const regrex = /^[+-]?([0-9]*[.])?[0-9]+$/;
                   if (regrex.test(e.target.value)) {
