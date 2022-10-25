@@ -37,6 +37,8 @@ const Exchange: React.FC<ExchangeProps> = ({
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
 
+    console.log('%cindex.tsx line:37 amount', 'color: #007acc;', amount);
+
     const scaled_amount = inversion
       ? scaleAmountUp(amount, buyBalance.token.decimals)
       : scaleAmountUp(amount, sellBalance.token.decimals);
