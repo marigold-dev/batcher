@@ -19,11 +19,11 @@ const menu = (
       },
       {
         key: '2',
-        label: <Typography>Order books</Typography>,
+        label: <Typography>Order Book</Typography>,
       },
       {
         key: '3',
-        label: <Typography>Redeem holdings</Typography>,
+        label: <Typography>Redeem Holdings</Typography>,
       },
     ]}
   />

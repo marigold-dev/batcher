@@ -4,7 +4,10 @@ import { PageLoading } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from 'umi';
 import defaultSettings from '../config/defaultSettings';
 import Main from './pages/Main';
+import { Spin, Image } from 'antd';
+import MarigoldLogo from '../img/marigold-logo.png';
 
+Spin.setDefaultIndicator(<Image src={MarigoldLogo}/>);
 
 export const initialStateConfig = {
   loading: <PageLoading />,

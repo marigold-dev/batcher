@@ -110,6 +110,7 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
 
   return (
               <Col className="base-content br-t br-b br-l br-r">
+                <Space className="batcher-price" direction="vertical">
                   <Row>
                     <Col className="mr-c" span={5}>
                       <Typography className="batcher-title p-16">
@@ -118,14 +119,17 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
                     </Col>
                   </Row>
                       <Row className="text-center">
-                      <Space direction="vertical"/>
-                    <Col className="batcher-title br-t" span={8} offset={8}>
-                       <Typography className="p-12">{buyTokenHoldings} {buyToken.name}</Typography>
+                    <Col className="batcher-title br-t br-b" span={8} offset={8}>
+                        <Space  direction="vertical">
+                       <Typography className="p-12" autosize>{buyTokenHoldings} {buyToken.name}</Typography>
+                       </Space>
                        </Col>
                        </Row>
                       <Row className="text-center">
                     <Col className="batcher-title br-t br-b" span={8} offset={8}>
+                        <Space  direction="vertical">
                        <Typography className="p-12">{sellTokenHoldings} {sellToken.name}</Typography>
+                       </Space>
                        </Col>
                       </Row>
                       <Row className="text-center">
@@ -135,6 +139,7 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
                       </Button>
                        </Col>
                     </Row>
+                    </Space>
               </Col>
   );
 };

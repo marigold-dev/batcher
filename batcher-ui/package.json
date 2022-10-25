@@ -1,6 +1,6 @@
 {
-  "name": "ant-design-pro",
-  "version": "5.2.0",
+  "name": "batcher",
+  "version": "1.0.0",
   "private": true,
   "description": "An out-of-box UI solution for enterprise applications",
   "scripts": {
@@ -29,7 +29,9 @@
     "serve": "umi-serve",
     "start": "cross-env UMI_ENV=dev umi dev",
     "start:ghostnet": "cross-env UMI_ENV=ghostnet umi dev",
+    "start:ghostnet-ci": "cross-env UMI_ENV=ghostnet NODE_OPTIONS='--openssl-legacy-provider' umi dev",
     "start:kathmandunet": "cross-env UMI_ENV=kathmandunet umi dev",
+    "start:kathmandunet-ci": "cross-env UMI_ENV=kathmandunet NODE_OPTIONS='--openssl-legacy-provider' umi dev",
     "test": "umi test",
     "test:component": "umi test ./src/components",
     "test:e2e": "node ./tests/run-tests.js",

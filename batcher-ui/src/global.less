@@ -11,7 +11,7 @@ body,
 }
 
 .ant-layout {
-  min-height: 100vh;
+  min-height: 60vh;
 }
 .ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
   left: unset;
@@ -48,6 +48,7 @@ ol {
 .ant-pro-footer-bar {
   background-color: #1C1D22;
   border-top: 2px solid #7B7B7E;
+  min-height: 10vh ;
 }
 
 .p-16 {
@@ -165,10 +166,17 @@ ol {
 .batcher-nav-btn {
   color: #FFF;
   background-color: #1C1D22;
-  border-bottom: 2px solid #7B7B7E;
+  border: 2px solid #ff4d4f !important;
   text-align: center;
 }
 
+.batcher-nav-btn:active,
+.batcher-nav-btn:focus,
+.batcher-nav-btn:hover {
+  color: #1C1D22;
+  background-color: #ff4d4f;
+  border: 2px solid #7B7B7E !important;
+}
 .batcher-col-focus {
   background-color: #FFFFFF;
   .ant-typography {
