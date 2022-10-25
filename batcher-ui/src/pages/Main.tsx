@@ -99,6 +99,12 @@ const Welcome: React.FC = () => {
           });
         }
       });
+
+      // This is the place handling operaions and storages
+      connection.on('operations', (msg: any) => {
+        console.log('Operations', msg);
+      });
+
       init(userAddress);
     }
   };
