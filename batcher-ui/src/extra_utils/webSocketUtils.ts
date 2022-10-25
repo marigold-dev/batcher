@@ -1,7 +1,7 @@
 // Tzkt Websocket
-const signalR = require('@microsoft/signalr');
+import { HubConnectionBuilder } from '@microsoft/signalr';
 
-export const connection = new signalR.HubConnectionBuilder()
+export const connection = new HubConnectionBuilder()
   .withUrl(REACT_APP_TZKT_URI_API + '/v1/ws')
   .build();
 
