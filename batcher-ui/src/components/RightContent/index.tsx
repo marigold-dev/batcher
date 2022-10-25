@@ -44,18 +44,15 @@ const GlobalHeaderRight: React.FC = () => {
   }
 
   const { wallet } = initialState;
-  console.log(process.env);
 
-  const Tezos = new TezosToolkit(process.env['REACT_APP_TEZOS_NODE_URI']!);
+  const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
   const getNetworkType = () => {
-    const network = process.env['REACT_APP_NETWORK_TARGET'];
+    const network = REACT_APP_NETWORK_TARGET;
     if (network?.includes('GHOSTNET')) {
       return NetworkType.GHOSTNET;
-    } else if (network?.includes('JAKARTANET')) {
-      return NetworkType.KATHMANDUNET;
     } else {
-      return NetworkType.GHOSTNET;
+      return NetworkType.KATHMANDUNET;
     }
   };
 
@@ -70,7 +67,7 @@ const GlobalHeaderRight: React.FC = () => {
       await updatedWallet.requestPermissions({
         network: {
           type: getNetworkType(),
-          rpcUrl: process.env['REACT_APP_TEZOS_NODE_URI']!,
+          rpcUrl: REACT_APP_TEZOS_NODE_URI,
         },
       });
 
