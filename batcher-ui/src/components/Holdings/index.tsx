@@ -68,7 +68,7 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri,userAddress, c
 
   const redeemHoldings = async () : Promise<void> => {
     console.log("redeeming");
-    message.loading("Attempting to redeem holdings...",0);
+    message.loading("Attempting to redeem holdings...");
      try{
         const contractWallet = await tezos.wallet.at(contractAddress);
         const buyTokenWalletContract = await tezos.wallet.at(buyToken.address);
@@ -98,7 +98,7 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri,userAddress, c
            message.success("Successfully redeemed holdings");
         }
      } catch (error:any){
-           message.error({ content:"Unable to redeem holdings : " + error.message,  icon:{MarigoldLogoSvg}});
+           message.error("Unable to redeem holdings : " + error.message);
            console.error("Unable to redeem holdings" + error);
      }
   };
