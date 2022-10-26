@@ -8,8 +8,6 @@ export const connection = new HubConnectionBuilder()
 export const init = async (userAddress: string) => {
   await connection.start();
 
-  await connection.invoke('SubscribeToHead');
-
   // Subscription to tzBTC contract
   await connection.invoke('SubscribeToTokenBalances', {
     account: userAddress,
@@ -28,5 +26,10 @@ export const init = async (userAddress: string) => {
   await connection.invoke('SubscribeToOperations', {
     address: REACT_APP_BATCHER_CONTRACT_HASH,
     types: 'transaction',
+  });
+
+  // Subscription to Batcher oracle rates
+  await connection.invoke('SubscribeToBigMaps', {
+    contract: REACT_APP_BATCHER_CONTRACT_HASH,
   });
 };

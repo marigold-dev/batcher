@@ -1,13 +1,19 @@
-import React from 'react';
-import {  Space, Typography, Col, Row } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Space, Typography, Col, Row } from 'antd';
 import { useModel } from 'umi';
 import '@/components/BatcherInfo/index.less';
 import '@/global.less';
 import { BatcherInfoProps } from '@/extra_utils/types';
+import { MichelineFormat } from '@dipdup/tzkt-api';
 
 const { Text } = Typography;
 
-const BatcherInfo: React.FC<BatcherInfoProps> = ({ buyBalance, sellBalance, inversion }: BatcherInfoProps) => {
+const BatcherInfo: React.FC<BatcherInfoProps> = ({
+  buyBalance,
+  sellBalance,
+  inversion,
+  rate,
+}: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
 
@@ -48,7 +54,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({ buyBalance, sellBalance, inve
         <Col className="batcher-oracle" xs={24} lg={6}>
           <Space>
             <Typography className="batcher-title p-16">Oracle Price</Typography>
-            <Typography className="batcher-title p-13">0 tzBTC/USDT</Typography>
+            <Typography className="batcher-title p-13">{rate} tzBTC/USDT</Typography>
           </Space>
         </Col>
         <Col lg={3} />
