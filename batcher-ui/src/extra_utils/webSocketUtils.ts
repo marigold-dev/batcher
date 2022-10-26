@@ -6,6 +6,8 @@ export const connection = new HubConnectionBuilder()
   .build();
 
 export const init = async (userAddress: string) => {
+  await connection.stop();
+
   await connection.start();
 
   // Subscription to tzBTC contract

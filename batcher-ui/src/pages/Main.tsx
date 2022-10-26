@@ -83,9 +83,9 @@ const Welcome: React.FC = () => {
     }
   };
   const handleWebsocket = () => {
-    connection.onclose(() => init(userAddress));
     connection.on('token_balances', (msg: any) => {
       if (!msg.data) return;
+      if (!userAddress) return;
 
       const updatedBuyBalance = getSocketTokenAmount(msg.data, userAddress, buyBalance);
       if (updatedBuyBalance !== 0) {
@@ -107,6 +107,7 @@ const Welcome: React.FC = () => {
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
+
       console.log('Operations', msg);
     });
 
