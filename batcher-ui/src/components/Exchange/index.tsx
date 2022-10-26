@@ -8,13 +8,12 @@ import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { TezosToolkit } from '@taquito/taquito';
 
-const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
-
 const Exchange: React.FC<ExchangeProps> = ({
   buyBalance,
   sellBalance,
   inversion,
   setInversion,
+  tezos
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [amount, setAmount] = useState(0);
@@ -31,8 +30,8 @@ const Exchange: React.FC<ExchangeProps> = ({
       return;
     }
 
-    const batcherContract = await Tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
-    const tokenContract = await Tezos.wallet.at(
+    const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
+    const tokenContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
 
@@ -74,15 +73,13 @@ const Exchange: React.FC<ExchangeProps> = ({
       tolerance: tolerance,
     };
 
+    const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
     const loading = message.loading(
-      'Attempting to place swap order for ' +
-        (inversion ? buyBalance.token.name : sellBalance.token.name),
+      'Attempting to place swap order for ' + tokenName,
       0,
     );
-
     try {
-      Tezos.setWalletProvider(wallet);
-      const order_batcher_op = await Tezos.wallet
+      const order_batcher_op = await tezos.wallet
         .batch()
         .withContractCall(tokenContract.methods.update_operators(operator_params))
         .withContractCall(batcherContract.methodsObject.deposit(swap_params))
@@ -95,16 +92,12 @@ const Exchange: React.FC<ExchangeProps> = ({
             ' token',
         );
       } else {
-        loading();
         form.resetFields();
         message.success(
-          'Successfully deposit ' +
-            (inversion ? buyBalance.token.name : sellBalance.token.name) +
-            ' token',
+          'Successfully deposited ' + tokenName,
         );
       }
     } catch (error) {
-      loading();
       form.resetFields();
       message.error(getErrorMess(error));
     }

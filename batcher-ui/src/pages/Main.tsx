@@ -6,6 +6,7 @@ import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
 import {
   ContentType,
+  ContractStorage,
   token,
   batch,
   batch_set,
@@ -19,6 +20,7 @@ import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp } from '@/extra_utils/utils';
+import { JSONPath } from "jsonpath-plus";
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -48,13 +50,13 @@ const Welcome: React.FC = () => {
     withCredentials: false,
   });
   const [batches, setBatches] = useState<batch_set>();
-  const [previousBatches, setPreviousBatches] = useState<Array<batch>>([]);
-  const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps');
-  const [currentBatchExists, setCurrentBatchExists] = useState<boolean>(false);
+  const [previousTreasuries, setPreviousTreasuries] = useState<Array<number>>([]);
+  const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
+  const [orderBookExists, setOrderBookExists] = useState<boolean>(false);
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
   const { initialState } = useModel('@@initialState');
-  const { userAddress } = initialState;
+  const { wallet, userAddress } = initialState;
   const [buyBalance, setBuyBalance] = useState({
     token: buyToken,
     balance: 0,
@@ -67,31 +69,35 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
 
-  const get_batches = async () => {
+  const process_batches_and_order_book =  (order_book: order_book, treasuries: Array<number>) => {
+
+       console.log('Operations-order-book', order_book);
+    try{
+       setOrderBook(order_book);
+       setOrderBookExists(order_book === undefined || order_book === null ? false : true);
+       console.log('Operations-order-book-exists', orderBookExists);
+       setPreviousTreasuries(treasuries)
+    } catch (error:any) {
+      console.log('Operations-previousBatches-error', error);
+      setPreviousTreasuries([]);
+      setOrderBookExists(false);
+    }
+  };
+
+
+
+  const getBatches = async () => {
     const storage = await contractsService.getStorage({
       address: contractAddress,
       level: 0,
       path: null,
     });
 
-    const batches: batch_set = await storage.batches;
-    setBatches(batches);
-    setPreviousBatches(batches?.previous ? [] : batches?.previous);
-
-    let current_batch = undefined;
-
-    try {
-      current_batch = await storage.batches.current;
+     try{
+    const status = Object.keys(storage.batches.current.status)[0];
+    setStatus(status);
+    process_batches_and_order_book(storage.batches.current.orderbook, storage.batches.previous.map((p:batch) => p.treasury));
     } catch {}
-
-    setCurrentBatchExists(current_batch === undefined || current_batch === null ? false : true);
-
-    if (currentBatchExists) {
-      const order_book: order_book = storage.batches.current.orderbook;
-      const status = Object.keys(storage.batches.current.status)[0];
-      setStatus(status);
-      setOrderBook(order_book);
-    }
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -120,6 +126,15 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
+      try{
+      console.log('Operations-storage', msg.data[0].storage);
+      const storage_string = msg.data[0].storage as string;
+      console.log('Operations-storage-string', storage_string);
+
+      process_batches_and_order_book(msg.data[0].storage.batches.current.orderbook, msg.data[0].storage.batches.previous.map((p:batch) => p.treasury));
+        } catch (error:any) {
+          console.log(error);
+        }
       if (!msg.data[0].storage.batches.current) {
         setStatus(BatcherStatus.NONE);
       } else {
@@ -140,6 +155,7 @@ const Welcome: React.FC = () => {
     });
 
     init(userAddress);
+    Tezos.setWalletProvider(wallet);
   };
 
   const getTokenBalance = async () => {
@@ -184,12 +200,13 @@ const Welcome: React.FC = () => {
             sellBalance={sellBalance}
             inversion={inversion}
             setInversion={setInversion}
+            tezos={Tezos}
           />
         );
       case ContentType.ORDER_BOOK:
         return (
           <OrderBook
-            orderBookExists={currentBatchExists}
+            orderBookExists={orderBookExists}
             orderBook={orderBook}
             buyToken={buyToken}
             sellToken={sellToken}
@@ -200,8 +217,9 @@ const Welcome: React.FC = () => {
           <Holdings
             tezos={Tezos}
             bigMapsByIdUri={bigMapsByIdUri}
+            userAddress={userAddress}
             contractAddress={contractAddress}
-            previousBatches={previousBatches}
+            previousTreasuries={previousTreasuries}
             buyToken={buyToken}
             sellToken={sellToken}
           />
@@ -213,13 +231,14 @@ const Welcome: React.FC = () => {
             sellBalance={sellBalance}
             inversion={inversion}
             setInversion={setInversion}
+            tezos={Tezos}
           />
         );
     }
   };
 
   useEffect(() => {
-    (async () => get_batches())();
+    getBatches();
     getTokenBalance();
     getOraclePrice();
     handleWebsocket();
