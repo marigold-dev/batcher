@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row, message, Form } from 'antd';
 import { useModel } from 'umi';
@@ -7,7 +7,6 @@ import '@/global.less';
 import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { TezosToolkit } from '@taquito/taquito';
-import useFormInstance from 'antd/lib/form/hooks/useFormInstance';
 
 const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
