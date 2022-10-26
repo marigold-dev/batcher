@@ -4,7 +4,14 @@ import Holdings from '@/components/Holdings';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
-import { ContentType, token, batch, batch_set, order_book } from '@/extra_utils/types';
+import {
+  ContentType,
+  token,
+  batch,
+  batch_set,
+  order_book,
+  BatcherStatus,
+} from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
@@ -58,6 +65,7 @@ const Welcome: React.FC = () => {
     balance: 0,
   });
   const [rate, setRate] = useState(0);
+  const [status, setStatus] = useState<string>(BatcherStatus.NONE);
 
   const get_batches = async () => {
     const storage = await contractsService.getStorage({
@@ -65,6 +73,7 @@ const Welcome: React.FC = () => {
       level: 0,
       path: null,
     });
+
     const batches: batch_set = await storage.batches;
     setBatches(batches);
     setPreviousBatches(batches?.previous ? [] : batches?.previous);
@@ -79,6 +88,8 @@ const Welcome: React.FC = () => {
 
     if (currentBatchExists) {
       const order_book: order_book = storage.batches.current.orderbook;
+      const status = Object.keys(storage.batches.current.status)[0];
+      setStatus(status);
       setOrderBook(order_book);
     }
   };
@@ -109,6 +120,12 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
+      if (!msg.data[0].storage.batches.current) {
+        setStatus(BatcherStatus.NONE);
+      } else {
+        const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+        setStatus(status);
+      }
     });
 
     connection.on('bigmaps', (msg: any) => {
@@ -215,6 +232,7 @@ const Welcome: React.FC = () => {
         sellBalance={sellBalance}
         inversion={inversion}
         rate={rate}
+        status={status}
       />
       <BatcherAction setContent={setContent} />
       <div>
