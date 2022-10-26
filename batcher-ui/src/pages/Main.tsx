@@ -92,11 +92,6 @@ const Welcome: React.FC = () => {
       setStatus(status);
       setOrderBook(order_book);
     }
-
-    if (!currentBatchExists && storage.batches.previous) {
-      const status = Object.keys(storage.batches.previous[0].status)[0];
-      setStatus(status);
-    }
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -125,8 +120,12 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
-      const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
-      setStatus(status);
+      if (!msg.data[0].storage.batches.current) {
+        setStatus(BatcherStatus.NONE);
+      } else {
+        const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+        setStatus(status);
+      }
     });
 
     connection.on('bigmaps', (msg: any) => {
