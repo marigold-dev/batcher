@@ -179,6 +179,7 @@ export type BatcherInfoProps = {
   sellBalance: TokenBalance;
   inversion: boolean;
   rate: number;
+  status: string;
 };
 
 export type BatcherActionProps = {
@@ -193,3 +194,14 @@ export class list_of_orders {
   price!: string;
   value!: number;
 }
+
+export enum BatcherStatus {
+  NONE = 'none',
+  OPEN = 'open',
+  CLOSED = 'closed',
+  CLEARED = 'cleared',
+}
+
+export type BatcherStepperProps = {
+  status: string;
+};
