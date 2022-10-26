@@ -4,7 +4,7 @@ import { useModel } from 'umi';
 import '@/components/BatcherInfo/index.less';
 import '@/global.less';
 import { BatcherInfoProps } from '@/extra_utils/types';
-import { MichelineFormat } from '@dipdup/tzkt-api';
+import BatcherStepper from '../BatcherStepper';
 
 const { Text } = Typography;
 
@@ -24,7 +24,8 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
         <Col className="batcher-time" xs={24} lg={6}>
           <Space direction="vertical">
             <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
-            <Typography className="batcher-title p-13">No open Batch</Typography>
+            {/* <Typography className="batcher-title p-13">No open Batch</Typography> */}
+            <BatcherStepper />
           </Space>
         </Col>
         <Col className="batcher-balance" xs={24} lg={6}>
