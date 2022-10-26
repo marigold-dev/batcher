@@ -2,13 +2,13 @@ version: "3"
 
 services:
   batcher-price-ghostnet:
-    container_name: batcher-price-ghostnet
+    container_name: price-ghostnet
     build:
       context: .
       dockerfile: Dockerfile.price.ghostnet
     restart: always
   batcher-price-kathmandunet:
-    container_name: batcher-price-kathmandunet
+    container_name: price-kathmandunet
     build:
       context: .
       dockerfile: Dockerfile.price.kathmandunet
