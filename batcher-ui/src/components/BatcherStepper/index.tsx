@@ -1,17 +1,7 @@
 import React from 'react';
-import { Image, Space, Steps, Typography } from 'antd';
-import { MinusCircleFilled } from '@ant-design/icons';
+import { Space, Typography } from 'antd';
 import '@/components/BatcherStepper/index.less';
 
-const SquareIcon = (
-  <div>
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="15" height="15" fill="#CECCCC" />
-    </svg>
-  </div>
-);
-
-const { Step } = Steps;
 const BatcherStepper: React.FC = () => {
   return (
     <div>
