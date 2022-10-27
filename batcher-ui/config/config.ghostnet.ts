@@ -45,7 +45,7 @@ export default defineConfig({
   exportStatic: {},
   define: {
     REACT_APP_NETWORK_TARGET: 'GHOSTNET',
-    REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.tezos.marigold.dev',
+    REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.ecadinfra.com',
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1Q94T4yntfYx2X2zVQTNuAtNbdppzFRRhE',
     REACT_APP_TZBTC_HASH: 'KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG',

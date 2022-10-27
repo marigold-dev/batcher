@@ -45,7 +45,7 @@ export default defineConfig({
   exportStatic: {},
   define: {
     REACT_APP_NETWORK_TARGET: 'KATHMANDUNET',
-    REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.tezos.marigold.dev',
+    REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.ecadinfra.com',
     REACT_APP_TZKT_URI_API: 'https://api.kathmandunet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1NVG4waVtLK8TXHMpFVK653YA4dDEnWYpz',
     REACT_APP_TZBTC_HASH: 'KT1EGB9ZquErCN3dNvPurmNBuKCAi8pc1ce7',

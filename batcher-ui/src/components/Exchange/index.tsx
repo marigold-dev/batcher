@@ -30,6 +30,11 @@ const Exchange: React.FC<ExchangeProps> = ({
       return;
     }
 
+    const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
+    const loading =  message.loading(
+      'Attempting to place swap order for ' + tokenName,
+      0,
+    );
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
@@ -73,12 +78,8 @@ const Exchange: React.FC<ExchangeProps> = ({
       tolerance: tolerance,
     };
 
-    const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
-    const loading =  message.loading(
-      'Attempting to place swap order for ' + tokenName,
-      0,
-    );
     try {
+      loading();
       const order_batcher_op = await tezos.wallet
         .batch()
         .withContractCall(tokenContract.methods.update_operators(operator_params))
@@ -86,13 +87,13 @@ const Exchange: React.FC<ExchangeProps> = ({
         .send();
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
+        message.error('Failed to deposit ' + tokenName);
         throw new Error(
           'Failed to deposit ' +
             (inversion ? buyBalance.token.name : sellBalance.token.name) +
             ' token',
         );
       } else {
-        loading();
         form.resetFields();
         message.success(
           'Successfully deposited ' + tokenName,
