@@ -6,14 +6,13 @@ import '@/components/Exchange/index.less';
 import '@/global.less';
 import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
-import { TezosToolkit } from '@taquito/taquito';
 
 const Exchange: React.FC<ExchangeProps> = ({
   buyBalance,
   sellBalance,
   inversion,
   setInversion,
-  tezos
+  tezos,
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [amount, setAmount] = useState(0);
@@ -31,10 +30,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
 
     const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
-    const loading =  message.loading(
-      'Attempting to place swap order for ' + tokenName,
-      0,
-    );
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
@@ -78,13 +73,15 @@ const Exchange: React.FC<ExchangeProps> = ({
       tolerance: tolerance,
     };
 
+    let loading = undefined;
+
     try {
-      loading();
       const order_batcher_op = await tezos.wallet
         .batch()
         .withContractCall(tokenContract.methods.update_operators(operator_params))
         .withContractCall(batcherContract.methodsObject.deposit(swap_params))
         .send();
+      loading = message.loading('Attempting to place swap order for ' + tokenName, 0);
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
         message.error('Failed to deposit ' + tokenName);
@@ -94,10 +91,9 @@ const Exchange: React.FC<ExchangeProps> = ({
             ' token',
         );
       } else {
+        loading();
         form.resetFields();
-        message.success(
-          'Successfully deposited ' + tokenName,
-        );
+        message.success('Successfully deposited ' + tokenName);
       }
     } catch (error) {
       loading();
