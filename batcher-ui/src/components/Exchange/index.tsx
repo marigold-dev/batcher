@@ -74,7 +74,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     };
 
     const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
-    const loading = message.loading(
+    const loading =  message.loading(
       'Attempting to place swap order for ' + tokenName,
       0,
     );
@@ -92,12 +92,14 @@ const Exchange: React.FC<ExchangeProps> = ({
             ' token',
         );
       } else {
+        loading();
         form.resetFields();
         message.success(
           'Successfully deposited ' + tokenName,
         );
       }
     } catch (error) {
+      loading();
       form.resetFields();
       message.error(getErrorMess(error));
     }
