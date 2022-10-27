@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
-import { Input, Button, Space, Typography, Col, Row } from 'antd';
+import { Input, Button, Space, Typography, Col, Row, message } from 'antd';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
@@ -8,30 +8,29 @@ import { HoldingsProps, batch, token_amount } from '@/extra_utils/types';
 import { scaleAmountDown } from '@/extra_utils/utils';
 import { JSONPath } from "jsonpath-plus";
 import toast from "react-hot-toast";
-
+import MarigoldLogoSvg from '../../../img/marigold-logo.svg';
 
 const { Text } = Typography;
 
-const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddress, previousBatches, buyToken, sellToken }: HoldingsProps) => {
+const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri,userAddress, contractAddress, previousTreasuries, buyToken, sellToken }: HoldingsProps) => {
   const [inversion, setInversion] = useState(true);
   const { initialState } = useModel('@@initialState');
-  const { wallet, userAddress } = initialState;
 
   const [buyTokenHoldings, setBuyTokenHoldings] = useState<number>(0);
   const [sellTokenHoldings, setSellTokenHoldings] = useState<number>(0);
 
   const update_holdings = async () => {
-    let treasuries = previousBatches?.map((batch) => batch.treasury);
-
+    console.log('Holdings-previousBatches',previousTreasuries);
     let buy_holdings = 0;
     let sell_holdings = 0;
 
     setBuyTokenHoldings(buy_holdings);
     setSellTokenHoldings(sell_holdings);
 
-    for(var i =0; i < treasuries?.length; i++) {
+    for(var i =0; i < previousTreasuries?.length; i++) {
      try{
-       let bm_uri = bigMapsByIdUri + treasuries.at(i) + "/keys/" + userAddress;
+       let bm_uri = bigMapsByIdUri + previousTreasuries.at(i) + "/keys/" + userAddress;
+       console.log('Holdings-bm-uri',bm_uri);
        const data = await fetch(bm_uri, {
           method: "GET"
        });
@@ -68,8 +67,8 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
   };
 
   const redeemHoldings = async () : Promise<void> => {
-    const redeemToastId = 'redeem';
-    toast.loading('Attempting to redeem holdings...', {id: redeemToastId});
+    console.log("redeeming");
+    message.loading("Attempting to redeem holdings...");
      try{
         const contractWallet = await tezos.wallet.at(contractAddress);
         const buyTokenWalletContract = await tezos.wallet.at(buyToken.address);
@@ -93,13 +92,14 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri, contractAddre
 
         const confirm = await redeem_op.confirmation();
         if(!confirm.completed){
-           toast.error("Failed to redeem holdings", {id: redeemToastId});
-           throw Error("Failed to redeem holdings");
+           message.error("Failed to redeem holdings");
+           console.error("Failed to redeem holdings" + confirm);
         } else {
-           toast.error("Successfully redeemed holdings", {id: redeemToastId});
+           message.success("Successfully redeemed holdings");
         }
      } catch (error:any){
-      toast.error("Unable to redeem holdings : " + error.message, {id:redeemToastId});
+           message.error("Unable to redeem holdings : " + error.message);
+           console.error("Unable to redeem holdings" + error);
      }
   };
 

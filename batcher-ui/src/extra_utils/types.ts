@@ -150,14 +150,14 @@ export class ApiTokenBalanceData {
 export type HoldingsProps = {
   tezos: TezosToolkit;
   bigMapsByIdUri: string;
+  userAddress: string;
   contractAddress: string;
-  previousBatches: Array<batch>;
+  previousTreasuries: Array<number>;
   buyToken: token;
   sellToken: token;
 };
 
 export type OrderBookProps = {
-  orderBookExists: boolean;
   orderBook: order_book;
   buyToken: token;
   sellToken: token;
@@ -172,6 +172,7 @@ export type ExchangeProps = {
   sellBalance: TokenBalance;
   inversion: boolean;
   setInversion: Dispatch<SetStateAction<boolean>>;
+  tezos: TezosToolkit;
 };
 
 export type BatcherInfoProps = {
@@ -204,4 +205,5 @@ export enum BatcherStatus {
 
 export type BatcherStepperProps = {
   status: string;
-};
+}
+
