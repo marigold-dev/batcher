@@ -5,12 +5,13 @@ import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
 import { OrderBookProps, list_of_orders, aggregate_orders, swap_order, Tolerance } from '@/extra_utils/types';
+import { orders_exist_in_order_book } from '@/extra_utils/utils';
 import {ColumnCount} from 'antd/lib/list';
 import { ColumnsType } from "antd/es/table";
 
 const { Text } = Typography;
 
-const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyToken, sellToken }: OrderBookProps) => {
+const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }: OrderBookProps) => {
 
   interface AggregateOrder {
     buyside: number;
@@ -23,8 +24,6 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
   }
   const { initialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
-  const [listOfOrders, setListOfOrders] = useState<Array<list_of_orders>>([]);
-  const [aggregateOrders, setAggregateOrders] = useState<Array<aggregate_orders>>([]);
   const [aggregateOrdersForTable, setAggregateOrdersForTable] = useState<Array<AggregateOrder>>([]);
   const [aggregateOrdersLoading, setAggregateOrdersLoading] = useState<boolean>(true);
   const [orderListForTable, setOrderListForTable] = useState<Array<OrderListItem>>([]);
@@ -36,7 +35,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
 
 
    const aggregateAmounts = (orders: Array<swap_order>) => {
-      console.log('OrderBook-orders',orders);
+      console.log('OrderBook-aggregate-amounts-orders',orders);
       return  orders.reduce((prev, order) =>{
            prev += Number(order.swap.from.amount);
            return prev;
@@ -44,6 +43,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
    };
 
    const to_string_tolerance = (tolerance:Tolerance) => {
+      console.log('OrderBook-tolerance', tolerance);
       if (tolerance.eXACT != undefined){
          return "Oracle Price";
       }
@@ -70,14 +70,12 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
    const update_list_of_orders = async () => {
      let lofo : Array<list_of_orders> = [];
 
-      console.log('OrderBook-order-book-exists', orderBookExists);
-     if(orderBookExists){
+     if(orders_exist_in_order_book(orderBook)){
        orderBook.bids.map((o) => to_order_for_list(true,o)).forEach(o => lofo.push(o));
        orderBook.asks.map((o) => to_order_for_list(false,o)).forEach(o => lofo.push(o));
      }
-     setListOfOrders(lofo);
 
-     const list_orders_for_table  = listOfOrders.map((o:list_of_orders) => {
+     const list_orders_for_table  = lofo.map((o:list_of_orders) => {
         const modified : OrderListItem =  {
             ordertype: o.ordertype,
             price: o.price,
@@ -86,14 +84,14 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
          return modified
         });
     setOrderListForTableExpanded(list_orders_for_table);
-    setOrderListForTable(list_orders_for_table.slice(1,3));
+    setOrderListForTable(list_orders_for_table.slice(0,3));
    };
 
     const update_aggregate_orders = async () => {
      let buySideAmount = 0;
      let sellSideAmount = 0;
 
-     if(orderBookExists){
+     if(orders_exist_in_order_book(orderBook)){
        buySideAmount = aggregateAmounts(orderBook.bids);
        sellSideAmount = aggregateAmounts(orderBook.asks);
 
@@ -103,9 +101,8 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
           sellside: sellSideAmount
         };
 
-        setAggregateOrders([ agg_ord ]);
 
-        const agg_orders_for_table  = aggregateOrders.map((ao:aggregate_orders) => {
+        const agg_orders_for_table  = [agg_ord].map((ao:aggregate_orders) => {
           const modified : AggregateOrder =  {
             buyside: ao.buyside,
             sellside: ao.sellside,
@@ -117,20 +114,17 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
     };
 
   const update_orders = async () => {
-     if(orderBookExists){
+     if(orders_exist_in_order_book(orderBook)){
         update_list_of_orders();
         update_aggregate_orders();
         setAggregateOrdersLoading(false);
         setOrderListForTableLoading(false)
-     } else {
-       setListOfOrders([]);
-       setAggregateOrders([]);
      }
   };
 
   useEffect(() => {
     update_orders();
-  }, [orderBookExists, orderBook]);
+  }, [ orderBook]);
 
   const setView= () => {
      setExpandedView(!expandedView);
@@ -176,13 +170,13 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBookExists, orderBook, buyTo
                   </Row>
                   <Row className="text-center">
                   <Col span={12} offset={6}>
-                     <Table className="batcher-table ant-typeography center col-offset-6" columns={aggregateOrdersColumns} dataSource={aggregateOrdersForTable} pagination={false} loading={aggregateOrdersLoading} />
+                     <Table className="batcher-table ant-typeography center col-offset-6" columns={aggregateOrdersColumns} dataSource={aggregateOrdersForTable} pagination={false} />
                      </Col>
                   </Row>
                   <Space size="large" />
                   <Row className="text-center">
                   <Col span={12} offset={6}>
-                  <Table className="batcher-table ant-typeography center" columns={listOfOrdersColumns} dataSource={expandedView ? orderListForTableExpanded : orderListForTable} pagination={false} loading={orderListForTableLoading}/>
+                  <Table className="batcher-table ant-typeography center" columns={listOfOrdersColumns} dataSource={expandedView ? orderListForTableExpanded : orderListForTable} pagination={false} />
                      </Col>
                   </Row>
                   <Space size="large" />

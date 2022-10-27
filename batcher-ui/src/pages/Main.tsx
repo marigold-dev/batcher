@@ -52,7 +52,6 @@ const Welcome: React.FC = () => {
   const [batches, setBatches] = useState<batch_set>();
   const [previousTreasuries, setPreviousTreasuries] = useState<Array<number>>([]);
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
-  const [orderBookExists, setOrderBookExists] = useState<boolean>(false);
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
   const { initialState } = useModel('@@initialState');
@@ -74,13 +73,10 @@ const Welcome: React.FC = () => {
        console.log('Operations-order-book', order_book);
     try{
        setOrderBook(order_book);
-       setOrderBookExists(order_book === undefined || order_book === null ? false : true);
-       console.log('Operations-order-book-exists', orderBookExists);
        setPreviousTreasuries(treasuries)
     } catch (error:any) {
       console.log('Operations-previousBatches-error', error);
       setPreviousTreasuries([]);
-      setOrderBookExists(false);
     }
   };
 
@@ -206,7 +202,6 @@ const Welcome: React.FC = () => {
       case ContentType.ORDER_BOOK:
         return (
           <OrderBook
-            orderBookExists={orderBookExists}
             orderBook={orderBook}
             buyToken={buyToken}
             sellToken={sellToken}

@@ -158,7 +158,6 @@ export type HoldingsProps = {
 };
 
 export type OrderBookProps = {
-  orderBookExists: boolean;
   orderBook: order_book;
   buyToken: token;
   sellToken: token;

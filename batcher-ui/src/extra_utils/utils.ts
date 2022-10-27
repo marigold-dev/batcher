@@ -28,3 +28,14 @@ export const getSocketTokenAmount = (
 export const getErrorMess = (error: unknown) => {
   return error instanceof Error ? error.message : 'Unknown error';
 };
+
+export const orders_exist_in_order_book = (ob : types.order_book) => {
+    try{
+       return ob.bids.length > 0 || ob.asks.length > 0;
+    }
+    catch {
+       return false;
+    }
+
+
+  };
