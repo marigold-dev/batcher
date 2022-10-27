@@ -39,3 +39,12 @@ export const orders_exist_in_order_book = (ob : types.order_book) => {
 
 
   };
+
+export const getEmptyOrderBook = () => {
+return {
+  bids: [],
+  asks: [],
+};
+
+};
+
