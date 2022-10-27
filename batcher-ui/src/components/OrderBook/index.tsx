@@ -18,6 +18,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
     sellside:number;
   }
   interface OrderListItem {
+    order_number:number;
     ordertype: string;
     price: string;
     value: number;
@@ -70,13 +71,17 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
    const update_list_of_orders = async () => {
      let lofo : Array<list_of_orders> = [];
 
+
      if(orders_exist_in_order_book(orderBook)){
        orderBook.bids.map((o) => to_order_for_list(true,o)).forEach(o => lofo.push(o));
        orderBook.asks.map((o) => to_order_for_list(false,o)).forEach(o => lofo.push(o));
      }
 
+     let ordernum=0;
+
      const list_orders_for_table  = lofo.map((o:list_of_orders) => {
         const modified : OrderListItem =  {
+            order_number: ordernum+1,
             ordertype: o.ordertype,
             price: o.price,
             value: o.value,
@@ -135,10 +140,12 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
  const aggregateOrdersColumns: ColumnsType<AggregateOrder> = [
     {
      title: leftAggName,
+     key: 'buyside',
      dataIndex: 'buyside',
     },
     {
      title: rightAggName,
+     key: 'sellside',
      dataIndex: 'sellside',
     },
  ];
@@ -146,15 +153,23 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
 
  const listOfOrdersColumns = [
     {
+     title: 'Order #',
+     key: 'order_number',
+     dataIndex: 'order_number',
+    },
+    {
      title: 'Order type',
+     key: 'ordertype',
      dataIndex: 'ordertype',
     },
     {
      title: 'Price',
+     key: 'price',
      dataIndex: 'price',
     },
     {
      title: 'Value',
+     key: 'value',
      dataIndex: 'value',
     },
  ];

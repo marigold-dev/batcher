@@ -22,13 +22,13 @@ post_rate_contract () {
   # Regrex for the scientific notation. I.e, 1.2E-05
   notation_regrex="E|e"
 
-  if [[ "$xtz_usdt_price" =~ $notation_regrex ]]; then 
+  if [[ "$xtz_usdt_price" =~ $notation_regrex ]]; then
     xtz_usdt_price=$(echo "$xtz_usdt_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
-  fi 
+  fi
 
-  if [[ "$xtz_tzBTC_price" =~ $notation_regrex ]]; then 
+  if [[ "$xtz_tzBTC_price" =~ $notation_regrex ]]; then
     xtz_tzBTC_price=$(echo "$xtz_tzBTC_price" | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
-  fi 
+  fi
 
   # Get current rate for tzBTC/USDT
   round_tzBTC_usdt_price=$(echo "scale=0; $xtz_usdt_price * 100000000 / $xtz_tzBTC_price" | bc)
