@@ -5,7 +5,7 @@ import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
 import { OrderBookProps, list_of_orders, aggregate_orders, swap_order, Tolerance } from '@/extra_utils/types';
-import { orders_exist_in_order_book } from '@/extra_utils/utils';
+import { orders_exist_in_order_book, scaleAmountDown } from '@/extra_utils/utils';
 import {ColumnCount} from 'antd/lib/list';
 import { ColumnsType } from "antd/es/table";
 
@@ -63,7 +63,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
       return {
         ordertype: isBuySide ? leftAggName : rightAggName,
         price: to_string_tolerance(order.tolerance) ,
-        value: order.swap.from.amount,
+        value: isBuySide ? scaleAmountDown(order.swap.from.amount, buyToken.decimals) : scaleAmountDown(order.swap.from.amount,sellToken.decimals),
       }
    };
 
@@ -92,8 +92,10 @@ const OrderBook: React.FC<OrderBookProps> = ({ orderBook, buyToken, sellToken }:
      let sellSideAmount = 0;
 
      if(orders_exist_in_order_book(orderBook)){
-       buySideAmount = aggregateAmounts(orderBook.bids);
-       sellSideAmount = aggregateAmounts(orderBook.asks);
+       buySideAmount = scaleAmountDown(aggregateAmounts(orderBook.bids), buyToken.decimals);
+       sellSideAmount =scaleAmountDown(aggregateAmounts(orderBook.asks), sellToken.decimals);
+
+
 
       let agg_ord : aggregate_orders =
         {
