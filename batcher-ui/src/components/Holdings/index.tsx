@@ -42,15 +42,15 @@ const Holdings: React.FC<HoldingsProps> = ({tezos, bigMapsByIdUri,userAddress, c
 
        const amounts = JSONPath({ path: "$.value.*.token_amount", json:jsonData});
        const tokenAmounts = amounts as Array<token_amount>;
-
-       buy_holdings = tokenAmounts.reduce((prev, token_amount) => {
+       console.log('Holdings-token-amounts',tokenAmounts);
+       buy_holdings += tokenAmounts.reduce((prev, token_amount) => {
         if (token_amount.token.name === buyToken.name){
           prev += scaleAmountDown(token_amount.amount, buyToken.decimals);
         }
         return prev;
        },0);
 
-       sell_holdings = tokenAmounts.reduce((prev, token_amount) => {
+       sell_holdings += tokenAmounts.reduce((prev, token_amount) => {
         if (token_amount.token.name === sellToken.name){
           prev += scaleAmountDown(token_amount.amount, sellToken.decimals);
         }
