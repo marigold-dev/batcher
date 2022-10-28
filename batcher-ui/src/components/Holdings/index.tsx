@@ -117,10 +117,10 @@ const Holdings: React.FC<HoldingsProps> = ({
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="vertical">
             <Typography>
-              {'tzBTC Holdings'} {buyTokenHoldings} {buyToken.name}
+              {buyTokenHoldings} {buyToken.name}
             </Typography>
             <Typography>
-              {'USDT Holdings'} {sellTokenHoldings} {sellToken.name}
+              {sellTokenHoldings} {sellToken.name}
             </Typography>
           </Space>
         </Col>
