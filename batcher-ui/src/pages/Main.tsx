@@ -19,7 +19,7 @@ import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
-import { scaleAmountUp } from '@/extra_utils/utils';
+import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
 import { JSONPath } from "jsonpath-plus";
 
 const Welcome: React.FC = () => {
@@ -77,6 +77,7 @@ const Welcome: React.FC = () => {
     } catch (error:any) {
       console.log('Operations-previousBatches-error', error);
       setPreviousTreasuries([]);
+      setOrderBook(getEmptyOrderBook());
     }
   };
 
@@ -92,7 +93,11 @@ const Welcome: React.FC = () => {
      try{
     const status = Object.keys(storage.batches.current.status)[0];
     setStatus(status);
-    process_batches_and_order_book(storage.batches.current.orderbook, storage.batches.previous.map((p:batch) => p.treasury));
+    if(storage.batches.current === null || storage.batches.current === undefined) {
+      process_batches_and_order_book(getEmptyOrderBook(), storage.batches.previous.map((p:batch) => p.treasury));
+    }else {
+      process_batches_and_order_book(storage.batches.current.orderbook, storage.batches.previous.map((p:batch) => p.treasury));
+    }
     } catch {}
   };
   const handleWebsocket = () => {
