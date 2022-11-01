@@ -59,13 +59,13 @@ const Holdings: React.FC<HoldingsProps> = ({
           }
           return prev;
         }, 0);
-
-        setBuyTokenHoldings(buy_holdings);
-        setSellTokenHoldings(sell_holdings);
       } catch (error: any) {
-        console.log(error);
+        console.log(123, error);
       }
     }
+
+    setBuyTokenHoldings(buy_holdings);
+    setSellTokenHoldings(sell_holdings);
   };
 
   const redeemHoldings = async (): Promise<void> => {
@@ -94,7 +94,7 @@ const Holdings: React.FC<HoldingsProps> = ({
         .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
         .send();
 
-      loading = message.loading('Attempting to redeem holdings...');
+      loading = message.loading('Attempting to redeem holdings...', 0);
 
       const confirm = await redeem_op.confirmation();
       if (!confirm.completed) {
@@ -102,6 +102,7 @@ const Holdings: React.FC<HoldingsProps> = ({
         console.error('Failed to redeem holdings' + confirm);
       } else {
         loading();
+
         message.success('Successfully redeemed holdings');
       }
     } catch (error: any) {
