@@ -69,7 +69,7 @@ const Welcome: React.FC = () => {
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
 
   const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
-    console.log('Operations-order-book', order_book);
+    console.log('Operations-order-book', order_book, treasuries);
     try {
       setOrderBook(order_book);
       setPreviousTreasuries(treasuries);
@@ -88,8 +88,6 @@ const Welcome: React.FC = () => {
     });
 
     try {
-      const status = Object.keys(storage.batches.current.status)[0];
-      setStatus(status);
       if (storage.batches.current === null || storage.batches.current === undefined) {
         process_batches_and_order_book(
           getEmptyOrderBook(),
@@ -100,8 +98,12 @@ const Welcome: React.FC = () => {
           storage.batches.current.orderbook,
           storage.batches.previous.map((p: batch) => p.treasury),
         );
+        const status = Object.keys(storage.batches.current.status)[0];
+        setStatus(status);
       }
-    } catch {}
+    } catch (error) {
+      console.log('Batcher error', error);
+    }
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
