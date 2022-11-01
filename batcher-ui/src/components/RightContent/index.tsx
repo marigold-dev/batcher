@@ -2,7 +2,7 @@ import { Space, Button, Menu, Dropdown, Typography } from 'antd';
 import React, { useEffect } from 'react';
 import { useModel } from 'umi';
 import styles from '@/components/RightContent/index.less';
-import { MenuOutlined, CloseOutlined } from '@ant-design/icons';
+import { MenuOutlined } from '@ant-design/icons';
 import { TezosToolkit } from '@taquito/taquito';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { NetworkType } from '@/extra_utils/types';
@@ -29,10 +29,6 @@ const GlobalHeaderRight: React.FC = () => {
   const menu = (
     <Menu
       items={[
-        // {
-        //   key: '0',
-        //   label: <CloseOutlined className="white-color" />,
-        // },
         {
           key: '1',
           label: (
@@ -58,8 +54,6 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const connectWallet = async () => {
-    console.log('%cindex.tsx line:63 wallet', 'color: #007acc;', wallet);
-
     if (!wallet) {
       const updatedWallet = new BeaconWallet({
         name: 'batcher',
