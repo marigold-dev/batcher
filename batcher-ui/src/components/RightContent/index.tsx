@@ -2,32 +2,13 @@ import { Space, Button, Menu, Dropdown, Typography } from 'antd';
 import React, { useEffect } from 'react';
 import { useModel } from 'umi';
 import styles from '@/components/RightContent/index.less';
-import { MenuOutlined } from '@ant-design/icons';
+import { MenuOutlined, CloseOutlined } from '@ant-design/icons';
 import { TezosToolkit } from '@taquito/taquito';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { NetworkType } from '@/extra_utils/types';
 import '@/components/RightContent/index.less';
 
 export type SiderTheme = 'light' | 'dark';
-
-const menu = (
-  <Menu
-    items={[
-      {
-        key: '1',
-        label: <Typography>Connect Wallet</Typography>,
-      },
-      {
-        key: '2',
-        label: <Typography>Order Book</Typography>,
-      },
-      {
-        key: '3',
-        label: <Typography>Redeem Holdings</Typography>,
-      },
-    ]}
-  />
-);
 
 const GlobalHeaderRight: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
@@ -44,6 +25,26 @@ const GlobalHeaderRight: React.FC = () => {
   }
 
   const { wallet } = initialState;
+
+  const menu = (
+    <Menu
+      items={[
+        // {
+        //   key: '0',
+        //   label: <CloseOutlined className="white-color" />,
+        // },
+        {
+          key: '1',
+          label: (
+            <Typography className="p-12">
+              {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
+            </Typography>
+          ),
+          onClick: !wallet ? () => connectWallet() : () => disconnectWallet(),
+        },
+      ]}
+    />
+  );
 
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 

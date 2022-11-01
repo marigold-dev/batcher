@@ -87,6 +87,26 @@
   .batcher-menu-outer {
     display: block !important;
   }
+
+  .ant-dropdown {
+    top: 10px !important;
+    border: 1px solid #E2E2E3;
+    .ant-dropdown-menu {
+      background-color: #1C1D22;
+      .ant-dropdown-menu-item {
+        padding: 8px 20px;
+        .white-color {
+          color: #FFFFFF;
+          svg {
+            margin-left: 90px;
+          }
+        }
+      }
+      .ant-dropdown-menu-item.ant-dropdown-menu-item-active {
+        background-color: #1C1D22 !important;
+      }
+    }
+  }
 }
 
 @media (min-width: @screen-lg) {
