@@ -10,25 +10,6 @@ import '@/components/RightContent/index.less';
 
 export type SiderTheme = 'light' | 'dark';
 
-const menu = (
-  <Menu
-    items={[
-      {
-        key: '1',
-        label: <Typography>Connect Wallet</Typography>,
-      },
-      {
-        key: '2',
-        label: <Typography>Order Book</Typography>,
-      },
-      {
-        key: '3',
-        label: <Typography>Redeem Holdings</Typography>,
-      },
-    ]}
-  />
-);
-
 const GlobalHeaderRight: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
 
@@ -45,6 +26,22 @@ const GlobalHeaderRight: React.FC = () => {
 
   const { wallet } = initialState;
 
+  const menu = (
+    <Menu
+      items={[
+        {
+          key: '1',
+          label: (
+            <Typography className="p-12">
+              {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
+            </Typography>
+          ),
+          onClick: !wallet ? () => connectWallet() : () => disconnectWallet(),
+        },
+      ]}
+    />
+  );
+
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
   const getNetworkType = () => {
@@ -57,8 +54,6 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const connectWallet = async () => {
-    console.log('%cindex.tsx line:63 wallet', 'color: #007acc;', wallet);
-
     if (!wallet) {
       const updatedWallet = new BeaconWallet({
         name: 'batcher',

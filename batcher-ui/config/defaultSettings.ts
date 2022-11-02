@@ -15,7 +15,7 @@ const Settings: LayoutSettings & {
   colorWeak: false,
   title: 'BATCHER',
   pwa: false,
-  logo: 'https://s3-alpha-sig.figma.com/img/8ef9/ebc0/4711872c139e475b6a3fa5870707eb3a?Expires=1667174400&Signature=M0zlGc5wdH2IhUXeUQqlUuoAbnfJgBHwFimQ2L3irsr03yU~kDtHysMW5HlzlIZQqfMklKCti9-MV~tVuVXSpVDlo2T6e8cCSrFA-~HiuiehnFTPKSBkPHwjB3hGSE5yDlfsU0R82bs98TvjqCb3SreV6apOLNOEMcMrOoItl3s8av72OjZeEy1XIGDH8ByBVjAGtuV8MDk~dbvOEhm7zkSrxXfw-g1EeUNnT1vsANKDOZtiTBJetzOUVxUt6sgKB7ossX6QybjAgm5eYe781~uewIAZtOpAvLFeOHG2nVuJ7bu7Be9CRSjyyF-fZbF0aCxCUQeRjLOTxXYugq2qkQ__&Key-Pair-Id=APKAINTVSUGEWH5XD5UA',
+  logo: 'https://lh3.googleusercontent.com/drive-viewer/AJc5JmQGF2FV1rgeAfnXwcK6MX7y99zqRd5P7Fjr0Xe3hvAoLP1deg_TJPag4PNJ1ZQEe_uMwjHv8Ow=w800-h1722',
   iconfontUrl: '',
   disableMobile: true,
 };

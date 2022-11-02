@@ -20,7 +20,7 @@ import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
-import { JSONPath } from "jsonpath-plus";
+import { JSONPath } from 'jsonpath-plus';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -68,20 +68,17 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
 
-  const process_batches_and_order_book =  (order_book: order_book, treasuries: Array<number>) => {
-
-       console.log('Operations-order-book', order_book);
-    try{
-       setOrderBook(order_book);
-       setPreviousTreasuries(treasuries)
-    } catch (error:any) {
+  const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
+    console.log('Operations-order-book', order_book, treasuries);
+    try {
+      setOrderBook(order_book);
+      setPreviousTreasuries(treasuries);
+    } catch (error: any) {
       console.log('Operations-previousBatches-error', error);
       setPreviousTreasuries([]);
       setOrderBook(getEmptyOrderBook());
     }
   };
-
-
 
   const getBatches = async () => {
     const storage = await contractsService.getStorage({
@@ -90,15 +87,23 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-     try{
-    const status = Object.keys(storage.batches.current.status)[0];
-    setStatus(status);
-    if(storage.batches.current === null || storage.batches.current === undefined) {
-      process_batches_and_order_book(getEmptyOrderBook(), storage.batches.previous.map((p:batch) => p.treasury));
-    }else {
-      process_batches_and_order_book(storage.batches.current.orderbook, storage.batches.previous.map((p:batch) => p.treasury));
+    try {
+      if (storage.batches.current === null || storage.batches.current === undefined) {
+        process_batches_and_order_book(
+          getEmptyOrderBook(),
+          storage.batches.previous.map((p: batch) => p.treasury),
+        );
+      } else {
+        process_batches_and_order_book(
+          storage.batches.current.orderbook,
+          storage.batches.previous.map((p: batch) => p.treasury),
+        );
+        const status = Object.keys(storage.batches.current.status)[0];
+        setStatus(status);
+      }
+    } catch (error) {
+      console.log('Batcher error', error);
     }
-    } catch {}
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -127,15 +132,18 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
-      try{
-      console.log('Operations-storage', msg.data[0].storage);
-      const storage_string = msg.data[0].storage as string;
-      console.log('Operations-storage-string', storage_string);
+      try {
+        console.log('Operations-storage', msg.data[0].storage);
+        const storage_string = msg.data[0].storage as string;
+        console.log('Operations-storage-string', storage_string);
 
-      process_batches_and_order_book(msg.data[0].storage.batches.current.orderbook, msg.data[0].storage.batches.previous.map((p:batch) => p.treasury));
-        } catch (error:any) {
-          console.log(error);
-        }
+        process_batches_and_order_book(
+          msg.data[0].storage.batches.current.orderbook,
+          msg.data[0].storage.batches.previous.map((p: batch) => p.treasury),
+        );
+      } catch (error: any) {
+        console.log(error);
+      }
       if (!msg.data[0].storage.batches.current) {
         setStatus(BatcherStatus.NONE);
       } else {
@@ -164,13 +172,15 @@ const Welcome: React.FC = () => {
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
       const data = await fetch(balanceURI, { method: 'GET' });
       const balance = await data.json();
-      console.log('%cMain.tsx line:111 balance', 'color: #007acc;', balance);
       if (Array.isArray(balance)) {
         const baseAmount = getTokenAmount(balance, buyBalance);
         const quoteAmount = getTokenAmount(balance, sellBalance);
         setBuyBalance({ ...buyBalance, balance: baseAmount });
         setSellBalance({ ...sellBalance, balance: quoteAmount });
       }
+    } else {
+      setBuyBalance({ ...buyBalance, balance: 0 });
+      setSellBalance({ ...sellBalance, balance: 0 });
     }
   };
 
@@ -205,13 +215,7 @@ const Welcome: React.FC = () => {
           />
         );
       case ContentType.ORDER_BOOK:
-        return (
-          <OrderBook
-            orderBook={orderBook}
-            buyToken={buyToken}
-            sellToken={sellToken}
-          />
-        );
+        return <OrderBook orderBook={orderBook} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return (
           <Holdings

@@ -86,11 +86,9 @@ const OrderBook: React.FC<OrderBookProps> = ({
       orderBook.asks.map((o) => to_order_for_list(false, o)).forEach((o) => lofo.push(o));
     }
 
-    let ordernum = 0;
-
-    const list_orders_for_table = lofo.map((o: list_of_orders) => {
+    const list_orders_for_table = lofo.map((o: list_of_orders, index) => {
       const modified: OrderListItem = {
-        order_number: ordernum + 1,
+        order_number: index + 1,
         ordertype: o.ordertype,
         price: o.price,
         value: o.value,

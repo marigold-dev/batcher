@@ -16,7 +16,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   status,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
-  const { wallet, userAddress } = initialState;
+  const { userAddress } = initialState;
 
   return (
     <div>
@@ -36,17 +36,11 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
           <Col className="batcher-balance-title" span={24}>
             <Space className="pd-0">
               <Typography className="batcher-title p-16">Balance</Typography>
-              {!userAddress ? (
-                <Typography className="batcher-title p-13">
-                  {0 + ' ' + buyBalance.token.name}
-                </Typography>
-              ) : (
-                <Typography className="batcher-title p-13">
-                  {inversion
-                    ? buyBalance.balance + ' ' + buyBalance.token.name
-                    : sellBalance.balance + ' ' + sellBalance.token.name}
-                </Typography>
-              )}
+              <Typography className="batcher-title p-13">
+                {inversion
+                  ? buyBalance.balance + ' ' + buyBalance.token.name
+                  : sellBalance.balance + ' ' + sellBalance.token.name}
+              </Typography>
             </Space>
           </Col>
           <Col className="batcher-balance-amount" span={24}>

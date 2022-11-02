@@ -59,18 +59,19 @@ const Holdings: React.FC<HoldingsProps> = ({
           }
           return prev;
         }, 0);
-
-        setBuyTokenHoldings(buy_holdings);
-        setSellTokenHoldings(sell_holdings);
       } catch (error: any) {
-        console.log(error);
+        console.log(123, error);
       }
     }
+
+    setBuyTokenHoldings(buy_holdings);
+    setSellTokenHoldings(sell_holdings);
   };
 
   const redeemHoldings = async (): Promise<void> => {
     console.log('redeeming');
-    message.loading('Attempting to redeem holdings...');
+    let loading = undefined;
+
     try {
       const contractWallet = await tezos.wallet.at(contractAddress);
       const buyTokenWalletContract = await tezos.wallet.at(buyToken.address);
@@ -93,14 +94,19 @@ const Holdings: React.FC<HoldingsProps> = ({
         .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
         .send();
 
+      loading = message.loading('Attempting to redeem holdings...', 0);
+
       const confirm = await redeem_op.confirmation();
       if (!confirm.completed) {
         message.error('Failed to redeem holdings');
         console.error('Failed to redeem holdings' + confirm);
       } else {
+        loading();
+
         message.success('Successfully redeemed holdings');
       }
     } catch (error: any) {
+      loading();
       message.error('Unable to redeem holdings : ' + error.message);
       console.error('Unable to redeem holdings' + error);
     }

@@ -43,6 +43,8 @@ export default defineConfig({
   mfsu: {},
   webpack5: {},
   exportStatic: {},
+  favicon:
+    'https://uploads-ssl.webflow.com/616ab4741d375d1642c19027/617952f8510cfc45cbf09312_Favicon(3)(1).png',
   define: {
     REACT_APP_NETWORK_TARGET: 'KATHMANDUNET',
     REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.ecadinfra.com',
