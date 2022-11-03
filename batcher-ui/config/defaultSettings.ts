@@ -15,7 +15,7 @@ const Settings: LayoutSettings & {
   colorWeak: false,
   title: 'BATCHER',
   pwa: false,
-  logo: 'https://storage.cloud.google.com/marigold-stuff/batcher-logo.png?authuser=1',
+  logo: 'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
   iconfontUrl: '',
   disableMobile: true,
 };

@@ -23,13 +23,18 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
       <Row className="batcher-header">
         <Col lg={3} />
         <Col className="batcher-time" xs={24} lg={6}>
-          <Space direction="vertical">
-            <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
-            {status === BatcherStatus.NONE ? (
-              <Typography className="batcher-title p-13">No open Batch</Typography>
-            ) : (
-              <BatcherStepper status={status} />
-            )}
+          <Space className="batcher-time-gap">
+            <Space className="pd-0" direction="vertical">
+              <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
+              {status === BatcherStatus.NONE ? (
+                <Typography className="batcher-title p-13">No open Batch</Typography>
+              ) : (
+                <BatcherStepper status={status} />
+              )}
+            </Space>
+            <div className="batcher-time-difference">
+              <Typography className="p-13">5 min</Typography>
+            </div>
           </Space>
         </Col>
         <Col className="batcher-balance" xs={24} lg={6}>
