@@ -73,7 +73,9 @@ const Exchange: React.FC<ExchangeProps> = ({
       tolerance: tolerance,
     };
 
-    let loading = undefined;
+    let loading = function () {
+      return undefined;
+    };
 
     try {
       const order_batcher_op = await tezos.wallet

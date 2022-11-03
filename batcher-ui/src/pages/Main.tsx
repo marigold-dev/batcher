@@ -148,17 +148,18 @@ const Welcome: React.FC = () => {
           msg.data[0].storage.batches.current.orderbook,
           msg.data[0].storage.batches.previous.map((p: batch) => p.treasury),
         );
+
+        if (!msg.data[0].storage.batches.current) {
+          setStatus(BatcherStatus.NONE);
+        } else {
+          const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+          setStatus(status);
+          if (status === BatcherStatus.OPEN) {
+            setOpenTime(msg.data[0].storage.batches.current.status.open);
+          }
+        }
       } catch (error: any) {
         console.log(error);
-      }
-      if (!msg.data[0].storage.batches.current) {
-        setStatus(BatcherStatus.NONE);
-      } else {
-        const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
-          setOpenTime(msg.data[0].batches.current.status.open);
-        }
       }
     });
 

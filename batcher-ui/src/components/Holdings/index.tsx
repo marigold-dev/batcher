@@ -70,7 +70,9 @@ const Holdings: React.FC<HoldingsProps> = ({
 
   const redeemHoldings = async (): Promise<void> => {
     console.log('redeeming');
-    let loading = undefined;
+    let loading = function () {
+      return undefined;
+    };
 
     try {
       const contractWallet = await tezos.wallet.at(contractAddress);
