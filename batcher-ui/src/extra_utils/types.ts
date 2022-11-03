@@ -181,6 +181,7 @@ export type BatcherInfoProps = {
   inversion: boolean;
   rate: number;
   status: string;
+  openTime: string;
 };
 
 export type BatcherActionProps = {
@@ -205,5 +206,4 @@ export enum BatcherStatus {
 
 export type BatcherStepperProps = {
   status: string;
-}
-
+};

@@ -77,6 +77,10 @@ const GlobalHeaderRight: React.FC = () => {
     setInitialState({ ...initialState, wallet: null, userAddress: null });
   };
 
+  const scrollToTop = () => {
+    window.scrollTo(0, 0);
+  };
+
   useEffect(() => {
     // connectWallet(true);
   }, []);
@@ -91,9 +95,11 @@ const GlobalHeaderRight: React.FC = () => {
       >
         {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
       </Button>
-      <Dropdown className="batcher-menu-outer" overlay={menu} placement="bottomLeft">
-        <MenuOutlined className="batcher-menu" />
-      </Dropdown>
+      <div onClick={scrollToTop}>
+        <Dropdown className="batcher-menu-outer" overlay={menu} placement="bottomLeft">
+          <MenuOutlined className="batcher-menu" />
+        </Dropdown>
+      </div>
     </Space>
   );
 };
