@@ -28,6 +28,11 @@
         display: grid !important;
       }
     }
+
+    .batcher-price {
+      border-top: 2px solid #7B7B7E;
+      padding: 10px 25px;
+    }
   }
 
   .batcher-content-outer {
@@ -40,10 +45,6 @@
 }
 
 @media (max-width: @screen-xs) {
-  .ant-pro-basicLayout-content {
-    margin: 0;
-  }
-
   .batcher-header {
     .batcher-balance {
       border-top: 2px solid #7B7B7E;
@@ -56,6 +57,13 @@
     }
   
     .batcher-oracle {
+      .ant-space {
+        padding: 4px 25px 10px !important;
+        display: flex !important;
+      }
+    }
+
+    .batcher-price {
       .ant-space {
         padding: 4px 25px 10px !important;
         display: flex !important;

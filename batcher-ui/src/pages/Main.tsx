@@ -67,6 +67,7 @@ const Welcome: React.FC = () => {
   });
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
+  const [openTime, setOpenTime] = useState<string>(null);
 
   const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
     console.log('Operations-order-book', order_book, treasuries);
@@ -87,6 +88,8 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
+    console.log('%cMain.tsx line:90 storage', 'color: #007acc;', storage, contractAddress);
+
     try {
       if (storage.batches.current === null || storage.batches.current === undefined) {
         process_batches_and_order_book(
@@ -98,8 +101,12 @@ const Welcome: React.FC = () => {
           storage.batches.current.orderbook,
           storage.batches.previous.map((p: batch) => p.treasury),
         );
+
         const status = Object.keys(storage.batches.current.status)[0];
         setStatus(status);
+        if (status === BatcherStatus.OPEN) {
+          setOpenTime(storage.batches.current.status.open);
+        }
       }
     } catch (error) {
       console.log('Batcher error', error);
@@ -141,14 +148,18 @@ const Welcome: React.FC = () => {
           msg.data[0].storage.batches.current.orderbook,
           msg.data[0].storage.batches.previous.map((p: batch) => p.treasury),
         );
+
+        if (!msg.data[0].storage.batches.current) {
+          setStatus(BatcherStatus.NONE);
+        } else {
+          const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+          setStatus(status);
+          if (status === BatcherStatus.OPEN) {
+            setOpenTime(msg.data[0].storage.batches.current.status.open);
+          }
+        }
       } catch (error: any) {
         console.log(error);
-      }
-      if (!msg.data[0].storage.batches.current) {
-        setStatus(BatcherStatus.NONE);
-      } else {
-        const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
-        setStatus(status);
       }
     });
 
@@ -256,6 +267,7 @@ const Welcome: React.FC = () => {
         inversion={inversion}
         rate={rate}
         status={status}
+        openTime={openTime}
       />
       <BatcherAction setContent={setContent} />
       <div>

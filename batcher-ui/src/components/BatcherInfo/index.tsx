@@ -5,6 +5,7 @@ import '@/components/BatcherInfo/index.less';
 import '@/global.less';
 import { BatcherInfoProps, BatcherStatus } from '@/extra_utils/types';
 import BatcherStepper from '../BatcherStepper';
+import { parseISO, add, differenceInMinutes } from 'date-fns';
 
 const { Text } = Typography;
 
@@ -14,25 +15,46 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   inversion,
   rate,
   status,
+  openTime,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
   const { userAddress } = initialState;
+
+  const get_time_difference = () => {
+    if (status === BatcherStatus.OPEN && openTime) {
+      const now = new Date();
+      const open = parseISO(openTime);
+      const batcherClose = add(open, { minutes: 10 });
+      const diff = differenceInMinutes(batcherClose, now);
+      return diff;
+    }
+    return 0;
+  };
 
   return (
     <div>
       <Row className="batcher-header">
         <Col lg={3} />
-        <Col className="batcher-time" xs={24} lg={6}>
-          <Space direction="vertical">
-            <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
-            {status === BatcherStatus.NONE ? (
-              <Typography className="batcher-title p-13">No open Batch</Typography>
+        <Col className="batcher-time" xs={24} lg={9}>
+          <Space className="batcher-time-gap">
+            <Space className="pd-0" direction="vertical">
+              <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
+              {status === BatcherStatus.NONE ? (
+                <Typography className="batcher-title p-13">No open Batch</Typography>
+              ) : (
+                <BatcherStepper status={status} />
+              )}
+            </Space>
+            {status === BatcherStatus.OPEN ? (
+              <div className="batcher-time-difference">
+                <Typography className="p-13">{get_time_difference() + ' min'}</Typography>
+              </div>
             ) : (
-              <BatcherStepper status={status} />
+              <div />
             )}
           </Space>
         </Col>
-        <Col className="batcher-balance" xs={24} lg={6}>
+        <Col className="batcher-balance" xs={24} lg={9}>
           <Col className="batcher-balance-title" span={24}>
             <Space className="pd-0">
               <Typography className="batcher-title p-16">Balance</Typography>
@@ -45,7 +67,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
           </Col>
           <Col className="batcher-balance-amount" span={24}>
             <Space className="pd-0">
-              <Typography>Address</Typography>
+              <Typography className="batcher-title p-16">Address</Typography>
               {userAddress ? (
                 <Text style={{ width: 150 }} ellipsis={{ tooltip: userAddress }}>
                   {userAddress}
@@ -55,12 +77,12 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
               )}
             </Space>
           </Col>
-        </Col>
-        <Col className="batcher-oracle" xs={24} lg={6}>
-          <Space>
-            <Typography className="batcher-title p-16">Oracle Price</Typography>
-            <Typography className="batcher-title p-13">{rate} tzBTC/USDT</Typography>
-          </Space>
+          <Col className="batcher-price" span={24}>
+            <Space className="pd-0">
+              <Typography className="batcher-title p-16">Oracle Price</Typography>
+              <Typography className="batcher-title p-13">{rate} tzBTC/USDT</Typography>
+            </Space>
+          </Col>
         </Col>
         <Col lg={3} />
       </Row>
