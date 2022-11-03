@@ -67,7 +67,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
           </Col>
           <Col className="batcher-balance-amount" span={24}>
             <Space className="pd-0">
-              <Typography>Address</Typography>
+              <Typography className="batcher-title p-16">Address</Typography>
               {userAddress ? (
                 <Text style={{ width: 150 }} ellipsis={{ tooltip: userAddress }}>
                   {userAddress}
