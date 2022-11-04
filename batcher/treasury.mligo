@@ -109,9 +109,9 @@ module Utils = struct
 
   (* Transfer the tokens to the appropriate address. This is based on the FA12 and FA2 token standard *)
   let transfer_token (sender : address) (receiver : address) (token_address : address) (token_amount : token_amount) : operation =
-    if token_amount.token.standard = Constants.fa12_token then 
+    if Set.mem token_amount.token.name Constants.fa12_token then 
       transfer_fa12_token sender receiver token_address token_amount.amount
-    else if token_amount.token.standard = Constants.fa2_token then 
+    else if Set.mem token_amount.token.name Constants.fa2_token  then 
       transfer_fa2_token sender receiver token_address token_amount.amount
     else failwith Errors.not_found_token_standard
 

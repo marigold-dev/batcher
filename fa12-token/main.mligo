@@ -31,10 +31,16 @@ type getTotalSupply =
 
 type tokens = (address, nat) big_map
 type allowances = (allowance_key, nat) big_map
+type data = {
+    token_id : nat; 
+    token_info : (string, bytes) map
+  }
+type token_metadata = (nat, data) big_map 
 
 type storage = {
   tokens : tokens;
   allowances : allowances;
+  token_metadata : token_metadata;
   total_supply : nat;
 }
 

@@ -4,6 +4,6 @@
 (* The constant which represents the period during which a closed batch will wait before looking for a price, in seconds. *)
 [@inline] let price_wait_window : int = 120
 
-[@inline] let fa12_token : string = "FA12 token"
+let fa12_token : string set = Set.literal ["tzBTC"]
 
-[@inline] let fa2_token : string = "FA2 token"
+let fa2_token : string set = Set.literal ["USDT"]
