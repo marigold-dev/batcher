@@ -51,5 +51,7 @@ batcher.tz
 batcher-storage.tz
 tzBTC_token.tz
 tzBTC_token_storage.tz
+tzBTC_fa12_token.tz
+tzBTC_fa12_token_storage.tz
 USDT_token.tz
 USDT_token_storage.tz

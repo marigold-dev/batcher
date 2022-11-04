@@ -2,6 +2,7 @@
 #import "storage.mligo" "Storage"
 #import "errors.mligo" "Errors"
 #include "utils.mligo"
+#import "constants.mligo" "Constants"
 
 type storage = Storage.Types.t
 type treasury = Types.Types.treasury
@@ -29,7 +30,15 @@ module Utils = struct
   }
 
   (* Transferred format for tokens in FA2 standard *)
-  type transfer = transfer_from list
+  type fa2_transfer = transfer_from list
+
+  (* Transferred format for tokens in FA12 standard *)
+  type fa12_transfer = 
+    [@layout:comb] { 
+    [@annot:from] address_from : address;
+    [@annot:to] address_to : address;
+    value : nat 
+  }
 
   (* Check that the token holding amount is greater or equal to the token amount being swapped *)
   let check_token_holding_amount
@@ -56,30 +65,55 @@ module Utils = struct
                    th
      | None -> (failwith Errors.no_treasury_holding_for_address : treasury_holding)
 
-  (* Transfer the tokens to the appropriate address. This is based on the FA2 token standard *)
-  let transfer_token
+  let transfer_fa12_token 
     (sender : address)
     (receiver : address)
     (token_address : address)
-    (token_amount : nat) : operation =
-      let transfer_entrypoint : transfer contract =
-        match (Tezos.get_entrypoint_opt "%transfer" token_address : transfer contract option) with
+    (token_amount : nat) : operation = 
+      let transfer_entrypoint : fa12_transfer contract =
+        match (Tezos.get_entrypoint_opt "%transfer" token_address : fa12_transfer contract option) with
         | None -> failwith Errors.invalid_token_address
         | Some transfer_entrypoint -> transfer_entrypoint
       in
-      let transfer : transfer = [
+      let transfer : fa12_transfer = {
+        address_from = sender;
+        address_to = receiver;
+        value = token_amount
+      } in
+      Tezos.transaction transfer 0tez transfer_entrypoint
+
+  let transfer_fa2_token
+    (sender : address)
+    (receiver : address)
+    (token_address : address)
+    (token_amount : nat) : operation =  
+      let transfer_entrypoint : fa2_transfer contract =
+        match (Tezos.get_entrypoint_opt "%transfer" token_address : fa2_transfer contract option) with
+        | None -> failwith Errors.invalid_token_address
+        | Some transfer_entrypoint -> transfer_entrypoint
+      in
+      let transfer : fa2_transfer = [
         {
           from_ = sender;
           tx = [
             {
               to_ = receiver;
-              token_id = 0n; // Need more discussion to decide to whether have token_id parameter or not
+              token_id = 0n;
               amount = token_amount
             }
           ]
         }
       ] in
       Tezos.transaction transfer 0tez transfer_entrypoint
+
+
+  (* Transfer the tokens to the appropriate address. This is based on the FA12 and FA2 token standard *)
+  let transfer_token (sender : address) (receiver : address) (token_address : address) (token_amount : token_amount) : operation =
+    if token_amount.token.standard = Constants.fa12_token then 
+      transfer_fa12_token sender receiver token_address token_amount.amount
+    else if token_amount.token.standard = Constants.fa2_token then 
+      transfer_fa2_token sender receiver token_address token_amount.amount
+    else failwith Errors.not_found_token_standard
 
   (* Transfer the XTZ to the appropriate address *)
   let transfer_xtz (receiver : address) (amount : tez) : operation =
@@ -95,7 +129,7 @@ module Utils = struct
       let xtz_amount = received_token.amount * 1tez in
       transfer_xtz receiver xtz_amount
     | Some token_address ->
-      transfer_token sender receiver token_address received_token.amount
+      transfer_token sender receiver token_address received_token
 
   (* asserts that the holdings held in a treasury holding match the holder address *)
   let assert_holdings_are_coherent

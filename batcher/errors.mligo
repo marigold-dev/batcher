@@ -50,3 +50,5 @@ let append_an_order_with_no_current_batch : nat = 123n
 let unable_to_parse_side_from_external_order : nat = 124n
 
 let unable_to_parse_tolerance_from_external_order : nat = 125n
+
+let not_found_token_standard : nat = 126n
