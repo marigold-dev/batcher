@@ -92,7 +92,6 @@ const Holdings: React.FC<HoldingsProps> = ({
       const redeem_op = await tezos.wallet
         .batch()
         .withContractCall(contractWallet.methodsObject.redeem())
-        .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
         .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
         .send();
 
