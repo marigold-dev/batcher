@@ -4,7 +4,7 @@ let f(_:unit) = {
   valid_tokens = [
     {
       name = "tzBTC";
-      address = Some(("KT1ADYfLrrifqZZGMpgtZF2HkEhNfDXXsdSK" : address));
+      address = Some(("KT1CzJ7cWxdWaHnRKhnQCTpNXwb9FPmqwQTf" : address));
       decimals = 8;
     };
     {
@@ -24,7 +24,7 @@ let f(_:unit) = {
           amount = 1n;
           token = {
             name = "tzBTC";
-            address = Some(("KT1ADYfLrrifqZZGMpgtZF2HkEhNfDXXsdSK" : address));
+            address = Some(("KT1CzJ7cWxdWaHnRKhnQCTpNXwb9FPmqwQTf" : address));
             decimals = 8;
           };
         };
