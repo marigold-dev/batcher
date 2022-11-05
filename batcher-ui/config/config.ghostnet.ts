@@ -50,7 +50,7 @@ export default defineConfig({
     REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.ecadinfra.com',
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1EUuSh1BjWTBVPm4SDhpK6FLaLH94mMfnq',
-    REACT_APP_TZBTC_HASH: 'KT1TxXJRJvdS3dqCgwUq2WSjiXjnTwZHRoTT',
+    REACT_APP_TZBTC_HASH: 'KT1SahHEbkbJWEeqc8UDMpTSYZ1qAyq8FM1C',
     REACT_APP_USDT_HASH: 'KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm',
   },
 });

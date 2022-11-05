@@ -91,18 +91,17 @@ const Welcome: React.FC = () => {
     console.log('%cMain.tsx line:90 storage', 'color: #007acc;', storage, contractAddress);
 
     try {
-      if (storage.batches.current === null || storage.batches.current === undefined) {
-        process_batches_and_order_book(
-          getEmptyOrderBook(),
-          storage.batches.previous.map((p: batch) => p.treasury),
-        );
-      } else {
-        process_batches_and_order_book(
-          storage.batches.current.orderbook,
-          storage.batches.previous.map((p: batch) => p.treasury),
-        );
+      process_batches_and_order_book(
+        storage.batches.current ? storage.batches.current.orderbook : getEmptyOrderBook(),
+        storage.batches.previous ? storage.batches.previous.map((p: batch) => p.treasury) : [],
+      );
 
+      if (!storage.batches.current) {
+        console.log('77777777hihi');
+        setStatus(BatcherStatus.NONE);
+      } else {
         const status = Object.keys(storage.batches.current.status)[0];
+        console.log('Hello3333hihi', status);
         setStatus(status);
         if (status === BatcherStatus.OPEN) {
           setOpenTime(storage.batches.current.status.open);
@@ -139,23 +138,24 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
+
+      const batches = msg.data[0].storage.batches;
+
+      process_batches_and_order_book(
+        batches.current ? batches.current.orderbook : getEmptyOrderBook(),
+        batches.previous ? batches.previous.map((p: batch) => p.treasury) : [],
+      );
+
       try {
-        console.log('Operations-storage', msg.data[0].storage);
-        const storage_string = msg.data[0].storage as string;
-        console.log('Operations-storage-string', storage_string);
-
-        process_batches_and_order_book(
-          msg.data[0].storage.batches.current.orderbook,
-          msg.data[0].storage.batches.previous.map((p: batch) => p.treasury),
-        );
-
-        if (!msg.data[0].storage.batches.current) {
+        if (!batches.current) {
+          console.log('77777777');
           setStatus(BatcherStatus.NONE);
         } else {
-          const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+          const status = Object.keys(batches.current.status)[0];
+          console.log('Hello3333', status);
           setStatus(status);
           if (status === BatcherStatus.OPEN) {
-            setOpenTime(msg.data[0].storage.batches.current.status.open);
+            setOpenTime(batches.current.status.open);
           }
         }
       } catch (error: any) {

@@ -1,11 +1,11 @@
-FROM oxheadalpha/flextesa:latest
+FROM oxheadalpha/flextesa:20221026
 
 RUN apk update &&\
     apk add bash &&\
     apk add curl &&\
     apk add jq &&\
-    tezos-client --endpoint https://ghostnet.ecadinfra.com/ config update &&\
-    tezos-client import secret key oracle_account unencrypted:edskRuYq76EQZ2hzmQpotWz8Fpnxdo2cCfP274tjxP4mJGR9LUGRSCfRWYRkEHJyBJLAkF56aPzuREGUsdtqXdYMAVLtpwbX7i --force
+    octez-client --endpoint https://ghostnet.ecadinfra.com/ config update &&\
+    octez-client import secret key oracle_account unencrypted:edskRuYq76EQZ2hzmQpotWz8Fpnxdo2cCfP274tjxP4mJGR9LUGRSCfRWYRkEHJyBJLAkF56aPzuREGUsdtqXdYMAVLtpwbX7i --force
 
 WORKDIR /etc/run
 

@@ -1,14 +1,14 @@
-FROM oxheadalpha/flextesa:latest
+FROM oxheadalpha/flextesa:20221026
 
 RUN apk update &&\
     apk add bash &&\
     apk add curl &&\
     apk add jq &&\
-    tezos-client --endpoint https://kathmandunet.ecadinfra.com/ config update &&\
-    tezos-client import secret key oracle_account unencrypted:edskS7XvfNqsdqTiScE764kgBCfCeTBe9sTiZ4TaVTxFpGvMjfWsgDxbo9NZiiZSnWJgGLdZUhRC46B5Wqg7fYfk282TRUd8Gd --force
+    octez-client --endpoint https://kathmandunet.ecadinfra.com/ config update &&\
+    octez-client import secret key oracle_account unencrypted:edskS7XvfNqsdqTiScE764kgBCfCeTBe9sTiZ4TaVTxFpGvMjfWsgDxbo9NZiiZSnWJgGLdZUhRC46B5Wqg7fYfk282TRUd8Gd --force
 
 WORKDIR /etc/run
 
 COPY ./sandbox.sh /etc/run/
 
-CMD [ "/etc/run/sandbox.sh", "-u", "KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF", "-t", "KT1ADYfLrrifqZZGMpgtZF2HkEhNfDXXsdSK", "-b", "KT1EajV3My76G7Lbu5Atq7G68aiXa5PaCiL8" ]
+CMD [ "/etc/run/sandbox.sh", "-u", "KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF", "-t", "KT1ADYfLrrifqZZGMpgtZF2HkEhNfDXXsdSK", "-b", "KT1TH9PuhAPaVXZ3pm1S8xjmJECxQZi4MENV" ]
