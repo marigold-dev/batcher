@@ -44,7 +44,6 @@ const OrderBook: React.FC<OrderBookProps> = ({
   const rightAggName = sellToken.name + ' -> ' + buyToken.name;
 
   const aggregateAmounts = (orders: Array<swap_order>) => {
-    console.log('OrderBook-aggregate-amounts-orders', orders);
     return orders.reduce((prev, order) => {
       prev += Number(order.swap.from.amount);
       return prev;
@@ -52,7 +51,6 @@ const OrderBook: React.FC<OrderBookProps> = ({
   };
 
   const to_string_tolerance = (tolerance: Tolerance) => {
-    console.log('OrderBook-tolerance', tolerance);
     if (tolerance.eXACT != undefined) {
       return 'Oracle Price';
     }

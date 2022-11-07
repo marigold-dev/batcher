@@ -34,8 +34,8 @@ post_rate_contract () {
   round_tzBTC_usdt_price=$(echo "scale=0; $xtz_usdt_price * 100000000 / $xtz_tzBTC_price" | bc)
 
   # Compute exchange rate and post this rate to the batcher contract
-  tzBTC_token="Pair (Pair (Some \"$tzBTC_address\") 8) \"tzBTC\""
-  USDT_token="Pair (Pair (Some \"$USDT_address\") 6) \"USDT\""
+  tzBTC_token="Pair (Pair (Some \"$tzBTC_address\") 8) (Pair \"tzBTC\" (Some \"FA1.2 token\"))"
+  USDT_token="Pair (Pair (Some \"$USDT_address\") 6) (Pair \"USDT\" (Some \"FA2 token\"))"
   timestamp=$(date +%s)
 
   octez-client transfer 0 from oracle_account to $1 \

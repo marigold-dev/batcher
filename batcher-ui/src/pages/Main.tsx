@@ -20,7 +20,6 @@ import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
-import { JSONPath } from 'jsonpath-plus';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -28,19 +27,23 @@ const Welcome: React.FC = () => {
   const buyTokenName = 'tzBTC';
   const buyTokenAddress = REACT_APP_TZBTC_HASH;
   const buyTokenDecimals = 8;
+  const buyTokenStandard = 'FA1.2 token';
   const sellTokenName = 'USDT';
   const sellTokenAddress = REACT_APP_USDT_HASH;
   const sellTokenDecimals = 6;
+  const sellTokenStandard = 'FA2 token';
   const tokenPair = buyTokenName + '/' + sellTokenName;
   const buyToken: token = {
     name: buyTokenName,
     address: buyTokenAddress,
     decimals: buyTokenDecimals,
+    standard: buyTokenStandard,
   };
   const sellToken: token = {
     name: sellTokenName,
     address: sellTokenAddress,
     decimals: sellTokenDecimals,
+    standard: sellTokenStandard,
   };
   const [contractAddress] = useState<string>(REACT_APP_BATCHER_CONTRACT_HASH);
   const chain_api_url = REACT_APP_TZKT_URI_API;
@@ -70,12 +73,10 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
 
   const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
-    console.log('Operations-order-book', order_book, treasuries);
     try {
       setOrderBook(order_book);
       setPreviousTreasuries(treasuries);
     } catch (error: any) {
-      console.log('Operations-previousBatches-error', error);
       setPreviousTreasuries([]);
       setOrderBook(getEmptyOrderBook());
     }
@@ -88,8 +89,6 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    console.log('%cMain.tsx line:90 storage', 'color: #007acc;', storage, contractAddress);
-
     try {
       process_batches_and_order_book(
         storage.batches.current ? storage.batches.current.orderbook : getEmptyOrderBook(),
@@ -97,11 +96,9 @@ const Welcome: React.FC = () => {
       );
 
       if (!storage.batches.current) {
-        console.log('77777777hihi');
         setStatus(BatcherStatus.NONE);
       } else {
         const status = Object.keys(storage.batches.current.status)[0];
-        console.log('Hello3333hihi', status);
         setStatus(status);
         if (status === BatcherStatus.OPEN) {
           setOpenTime(storage.batches.current.status.open);
@@ -148,11 +145,9 @@ const Welcome: React.FC = () => {
 
       try {
         if (!batches.current) {
-          console.log('77777777');
           setStatus(BatcherStatus.NONE);
         } else {
           const status = Object.keys(batches.current.status)[0];
-          console.log('Hello3333', status);
           setStatus(status);
           if (status === BatcherStatus.OPEN) {
             setOpenTime(batches.current.status.open);

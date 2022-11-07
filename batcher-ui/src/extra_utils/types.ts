@@ -33,6 +33,7 @@ export class token {
   name!: string;
   address!: string;
   decimals!: number;
+  standard!: string;
 }
 
 export class token_balance {

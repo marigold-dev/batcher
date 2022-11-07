@@ -30,12 +30,11 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
 
     const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
+    const selectedToken = inversion ? buyBalance.token : sellBalance.token;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
-
-    console.log('%cindex.tsx line:37 amount', 'color: #007acc;', amount);
 
     const scaled_amount = inversion
       ? scaleAmountUp(amount, buyBalance.token.decimals)
@@ -66,6 +65,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             name: inversion ? buyBalance.token.name : sellBalance.token.name,
             address: inversion ? buyBalance.token.address : sellBalance.token.address,
             decimals: inversion ? buyBalance.token.decimals : sellBalance.token.decimals,
+            standard: inversion ? buyBalance.token.standard : sellBalance.token.standard,
           },
           amount: scaled_amount,
         },
@@ -73,6 +73,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           name: inversion ? sellBalance.token.name : buyBalance.token.name,
           address: inversion ? sellBalance.token.address : buyBalance.token.address,
           decimals: inversion ? sellBalance.token.decimals : buyBalance.token.decimals,
+          standard: inversion ? sellBalance.token.standard : buyBalance.token.standard,
         },
       },
       created_at: new Date(),
@@ -87,8 +88,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     try {
       let order_batcher_op = null;
 
-      if (tokenName === 'tzBTC') {
-        console.log('first', fa12_operation_params);
+      if (selectedToken.standard === 'FA1.2 token') {
         order_batcher_op = await tezos.wallet
           .batch()
           .withContractCall(tokenContract.methodsObject.approve(fa12_operation_params))
@@ -96,7 +96,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           .send();
       }
 
-      if (tokenName === 'USDT') {
+      if (selectedToken.standard === 'FA2 token') {
         order_batcher_op = await tezos.wallet
           .batch()
           .withContractCall(tokenContract.methods.update_operators(fa2_operator_params))
@@ -121,7 +121,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     } catch (error) {
       loading();
       form.resetFields();
-      console.log('oooo', error);
       message.error(getErrorMess(error));
     }
   };

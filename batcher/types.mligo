@@ -11,6 +11,7 @@ module Types = struct
     name : string;
     address : address option;
     decimals : int;
+    standard : string option;
   }
 
   (* Side of an order, either BUY side or SELL side  *)

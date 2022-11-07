@@ -4,8 +4,6 @@ import '@/components/BatcherStepper/index.less';
 import { BatcherStatus, BatcherStepperProps } from '@/extra_utils/types';
 
 const BatcherStepper: React.FC<BatcherStepperProps> = ({ status }: BatcherStepperProps) => {
-  console.log('ooooo', status);
-
   return (
     <div>
       <Space className="pd-5-10">
