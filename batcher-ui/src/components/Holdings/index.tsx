@@ -92,33 +92,40 @@ const Holdings: React.FC<HoldingsProps> = ({
 
       let redeem_op = null;
 
-      if (buyToken.standard === 'FA1.2 token' && sellToken.standard === 'FA1.2 token') {
-        redeem_op = await tezos.wallet
-          .batch()
-          .withContractCall(contractWallet.methodsObject.redeem())
-          .send();
+      if (buyToken.standard === 'FA1.2 token') {
+        if (sellToken.standard === 'FA1.2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .send();
+        }
+
+        if (sellToken.standard === 'FA2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
       }
-      if (buyToken.standard === 'FA1.2 token' && sellToken.standard === 'FA2 token') {
-        redeem_op = await tezos.wallet
-          .batch()
-          .withContractCall(contractWallet.methodsObject.redeem())
-          .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
-          .send();
-      }
-      if (buyToken.standard === 'FA2 token' && sellToken.standard === 'FA1.2 token') {
-        redeem_op = await tezos.wallet
-          .batch()
-          .withContractCall(contractWallet.methodsObject.redeem())
-          .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
-          .send();
-      }
-      if (buyToken.standard === 'FA2 token' && sellToken.standard === 'FA2 token') {
-        redeem_op = await tezos.wallet
-          .batch()
-          .withContractCall(contractWallet.methodsObject.redeem())
-          .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
-          .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
-          .send();
+
+      if (buyToken.standard === 'FA2 token') {
+        if (sellToken.standard === 'FA1.2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
+
+        if (sellToken.standard === 'FA2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
+            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
       }
 
       if (redeem_op) {
