@@ -30,6 +30,8 @@ const Holdings: React.FC<HoldingsProps> = ({
     setBuyTokenHoldings(buy_holdings);
     setSellTokenHoldings(sell_holdings);
 
+    if (!userAddress) return;
+
     for (var i = 0; i < previousTreasuries?.length; i++) {
       try {
         let bm_uri = bigMapsByIdUri + previousTreasuries.at(i) + '/keys/' + userAddress;
