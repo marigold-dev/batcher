@@ -30,18 +30,18 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
 
     const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
+    const selectedToken = inversion ? buyBalance.token : sellBalance.token;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
 
-    console.log('%cindex.tsx line:37 amount', 'color: #007acc;', amount);
-
     const scaled_amount = inversion
       ? scaleAmountUp(amount, buyBalance.token.decimals)
       : scaleAmountUp(amount, sellBalance.token.decimals);
 
-    const operator_params = [
+    // This is for fa2 token standard. I.e, USDT token
+    const fa2_operator_params = [
       {
         add_operator: {
           owner: userAddress,
@@ -51,6 +51,12 @@ const Exchange: React.FC<ExchangeProps> = ({
       },
     ];
 
+    // This is for fa1.2 token standard. I.e, tzBTC token
+    const fa12_operation_params = {
+      spender: REACT_APP_BATCHER_CONTRACT_HASH,
+      value: scaled_amount,
+    };
+
     const swap_params = {
       trader: userAddress,
       swap: {
@@ -59,6 +65,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             name: inversion ? buyBalance.token.name : sellBalance.token.name,
             address: inversion ? buyBalance.token.address : sellBalance.token.address,
             decimals: inversion ? buyBalance.token.decimals : sellBalance.token.decimals,
+            standard: inversion ? buyBalance.token.standard : sellBalance.token.standard,
           },
           amount: scaled_amount,
         },
@@ -66,6 +73,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           name: inversion ? sellBalance.token.name : buyBalance.token.name,
           address: inversion ? sellBalance.token.address : buyBalance.token.address,
           decimals: inversion ? sellBalance.token.decimals : buyBalance.token.decimals,
+          standard: inversion ? sellBalance.token.standard : buyBalance.token.standard,
         },
       },
       created_at: new Date(),
@@ -78,11 +86,24 @@ const Exchange: React.FC<ExchangeProps> = ({
     };
 
     try {
-      const order_batcher_op = await tezos.wallet
-        .batch()
-        .withContractCall(tokenContract.methods.update_operators(operator_params))
-        .withContractCall(batcherContract.methodsObject.deposit(swap_params))
-        .send();
+      let order_batcher_op = null;
+
+      if (selectedToken.standard === 'FA1.2 token') {
+        order_batcher_op = await tezos.wallet
+          .batch()
+          .withContractCall(tokenContract.methodsObject.approve(fa12_operation_params))
+          .withContractCall(batcherContract.methodsObject.deposit(swap_params))
+          .send();
+      }
+
+      if (selectedToken.standard === 'FA2 token') {
+        order_batcher_op = await tezos.wallet
+          .batch()
+          .withContractCall(tokenContract.methods.update_operators(fa2_operator_params))
+          .withContractCall(batcherContract.methodsObject.deposit(swap_params))
+          .send();
+      }
+
       loading = message.loading('Attempting to place swap order for ' + tokenName, 0);
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {

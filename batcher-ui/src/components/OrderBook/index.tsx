@@ -22,6 +22,7 @@ const OrderBook: React.FC<OrderBookProps> = ({
   sellToken,
 }: OrderBookProps) => {
   interface AggregateOrder {
+    index: number;
     buyside: number;
     sellside: number;
   }
@@ -44,7 +45,6 @@ const OrderBook: React.FC<OrderBookProps> = ({
   const rightAggName = sellToken.name + ' -> ' + buyToken.name;
 
   const aggregateAmounts = (orders: Array<swap_order>) => {
-    console.log('OrderBook-aggregate-amounts-orders', orders);
     return orders.reduce((prev, order) => {
       prev += Number(order.swap.from.amount);
       return prev;
@@ -52,7 +52,6 @@ const OrderBook: React.FC<OrderBookProps> = ({
   };
 
   const to_string_tolerance = (tolerance: Tolerance) => {
-    console.log('OrderBook-tolerance', tolerance);
     if (tolerance.eXACT != undefined) {
       return 'Oracle Price';
     }
@@ -112,8 +111,9 @@ const OrderBook: React.FC<OrderBookProps> = ({
         sellside: sellSideAmount,
       };
 
-      const agg_orders_for_table = [agg_ord].map((ao: aggregate_orders) => {
+      const agg_orders_for_table = [agg_ord].map((ao: aggregate_orders, index) => {
         const modified: AggregateOrder = {
+          index: index + 1,
           buyside: ao.buyside,
           sellside: ao.sellside,
         };
@@ -191,6 +191,7 @@ const OrderBook: React.FC<OrderBookProps> = ({
               <Table
                 className="batcher-table ant-typeography center col-offset-6"
                 columns={aggregateOrdersColumns}
+                rowKey="index"
                 dataSource={aggregateOrdersForTable}
                 pagination={false}
               />
@@ -204,6 +205,7 @@ const OrderBook: React.FC<OrderBookProps> = ({
               <Table
                 className="batcher-table ant-typeography center"
                 columns={listOfOrdersColumns}
+                rowKey="order_number"
                 dataSource={expandedView ? orderListForTableExpanded : orderListForTable}
                 pagination={false}
               />

@@ -1,4 +1,4 @@
-import { Space, Button, Menu, Dropdown, Typography } from 'antd';
+import { Space, Button, Dropdown, Typography, MenuProps } from 'antd';
 import React, { useEffect } from 'react';
 import { useModel } from 'umi';
 import styles from '@/components/RightContent/index.less';
@@ -26,21 +26,19 @@ const GlobalHeaderRight: React.FC = () => {
 
   const { wallet } = initialState;
 
-  const menu = (
-    <Menu
-      items={[
-        {
-          key: '1',
-          label: (
-            <Typography className="p-12">
-              {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
-            </Typography>
-          ),
-          onClick: !wallet ? () => connectWallet() : () => disconnectWallet(),
-        },
-      ]}
-    />
-  );
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      label: (
+        <Typography className="p-12">{!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}</Typography>
+      ),
+    },
+  ];
+
+  const menuProps = {
+    items,
+    onClick: !wallet ? () => connectWallet() : () => disconnectWallet(),
+  };
 
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
@@ -96,7 +94,7 @@ const GlobalHeaderRight: React.FC = () => {
         {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
       </Button>
       <div onClick={scrollToTop}>
-        <Dropdown className="batcher-menu-outer" overlay={menu} placement="bottomLeft">
+        <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
           <MenuOutlined className="batcher-menu" />
         </Dropdown>
       </div>

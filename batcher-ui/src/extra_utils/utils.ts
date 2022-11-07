@@ -4,7 +4,7 @@ export const getTokenAmount = (balances: Array<any>, standardBalance: types.toke
   const item = balances.find(
     (item) => item.token.contract.address === standardBalance.token.address,
   );
-  return parseInt(item.balance) / 10 ** standardBalance.token.decimals;
+  return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
 };
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
@@ -29,22 +29,17 @@ export const getErrorMess = (error: unknown) => {
   return error instanceof Error ? error.message : 'Unknown error';
 };
 
-export const orders_exist_in_order_book = (ob : types.order_book) => {
-    try{
-       return ob.bids.length > 0 || ob.asks.length > 0;
-    }
-    catch {
-       return false;
-    }
-
-
-  };
+export const orders_exist_in_order_book = (ob: types.order_book) => {
+  try {
+    return ob.bids.length > 0 || ob.asks.length > 0;
+  } catch {
+    return false;
+  }
+};
 
 export const getEmptyOrderBook = () => {
-return {
-  bids: [],
-  asks: [],
+  return {
+    bids: [],
+    asks: [],
+  };
 };
-
-};
-

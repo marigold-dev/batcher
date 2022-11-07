@@ -30,6 +30,8 @@ const Holdings: React.FC<HoldingsProps> = ({
     setBuyTokenHoldings(buy_holdings);
     setSellTokenHoldings(sell_holdings);
 
+    if (!userAddress) return;
+
     for (var i = 0; i < previousTreasuries?.length; i++) {
       try {
         let bm_uri = bigMapsByIdUri + previousTreasuries.at(i) + '/keys/' + userAddress;
@@ -60,7 +62,7 @@ const Holdings: React.FC<HoldingsProps> = ({
           return prev;
         }, 0);
       } catch (error: any) {
-        console.log(123, error);
+        console.log(error);
       }
     }
 
@@ -69,7 +71,6 @@ const Holdings: React.FC<HoldingsProps> = ({
   };
 
   const redeemHoldings = async (): Promise<void> => {
-    console.log('redeeming');
     let loading = function () {
       return undefined;
     };
@@ -89,23 +90,57 @@ const Holdings: React.FC<HoldingsProps> = ({
         },
       ];
 
-      const redeem_op = await tezos.wallet
-        .batch()
-        .withContractCall(contractWallet.methodsObject.redeem())
-        .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
-        .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
-        .send();
+      let redeem_op = null;
 
-      loading = message.loading('Attempting to redeem holdings...', 0);
+      if (buyToken.standard === 'FA1.2 token') {
+        if (sellToken.standard === 'FA1.2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .send();
+        }
 
-      const confirm = await redeem_op.confirmation();
-      if (!confirm.completed) {
-        message.error('Failed to redeem holdings');
-        console.error('Failed to redeem holdings' + confirm);
+        if (sellToken.standard === 'FA2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
+      }
+
+      if (buyToken.standard === 'FA2 token') {
+        if (sellToken.standard === 'FA1.2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
+
+        if (sellToken.standard === 'FA2 token') {
+          redeem_op = await tezos.wallet
+            .batch()
+            .withContractCall(contractWallet.methodsObject.redeem())
+            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
+            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
+            .send();
+        }
+      }
+
+      if (redeem_op) {
+        loading = message.loading('Attempting to redeem holdings...', 0);
+        const confirm = await redeem_op.confirmation();
+        if (!confirm.completed) {
+          message.error('Failed to redeem holdings');
+          console.error('Failed to redeem holdings' + confirm);
+        } else {
+          loading();
+
+          message.success('Successfully redeemed holdings');
+        }
       } else {
-        loading();
-
-        message.success('Successfully redeemed holdings');
+        throw new Error('Failed to redeem tokens');
       }
     } catch (error: any) {
       loading();

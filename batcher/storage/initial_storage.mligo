@@ -3,19 +3,22 @@
 let f(_:unit) = {
   valid_tokens = [
     {
-       name = "tzBTC";
-       address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
-       decimals = 8;
+      name = "tzBTC";
+      address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
+      decimals = 8;
+      standard = Some "FA1.2 token";
     };
     {
       name = "USDT";
       address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
-       decimals = 6;
+      decimals = 6;
+      standard = Some "FA2 token";
     };
     {
-       name = "XTZ";
-       address = (None : address option);
-       decimals = 6;
+      name = "XTZ";
+      address = (None : address option);
+      decimals = 6;
+      standard = None;
     }
   ];
   valid_swaps = Map.literal [
@@ -26,12 +29,14 @@ let f(_:unit) = {
             name = "tzBTC";
             address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
             decimals = 8;
+            standard = Some "FA1.2 token";
           };
         };
         to = {
           name = "USDT";
           address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
           decimals = 6;
+          standard = Some "FA2 token";
         }
       }
     )

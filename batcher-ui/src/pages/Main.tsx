@@ -20,7 +20,6 @@ import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
-import { JSONPath } from 'jsonpath-plus';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -28,19 +27,23 @@ const Welcome: React.FC = () => {
   const buyTokenName = 'tzBTC';
   const buyTokenAddress = REACT_APP_TZBTC_HASH;
   const buyTokenDecimals = 8;
+  const buyTokenStandard = 'FA1.2 token';
   const sellTokenName = 'USDT';
   const sellTokenAddress = REACT_APP_USDT_HASH;
   const sellTokenDecimals = 6;
+  const sellTokenStandard = 'FA2 token';
   const tokenPair = buyTokenName + '/' + sellTokenName;
   const buyToken: token = {
     name: buyTokenName,
     address: buyTokenAddress,
     decimals: buyTokenDecimals,
+    standard: buyTokenStandard,
   };
   const sellToken: token = {
     name: sellTokenName,
     address: sellTokenAddress,
     decimals: sellTokenDecimals,
+    standard: sellTokenStandard,
   };
   const [contractAddress] = useState<string>(REACT_APP_BATCHER_CONTRACT_HASH);
   const chain_api_url = REACT_APP_TZKT_URI_API;
@@ -70,12 +73,10 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
 
   const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
-    console.log('Operations-order-book', order_book, treasuries);
     try {
       setOrderBook(order_book);
       setPreviousTreasuries(treasuries);
     } catch (error: any) {
-      console.log('Operations-previousBatches-error', error);
       setPreviousTreasuries([]);
       setOrderBook(getEmptyOrderBook());
     }
@@ -88,20 +89,15 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    console.log('%cMain.tsx line:90 storage', 'color: #007acc;', storage, contractAddress);
-
     try {
-      if (storage.batches.current === null || storage.batches.current === undefined) {
-        process_batches_and_order_book(
-          getEmptyOrderBook(),
-          storage.batches.previous.map((p: batch) => p.treasury),
-        );
-      } else {
-        process_batches_and_order_book(
-          storage.batches.current.orderbook,
-          storage.batches.previous.map((p: batch) => p.treasury),
-        );
+      process_batches_and_order_book(
+        storage.batches.current ? storage.batches.current.orderbook : getEmptyOrderBook(),
+        storage.batches.previous ? storage.batches.previous.map((p: batch) => p.treasury) : [],
+      );
 
+      if (!storage.batches.current) {
+        setStatus(BatcherStatus.NONE);
+      } else {
         const status = Object.keys(storage.batches.current.status)[0];
         setStatus(status);
         if (status === BatcherStatus.OPEN) {
@@ -139,23 +135,22 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
+
+      const batches = msg.data[0].storage.batches;
+
+      process_batches_and_order_book(
+        batches.current ? batches.current.orderbook : getEmptyOrderBook(),
+        batches.previous ? batches.previous.map((p: batch) => p.treasury) : [],
+      );
+
       try {
-        console.log('Operations-storage', msg.data[0].storage);
-        const storage_string = msg.data[0].storage as string;
-        console.log('Operations-storage-string', storage_string);
-
-        process_batches_and_order_book(
-          msg.data[0].storage.batches.current.orderbook,
-          msg.data[0].storage.batches.previous.map((p: batch) => p.treasury),
-        );
-
-        if (!msg.data[0].storage.batches.current) {
+        if (!batches.current) {
           setStatus(BatcherStatus.NONE);
         } else {
-          const status = Object.keys(msg.data[0].storage.batches.current.status)[0];
+          const status = Object.keys(batches.current.status)[0];
           setStatus(status);
           if (status === BatcherStatus.OPEN) {
-            setOpenTime(msg.data[0].storage.batches.current.status.open);
+            setOpenTime(batches.current.status.open);
           }
         }
       } catch (error: any) {

@@ -34,3 +34,6 @@ test-math:
 	$(call test_ligo,batcher/test/test_math.mligo)
 test-tokens:
 	$(call test_ligo,batcher/test/test_tokens.mligo)
+build-fa12-tzBTC:
+	$(call compile_contract,fa12-token/main.mligo, tzBTC_fa12_token.tz)
+	$(call compile_storage,fa12-token/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
