@@ -47,6 +47,8 @@ export default defineConfig({
     'https://uploads-ssl.webflow.com/616ab4741d375d1642c19027/617952f8510cfc45cbf09312_Favicon(3)(1).png',
   define: {
     REACT_APP_NETWORK_TARGET: 'KATHMANDUNET',
+    REACT_APP_BATCHER_URI:'https://kathmandunet.batcher.marigold.dev',
+    REACT_APP_PATH_TO_BATCHER_LOGO: 'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
     REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.ecadinfra.com',
     REACT_APP_TZKT_URI_API: 'https://api.kathmandunet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1CRv12p9vk1ud5VMvrRMKmsm6iyYjbfF6j',

@@ -26,34 +26,34 @@ type entrypoint =
   | Post of exchange_rate
   | Redeem
 
-let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate = 
-  match Big_map.find_opt rate_name current_rate with 
+let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate =
+  match Big_map.find_opt rate_name current_rate with
   | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
-  | Some r ->  
-      let base_token = r.swap.from.token in 
+  | Some r ->
+      let base_token = r.swap.from.token in
       let quote_token = r.swap.to in
-      let new_base_token = { r.swap.from with token = quote_token } in 
-      let new_quote_token = base_token in  
+      let new_base_token = { r.swap.from with token = quote_token } in
+      let new_quote_token = base_token in
       let inverse_rate : inverse_exchange_rate = {
         swap = { from = new_base_token; to = new_quote_token };
         rate = Float.inverse r.rate;
         when = r.when;
-      } in 
+      } in
       (inverse_rate, r)
 
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : (inverse_exchange_rate * Batch.t) =
-  let (inverse_rate, rate) = 
-    if Big_map.mem (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current then 
+  let (inverse_rate, rate) =
+    if Big_map.mem (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current then
       match Big_map.find_opt (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current with
       | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
-      | Some r -> (r, r) 
-    else if Big_map.mem (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current then 
+      | Some r -> (r, r)
+    else if Big_map.mem (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current then
       get_inverse_exchange_rate (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current
-    else 
+    else
       failwith Pricing.PriceErrors.no_rate_available_for_swap
   in
   let clearing = Clearing.compute_clearing_prices inverse_rate storage in
-  let batch = Batch.finalize batch current_time clearing rate in 
+  let batch = Batch.finalize batch current_time clearing rate in
   (inverse_rate, batch)
 
 let tick_current_batches (storage : storage) : storage =
@@ -82,7 +82,7 @@ let try_to_append_order (order : order)
   (batches : Batch.batch_set) : Batch.batch_set =
   match batches.current with
     | None ->
-      failwith Errors.append_an_order_with_no_current_batch (* FIXME: make this impossible *)
+      failwith Errors.append_an_order_with_no_current_batch
     | Some current ->
       if not (Batch.is_open current) then
         failwith Errors.append_an_order_to_a_non_open_batch
@@ -144,16 +144,16 @@ let redeem (storage : storage) : result =
   (tokens_transfer_ops, new_storage)
 
 
-let move_current_to_previous_if_finalized (storage : storage) : storage = 
+let move_current_to_previous_if_finalized (storage : storage) : storage =
   let batches = storage.batches in
   let current = batches.current in
   match current with
   | None -> storage
-  | Some current_batch -> 
+  | Some current_batch ->
      if (Batch.is_cleared current_batch) then
        let previous = batches.previous in
        let new_previous = current_batch :: previous in
-       let new_current : Types.Types.batch option= None in 
+       let new_current : Types.Types.batch option= None in
        let new_batches = { batches with current = new_current; previous = new_previous } in
        { storage with batches = new_batches }
      else
@@ -223,7 +223,7 @@ let get_previous_orders_by_user (user, storage : address * storage) : order list
 let get_current_exchange_pair ((), storage : unit * storage) : string =
   match storage.batches.current with
   | None -> failwith Errors.not_open_batch
-  | Some current_batch -> 
+  | Some current_batch ->
     Types.Utils.get_rate_name_from_pair current_batch.pair
 
 
