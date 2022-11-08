@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, Typography, Col, Row, Table } from 'antd';
-import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/components/OrderBook/index.less';
 import '@/global.less';
@@ -32,14 +31,11 @@ const OrderBook: React.FC<OrderBookProps> = ({
     price: string;
     value: number;
   }
-  const { initialState } = useModel('@@initialState');
   const [aggregateOrdersForTable, setAggregateOrdersForTable] = useState<Array<AggregateOrder>>([]);
-  const [aggregateOrdersLoading, setAggregateOrdersLoading] = useState<boolean>(true);
   const [orderListForTable, setOrderListForTable] = useState<Array<OrderListItem>>([]);
   const [orderListForTableExpanded, setOrderListForTableExpanded] = useState<Array<OrderListItem>>(
     [],
   );
-  const [orderListForTableLoading, setOrderListForTableLoading] = useState<boolean>(true);
   const [expandedView, setExpandedView] = useState<boolean>(false);
   const leftAggName = buyToken.name + ' -> ' + sellToken.name;
   const rightAggName = sellToken.name + ' -> ' + buyToken.name;
@@ -127,8 +123,10 @@ const OrderBook: React.FC<OrderBookProps> = ({
     if (orders_exist_in_order_book(orderBook)) {
       update_list_of_orders();
       update_aggregate_orders();
-      setAggregateOrdersLoading(false);
-      setOrderListForTableLoading(false);
+    } else {
+      setOrderListForTableExpanded([]);
+      setOrderListForTable([]);
+      setAggregateOrdersForTable([]);
     }
   };
 

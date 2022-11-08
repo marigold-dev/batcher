@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Space, Typography, Col, message } from 'antd';
-import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
@@ -17,8 +16,6 @@ const Holdings: React.FC<HoldingsProps> = ({
   buyToken,
   sellToken,
 }: HoldingsProps) => {
-  const { initialState } = useModel('@@initialState');
-
   const [buyTokenHoldings, setBuyTokenHoldings] = useState<number>(0);
   const [sellTokenHoldings, setSellTokenHoldings] = useState<number>(0);
 
@@ -151,7 +148,7 @@ const Holdings: React.FC<HoldingsProps> = ({
 
   useEffect(() => {
     (async () => update_holdings())();
-  }, [initialState, userAddress]);
+  }, [userAddress, previousTreasuries]);
 
   return (
     <Col className="base-content br-t br-b br-l br-r">
