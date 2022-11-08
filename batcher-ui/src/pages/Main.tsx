@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Exchange from '@/components/Exchange';
 import Holdings from '@/components/Holdings';
+import About from '@/components/About';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
@@ -233,6 +234,10 @@ const Welcome: React.FC = () => {
             buyToken={buyToken}
             sellToken={sellToken}
           />
+        );
+      case ContentType.ABOUT:
+        return (
+          <About />
         );
       default:
         return (

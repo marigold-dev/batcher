@@ -31,6 +31,12 @@ const BatcherAction: React.FC<BatcherActionProps> = ({ setContent }: BatcherActi
                 >
                   <Text underline>Redeem Holdings</Text>
                 </Button>
+                <Button
+                  className="batcher-nav-btn"
+                  onClick={() => setContent(ContentType.ABOUT)}
+                >
+                  <Text underline>About</Text>
+                </Button>
               </Space>
             </Col>
             <Col lg={3} />
