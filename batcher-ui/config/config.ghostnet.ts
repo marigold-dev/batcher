@@ -47,12 +47,13 @@ export default defineConfig({
     'https://uploads-ssl.webflow.com/616ab4741d375d1642c19027/617952f8510cfc45cbf09312_Favicon(3)(1).png',
   define: {
     REACT_APP_NETWORK_TARGET: 'GHOSTNET',
-    REACT_APP_BATCHER_URI:'https://ghostnet.batcher.marigold.dev',
-    REACT_APP_PATH_TO_BATCHER_LOGO: 'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
+    REACT_APP_BATCHER_URI: 'https://ghostnet.batcher.marigold.dev',
+    REACT_APP_PATH_TO_BATCHER_LOGO:
+      'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
     REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.ecadinfra.com',
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1G7ziTpUgXQR9QymGj348jM5B8KdZgBp1B',
-    REACT_APP_TZBTC_HASH: 'KT1MQJKqrB982V7hqDo3MjCV2aCS6Dyt5PLz',
+    REACT_APP_TZBTC_HASH: 'KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS',
     REACT_APP_USDT_HASH: 'KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm',
   },
 });
