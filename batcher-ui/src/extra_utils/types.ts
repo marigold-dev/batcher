@@ -21,6 +21,7 @@ export enum ContentType {
   SWAP = 'swap',
   ORDER_BOOK = 'order_book',
   REDEEM_HOLDING = 'redeem_holding',
+  ABOUT = 'about',
 }
 
 export enum selected_tolerance {
