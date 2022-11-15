@@ -12,7 +12,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({ setContent }: BatcherActi
       <Row>
         <Col lg={3} />
         <Col lg={18} xs={24}>
-          <Row className="batcher-action-outer pd-25">
+          <Row className="batcher-action-outer">
             <Col lg={3} />
             <Col className="batcher-action-items" lg={18} xs={24}>
               <Space align="center">
@@ -31,10 +31,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({ setContent }: BatcherActi
                 >
                   <Text underline>Redeem Holdings</Text>
                 </Button>
-                <Button
-                  className="batcher-nav-btn"
-                  onClick={() => setContent(ContentType.ABOUT)}
-                >
+                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.ABOUT)}>
                   <Text underline>About</Text>
                 </Button>
               </Space>

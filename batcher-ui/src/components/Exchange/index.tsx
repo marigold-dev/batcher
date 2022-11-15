@@ -218,7 +218,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         {wallet ? (
           <Form.Item>
             <div className="tx-align">
-              <Button className="mtb-25" type="primary" htmlType="submit" danger>
+              <Button className="swap-btn mtb-25" type="primary" htmlType="submit" danger>
                 Try to swap
               </Button>
             </div>
