@@ -50,7 +50,7 @@ export default defineConfig({
     REACT_APP_BATCHER_URI: 'https://kathmandunet.batcher.marigold.dev',
     REACT_APP_PATH_TO_BATCHER_LOGO:
       'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
-    REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.ecadinfra.com',
+    REACT_APP_TEZOS_NODE_URI: 'https://kathmandunet.tezos.marigold.dev/',
     REACT_APP_TZKT_URI_API: 'https://api.kathmandunet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1CRv12p9vk1ud5VMvrRMKmsm6iyYjbfF6j',
     REACT_APP_TZBTC_HASH: 'KT1FRyR3ohQ59N54BJMg9KjDUGh4z5hWuYab',
