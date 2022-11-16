@@ -24,20 +24,22 @@ const GlobalHeaderRight: React.FC = () => {
     className = `${styles.right}  ${styles.dark}`;
   }
 
-  const { wallet } = initialState;
+  const { userAddress } = initialState;
 
   const items: MenuProps['items'] = [
     {
       key: '1',
       label: (
-        <Typography className="p-12">{!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}</Typography>
+        <Typography className="p-12">
+          {!userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
+        </Typography>
       ),
     },
   ];
 
   const menuProps = {
     items,
-    onClick: !wallet ? () => connectWallet() : () => disconnectWallet(),
+    onClick: !userAddress ? () => connectWallet() : () => disconnectWallet(),
   };
 
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
@@ -52,7 +54,7 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const connectWallet = async () => {
-    if (!wallet) {
+    if (!userAddress) {
       const updatedWallet = new BeaconWallet({
         name: 'batcher',
         preferredNetwork: getNetworkType(),
@@ -67,11 +69,13 @@ const GlobalHeaderRight: React.FC = () => {
       Tezos.setWalletProvider(updatedWallet);
       const activeAccount = await updatedWallet.client.getActiveAccount();
       const userAddress = activeAccount ? await updatedWallet.getPKH() : null;
+      localStorage.setItem('address', userAddress);
       setInitialState({ ...initialState, wallet: updatedWallet, userAddress });
     }
   };
 
   const disconnectWallet = async () => {
+    localStorage.removeItem('address');
     setInitialState({ ...initialState, wallet: null, userAddress: null });
   };
 
@@ -89,10 +93,10 @@ const GlobalHeaderRight: React.FC = () => {
         <Button
           className="batcher-connect-wallet"
           type="primary"
-          onClick={!wallet ? connectWallet : disconnectWallet}
+          onClick={!userAddress ? connectWallet : disconnectWallet}
           danger
         >
-          {!wallet ? 'Connect Wallet' : 'Disconnect Wallet'}
+          {!userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
         </Button>
         <div onClick={scrollToTop}>
           <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
