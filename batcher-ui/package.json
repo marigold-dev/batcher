@@ -72,7 +72,6 @@
     "react-dom": "^16.0.2",
     "react-helmet-async": "^1.2.0",
     "react-hot-toast": "^2.4.0",
-    "react-meta-tags": "^1.0.1",
     "umi": "^3.5.0"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ import Main from './pages/Main';
 import { Spin, Image } from 'antd';
 import MarigoldLogo from '../img/marigold-logo.png';
 
-Spin.setDefaultIndicator(<Image src={MarigoldLogo}/>);
+Spin.setDefaultIndicator(<Image src={MarigoldLogo} />);
 
 export const initialStateConfig = {
   loading: <PageLoading />,
@@ -16,7 +16,7 @@ export const initialStateConfig = {
 export async function getInitialState(): Promise<any> {
   return {
     wallet: null,
-    userAddress: null,
+    userAddress: localStorage.getItem('address') ?? null,
     settings: defaultSettings,
   };
 }

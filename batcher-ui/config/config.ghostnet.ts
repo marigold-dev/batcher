@@ -1,9 +1,12 @@
+// @ts-nocheck
 import { defineConfig } from 'umi';
 
 import defaultSettings from './defaultSettings';
 import proxy from './proxy';
 
 const { REACT_APP_ENV } = process.env;
+
+const BATCHER_LOGO = 'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png';
 
 export default defineConfig({
   hash: true,
@@ -48,12 +51,75 @@ export default defineConfig({
   define: {
     REACT_APP_NETWORK_TARGET: 'GHOSTNET',
     REACT_APP_BATCHER_URI: 'https://ghostnet.batcher.marigold.dev',
-    REACT_APP_PATH_TO_BATCHER_LOGO:
-      'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
+    REACT_APP_PATH_TO_BATCHER_LOGO: BATCHER_LOGO,
     REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.tezos.marigold.dev',
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1G7ziTpUgXQR9QymGj348jM5B8KdZgBp1B',
     REACT_APP_TZBTC_HASH: 'KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS',
     REACT_APP_USDT_HASH: 'KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm',
   },
+  metas: [
+    {
+      property: 'og:locale',
+      content: 'en_US',
+    },
+    {
+      property: 'og:title',
+      content: 'Batcher DEX',
+    },
+    {
+      property: 'og:description',
+      content:
+        'The aim of the batch clearing dex is to enable users to deposit tokens with the aim of being swapped at a fair price with bounded slippage and almost no impermanent loss..',
+    },
+    {
+      property: 'og:url',
+      content: 'https://batcher.marigold.dev',
+    },
+    {
+      property: 'og:site_name',
+      content: 'Why is Tezos the Best?',
+    },
+    {
+      property: 'og:image',
+      content: BATCHER_LOGO,
+    },
+    {
+      property: 'og:image:secure_url',
+      content: BATCHER_LOGO,
+    },
+    {
+      property: 'og:image:width',
+      content: '400',
+    },
+    {
+      property: 'og:image:height',
+      content: '400',
+    },
+    {
+      name: 'twitter:card',
+      content: 'summary',
+    },
+    {
+      name: 'twitter:description',
+      content:
+        'The aim of the batch clearing dex is to enable users to deposit tokens with the aim of being swapped at a fair price with bounded slippage and almost no impermanent loss.',
+    },
+    {
+      name: 'twitter:title',
+      content: 'Batcher DEX',
+    },
+    {
+      name: 'twitter:site',
+      content: '@Marigold_Dev',
+    },
+    {
+      name: 'twitter:image',
+      content: BATCHER_LOGO,
+    },
+    {
+      name: 'twitter:creator',
+      content: '@Marigold_Dev',
+    },
+  ],
 });

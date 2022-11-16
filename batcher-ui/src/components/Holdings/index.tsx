@@ -147,8 +147,10 @@ const Holdings: React.FC<HoldingsProps> = ({
   };
 
   useEffect(() => {
+    console.log('Address', userAddress);
+    console.log('Previous Holdings', previousTreasuries);
     (async () => update_holdings())();
-  }, [userAddress, previousTreasuries]);
+  }, [userAddress, previousTreasuries.length]);
 
   return (
     <Col className="base-content br-t br-b br-l br-r">
