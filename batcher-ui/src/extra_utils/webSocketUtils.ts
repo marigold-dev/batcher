@@ -5,16 +5,10 @@ export const connection = new HubConnectionBuilder()
   .withUrl(REACT_APP_TZKT_URI_API + '/v1/ws')
   .build();
 
-export const connection_side = new HubConnectionBuilder()
-  .withUrl(REACT_APP_TZKT_URI_API + '/v1/ws')
-  .build();
-
 export const init = async (userAddress: string) => {
   await connection.stop();
-  await connection_side.stop();
 
   await connection.start();
-  await connection_side.start();
 
   // Subscription to tzBTC contract
   await connection.invoke('SubscribeToTokenBalances', {
@@ -23,7 +17,7 @@ export const init = async (userAddress: string) => {
   });
 
   // Subscription to USDT contract
-  await connection_side.invoke('SubscribeToTokenBalances', {
+  await connection.invoke('SubscribeToTokenBalances', {
     account: userAddress,
     contract: REACT_APP_USDT_HASH,
   });
