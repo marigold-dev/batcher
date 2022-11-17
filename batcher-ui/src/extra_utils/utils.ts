@@ -20,8 +20,9 @@ export const getSocketTokenAmount = (
   balances: Array<any>,
   userAddress: string,
   standardBalance: types.token_balance,
+  tokenAddress: string,
 ) => {
-  const item = balances.find((item) => item.account.address === userAddress);
+  const item = balances.find((item) => item.account.address === userAddress && item.token.contract.address === tokenAddress);
   return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
 };
 

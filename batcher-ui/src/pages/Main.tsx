@@ -19,7 +19,7 @@ import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
-import { connection, connection_side, init } from '@/extra_utils/webSocketUtils';
+import { connection,  init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
 
 const Welcome: React.FC = () => {
@@ -114,7 +114,8 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
       if (!userAddress) return;
 
-      const updatedBuyBalance = getSocketTokenAmount(msg.data, userAddress, buyBalance);
+      console.log('Balance', msg);
+      const updatedBuyBalance = getSocketTokenAmount(msg.data, userAddress, buyBalance, buyTokenAddress);
       if (updatedBuyBalance !== 0) {
         setBuyBalance({
           ...buyBalance,
@@ -122,20 +123,15 @@ const Welcome: React.FC = () => {
         });
       }
 
-    });
-
-    connection_side.on('token_balances', (msg: any) => {
-      if (!msg.data) return;
-      if (!userAddress) return;
-
-      const updatedSellBalance = getSocketTokenAmount(msg.data, userAddress, sellBalance);
+      const updatedSellBalance = getSocketTokenAmount(msg.data, userAddress, sellBalance, sellTokenAddress);
       if (updatedSellBalance !== 0) {
         setSellBalance({
           ...sellBalance,
-          balance: getSocketTokenAmount(msg.data, userAddress, sellBalance),
+          balance: updatedSellBalance,
         });
       }
     });
+
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
