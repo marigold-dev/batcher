@@ -19,7 +19,7 @@ import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
-import { connection, init } from '@/extra_utils/webSocketUtils';
+import { connection, connection_side, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
 
 const Welcome: React.FC = () => {
@@ -122,6 +122,12 @@ const Welcome: React.FC = () => {
         });
       }
 
+    });
+
+    connection_side.on('token_balances', (msg: any) => {
+      if (!msg.data) return;
+      if (!userAddress) return;
+
       const updatedSellBalance = getSocketTokenAmount(msg.data, userAddress, sellBalance);
       if (updatedSellBalance !== 0) {
         setSellBalance({
@@ -130,7 +136,6 @@ const Welcome: React.FC = () => {
         });
       }
     });
-
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
