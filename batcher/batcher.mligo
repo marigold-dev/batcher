@@ -26,7 +26,7 @@ type entrypoint =
   | Post of exchange_rate
   | Redeem
 
-let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate =
+let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate * bool =
   match Big_map.find_opt rate_name current_rate with
   | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
   | Some r ->
@@ -39,14 +39,43 @@ let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types
         rate = Float.inverse r.rate;
         when = r.when;
       } in
-      (inverse_rate, r)
+      (inverse_rate, r, true)
+
+(* 
+  This function gets the actual price.
+  | Inversion   | P-10bps          | P         | P+10bps          |
+  |-------------|:----------------:|----------:|-----------------:|
+  | *True*      | P * 1.0001       | P         | P / 1.0001       |
+  | *False*     | P / 1.0001       | P         | P * 1.0001       |
+*)
+let get_actual_rate (inversion : bool) (exchange_rate : exchange_rate) (tolerance : tolerance) : exchange_rate = 
+  let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4)) in 
+  let rate = exchange_rate.rate in 
+  if inversion then 
+    match tolerance with 
+    | MINUS -> 
+      let new_rate = Float.mul rate constant_number in 
+      { exchange_rate with rate = new_rate } 
+    | EXACT -> exchange_rate
+    | PLUS -> 
+      let new_rate = Float.div rate constant_number in 
+      { exchange_rate with rate = new_rate } 
+  else 
+    match tolerance with 
+    | MINUS ->
+      let new_rate = Float.div rate constant_number in 
+      { exchange_rate with rate = new_rate }
+    | EXACT -> exchange_rate
+    | PLUS ->
+      let new_rate = Float.mul rate constant_number in 
+      { exchange_rate with rate = new_rate }
 
 let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : (inverse_exchange_rate * Batch.t) =
-  let (inverse_rate, rate) =
+  let (inverse_rate, rate, inversion) =
     if Big_map.mem (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current then
       match Big_map.find_opt (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current with
       | None -> failwith Pricing.PriceErrors.no_rate_available_for_swap
-      | Some r -> (r, r)
+      | Some r -> (r, r, false)
     else if Big_map.mem (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current then
       get_inverse_exchange_rate (Types.Utils.get_inverse_rate_name_from_pair batch.pair) storage.rates_current
     else
@@ -54,7 +83,8 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
   in
   let clearing = Clearing.compute_clearing_prices inverse_rate storage in
   let batch = Batch.finalize batch current_time clearing rate in
-  (inverse_rate, batch)
+  let updated_rate = get_actual_rate inversion inverse_rate clearing.clearing_tolerance in 
+  (updated_rate, batch)
 
 let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
@@ -67,9 +97,9 @@ let tick_current_batches (storage : storage) : storage =
           if Batch.should_be_closed current_batch current_time then
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
-            let (inverse_rate, finalized_batch) = finalize current_batch storage current_time in
+            let (rate, finalized_batch) = finalize current_batch storage current_time in
             let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
-            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing inverse_rate finalized_batch.treasury in
+            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing rate finalized_batch.treasury in
             {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
             current_batch
