@@ -16,7 +16,7 @@ export const initialStateConfig = {
 export async function getInitialState(): Promise<any> {
   return {
     wallet: null,
-    userAddress: localStorage.getItem('address') ?? null,
+    userAddress: null,
     settings: defaultSettings,
   };
 }
