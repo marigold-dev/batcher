@@ -1,10 +1,10 @@
 #import "types.mligo" "CommonTypes"
 #import "../math_lib/lib/float.mligo" "Float"
+#import "constants.mligo" "Constants"
 
 module Types = CommonTypes.Types
 
-let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4))
-
+let constant_number = Constants.constant_number
 
 (* Get the number with 0 decimal accuracy *)
 let get_rounded_number (number : Float.t) : nat = 

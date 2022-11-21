@@ -41,36 +41,11 @@ let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types
       } in
       (inverse_rate, r, true)
 
-(* 
-  This function gets the actual price.
-  | Inversion   | P-10bps          | P         | P+10bps          |
-  |-------------|:----------------:|----------:|-----------------:|
-  | *True*      | P * 1.0001       | P         | P / 1.0001       |
-  | *False*     | P / 1.0001       | P         | P * 1.0001       |
-*)
-let get_actual_rate (inversion : bool) (exchange_rate : exchange_rate) (tolerance : tolerance) : exchange_rate = 
-  let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4)) in 
-  let rate = exchange_rate.rate in 
-  if inversion then 
-    match tolerance with 
-    | MINUS -> 
-      let new_rate = Float.mul rate constant_number in 
-      { exchange_rate with rate = new_rate } 
-    | EXACT -> exchange_rate
-    | PLUS -> 
-      let new_rate = Float.div rate constant_number in 
-      { exchange_rate with rate = new_rate } 
-  else 
-    match tolerance with 
-    | MINUS ->
-      let new_rate = Float.div rate constant_number in 
-      { exchange_rate with rate = new_rate }
-    | EXACT -> exchange_rate
-    | PLUS ->
-      let new_rate = Float.mul rate constant_number in 
-      { exchange_rate with rate = new_rate }
-
-let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : (inverse_exchange_rate * Batch.t) =
+let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : (inverse_exchange_rate * Batch.t * bool) =
+  (* 
+    If the inversion is true, the current batch is the opposite of the exchange rates.
+    If the inversion is false, the current batch is the same as the exchange rates.
+  *)
   let (inverse_rate, rate, inversion) =
     if Big_map.mem (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current then
       match Big_map.find_opt (Types.Utils.get_rate_name_from_pair batch.pair) storage.rates_current with
@@ -83,8 +58,7 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
   in
   let clearing = Clearing.compute_clearing_prices inverse_rate storage in
   let batch = Batch.finalize batch current_time clearing rate in
-  let updated_rate = get_actual_rate inversion inverse_rate clearing.clearing_tolerance in 
-  (updated_rate, batch)
+  (inverse_rate, batch, inversion)
 
 let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
@@ -97,9 +71,9 @@ let tick_current_batches (storage : storage) : storage =
           if Batch.should_be_closed current_batch current_time then
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
-            let (rate, finalized_batch) = finalize current_batch storage current_time in
+            let (inverse_rate, finalized_batch, inversion) = finalize current_batch storage current_time in
             let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
-            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing rate finalized_batch.treasury in
+            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing inverse_rate inversion finalized_batch.treasury in
             {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
           else
             current_batch

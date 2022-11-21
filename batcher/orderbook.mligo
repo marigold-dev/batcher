@@ -4,6 +4,7 @@
 #import "math.mligo" "Math"
 #import "../math_lib/lib/float.mligo" "Float"
 #import "treasury.mligo" "Treasury"
+#import "constants.mligo" "Constants"
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
@@ -24,13 +25,89 @@ type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
+let constant_number = Constants.constant_number
+
+(* 
+  The actual price when the sides aren't the same.
+  | Inversion   | P-10bps          | P         | P+10bps          |
+  |-------------|:----------------:|----------:|-----------------:|
+  | *True*      | P * 1.0001       | P         | P / 1.0001       |
+*)
+let compute_true_inversion_equivalent_token 
+  (order : order) 
+  (float_amount : Float.t) 
+  (exchange_rate : exchange_rate) 
+  (tolerance : tolerance) : nat = 
+    if order.swap.from.token = exchange_rate.swap.from.token then 
+      match tolerance with 
+      | MINUS -> 
+        let equivalent_amount = Float.mul (Float.mul float_amount exchange_rate.rate) constant_number in 
+        Math.get_rounded_number equivalent_amount
+      | EXACT -> 
+        let equivalent_amount = Float.mul float_amount exchange_rate.rate in 
+        Math.get_rounded_number equivalent_amount
+      | PLUS ->
+        let equivalent_amount = Float.div (Float.mul float_amount exchange_rate.rate) constant_number in 
+        Math.get_rounded_number equivalent_amount
+    else 
+      match tolerance with 
+      | MINUS -> 
+        let equivalent_amount = Float.div float_amount (Float.mul exchange_rate.rate constant_number) in 
+        Math.get_rounded_number equivalent_amount
+      | EXACT -> 
+        let equivalent_amount = Float.div float_amount exchange_rate.rate in 
+        Math.get_rounded_number equivalent_amount
+      | PLUS ->
+        let equivalent_amount = Float.div (Float.mul float_amount constant_number) exchange_rate.rate in 
+        Math.get_rounded_number equivalent_amount
+
+
+(* 
+  The actual price when the sides are the same.
+  | Inversion   | P-10bps          | P         | P+10bps          |
+  |-------------|:----------------:|----------:|-----------------:|
+  | *False*     | P / 1.0001       | P         | P * 1.0001       |
+*)
+let compute_false_inversion_equivalent_token 
+  (order : order) 
+  (float_amount : Float.t) 
+  (exchange_rate : exchange_rate) 
+  (tolerance : tolerance) : nat = 
+    if order.swap.from.token = exchange_rate.swap.from.token then  
+      match tolerance with 
+      | MINUS -> 
+        let equivalent_amount = Float.div (Float.mul float_amount exchange_rate.rate) constant_number in 
+        Math.get_rounded_number equivalent_amount
+      | EXACT -> 
+        let equivalent_amount = Float.mul float_amount exchange_rate.rate in 
+        Math.get_rounded_number equivalent_amount
+      | PLUS ->
+        let equivalent_amount = Float.mul (Float.mul float_amount exchange_rate.rate) constant_number in 
+        Math.get_rounded_number equivalent_amount
+    else 
+      match tolerance with 
+      | MINUS -> 
+        let equivalent_amount = Float.div (Float.mul float_amount constant_number) exchange_rate.rate in 
+        Math.get_rounded_number equivalent_amount
+      | EXACT -> 
+        let equivalent_amount = Float.div float_amount exchange_rate.rate in
+        Math.get_rounded_number equivalent_amount 
+      | PLUS ->
+        let equivalent_amount = Float.div float_amount (Float.mul exchange_rate.rate constant_number) in 
+        Math.get_rounded_number equivalent_amount
+
+
 [@inline]
-let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat = 
+let compute_equivalent_token 
+  (order : order) 
+  (exchange_rate : exchange_rate) 
+  (tolerance : tolerance)
+  (inversion : bool) : nat = 
   let float_amount = Float.new (int (order.swap.from.amount)) 0 in 
-  if order.swap.from.token = exchange_rate.swap.from.token then 
-    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate) 
+  if inversion then 
+    compute_true_inversion_equivalent_token order float_amount exchange_rate tolerance
   else 
-    Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
+    compute_false_inversion_equivalent_token order float_amount exchange_rate tolerance
 
 [@inline]
 let make_new_order (order : order) (amt: nat) : order =
@@ -107,13 +184,15 @@ let match_orders
   (ord_1 : order)
   (ord_2 : order)
   (exchange_rate : CommonTypes.Types.exchange_rate)
-  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-  let equivalent_ord_1_amount : nat = compute_equivalent_token ord_1 exchange_rate in 
+  (treasury : CommonTypes.Types.treasury)
+  (tolerance : tolerance)
+  (inversion : bool) : treasury * matching * matching =
+  let equivalent_ord_1_amount : nat = compute_equivalent_token ord_1 exchange_rate tolerance inversion in 
   let match_calculation = 
     match get_match_type equivalent_ord_1_amount ord_2 with
     | RIGHT_PARTIAL ->  right_partial_match equivalent_ord_1_amount ord_1 ord_2 treasury
     | LEFT_PARTIAL -> 
-      let equivalent_ord_2_amount : nat = compute_equivalent_token ord_2 exchange_rate in 
+      let equivalent_ord_2_amount : nat = compute_equivalent_token ord_2 exchange_rate tolerance inversion in 
       left_partial_match equivalent_ord_2_amount ord_1 ord_2 treasury
     | EXACT_MATCH -> 
       total_match equivalent_ord_1_amount ord_1 ord_2 treasury
@@ -175,6 +254,7 @@ let orders_execution
   (orderbook : t)
   (clearing : clearing)
   (exchange_rate : CommonTypes.Types.exchange_rate)
+  (inversion : bool)
   (treasury : CommonTypes.Types.treasury ): treasury * t =
   let rec aux
     (t, bids, asks, rem_bids, rem_asks :
@@ -188,7 +268,7 @@ let orders_execution
    | tr, [], ask::asks ->
      aux (tr, ([] : order list),asks,rem_bids,(ask::rem_asks))
    | tr, bid::bids, ask::asks ->
-     (match (match_orders bid ask exchange_rate tr) with
+     (match (match_orders bid ask exchange_rate tr clearing.clearing_tolerance inversion) with
       | nt, Total, Partial new_ask ->
         aux (nt,bids,(new_ask::asks),rem_bids,rem_asks)
       | nt, Partial new_bid, Total ->
