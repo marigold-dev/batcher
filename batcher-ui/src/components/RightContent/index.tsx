@@ -69,13 +69,11 @@ const GlobalHeaderRight: React.FC = () => {
       Tezos.setWalletProvider(updatedWallet);
       const activeAccount = await updatedWallet.client.getActiveAccount();
       const userAddress = activeAccount ? await updatedWallet.getPKH() : null;
-      localStorage.setItem('address', userAddress);
       setInitialState({ ...initialState, wallet: updatedWallet, userAddress });
     }
   };
 
   const disconnectWallet = async () => {
-    localStorage.removeItem('address');
     setInitialState({ ...initialState, wallet: null, userAddress: null });
   };
 
