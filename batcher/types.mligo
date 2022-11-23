@@ -76,10 +76,18 @@ module Types = struct
     [@layout:comb]
     NOT_OPEN | OPEN | CLOSED | FINALIZED
 
+  type prorata_equivalence = {
+    buy_side_actual_volume: nat;
+    buy_side_actual_volume_equivalence: nat;
+    sell_side_actual_volume: nat;
+    sell_side_actual_volume_equivalence: nat
+  }
+
   type clearing = {
     [@layout:comb]
     clearing_volumes : (tolerance, nat) map;
     clearing_tolerance : tolerance;
+    prorata_equivalence: prorata_equivalence;
   }
 
   type treasury_item_status =
@@ -138,6 +146,16 @@ module Types = struct
 end
 
 module Utils = struct
+
+
+  let empty_prorata_equivalence : Types.prorata_equivalence = {
+    buy_side_actual_volume = 0n;
+    buy_side_actual_volume_equivalence = 0n;
+    sell_side_actual_volume = 0n;
+    sell_side_actual_volume_equivalence = 0n;
+  }
+
+
   let get_rate_name_from_swap (s : Types.swap) : string =
     let base_name = s.from.token.name in
     let quote_name = s.to.name in
