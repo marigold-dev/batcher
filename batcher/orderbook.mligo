@@ -165,8 +165,25 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
   in
   let new_bids = filter_orders orderbook.bids f_bids in
   let new_asks = filter_orders orderbook.asks f_asks in
-
   {orderbook with bids = new_bids; asks = new_asks}
+
+let sum_order_amounts
+  (orders : order list): nat =
+  let amounts : nat list = List.map (fun (o:order) -> o.swap.from.amount) (orders) in
+  let sum (acc, i : nat * nat) : nat = acc + i in
+  List.fold sum amounts 0
+
+(*
+  This function builds the order equivalence for the pro-rata redeemption.
+*)
+let build_equivalence
+  (bids: order list)
+  (asks: order list)
+  (clearing : clearing)
+  (exchange_rate : CommonTypes.Types.exchange_rate) : clearing =
+  let bid_amounts = sum_order_amounts bids in
+  let ask_amounts = sum_order_amounts asks in
+  clearing
 
 (*
   rem = remaining
