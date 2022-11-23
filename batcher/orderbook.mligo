@@ -25,11 +25,11 @@ type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
 [@inline]
-let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat = 
-  let float_amount = Float.new (int (order.swap.from.amount)) 0 in 
-  if order.swap.from.token = exchange_rate.swap.from.token then 
-    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate) 
-  else 
+let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat =
+  let float_amount = Float.new (int (order.swap.from.amount)) 0 in
+  if order.swap.from.token = exchange_rate.swap.from.token then
+    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate)
+  else
     Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
 
 [@inline]
@@ -62,8 +62,8 @@ let right_partial_match
     let ord_2_remaining_token = ord_2.swap.from.amount - equivalent_ord_1_amount in
     (*  We need to create a new token amount that can be swapped for the partial amount *)
     let new_token_amount_2 = { ord_2.swap.from with amount = equivalent_ord_1_amount } in
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader new_token_amount_2 in
+    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from false in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader new_token_amount_2 false in
     let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
     updated_treasury, Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
 
@@ -79,10 +79,10 @@ let left_partial_match
   (ord_1 : order)
   (ord_2 : order)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-    let ord_1_remaining_token = ord_1.swap.from.amount - equivalent_ord_2_amount in 
-    let new_token_amount_1 = { ord_1.swap.from with amount = equivalent_ord_2_amount } in 
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader new_token_amount_1 in 
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in 
+    let ord_1_remaining_token = ord_1.swap.from.amount - equivalent_ord_2_amount in
+    let new_token_amount_1 = { ord_1.swap.from with amount = equivalent_ord_2_amount } in
+    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader new_token_amount_1 false in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from false in
     let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
     updated_treasury, Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
 
@@ -91,8 +91,8 @@ let total_match
   (ord_1 : order)
   (ord_2 : order)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from in
+    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from false in
+    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from false in
     let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
     updated_treasury, Total, Total
 
@@ -108,18 +108,18 @@ let match_orders
   (ord_2 : order)
   (exchange_rate : CommonTypes.Types.exchange_rate)
   (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-  let equivalent_ord_1_amount : nat = compute_equivalent_token ord_1 exchange_rate in 
-  let match_calculation = 
+  let equivalent_ord_1_amount : nat = compute_equivalent_token ord_1 exchange_rate in
+  let match_calculation =
     match get_match_type equivalent_ord_1_amount ord_2 with
     | RIGHT_PARTIAL ->  right_partial_match equivalent_ord_1_amount ord_1 ord_2 treasury
-    | LEFT_PARTIAL -> 
-      let equivalent_ord_2_amount : nat = compute_equivalent_token ord_2 exchange_rate in 
+    | LEFT_PARTIAL ->
+      let equivalent_ord_2_amount : nat = compute_equivalent_token ord_2 exchange_rate in
       left_partial_match equivalent_ord_2_amount ord_1 ord_2 treasury
-    | EXACT_MATCH -> 
+    | EXACT_MATCH ->
       total_match equivalent_ord_1_amount ord_1 ord_2 treasury
-  in 
+  in
   match_calculation
-    
+
 
 [@inline]
 (*This function push orders auxording to a pro-rata "model"*)

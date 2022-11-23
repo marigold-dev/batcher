@@ -37,6 +37,7 @@ module Types = struct
     [@layout:comb]
     holder: address;
     token_amount : token_amount;
+    redeemed: bool;
   }
 
   type swap = {
@@ -148,7 +149,7 @@ module Utils = struct
     let quote_name = quote.name in
     base_name ^ "/" ^ quote_name
 
-  let get_inverse_rate_name_from_pair (s : Types.token * Types.token) : string = 
+  let get_inverse_rate_name_from_pair (s : Types.token * Types.token) : string =
     let (base, quote) = s in
     let quote_name = quote.name in
     let base_name = base.name in
@@ -194,22 +195,24 @@ module Utils = struct
   (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding
     (holder : address)
-    (token_amount : Types.token_amount) : Types.token_holding =
+    (token_amount : Types.token_amount)
+    (redeemed : bool): Types.token_holding =
     {
       holder =  holder;
       token_amount = token_amount;
+      redeemed = redeemed;
     }
 
 
   let nat_to_side
   (order_side : nat) : Types.side =
     if order_side = 0n then BUY
-    else 
+    else
       if order_side = 1n then SELL
       else failwith Errors.unable_to_parse_side_from_external_order
 
   let nat_to_tolerance (tolerance : nat) : Types.tolerance =
-    if tolerance = 0n then MINUS 
+    if tolerance = 0n then MINUS
     else if tolerance = 1n then EXACT
     else if tolerance = 2n then PLUS
     else failwith Errors.unable_to_parse_tolerance_from_external_order
