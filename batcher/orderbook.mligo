@@ -25,6 +25,14 @@ type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
 
 [@inline]
+let compute_equivalent_amount (amount : nat) (exchange_rate : exchange_rate) (invert: bool) : nat =
+  let float_amount = Float.new (int (amount)) 0 in
+  if invert then
+    Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
+  else
+    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate)
+
+[@inline]
 let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat =
   let float_amount = Float.new (int (order.swap.from.amount)) 0 in
   if order.swap.from.token = exchange_rate.swap.from.token then
@@ -171,7 +179,7 @@ let sum_order_amounts
   (orders : order list): nat =
   let amounts : nat list = List.map (fun (o:order) -> o.swap.from.amount) (orders) in
   let sum (acc, i : nat * nat) : nat = acc + i in
-  List.fold sum amounts 0
+  List.fold sum amounts 0n
 
 (*
   This function builds the order equivalence for the pro-rata redeemption.
@@ -183,7 +191,15 @@ let build_equivalence
   (exchange_rate : CommonTypes.Types.exchange_rate) : clearing =
   let bid_amounts = sum_order_amounts bids in
   let ask_amounts = sum_order_amounts asks in
-  clearing
+  let bid_equivalent_amounts = compute_equivalent_amount bid_amounts exchange_rate false in
+  let ask_equivalent_amounts = compute_equivalent_amount ask_amounts exchange_rate true in
+  let equivalence = {
+    buy_side_actual_volume = bid_amounts;
+    buy_side_actual_volume_equivalence = bid_equivalent_amounts;
+    sell_side_actual_volume = ask_amounts;
+    sell_side_actual_volume_equivalence = ask_equivalent_amounts;
+  } in
+  { clearing with prorata_equivalence= equivalence }
 
 (*
   rem = remaining
