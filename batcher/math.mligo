@@ -57,11 +57,11 @@ let get_clearing_price (rate : Float.t) (buy_side : Types.buy_side) (sell_side :
   let rounded_cp_exact = get_rounded_number cp_exact in
   let rounded_cp_plus = get_rounded_number cp_plus in
   let clearing_volumes =
-    Map.literal [
-      (MINUS, rounded_cp_minus);
-      (EXACT, rounded_cp_exact);
-      (PLUS, rounded_cp_plus)
-    ]
+    {
+      minus = rounded_cp_minus;
+      exact = rounded_cp_exact;
+      plus = rounded_cp_plus
+    }
   in
   let clearing_tolerance = get_clearing_tolerance cp_minus cp_exact cp_plus in
   { clearing_volumes = clearing_volumes; clearing_tolerance = clearing_tolerance; prorata_equivalence = CommonTypes.Utils.empty_prorata_equivalence; }

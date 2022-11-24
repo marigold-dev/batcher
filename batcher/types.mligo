@@ -77,15 +77,24 @@ module Types = struct
     NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type prorata_equivalence = {
+    [@layout:comb]
     buy_side_actual_volume: nat;
     buy_side_actual_volume_equivalence: nat;
     sell_side_actual_volume: nat;
     sell_side_actual_volume_equivalence: nat
   }
 
+  type clearing_volumes = {
+    [@layout:comb]
+    minus: nat;
+    exact: nat;
+    plus: nat;
+  }
+
+
   type clearing = {
     [@layout:comb]
-    clearing_volumes : (tolerance, nat) map;
+    clearing_volumes : clearing_volumes;
     clearing_tolerance : tolerance;
     prorata_equivalence: prorata_equivalence;
   }

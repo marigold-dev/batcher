@@ -66,11 +66,10 @@ let push_order (order : order) (orderbook : t) : t =
 *)
 [@inline]
 let filter_orders (orders: order list) (f : order -> bool) : order list =
-  let aux (new_odb, order : order list * order) : order list =
-    if f order then order :: new_odb
+  let aux (ord_acc, order : order list * order) : order list =
+    if f order then order :: ord_acc
     else
-     (* call redeem for this order *)
-      new_odb
+      ord_acc
   in
   List.fold_left aux ([] : order list) orders
 
