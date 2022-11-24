@@ -110,10 +110,10 @@ let get_clearing_rate
   match clearing.clearing_tolerance with
   | EXACT -> exchange_rate
   | PLUS -> let val : Float.t = exchange_rate.rate in
-            let rate = Math.get_rounded_number (Float.mul val Constants.ten_bips_constant) in
+            let rate =  (Float.mul val Constants.ten_bips_constant) in
             { exchange_rate with rate = rate}
   | MINUS -> let val = exchange_rate.rate in
-             let rate = Math.get_rounded_number (Float.div val Constants.ten_bips_constant) in
+             let rate = (Float.div val Constants.ten_bips_constant) in
              { exchange_rate with rate = rate}
 
 
@@ -136,7 +136,7 @@ let build_equivalence
     sell_side_actual_volume = ask_amounts;
     sell_side_actual_volume_equivalence = ask_equivalent_amounts;
   } in
-  { clearing with prorata_equivalence= equivalence }
+  { clearing with prorata_equivalence = equivalence; clearing_rate = clearing_rate }
 
 
 (*

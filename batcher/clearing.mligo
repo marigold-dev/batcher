@@ -59,6 +59,6 @@ let compute_clearing_prices
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in
   let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in
 
-  let clearing = Math.get_clearing_price rate.rate buy_side sell_side in
+  let clearing = Math.get_clearing_price rate buy_side sell_side in
   let with_equiv = Order.get_equivalence orderbook clearing rate in
   with_equiv

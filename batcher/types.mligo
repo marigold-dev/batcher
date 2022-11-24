@@ -97,6 +97,7 @@ module Types = struct
     clearing_volumes : clearing_volumes;
     clearing_tolerance : tolerance;
     prorata_equivalence: prorata_equivalence;
+    clearing_rate: exchange_rate;
   }
 
   type treasury_item_status =
