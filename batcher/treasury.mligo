@@ -304,10 +304,3 @@ let redeem
       let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
       (ops, { storage with batches = updated_batches })
 
-let swap_old
-    (this : token_holding)
-    (with_that : token_holding)
-    (treasury : treasury) : treasury =
-    let this_holding = Utils.has_sufficient_holding this treasury in
-    let that_holding = Utils.has_sufficient_holding with_that treasury in
-    Utils.atomic_swap this this_holding with_that that_holding treasury
