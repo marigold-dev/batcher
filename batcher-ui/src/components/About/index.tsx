@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Space, Typography, Col, Row, Table } from 'antd';
+import { Button, Space, Typography, Col, Row, Table, Anchor } from 'antd';
 import '@/global.less';
 const { Text, Paragraph } = Typography;
-
+const { Link } = Anchor;
 const About: React.FC = () => {
   return (
     <div>
@@ -14,6 +14,10 @@ For V1, the <Text italic>deposit window</Text> will be 10 mins and then a wait t
         </Paragraph>
         <Paragraph strong>
 Note: Batcher can deal with token value imbalance which means that holders of <Text italic>tzBTC</Text> and holders of <Text italic>USDT</Text> can swap different amounts as long as the market of <Text italic>orders</Text> is equivalent on both sides.
+     </Paragraph>
+     <Paragraph strong>
+
+      <Link href="https://www.youtube.com/watch?v=P1Ohe4vCPRI&list=PLtUU5fjvCugpap87nNp95txM23m2DNz_H" title="Batcher Video Playlist" />
      </Paragraph>
      </Space>
     </div>
