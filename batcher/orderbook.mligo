@@ -47,87 +47,6 @@ let make_new_order (order : order) (amt: nat) : order =
   let new_swap = {order.swap with from = new_token_amount} in
   {order with swap = new_swap}
 
-[@inline]
-let get_match_type (equivalent_ord_1_amount : nat) (ord_2 : order)  : match_calculation_type =
-    if (ord_2.swap.from.amount > equivalent_ord_1_amount) then RIGHT_PARTIAL else
-      if (ord_2.swap.from.amount < equivalent_ord_1_amount) then
-        LEFT_PARTIAL
-      else
-        EXACT_MATCH
-
-(*
-  For a right partial match we need to find the correct amount of ord_2 to swap that is equivalent
-  to the amount in ord_1 and pass that to the treasury to be swapped.  In addition, we need to understand
-  the remaining amount from order 2 that will be be left in the order book to be matched in the next
-  iteration of matching
-*)
-let right_partial_match
-  (equivalent_ord_1_amount : nat)
-  (ord_1 : order)
-  (ord_2 : order)
-  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-    (* Here we get the amount that is remaining after the swap is done that will remain to be matched to another swap *)
-    let ord_2_remaining_token = ord_2.swap.from.amount - equivalent_ord_1_amount in
-    (*  We need to create a new token amount that can be swapped for the partial amount *)
-    let new_token_amount_2 = { ord_2.swap.from with amount = equivalent_ord_1_amount } in
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from false in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader new_token_amount_2 false in
-    let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
-    updated_treasury, Total, Partial (make_new_order ord_2 (abs ord_2_remaining_token) )
-
-
-(*
-  For a left partial match we need to find the correct amount of ord_1 to swap that is equivalent
-  to the amount in ord_2 and pass that to the treasury to be swapped.  In addition, we need to understand
-  the remaining amount from order 1 that will be be left in the order book to be matched in the next
-  iteration of matching
-*)
-let left_partial_match
-  (equivalent_ord_2_amount : nat)
-  (ord_1 : order)
-  (ord_2 : order)
-  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-    let ord_1_remaining_token = ord_1.swap.from.amount - equivalent_ord_2_amount in
-    let new_token_amount_1 = { ord_1.swap.from with amount = equivalent_ord_2_amount } in
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader new_token_amount_1 false in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from false in
-    let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
-    updated_treasury, Partial (make_new_order ord_1 (abs ord_1_remaining_token)), Total
-
-let total_match
-  (_equivalent_ord_1_amount : nat)
-  (ord_1 : order)
-  (ord_2 : order)
-  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-    let token_holding_1 = CommonTypes.Utils.token_amount_to_token_holding ord_1.trader ord_1.swap.from false in
-    let token_holding_2 = CommonTypes.Utils.token_amount_to_token_holding ord_2.trader ord_2.swap.from false in
-    let updated_treasury = Treasury.swap (token_holding_1) (token_holding_2) treasury in
-    updated_treasury, Total, Total
-
-
-
-(*
-  Here we actually match order, and call transfer function when necessary
-  it is mandatory that one of the two orders will be totally executed,
-  and the other one, partially.
-*)
-let match_orders
-  (ord_1 : order)
-  (ord_2 : order)
-  (exchange_rate : CommonTypes.Types.exchange_rate)
-  (treasury : CommonTypes.Types.treasury) : treasury * matching * matching =
-  let equivalent_ord_1_amount : nat = compute_equivalent_token ord_1 exchange_rate in
-  let match_calculation =
-    match get_match_type equivalent_ord_1_amount ord_2 with
-    | RIGHT_PARTIAL ->  right_partial_match equivalent_ord_1_amount ord_1 ord_2 treasury
-    | LEFT_PARTIAL ->
-      let equivalent_ord_2_amount : nat = compute_equivalent_token ord_2 exchange_rate in
-      left_partial_match equivalent_ord_2_amount ord_1 ord_2 treasury
-    | EXACT_MATCH ->
-      total_match equivalent_ord_1_amount ord_1 ord_2 treasury
-  in
-  match_calculation
-
 
 [@inline]
 (*This function push orders auxording to a pro-rata "model"*)
@@ -201,37 +120,28 @@ let build_equivalence
   } in
   { clearing with prorata_equivalence= equivalence }
 
+
 (*
-  rem = remaining
+  filter the oderbook based on the clearing
 *)
-let orders_execution
+let filter
   (orderbook : t)
-  (clearing : clearing)
-  (exchange_rate : CommonTypes.Types.exchange_rate)
-  (treasury : CommonTypes.Types.treasury ): treasury * t =
-  let rec aux
-    (t, bids, asks, rem_bids, rem_asks :
-     treasury * order list * order list * order list * order list)
-    : treasury * order list * order list
-  =
-  match t, bids, asks with
-   | tr, [],[] -> tr, rem_bids,rem_asks
-   | tr, bid::bids, [] ->
-     aux (tr, bids,([] : order list),(bid::rem_bids),rem_asks)
-   | tr, [], ask::asks ->
-     aux (tr, ([] : order list),asks,rem_bids,(ask::rem_asks))
-   | tr, bid::bids, ask::asks ->
-     (match (match_orders bid ask exchange_rate tr) with
-      | nt, Total, Partial new_ask ->
-        aux (nt,bids,(new_ask::asks),rem_bids,rem_asks)
-      | nt, Partial new_bid, Total ->
-        aux (nt, (new_bid::bids),asks,rem_bids,rem_asks)
-      | nt, _, _ -> aux (nt,bids,asks,rem_bids,rem_asks))
-  in
+  (clearing : clearing) :  t =
   let filtered_orderbook =
     trigger_filtering_orders orderbook clearing in
   let bids = filtered_orderbook.bids in
   let asks = filtered_orderbook.asks in
-  let (ft, rem_bids, rem_asks) =
-    aux (treasury, bids, asks, ([] : order list ),([] : order list)) in
-  ft, {orderbook with bids = rem_bids; asks = rem_asks}
+  {orderbook with bids = bids; asks = asks}
+
+(*
+  get the equivalence object based on the filtered orderbook
+*)
+let get_equivalence
+  (orderbook : t)
+  (clearing : clearing)
+  (exchange_rate : CommonTypes.Types.exchange_rate) : clearing =
+  let filtered_orderbook = filter orderbook clearing in
+  build_equivalence filtered_orderbook.bids filtered_orderbook.asks clearing exchange_rate
+
+
+

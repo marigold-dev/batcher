@@ -52,7 +52,7 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
     else
       failwith Pricing.PriceErrors.no_rate_available_for_swap
   in
-  let clearing = Clearing.compute_clearing_prices inverse_rate storage in
+  let clearing = Clearing.compute_clearing_prices inverse_rate batch in
   let batch = Batch.finalize batch current_time clearing rate in
   (inverse_rate, batch)
 
@@ -63,14 +63,12 @@ let tick_current_batches (storage : storage) : storage =
       | None -> batches
       | Some current_batch ->
         let current_time = Tezos.get_now () in
-        let updated_batch =
+        let updated_batch : Batch.t =
           if Batch.should_be_closed current_batch current_time then
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
-            let (inverse_rate, finalized_batch) = finalize current_batch storage current_time in
-            let cleared_infos = Batch.get_status_when_its_cleared finalized_batch in
-            let updated_treasury, new_orderbook = Orderbook.orders_execution current_batch.orderbook cleared_infos.clearing inverse_rate finalized_batch.treasury in
-            {finalized_batch with orderbook = new_orderbook; treasury = updated_treasury}
+            let (_inverse_rate, finalized_batch) = finalize current_batch storage current_time in
+            finalized_batch
           else
             current_batch
         in

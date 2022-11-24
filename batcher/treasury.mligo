@@ -304,7 +304,7 @@ let redeem
       let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
       (ops, { storage with batches = updated_batches })
 
-let swap
+let swap_old
     (this : token_holding)
     (with_that : token_holding)
     (treasury : treasury) : treasury =
