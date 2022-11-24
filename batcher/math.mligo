@@ -1,9 +1,10 @@
 #import "types.mligo" "CommonTypes"
+#import "constants.mligo" "Constants"
 #import "../math_lib/lib/float.mligo" "Float"
 
-module Types = CommonTypes.Types
 
-let constant_number = Float.add (Float.new 1 0) (Float.new 1 (-4))
+
+module Types = CommonTypes.Types
 
 
 (* Get the number with 0 decimal accuracy *)
@@ -29,7 +30,7 @@ let get_cp_minus (rate : Float.t) (buy_side : Types.buy_side) (sell_side : Types
   let (buy_minus_token, buy_exact_token, buy_plus_token) = buy_side in
   let (sell_minus_token, _, _) = sell_side in
   let left_number = Float.new (buy_minus_token + buy_exact_token + buy_plus_token) 0 in
-  let right_number = Float.div (Float.mul (Float.new sell_minus_token 0) constant_number) rate in
+  let right_number = Float.div (Float.mul (Float.new sell_minus_token 0) Constants.ten_bips_constant) rate in
   let min_number = get_min_number left_number right_number in
   min_number
 
@@ -45,7 +46,7 @@ let get_cp_plus (rate : Float.t) (buy_side : Types.buy_side) (sell_side : Types.
   let (_, _, buy_plus_token) = buy_side in
   let (sell_minus_token, sell_exact_token, sell_plus_token) = sell_side in
   let left_number = Float.new buy_plus_token 0 in
-  let right_number = Float.div (Float.new (sell_minus_token + sell_exact_token + sell_plus_token) 0) (Float.mul constant_number rate) in
+  let right_number = Float.div (Float.new (sell_minus_token + sell_exact_token + sell_plus_token) 0) (Float.mul Constants.ten_bips_constant rate) in
   let min_number = get_min_number left_number right_number in
   min_number
 

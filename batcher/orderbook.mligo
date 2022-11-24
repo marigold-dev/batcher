@@ -4,6 +4,7 @@
 #import "math.mligo" "Math"
 #import "../math_lib/lib/float.mligo" "Float"
 #import "treasury.mligo" "Treasury"
+#import "constants.mligo" "Constants"
 
 type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
@@ -99,6 +100,23 @@ let sum_order_amounts
   let sum (acc, i : nat * nat) : nat = acc + i in
   List.fold sum amounts 0n
 
+
+(*
+ Get the correct exchange rate based on the clearing price
+*)
+let get_clearing_rate
+  (clearing: clearing)
+  (exchange_rate: exchange_rate) : exchange_rate =
+  match clearing.clearing_tolerance with
+  | EXACT -> exchange_rate
+  | PLUS -> let val : Float.t = exchange_rate.rate in
+            let rate = Math.get_rounded_number (Float.mul val Constants.ten_bips_constant) in
+            { exchange_rate with rate = rate}
+  | MINUS -> let val = exchange_rate.rate in
+             let rate = Math.get_rounded_number (Float.div val Constants.ten_bips_constant) in
+             { exchange_rate with rate = rate}
+
+
 (*
   This function builds the order equivalence for the pro-rata redeemption.
 *)
@@ -107,10 +125,11 @@ let build_equivalence
   (asks: order list)
   (clearing : clearing)
   (exchange_rate : CommonTypes.Types.exchange_rate) : clearing =
+  let clearing_rate = get_clearing_rate clearing exchange_rate in
   let bid_amounts = sum_order_amounts bids in
   let ask_amounts = sum_order_amounts asks in
-  let bid_equivalent_amounts = compute_equivalent_amount bid_amounts exchange_rate false in
-  let ask_equivalent_amounts = compute_equivalent_amount ask_amounts exchange_rate true in
+  let bid_equivalent_amounts = compute_equivalent_amount bid_amounts clearing_rate false in
+  let ask_equivalent_amounts = compute_equivalent_amount ask_amounts clearing_rate true in
   let equivalence = {
     buy_side_actual_volume = bid_amounts;
     buy_side_actual_volume_equivalence = bid_equivalent_amounts;
