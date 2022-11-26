@@ -78,7 +78,7 @@ export default defineConfig({
     },
     {
       property: 'og:site_name',
-      content: 'Why is Tezos the Best?',
+      content: 'Batcher DEX',
     },
     {
       property: 'og:image',
