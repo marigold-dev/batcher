@@ -61,6 +61,7 @@ module Types = struct
     created_at : timestamp;
     side : side;
     tolerance : tolerance;
+    redeemed:bool;
   }
 
   type external_swap_order = {
@@ -100,13 +101,6 @@ module Types = struct
     clearing_rate: exchange_rate;
   }
 
-  type treasury_item_status =
-    [@layout:comb]
-    DEPOSITED | EXCHANGED | CLAIMED
-
-  type treasury_holding = (string, token_holding) map
-
-  type treasury = (address, treasury_holding) big_map
 
   (* These types are used in math module *)
   type buy_minus_token = int
@@ -140,7 +134,6 @@ module Types = struct
   type batch = {
     [@layout:comb]
     status : batch_status;
-    treasury : treasury;
     orderbook : orderbook;
     pair : token * token;
   }

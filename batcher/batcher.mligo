@@ -103,6 +103,7 @@ let external_to_order (order: external_order) : order =
       created_at = order.created_at;
       side = side;
       tolerance = tolerance;
+      redeemed = false;
     } in
   converted_swap
 

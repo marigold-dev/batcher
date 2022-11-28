@@ -13,7 +13,6 @@ type batch_status =
 (* Batch of orders for the same pair of tokens *)
 type t = {
   status : batch_status;
-  treasury : Types.treasury;
   orderbook : Orderbook.t;
   pair : Types.token * Types.token;
 }
@@ -29,12 +28,10 @@ type batch_set = {
 let make
   (timestamp : timestamp)
   (orderbook : Orderbook.t)
-  (pair : Types.token * Types.token)
-  (treasury : Types.treasury) : t =
+  (pair : Types.token * Types.token) : t =
   {
     status = Open { start_time = timestamp } ;
     orderbook = orderbook;
-    treasury = treasury;
     pair = pair;
   }
 
@@ -96,16 +93,14 @@ let should_open_new
       is_cleared batch
 
 
-let make_new_treasury : CommonTypes.Types.treasury = Big_map.empty
 
 let start_period
   (order : Types.swap_order)
   (batches : batch_set)
   (current_time : timestamp) : batch_set =
-    let treasury : CommonTypes.Types.treasury = make_new_treasury in
     let pair = CommonTypes.Utils.pair_of_swap order in
     let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
-    let new_batch = make current_time orderbook pair treasury in
+    let new_batch = make current_time orderbook pair in
     match batches.current with
       | None ->
         { batches with current = Some new_batch }

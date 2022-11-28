@@ -10,7 +10,6 @@ type order = CommonTypes.Types.swap_order
 type side = CommonTypes.Types.side
 type tolerance = CommonTypes.Types.tolerance
 type clearing = CommonTypes.Types.clearing
-type treasury = CommonTypes.Types.treasury
 type exchange_rate = CommonTypes.Types.exchange_rate
 type t = CommonTypes.Types.orderbook
 

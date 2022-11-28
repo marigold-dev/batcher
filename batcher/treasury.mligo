@@ -5,14 +5,15 @@
 #import "constants.mligo" "Constants"
 
 type storage = Storage.Types.t
-type treasury = Types.Types.treasury
 type token_amount = Types.Types.token_amount
 type token = Types.Types.token
-type treasury_holding = Types.Types.treasury_holding
 type token_holding = Types.Types.token_holding
 type pair = Types.Types.token * Types.Types.token
 type batch = Types.Types.batch
 type batch_set = Types.Types.batch_set
+type order = Types.Types.swap_order
+type clearing = Types.Types.clearing
+type tolerance = Types.Types.tolerance
 
 module Utils = struct
   type adjustment = INCREASE | DECREASE
@@ -46,24 +47,7 @@ module Utils = struct
     (tkh: token_holding) : token_holding =
     if (tkh.token_amount.amount >= holding.token_amount.amount) then tkh else (failwith Errors.insufficient_token_holding : token_holding)
 
-  (* Check that the a treasury holding holds the token required for the swap *)
-  let check_treasury_holding
-    (holding : token_holding )
-    (th : treasury_holding) : token_holding =
-    let token_name = Types.Utils.get_token_name_from_token_holding holding in
-    match (Map.find_opt (token_name) th) with
-    | Some (tkh) -> let _ = check_token_holding_amount holding tkh in
-                    tkh
-    | None -> (failwith Errors.insufficient_token_holding : token_holding)
 
-  (* Check that the treasury contains a sufficient holding for the swap being proposed *)
-  let has_sufficient_holding
-    (holding : token_holding)
-    (treasury : treasury ): treasury_holding =
-    match Big_map.find_opt holding.holder treasury with
-     | Some th ->  let _ = check_treasury_holding holding th in
-                   th
-     | None -> (failwith Errors.no_treasury_holding_for_address : treasury_holding)
 
   let transfer_fa12_token
     (sender : address)
@@ -136,14 +120,8 @@ module Utils = struct
     | Some token_address ->
       transfer_token sender receiver token_address received_token
 
-  (* asserts that the holdings held in a treasury holding match the holder address *)
-  let assert_holdings_are_coherent
-    (holder: address)
-    (treasury_holding : treasury_holding) : unit =
-    let is_coherent = fun (_s,th : string * token_holding) -> assert (th.holder = holder) in
-    Map.iter is_coherent treasury_holding
 
-  (* Adjusts the token holding within the treasury.   *)
+  (* Adjusts the token holding.  *)
   let adjust_token_holding
     (th : token_holding)
     (adjustment : adjustment)
@@ -159,128 +137,86 @@ module Utils = struct
       let new_token_amount = { original_token_amount with amount = new_balance  } in
       { th with token_amount = new_token_amount }
 
-  (* Find the associated treasury holding and adjusts the appropriate token holding *)
-  let adjust_treasury_holding
-    (token_name : string)
-    (assigned_token_holder : address)
-    (adjustment : adjustment)
-    (token_holding : token_holding)
-    (treasury_holding : treasury_holding) : treasury_holding =
-    let existing_token_holding_opt = Map.find_opt token_name treasury_holding in
-    match adjustment with
-    | DECREASE -> (match existing_token_holding_opt with
-                   | None -> (failwith Errors.insufficient_token_holding_for_decrease : treasury_holding)
-                   | Some (th) -> let new_holding = adjust_token_holding th DECREASE token_holding in
-                                  Map.update (token_name) (Some(new_holding)) treasury_holding)
-    | INCREASE -> (match existing_token_holding_opt with
-                   | None -> let new_holding = Types.Utils.assign_new_holder_to_token_holding assigned_token_holder token_holding in
-                             Map.add token_name new_holding treasury_holding
-                   | Some (th) -> let new_holding = adjust_token_holding th INCREASE token_holding in
-                                  Map.update (token_name) (Some(new_holding)) (treasury_holding))
 
-  (*
-  Swaps the tokens by first reducing the token holding for each user of the appropriate token
-  and then increasing the holding of the opposing token and assining the new holder.
-  *)
-  let atomic_swap
-    (this_token_holding : token_holding)
-    (this_treasury_holding : treasury_holding)
-    (with_that_token_holding : token_holding)
-    (with_that_treasury_holding : treasury_holding)
-    (treasury : treasury) : treasury =
-    let this_holder_address = this_token_holding.holder in
-    let with_that_holder_address = with_that_token_holding.holder in
-    let this_token_name = Types.Utils.get_token_name_from_token_holding this_token_holding in
-    let with_that_token_name = Types.Utils.get_token_name_from_token_holding with_that_token_holding in
-    let this_h = adjust_treasury_holding this_token_name this_holder_address DECREASE this_token_holding this_treasury_holding in
-    let that_h = adjust_treasury_holding with_that_token_name with_that_holder_address DECREASE with_that_token_holding with_that_treasury_holding in
-    let this_h = adjust_treasury_holding with_that_token_name this_holder_address INCREASE with_that_token_holding this_h in
-    let that_h = adjust_treasury_holding this_token_name with_that_holder_address INCREASE this_token_holding that_h in
-    let _ = assert_holdings_are_coherent this_holder_address this_h in
-    let _ = assert_holdings_are_coherent with_that_holder_address that_h in
-    let treasury = Big_map.update (this_holder_address) (Some(this_h)) treasury in
-    let treasury = Big_map.update (with_that_holder_address) (Some(that_h)) treasury in
-    treasury
+  let was_in_clearing_for_buy
+   (clearing_tolerance: tolerance)
+   (order_tolerance: tolerance) : bool =
+      match (order_tolerance, clearing_tolerance) with
+      | (EXACT,MINUS) -> true
+      | (PLUS,MINUS) -> true
+      | (MINUS,EXACT) -> false
+      | (PLUS,EXACT) -> true
+      | (MINUS,PLUS) -> false
+      | (EXACT,PLUS) -> false
+      | (_,_) -> true
 
-  let deposit_into_treasury_holding
-    (address : address)
-    (token_name : string)
-    (token_holding : token_holding)
-    (treasury : treasury) : treasury_holding =
-    match Big_map.find_opt address treasury with
-    | None -> Map.literal [ (token_name, token_holding )]
-    | Some (treasury_holding) ->  (match Map.find_opt token_name treasury_holding with
-                                   | None ->  Map.add (token_name) (token_holding) (treasury_holding)
-                                   | Some (oth) -> let new_token_holding = adjust_token_holding oth INCREASE token_holding in
-                                                   Map.update (token_name) (Some(new_token_holding)) (treasury_holding))
+  let was_in_clearing_for_sell
+   (clearing_tolerance: tolerance)
+   (order_tolerance: tolerance) : bool =
+      match (order_tolerance, clearing_tolerance) with
+      | (EXACT,MINUS) -> false
+      | (PLUS,MINUS) -> false
+      | (MINUS,EXACT) -> true
+      | (PLUS,EXACT) -> false
+      | (MINUS,PLUS) -> true
+      | (EXACT,PLUS) -> true
+      | (_,_) -> true
 
-  (* Deposit tokens into storage *)
-  let deposit_treasury (address : address) (received_token : token_amount) (treasury : treasury) : treasury =
-    let token_name = Types.Utils.get_token_name_from_token_amount received_token in
-    let token_holding = Types.Utils.token_amount_to_token_holding address received_token false in
-    let new_treasury_holding = deposit_into_treasury_holding address token_name token_holding treasury in
-    let _ = assert_holdings_are_coherent address new_treasury_holding in
-    Big_map.update (address) (Some(new_treasury_holding)) treasury
+
+  let was_in_clearing
+    (order:order)
+    (clearing: clearing) : bool =
+    let order_tolerance = order.tolerance in
+    let order_side = order.side in
+    let clearing_tolerance = clearing.clearing_tolerance in
+    match order_side with
+    | BUY -> was_in_clearing_for_buy clearing_tolerance order_tolerance
+    | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
+
+
+
+  let collect_orders_for_holder
+    (holder: address)
+    (batch: batch) : order list =
+     let ob = batch.orderbook in
+     let is_holder (acc, o : order list * order) : order list = (if o.trader = holder then o :: acc else acc) in
+     let bids = List.fold is_holder ob.bids [] in
+     let all = List.fold is_holder ob.asks bids in
+     all
+
 
   let accumulate_holdings_from_single_batch
     (holder : address)
     (batch : batch)
-    (redeemed_holding : treasury_holding) : (treasury_holding * batch) =
+    (redeemed_holdings : token_holding list) : (token_holding list * batch) =
       match batch.status with
-      | Cleared _ -> (
-        match Big_map.find_opt holder batch.treasury with
-        | None -> (redeemed_holding, batch)
-        | Some th ->
-          let accumulate (redeemed_holding, (token_name, token_holding) : treasury_holding * (string * token_holding)) : treasury_holding =
-            match Map.find_opt token_name redeemed_holding with
-            | None -> Map.add token_name token_holding redeemed_holding
-            | Some old_token_holding ->
-              let updated_amount = old_token_holding.token_amount.amount + token_holding.token_amount.amount in
-              let updated_token_amount = { token_holding.token_amount with amount = updated_amount } in
-              let updated_token_holding = { token_holding with token_amount = updated_token_amount } in
-              Map.update token_name (Some updated_token_holding) redeemed_holding
-          in
-          let redeemed_holding = Map.fold accumulate th redeemed_holding in
-          let updated_treasury = Big_map.remove holder batch.treasury in
-          let updated_batch = { batch with treasury = updated_treasury } in
-          (redeemed_holding, updated_batch))
-      | Open _ -> (redeemed_holding, batch)
-      | Closed _  -> (redeemed_holding, batch)
+      | Cleared _ ->  (redeemed_holdings, batch)
+      | Open _ -> (redeemed_holdings, batch)
+      | Closed _  -> (redeemed_holdings, batch)
 
-  let get_updated_previous_batches (holder : address) (previous_batches : batch list) : batch list =
-    let filter (batch : batch) : batch =
-      let (_, updated_batch) = accumulate_holdings_from_single_batch holder batch (Map.empty : treasury_holding) in
-      updated_batch
-    in
-    List.map filter previous_batches
 
-  let accumulate_holdings_previous_batches (holder : address) (previous_batches : batch list) : treasury_holding =
-    let filter (redeemed_holding, batch : treasury_holding * batch) : treasury_holding =
-      let (redeemed_holding, _) = accumulate_holdings_from_single_batch holder batch redeemed_holding in
-      redeemed_holding
-    in
-    List.fold filter previous_batches (Map.empty : treasury_holding)
-
-  let transfer_holdings (treasury_vault : address) (redeemed_holding : treasury_holding) : operation list =
-    let atomic_transfer (operations, (_, token_holding) : operation list * (string * token_holding)) : operation list =
-      let op = handle_transfer treasury_vault token_holding.holder token_holding.token_amount in
+ (*
+ let transfer_holdings (treasury_vault : address) (holder: address)  (holdings : token_holding list) : operation list =
+    let atomic_transfer (operations, th : operation list * token_holding) : operation list =
+      let op: operation = handle_transfer treasury_vault holder th.token_amount in
       op :: operations
     in
-    Map.fold atomic_transfer redeemed_holding ([] : operation list)
+    let op_list = Map.fold atomic_transfer holdings ([] : operation list)
+    in
+    op_list
+*)
 
   let redeem_holdings_from_batches
     (holder : address)
     (treasury_vault : address)
     (batches : batch_set) : operation list * batch_set =
-      let updated_previous_batches = get_updated_previous_batches holder batches.previous in
-      let redeemed_holding = accumulate_holdings_previous_batches holder batches.previous in
-      let operations = transfer_holdings treasury_vault redeemed_holding in
-      (operations, { batches with previous = updated_previous_batches })
+      (* let operations = transfer_holdings treasury_vault holder holdings in *)
+      let operations = ([]: operation list)  in
+      (operations,  batches )
 end
 
-let get_treasury_vault () : address = Tezos.get_self_address ()
 
-let empty : treasury = Big_map.empty
+let get_treasury_vault () : address = Tezos.get_self_address ()
 
 let deposit
     (deposit_address : address)
@@ -290,10 +226,9 @@ let deposit
       let (op, current_batch)  = (match batches.current with
                                      | None -> (* We should never get here without a current batch *)
                                                (failwith Errors.no_current_batch_available : operation * batch)
-                                     | Some (cb) -> let updated_current_batch_treasury : treasury = Utils.deposit_treasury deposit_address deposited_token cb.treasury in
-                                                    let treasury_vault = get_treasury_vault () in
+                                     | Some (cb) -> let treasury_vault = get_treasury_vault () in
                                                     let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                    (transfer_operation, { cb with treasury = updated_current_batch_treasury })) in
+                                                    (transfer_operation, cb )) in
       let updated_batches = { batches with current = Some(current_batch) } in
       (op, { storage with batches = updated_batches })
 
@@ -302,5 +237,7 @@ let redeem
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
       let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
-      (ops, { storage with batches = updated_batches })
+      let new_ops : operation list = ops in
+      let btchs : batch_set = updated_batches in
+      (new_ops, { storage with batches = btchs })
 
