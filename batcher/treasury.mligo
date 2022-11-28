@@ -175,15 +175,6 @@ module Utils = struct
 
 
 
-  let collect_orders_for_holder
-    (holder: address)
-    (batch: batch) : order list =
-     let ob = batch.orderbook in
-     let is_holder (acc, o : order list * order) : order list = (if o.trader = holder then o :: acc else acc) in
-     let bids = List.fold is_holder ob.bids [] in
-     let all = List.fold is_holder ob.asks bids in
-     all
-
 
   let accumulate_holdings_from_single_batch
     (holder : address)
@@ -206,10 +197,48 @@ module Utils = struct
     op_list
 *)
 
+  let redeem_order
+    (order:order) : order = {order with order.redeemed = true}
+
+  let calculate_pro_rata_payout
+    (order: order)
+    (clearing: clearing) : token_holding =
+    order.from
+
+  let get_pro_rata_payout
+    (order: order)
+    (clearing : clearing) : token_holding =
+    let is_order_in_clearing = was_in_clearing order clearing in
+    if is_order_in_clearing then
+      calculate_pro_rata_payout order clearing
+    else
+      order.from
+
+  let collect_orders_for_holder
+    (holder: address)
+    (orders: order list) : (order list * order list)=
+     let split_holder_orders (acc, oth, o : order list * order list * order) : (order list * order list)  =
+      if o.trader = holder then
+         (o :: acc,oth)
+      else
+        (acc, o :: oth)
+     in
+     List.fold split_holder_orders orders ([],[]) in
+
+  let redeem_holdings_from_batch
+   (holder: address)
+   (batch: batch) : operation list * batch =
+   let (holder_bid_orders, bids_remaining) = collect_orders_for_holder holder batch.orderbook.bids in
+   let (holder_ask_orders, asks_remaining) = collect_orders_for_holder holder batch.orderbook.asks in
+   let redeemed_bids = List.map
+
+
+
   let redeem_holdings_from_batches
     (holder : address)
     (treasury_vault : address)
     (batches : batch_set) : operation list * batch_set =
+      let previous_batches = batches.previous in
       (* let operations = transfer_holdings treasury_vault holder holdings in *)
       let operations = ([]: operation list)  in
       (operations,  batches )

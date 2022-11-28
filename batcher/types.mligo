@@ -61,7 +61,7 @@ module Types = struct
     created_at : timestamp;
     side : side;
     tolerance : tolerance;
-    redeemed:bool;
+    redeemed : bool;
   }
 
   type external_swap_order = {
