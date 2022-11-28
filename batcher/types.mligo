@@ -150,6 +150,7 @@ end
 
 module Utils = struct
 
+  type order = Types.swap_order
 
   let empty_prorata_equivalence : Types.prorata_equivalence = {
     buy_side_actual_volume = 0n;
@@ -246,5 +247,20 @@ module Utils = struct
     | MINUS -> 0n
     | EXACT -> 1n
     | PLUS -> 2n
+
+  let is_batch_fully_redeemed (batch : Types.batch) : bool =
+    let orders_redeemed (redeemed, order: bool * Types.swap_order) : bool =
+      if redeemed then order.redeemed else redeemed
+    in
+    let collect_orders
+      (batch: Types.batch) : order list =
+       let ob = batch.orderbook in
+       let collect (acc, o : order list * order) : order list = o :: acc in
+       List.fold collect ob.asks ob.bids
+    in
+    let orders = collect_orders batch
+    in
+    List.fold orders_redeemed orders true
+
 end
 
