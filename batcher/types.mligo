@@ -37,7 +37,6 @@ module Types = struct
     [@layout:comb]
     holder: address;
     token_amount : token_amount;
-    redeemed: bool;
   }
 
   type swap = {
@@ -118,11 +117,7 @@ module Types = struct
     A ask : the price a seller is willing to auxept for an asset
     Here, the orderbook is a list of bids orders and asks orders
   *)
-  type orderbook = {
-    [@layout:comb]
-    bids : swap_order list;
-    asks : swap_order list
-  }
+  type orderbook = (string, swap_order list) big_map
 
 
   type batch_status =
@@ -133,6 +128,7 @@ module Types = struct
   (* Batch of orders for the same pair of tokens *)
   type batch = {
     [@layout:comb]
+    batch_number: nat;
     status : batch_status;
     orderbook : orderbook;
     pair : token * token;
@@ -141,11 +137,7 @@ module Types = struct
   (* Set of batches, containing the current batch and the previous (finalized) batches.
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
-  type batch_set = {
-    [@layout:comb]
-    current : batch option;
-    previous : batch list;
-  }
+  type batch_set = (nat, batch) big_map
 end
 
 module Utils = struct
@@ -217,12 +209,10 @@ module Utils = struct
   (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding
     (holder : address)
-    (token_amount : Types.token_amount)
-    (redeemed : bool): Types.token_holding =
+    (token_amount : Types.token_amount): Types.token_holding =
     {
       holder =  holder;
       token_amount = token_amount;
-      redeemed = redeemed;
     }
 
 

@@ -17,6 +17,7 @@ type tolerance = Types.Types.tolerance
 
 module Utils = struct
   type adjustment = INCREASE | DECREASE
+  type aggregate_holding = (address, token_holding) map
 
  type atomic_trans =
     [@layout:comb] {
@@ -198,21 +199,31 @@ module Utils = struct
 *)
 
   let redeem_order
-    (order:order) : order = {order with order.redeemed = true}
+    (order:order) : order = {order with redeemed = true}
 
   let calculate_pro_rata_payout
+    (holder: address)
     (order: order)
     (clearing: clearing) : token_holding =
-    order.from
+    let ta: token_amount = order.swap.from in
+    (* FIX ME -- get correct payout for items that are cleared *)
+    {
+      holder = holder;
+      token_amount = ta;
+    }
 
   let get_pro_rata_payout
+    (holder: address)
     (order: order)
     (clearing : clearing) : token_holding =
     let is_order_in_clearing = was_in_clearing order clearing in
     if is_order_in_clearing then
       calculate_pro_rata_payout order clearing
     else
-      order.from
+      {
+        holder = holder;
+        token_amount = order.swap.from;
+      }
 
   let collect_orders_for_holder
     (holder: address)
@@ -223,15 +234,44 @@ module Utils = struct
       else
         (acc, o :: oth)
      in
-     List.fold split_holder_orders orders ([],[]) in
+     List.fold split_holder_orders orders ([],[])
+
+  let aggregate_token_holdings
+  (token_holdings: token_holding list) : token_holding list =
+  let agg_hold : aggregate_token_holdings = Map.empty in
+  let add_or_update_token_holding (agg_hol, th: aggregate_token_holdings * token_holding) : aggregate_token_holdings  =
+    let token_address = th.token_amount.token.address in
+    match Map.find_opt token_address agg_hold with
+    | Some(pth) -> adjustment_token_amount
+    | None -> Map.add token_address th agg_hold
+
+
+
+  let collect_token_holdings
+   (holder: address)
+   (orders: order list)
+   (clearing: clearing): (token_holding list) =
+   let get_token_holdings (o: order) = get_pro_rata_payout holder o clearing in
+   let token_holdings = List.map get_token_holdings orders in
+   aggregate_token_holdings token_holding
+
+
+
+
 
   let redeem_holdings_from_batch
    (holder: address)
-   (batch: batch) : operation list * batch =
+   (batch: batch) : token_holding list * batch =
    let (holder_bid_orders, bids_remaining) = collect_orders_for_holder holder batch.orderbook.bids in
    let (holder_ask_orders, asks_remaining) = collect_orders_for_holder holder batch.orderbook.asks in
-   let redeemed_bids = List.map
-
+   let redeemed_bids = List.map redeem_order holder_bid_orders in
+   let redeemed_asks = List.map redeem_order holder_ask_orders in
+   let holder_orders = concat (order) holder_bid_orders holder_ask_orders in
+   let token_holdings = collect_token_holdings holder holder_orders clearing in
+   let updated_bids = concat (order) redeemed_bids bids_remaining in
+   let updated_asks = concat (order) redeemed_asks asks_remaining in
+   let updated_orders = { batcher.orderbook with bids = updated_bids, asks = updated_asks } in
+   ([] : token_holding list), {batch with batch.orderbook = updated_orders }
 
 
   let redeem_holdings_from_batches

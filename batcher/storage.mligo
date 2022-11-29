@@ -10,6 +10,8 @@ module Types = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, CommonTypes.Types.exchange_rate) big_map
 
+  type user_orders = (address, CommonTypes.Types.swap_order list) big_map
+
   type batch_set = CommonTypes.Types.batch_set
 
   type batch = CommonTypes.Types.batch
