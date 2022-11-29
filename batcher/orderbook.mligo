@@ -1,5 +1,6 @@
 #import "types.mligo" "CommonTypes"
 #import "utils.mligo" "Utils"
+#import "errors.mligo" "Errors"
 #import "types.mligo" "CommonTypes"
 #import "math.mligo" "Math"
 #import "../math_lib/lib/float.mligo" "Float"
@@ -22,7 +23,22 @@ type key = side
 
 type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 
-let empty () : t = {bids = ([] : order list); asks = ([] : order list)}
+let empty () : t = Big_map.literal [("bids", ([] : order list)); "asks", ([] : order list)]
+
+let get_side_or_empty
+  (side: string)
+  (orderbook : t) : order list =
+  match Big_map.find_opt side orderbook with
+  | None -> ([]: order list)
+  | Some ol -> ol
+
+let update_order_sides
+  (bids: order list)
+  (asks: order list)
+  (orderbook : t) : t =
+  let updated_bids : t  = Big_map.update "bids" (Some(bids)) orderbook in
+  let updated : t = Big_map.update "asks" (Some(asks)) updated_bids in
+  (updated : t)
 
 [@inline]
 let compute_equivalent_amount (amount : nat) (exchange_rate : exchange_rate) (invert: bool) : nat =
@@ -49,11 +65,15 @@ let make_new_order (order : order) (amt: nat) : order =
 
 
 [@inline]
-(*This function push orders auxording to a pro-rata "model"*)
+(*This function push orders to the order book*)
 let push_order (order : order) (orderbook : t) : t =
-  match order.side with
-    | BUY ->  {orderbook with bids = (order :: orderbook.bids)}
-    | SELL -> {orderbook with asks = (order :: orderbook.asks)}
+  let side = match order.side with
+      | BUY ->  "bids"
+      | SELL -> "asks"
+  in
+  match Big_map.find_opt side orderbook with
+  | None -> (failwith Errors.unable_to_find_side_in_orderbook : t)
+  | Some(ol) -> Big_map.update side (Some(order :: ol )) orderbook
 
 (*
    This function should be call only once during a batch period,
@@ -89,9 +109,11 @@ let trigger_filtering_orders (orderbook : t) (clearing : clearing) : t =
        ((fun (order : order) -> order.tolerance = PLUS),
        (fun (_:order) -> true))
   in
-  let new_bids = filter_orders orderbook.bids f_bids in
-  let new_asks = filter_orders orderbook.asks f_asks in
-  {orderbook with bids = new_bids; asks = new_asks}
+  let orig_bids = get_side_or_empty "bids" orderbook in
+  let orig_asks = get_side_or_empty "asks" orderbook in
+  let new_bids = filter_orders orig_bids f_bids in
+  let new_asks = filter_orders orig_asks f_asks in
+  update_order_sides new_bids new_asks orderbook
 
 let sum_order_amounts
   (orders : order list): nat =
@@ -137,19 +159,6 @@ let build_equivalence
   } in
   { clearing with prorata_equivalence = equivalence; clearing_rate = clearing_rate }
 
-
-(*
-  filter the oderbook based on the clearing
-*)
-let filter
-  (orderbook : t)
-  (clearing : clearing) :  t =
-  let filtered_orderbook =
-    trigger_filtering_orders orderbook clearing in
-  let bids = filtered_orderbook.bids in
-  let asks = filtered_orderbook.asks in
-  {orderbook with bids = bids; asks = asks}
-
 (*
   get the equivalence object based on the filtered orderbook
 *)
@@ -157,8 +166,10 @@ let get_equivalence
   (orderbook : t)
   (clearing : clearing)
   (exchange_rate : CommonTypes.Types.exchange_rate) : clearing =
-  let filtered_orderbook = filter orderbook clearing in
-  build_equivalence filtered_orderbook.bids filtered_orderbook.asks clearing exchange_rate
+  let filtered_orderbook = trigger_filtering_orders orderbook clearing in
+  let filtered_bids = get_side_or_empty "bids" filtered_orderbook in
+  let filtered_asks = get_side_or_empty "asks" filtered_orderbook in
+  build_equivalence filtered_bids filtered_asks clearing exchange_rate
 
 
 

@@ -56,6 +56,8 @@ module Types = struct
 
   type swap_order = {
     [@layout:comb]
+    order_number: nat;
+    batch_number: nat;
     trader : address;
     swap  : swap;
     created_at : timestamp;
@@ -116,14 +118,15 @@ module Types = struct
   (*
     A bid : the price a buyer is willing to pay for an asset
     A ask : the price a seller is willing to auxept for an asset
-    Here, the orderbook is a list of bids orders and asks orders
+    Here, the orderbook is a map of bids orders list  and asks order list
   *)
-  type orderbook = {
-    [@layout:comb]
-    bids : swap_order list;
-    asks : swap_order list
-  }
+  type orderbook = (string, swap_order list) big_map
 
+ (* Holds all the orders associated with a user: redeemed and unredeemed *)
+  type user_orders = (string, swap_order list) big_map
+
+ (* Holds all the orders associated with all users *)
+  type user_orderbook = (address, user_orders) big_map
 
   type batch_status =
     | Open of { start_time : timestamp }
@@ -133,8 +136,10 @@ module Types = struct
   (* Batch of orders for the same pair of tokens *)
   type batch = {
     [@layout:comb]
+    batch_number: nat;
     status : batch_status;
     orderbook : orderbook;
+    last_order_number: nat;
     pair : token * token;
   }
 
@@ -142,10 +147,10 @@ module Types = struct
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
-    [@layout:comb]
-    current : batch option;
-    previous : batch list;
-  }
+    current_batch_number: nat;
+    last_batch_number: nat;
+    batches: (nat, batch) big_map;
+    }
 end
 
 module Utils = struct
@@ -248,19 +253,6 @@ module Utils = struct
     | EXACT -> 1n
     | PLUS -> 2n
 
-  let is_batch_fully_redeemed (batch : Types.batch) : bool =
-    let orders_redeemed (redeemed, order: bool * Types.swap_order) : bool =
-      if redeemed then order.redeemed else redeemed
-    in
-    let collect_orders
-      (batch: Types.batch) : order list =
-       let ob = batch.orderbook in
-       let collect (acc, o : order list * order) : order list = o :: acc in
-       List.fold collect ob.asks ob.bids
-    in
-    let orders = collect_orders batch
-    in
-    List.fold orders_redeemed orders true
 
 end
 

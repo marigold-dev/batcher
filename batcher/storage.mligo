@@ -10,16 +10,19 @@ module Types = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, CommonTypes.Types.exchange_rate) big_map
 
+  type batch = CommonTypes.Types.batch
+
   type batch_set = CommonTypes.Types.batch_set
 
-  type batch = CommonTypes.Types.batch
+  type user_orderbook = CommonTypes.Types.user_orderbook
 
   type t = {
     [@layout:comb]
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
-    batches : batch_set;
+    batch_set : batch_set;
+    user_orderbook : user_orderbook;
   }
 
 end

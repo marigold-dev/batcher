@@ -174,17 +174,6 @@ module Utils = struct
     | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
 
 
-
-  let collect_orders_for_holder
-    (holder: address)
-    (batch: batch) : order list =
-     let ob = batch.orderbook in
-     let is_holder (acc, o : order list * order) : order list = (if o.trader = holder then o :: acc else acc) in
-     let bids = List.fold is_holder ob.bids [] in
-     let all = List.fold is_holder ob.asks bids in
-     all
-
-
   let accumulate_holdings_from_single_batch
     (holder : address)
     (batch : batch)
@@ -222,22 +211,19 @@ let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
     (storage : storage) : operation * storage =
-      let batches = storage.batches in
-      let (op, current_batch)  = (match batches.current with
-                                     | None -> (* We should never get here without a current batch *)
-                                               (failwith Errors.no_current_batch_available : operation * batch)
-                                     | Some (cb) -> let treasury_vault = get_treasury_vault () in
-                                                    let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                    (transfer_operation, cb )) in
-      let updated_batches = { batches with current = Some(current_batch) } in
-      (op, { storage with batches = updated_batches })
+      let (op, update_storage) =  if  storage.batch_set.current_batch_number = 0n  then
+                                    (failwith Errors.no_current_batch_available : operation * storage)
+                                  else
+                                   let treasury_vault = get_treasury_vault () in
+                                   let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+                                   (transfer_operation, storage )
+      in
+      (op, update_storage)
 
 let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batches in
-      let new_ops : operation list = ops in
+      let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batch_set in
       let btchs : batch_set = updated_batches in
-      (new_ops, { storage with batches = btchs })
-
+      (ops, { storage with batch_set = btchs })

@@ -1,6 +1,6 @@
 #import "constants.mligo" "Constants"
 #import "types.mligo" "Types"
-#import "treasury.mligo" "Treasury"
+(* #import "treasury.mligo" "Treasury" *)
 #import "storage.mligo" "Storage"
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
@@ -24,7 +24,7 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 type entrypoint =
   | Deposit of external_order
   | Post of exchange_rate
-  | Redeem
+  (* | Redeem *)
 
 let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate =
   match Big_map.find_opt rate_name current_rate with
@@ -58,8 +58,9 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
 
 let tick_current_batches (storage : storage) : storage =
   let batches = storage.batches in
+  let current_batch_number = storage.current_batch in
   let updated_batches =
-    match batches.current with
+    match Big_map.find_opt current_batch_number batches with
       | None -> batches
       | Some current_batch ->
         let current_time = Tezos.get_now () in
@@ -68,11 +69,11 @@ let tick_current_batches (storage : storage) : storage =
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
             let (_inverse_rate, finalized_batch) = finalize current_batch storage current_time in
-            finalized_batch
+            {finalized_batch with cleared_orderbook = filetered_orderbook; treasury = updated_treasury; orderbook = current_batch.orderbook }
           else
             current_batch
         in
-        { batches with current = Some updated_batch }
+        Big_map.update current_batch_number (Some(updated_batch)) batches
   in
   { storage with batches = updated_batches }
 
@@ -103,7 +104,6 @@ let external_to_order (order: external_order) : order =
       created_at = order.created_at;
       side = side;
       tolerance = tolerance;
-      redeemed = false;
     } in
   converted_swap
 
@@ -231,4 +231,4 @@ let main
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
-   | Redeem -> redeem storage
+  (*  | Redeem -> redeem storage *)

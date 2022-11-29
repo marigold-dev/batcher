@@ -5,6 +5,8 @@
 
 module Types = CommonTypes.Types
 
+type batch_set = Types.batch_set
+
 type batch_status =
   | Open of { start_time : timestamp }
   | Closed of { start_time : timestamp ; closing_time : timestamp }
@@ -17,13 +19,6 @@ type t = {
   pair : Types.token * Types.token;
 }
 
-(* Set of batches, containing the current batch and the previous (finalized) batches.
-   The current batch can be open for deposits, closed for deposits (awaiting clearing) or
-   finalized, as we wait for a new deposit to start a new batch *)
-type batch_set = {
-  current : t option;
-  previous : t list;
-}
 
 let make
   (timestamp : timestamp)
@@ -84,12 +79,19 @@ let should_be_cleared
       current_time > closing_time + Constants.price_wait_window
     | _ -> false
 
+let get_current_batch
+  (batch_set: batch_set) : t option =
+  if batch_set.current_batch_number = 0 then
+    None
+  else
+    Big_map.find_opt batches.current_batch_number batch_set.batches
+
 let should_open_new
-  (batches : batch_set)
+  (batch_set : batch_set)
   (_current_time : timestamp) : bool =
-  match batches.current with
-    | None -> true
-    | Some batch ->
+  match (get_current_batch  batch_set) with
+  | None -> true
+  | Some batch ->
       is_cleared batch
 
 

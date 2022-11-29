@@ -26,8 +26,8 @@ let get_distribution_of
 =
   let side_orders =
       match side with
-      | BUY -> orderbook.bids
-      | SELL -> orderbook.asks
+      | BUY -> Order.get_side_or_empty "bids" orderbook
+      | SELL -> Order.get_side_or_empty "asks" orderbook
   in
   let filter_tolerence (orders: order list) (tolerance : tolerance) : order list =
      let aux (acc,o : order list * order) : order list =
