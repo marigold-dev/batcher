@@ -6,6 +6,7 @@
 module Types = CommonTypes.Types
 
 type batch_set = Types.batch_set
+type order = Types.swap_order
 
 type batch_status =
   | Open of { start_time : timestamp }
@@ -13,22 +14,23 @@ type batch_status =
   | Cleared of { at : timestamp; clearing : Types.clearing; rate : Types.exchange_rate }
 
 (* Batch of orders for the same pair of tokens *)
-type t = {
-  status : batch_status;
-  orderbook : Orderbook.t;
-  pair : Types.token * Types.token;
-}
+type t = Types.batch
 
 
 let make
-  (timestamp : timestamp)
-  (orderbook : Orderbook.t)
-  (pair : Types.token * Types.token) : t =
+  (order: order)
+  (batch_number: nat)
+  (timestamp: timestamp)
+  (orderbook: Orderbook.t)
+  (pair: Types.token * Types.token) : t =
   {
+    batch_number= batch_number;
     status = Open { start_time = timestamp } ;
     orderbook = orderbook;
+    last_order_number = order.order_number;
     pair = pair;
   }
+
 
 (* Append an order to a batch *withouth checks* *)
 let append_order (order : Types.swap_order) (batch : t) : t =
@@ -81,15 +83,19 @@ let should_be_cleared
 
 let get_current_batch
   (batch_set: batch_set) : t option =
-  if batch_set.current_batch_number = 0 then
+  let cbn = batch_set.current_batch_number in
+  if cbn = 0n then
     None
   else
-    Big_map.find_opt batches.current_batch_number batch_set.batches
+    let bts = batch_set.batches in
+    let cbf: t option = Big_map.find_opt cbn bts in
+    cbf
 
 let should_open_new
   (batch_set : batch_set)
   (_current_time : timestamp) : bool =
-  match (get_current_batch  batch_set) with
+  let cb = get_current_batch batch_set in
+  match cb with
   | None -> true
   | Some batch ->
       is_cleared batch
@@ -98,16 +104,14 @@ let should_open_new
 
 let start_period
   (order : Types.swap_order)
-  (batches : batch_set)
+  (batch_set : batch_set)
   (current_time : timestamp) : batch_set =
     let pair = CommonTypes.Utils.pair_of_swap order in
     let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
-    let new_batch = make current_time orderbook pair in
-    match batches.current with
-      | None ->
-        { batches with current = Some new_batch }
-      | Some old_batch ->
-        { batches with current = Some new_batch ; previous = old_batch :: batches.previous }
+    let new_batch_number = batch_set.last_batch_number + 1n in
+    let new_batch = make order new_batch_number current_time orderbook pair in
+    let batches = Big_map.add new_batch_number new_batch batch_set.batches in
+    { batch_set with batches = batches; current_batch_number = new_batch_number }
 
 let close (batch : t) : t =
   match batch.status with
@@ -125,4 +129,8 @@ let finalize (batch : t) (current_time : timestamp)
     | _ -> failwith Errors.trying_to_finalize_batch_which_is_not_closed
 
 let new_batch_set : batch_set =
-  { current = None; previous = [] }
+  {
+    current_batch_number = 0n;
+    last_batch_number= 0n;
+    batches= (Big_map.empty: (nat, t) big_map);
+  }

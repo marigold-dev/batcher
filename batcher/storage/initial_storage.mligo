@@ -42,9 +42,11 @@ let f(_:unit) = {
     )
   ];
   rates_current = (Big_map.empty : Storage.Types.rates_current);
-  batches = {
-     current = (None : Storage.Types.batch option);
-   	 previous = ([] : Storage.Types.batch list);
+  user_orderbook = (Big_map.empty : (address, user_orders) big_map);
+  batch_set = {
+     current_batch_number: 0n;
+     last_batch_number = 0n;
+   	 batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
   };
 }
 

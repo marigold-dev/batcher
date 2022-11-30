@@ -120,10 +120,10 @@ module Types = struct
     A ask : the price a seller is willing to auxept for an asset
     Here, the orderbook is a map of bids orders list  and asks order list
   *)
-  type orderbook = (string, swap_order list) big_map
+  type orderbook = (string, swap_order list) map
 
  (* Holds all the orders associated with a user: redeemed and unredeemed *)
-  type user_orders = (string, swap_order list) big_map
+  type user_orders = (string, swap_order list) map
 
  (* Holds all the orders associated with all users *)
   type user_orderbook = (address, user_orders) big_map

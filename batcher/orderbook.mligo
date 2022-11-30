@@ -23,12 +23,12 @@ type key = side
 
 type match_calculation_type = EXACT_MATCH | LEFT_PARTIAL | RIGHT_PARTIAL
 
-let empty () : t = Big_map.literal [("bids", ([] : order list)); "asks", ([] : order list)]
+let empty () : t = Map.literal [("bids", ([] : order list)); "asks", ([] : order list)]
 
 let get_side_or_empty
   (side: string)
   (orderbook : t) : order list =
-  match Big_map.find_opt side orderbook with
+  match Map.find_opt side orderbook with
   | None -> ([]: order list)
   | Some ol -> ol
 
@@ -36,8 +36,8 @@ let update_order_sides
   (bids: order list)
   (asks: order list)
   (orderbook : t) : t =
-  let updated_bids : t  = Big_map.update "bids" (Some(bids)) orderbook in
-  let updated : t = Big_map.update "asks" (Some(asks)) updated_bids in
+  let updated_bids : t  = Map.update "bids" (Some(bids)) orderbook in
+  let updated : t = Map.update "asks" (Some(asks)) updated_bids in
   (updated : t)
 
 [@inline]
@@ -71,9 +71,9 @@ let push_order (order : order) (orderbook : t) : t =
       | BUY ->  "bids"
       | SELL -> "asks"
   in
-  match Big_map.find_opt side orderbook with
+  match Map.find_opt side orderbook with
   | None -> (failwith Errors.unable_to_find_side_in_orderbook : t)
-  | Some(ol) -> Big_map.update side (Some(order :: ol )) orderbook
+  | Some(ol) -> Map.update side (Some(order :: ol )) orderbook
 
 (*
    This function should be call only once during a batch period,

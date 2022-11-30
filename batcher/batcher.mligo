@@ -57,8 +57,9 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
   (inverse_rate, batch)
 
 let tick_current_batches (storage : storage) : storage =
-  let batches = storage.batches in
-  let current_batch_number = storage.current_batch in
+  let batch_set = storage.batch_set in
+  let batches = batch_set.batches in
+  let current_batch_number = storage.batch_set.current_batch_number in
   let updated_batches =
     match Big_map.find_opt current_batch_number batches with
       | None -> batches
@@ -69,17 +70,20 @@ let tick_current_batches (storage : storage) : storage =
             Batch.close current_batch
           else if Batch.should_be_cleared current_batch current_time then
             let (_inverse_rate, finalized_batch) = finalize current_batch storage current_time in
-            {finalized_batch with cleared_orderbook = filetered_orderbook; treasury = updated_treasury; orderbook = current_batch.orderbook }
+            {finalized_batch with orderbook = current_batch.orderbook }
           else
             current_batch
         in
         Big_map.update current_batch_number (Some(updated_batch)) batches
   in
-  { storage with batches = updated_batches }
+  let updated_batch_set = { batch_set with batches = updated_batches } in
+  { storage with batch_set = updated_batch_set }
 
 let try_to_append_order (order : order)
-  (batches : Batch.batch_set) : Batch.batch_set =
-  match batches.current with
+  (batch_set : Batch.batch_set) : Batch.batch_set =
+  let current_batch_number = batch_set.current_batch_number in
+  let current_batch = Batch.get_current_batch batch_set in
+  match current_batch with
     | None ->
       failwith Errors.append_an_order_with_no_current_batch
     | Some current ->
@@ -92,18 +96,25 @@ let try_to_append_order (order : order)
           failwith Errors.order_pair_doesnt_match
         else
           let current = Batch.append_order order current in
-          { batches with current = Some current }
+          let updated_batches = Big_map.update current_batch_number (Some current) batch_set.batches in
+          { batch_set with batches = updated_batches }
 
-let external_to_order (order: external_order) : order =
+let external_to_order
+  (order: external_order)
+  (last_order_number: nat)
+  (batch_number: nat) : order =
   let side = Types.Utils.nat_to_side(order.side) in
   let tolerance = Types.Utils.nat_to_tolerance(order.tolerance) in
   let converted_swap : order =
     {
+      order_number = last_order_number + 1n;
+      batch_number = batch_number;
       trader = order.trader;
       swap  = order.swap;
       created_at = order.created_at;
       side = side;
       tolerance = tolerance;
+      redeemed = false;
     } in
   converted_swap
 
@@ -123,38 +134,42 @@ let order_to_external (order: order) : external_order =
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (external_order: external_order) (storage : storage) : result =
-  let order = external_to_order external_order in
+  let current_batch = Batch.get_current_batch storage.batch_set in
+  let (last_order_number, batch_number) = match current_batch with
+                                             | None -> (0n, storage.batch_set.last_batch_number + 1n)
+                                             | Some cb -> (cb.last_order_number, storage.batch_set.current_batch_number) in
+  let order : order = external_to_order external_order last_order_number batch_number  in
   let ticked_storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batches =
-    if Batch.should_open_new ticked_storage.batches current_time then
-      Batch.start_period order ticked_storage.batches current_time
+    if Batch.should_open_new ticked_storage.batch_set current_time then
+      Batch.start_period order ticked_storage.batch_set current_time
     else
-      try_to_append_order order ticked_storage.batches
+      try_to_append_order order ticked_storage.batch_set
   in
-  let updated_storage = { ticked_storage with batches = updated_batches } in
+  let updated_storage = { ticked_storage with batch_set = updated_batches } in
   (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
-  let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
-  ([ tokens_transfer_op ], storage_after_treasury_update)
+  (* let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in *)
+  (* ([ tokens_transfer_op ], storage_after_treasury_update) *)
+  ([  ], updated_storage)
 
 let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
-  (tokens_transfer_ops, new_storage)
+  (* let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in *)
+  (* (tokens_transfer_ops, new_storage) *)
+  (([]: operation list), storage)
 
 
 let move_current_to_previous_if_finalized (storage : storage) : storage =
-  let batches = storage.batches in
-  let current = batches.current in
+  let batch_set = storage.batch_set in
+  let current = Batch.get_current_batch batch_set in
   match current with
   | None -> storage
   | Some current_batch ->
      if (Batch.is_cleared current_batch) then
-       let previous = batches.previous in
-       let new_previous = current_batch :: previous in
-       let new_current : Types.Types.batch option= None in
-       let new_batches = { batches with current = new_current; previous = new_previous } in
-       { storage with batches = new_batches }
+       let current_batch_number = batch_set.current_batch_number in
+       let new_batch_set = { batch_set with current_batch_number = 0n; last_batch_number = current_batch_number; } in
+       { storage with batch_set = new_batch_set }
      else
        storage
 
@@ -179,52 +194,6 @@ let filter_orders_by_user
         new_orders
     in
     List.fold_left filter new_orders orders
-
-[@view]
-let get_deposit_starting_time ((), storage : unit * storage) : timestamp =
-  match storage.batches.current with
-  | None -> failwith Errors.not_open_batch
-  | Some current_batch ->
-    let start_time =
-      match current_batch.status with
-      | Open { start_time } -> start_time
-      | _ -> failwith Errors.not_open_status in
-    start_time
-
-[@view]
-let get_order_books ((), storage : unit * storage) : Orderbook.t =
-  match storage.batches.current with
-  | None -> failwith Errors.not_open_batch
-  | Some current_batch -> current_batch.orderbook
-
-[@view]
-let get_current_orders_by_user (user, storage : address * storage) : order list =
-  match storage.batches.current with
-  | None -> failwith Errors.not_open_batch
-  | Some current_batch ->
-    let new_orders = filter_orders_by_user user current_batch.orderbook.bids ([] : order list) in
-    let new_orders = filter_orders_by_user user current_batch.orderbook.asks new_orders in
-    new_orders
-
-[@view]
-let get_previous_orders_by_user (user, storage : address * storage) : order list =
-  match storage.batches.previous with
-  | [] -> failwith Errors.not_previous_batches
-  | _ ->
-    let filter (new_orders, batch : order list * Batch.t) : order list =
-      let new_orders = filter_orders_by_user user batch.orderbook.bids new_orders in
-      let new_orders = filter_orders_by_user user batch.orderbook.asks new_orders in
-      new_orders
-    in
-    List.fold_left filter ([] : order list) storage.batches.previous
-
-[@view]
-let get_current_exchange_pair ((), storage : unit * storage) : string =
-  match storage.batches.current with
-  | None -> failwith Errors.not_open_batch
-  | Some current_batch ->
-    Types.Utils.get_rate_name_from_pair current_batch.pair
-
 
 let main
   (action, storage : entrypoint * storage) : result =
