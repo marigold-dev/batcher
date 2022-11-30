@@ -7,6 +7,7 @@
 #import "clearing.mligo" "Clearing"
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
+#import "userorderbook.mligo" "Userorderbook"
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/float.mligo" "Float"
 
@@ -147,7 +148,8 @@ let deposit (external_order: external_order) (storage : storage) : result =
     else
       try_to_append_order order ticked_storage.batch_set
   in
-  let updated_storage = { ticked_storage with batch_set = updated_batches } in
+  let updated_user_orderbook = Userorderbook.push_open_order external_order.trader order storage.user_orderbook in
+  let updated_storage = { ticked_storage with batch_set = updated_batches; user_orderbook = updated_user_orderbook } in
   (* FIXME We should take the deposit before updating the batch ideally.  That way we can be sure we actually have the token we are trying to swap *)
   (* let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in *)
   (* ([ tokens_transfer_op ], storage_after_treasury_update) *)

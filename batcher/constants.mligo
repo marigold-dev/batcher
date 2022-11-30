@@ -13,3 +13,17 @@
 [@inline] let fa12_token : string = "FA1.2 token"
 
 [@inline] let fa2_token : string = "FA2 token"
+
+[@inline] let bids : string = "bids"
+
+[@inline] let asks : string = "asks"
+
+[@inline] let open : string = "open"
+
+[@inline] let redeemed : string = "redeemed"
+
+
+
+
+
+
