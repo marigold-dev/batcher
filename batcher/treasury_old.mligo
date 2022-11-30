@@ -41,6 +41,12 @@ module Utils = struct
     value : nat
   }
 
+  (* Check that the token holding amount is greater or equal to the token amount being swapped *)
+  let check_token_holding_amount
+    (holding : token_holding)
+    (tkh: token_holding) : token_holding =
+    if (tkh.token_amount.amount >= holding.token_amount.amount) then tkh else (failwith Errors.insufficient_token_holding : token_holding)
+
 
 
   let transfer_fa12_token
@@ -115,6 +121,22 @@ module Utils = struct
       transfer_token sender receiver token_address received_token
 
 
+  (* Adjusts the token holding.  *)
+  let adjust_token_holding
+    (th : token_holding)
+    (adjustment : adjustment)
+    (adjustment_holding : token_holding) : token_holding =
+      let original_token_amount = th.token_amount in
+      let adjustment_token_amount = Types.Utils.check_token_equality original_token_amount adjustment_holding.token_amount in
+      let original_balance = original_token_amount.amount in
+      let adjustment_balance = adjustment_token_amount.amount in
+      let new_balance = (match adjustment with
+                         | INCREASE -> original_balance + adjustment_balance
+                         | DECREASE -> abs (original_balance - adjustment_balance)
+                         ) in
+      let new_token_amount = { original_token_amount with amount = new_balance  } in
+      { th with token_amount = new_token_amount }
+
 
   let was_in_clearing_for_buy
    (clearing_tolerance: tolerance)
@@ -151,6 +173,35 @@ module Utils = struct
     | BUY -> was_in_clearing_for_buy clearing_tolerance order_tolerance
     | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
 
+
+  let accumulate_holdings_from_single_batch
+    (holder : address)
+    (batch : batch)
+    (redeemed_holdings : token_holding list) : (token_holding list * batch) =
+      match batch.status with
+      | Cleared _ ->  (redeemed_holdings, batch)
+      | Open _ -> (redeemed_holdings, batch)
+      | Closed _  -> (redeemed_holdings, batch)
+
+
+ (*
+ let transfer_holdings (treasury_vault : address) (holder: address)  (holdings : token_holding list) : operation list =
+    let atomic_transfer (operations, th : operation list * token_holding) : operation list =
+      let op: operation = handle_transfer treasury_vault holder th.token_amount in
+      op :: operations
+    in
+    let op_list = Map.fold atomic_transfer holdings ([] : operation list)
+    in
+    op_list
+*)
+
+  let redeem_holdings_from_batches
+    (holder : address)
+    (treasury_vault : address)
+    (batches : batch_set) : operation list * batch_set =
+      (* let operations = transfer_holdings treasury_vault holder holdings in *)
+      let operations = ([]: operation list)  in
+      (operations,  batches )
 end
 
 
@@ -168,3 +219,11 @@ let deposit
                                    (transfer_operation, storage )
       in
       (op, update_storage)
+
+let redeem
+    (redeem_address : address)
+    (storage : storage) : operation list * storage =
+      let treasury_vault = get_treasury_vault () in
+      let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batch_set in
+      let btchs : batch_set = updated_batches in
+      (ops, { storage with batch_set = btchs })
