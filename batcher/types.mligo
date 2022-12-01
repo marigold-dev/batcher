@@ -156,6 +156,8 @@ end
 module Utils = struct
 
   type order = Types.swap_order
+  type batch_set = Types.batch_set
+  type batch = Types.batch
 
   let empty_prorata_equivalence : Types.prorata_equivalence = {
     buy_side_actual_volume = 0n;
@@ -253,6 +255,15 @@ module Utils = struct
     | EXACT -> 1n
     | PLUS -> 2n
 
+  let get_current_batch
+    (batch_set: batch_set) : batch option =
+    let cbn = batch_set.current_batch_number in
+    if cbn = 0n then
+      None
+    else
+      let bts = batch_set.batches in
+      let cbf: batch option = Big_map.find_opt cbn bts in
+      cbf
 
 end
 

@@ -25,7 +25,7 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 type entrypoint =
   | Deposit of external_order
   | Post of exchange_rate
-  (* | Redeem *)
+  | Redeem
 
 let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate =
   match Big_map.find_opt rate_name current_rate with
@@ -60,9 +60,8 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
 let tick_current_batches (storage : storage) : storage =
   let batch_set = storage.batch_set in
   let batches = batch_set.batches in
-  let current_batch_number = storage.batch_set.current_batch_number in
   let updated_batches =
-    match Big_map.find_opt current_batch_number batches with
+    match Batch.get_current_batch batch_set with
       | None -> batches
       | Some current_batch ->
         let current_time = Tezos.get_now () in
@@ -75,7 +74,7 @@ let tick_current_batches (storage : storage) : storage =
           else
             current_batch
         in
-        Big_map.update current_batch_number (Some(updated_batch)) batches
+        Big_map.update current_batch.batch_number (Some(updated_batch)) batches
   in
   let updated_batch_set = { batch_set with batches = updated_batches } in
   { storage with batch_set = updated_batch_set }
@@ -155,9 +154,8 @@ let deposit (external_order: external_order) (storage : storage) : result =
 
 let redeem (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  (* let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in *)
-  (* (tokens_transfer_ops, new_storage) *)
-  (([]: operation list), storage)
+  let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
+  (tokens_transfer_ops, new_storage)
 
 
 let move_current_to_previous_if_finalized (storage : storage) : storage =
@@ -200,4 +198,4 @@ let main
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
-  (*  | Redeem -> redeem storage *)
+   | Redeem -> redeem storage

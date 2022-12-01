@@ -160,11 +160,19 @@ let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
     (storage : storage) : operation * storage =
-      let (op, update_storage) =  if  storage.batch_set.current_batch_number = 0n  then
-                                    (failwith Errors.no_current_batch_available : operation * storage)
-                                  else
-                                   let treasury_vault = get_treasury_vault () in
-                                   let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                   (transfer_operation, storage )
+      let (op, update_storage) = match Types.Utils.get_current_batch storage.batch_set with
+                                 | None -> (failwith Errors.no_current_batch_available : operation * storage)
+                                 | Some _batch -> let treasury_vault = get_treasury_vault () in
+                                                  let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+                                                  (transfer_operation, storage )
       in
       (op, update_storage)
+
+let redeem
+    (_redeem_address : address)
+    (storage : storage) : operation list * storage =
+      let _treasury_vault = get_treasury_vault () in
+      (* let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batch_set in *)
+      (* let btchs : batch_set = updated_batches in *)
+      (* (ops, { storage with batch_set = btchs }) *)
+      (([]: operation list), storage)
