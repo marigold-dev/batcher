@@ -16,6 +16,13 @@ type batch_status =
 (* Batch of orders for the same pair of tokens *)
 type t = Types.batch
 
+let roll_batch_off
+  (batch_set : batch_set) : batch_set =
+  if  batch_set.current_batch_number = 0n then
+    batch_set
+  else
+    let batch_to_be_rolled = batch_set.current_batch_number in
+    { batch_set with current_batch_number = 0n; last_batch_number = batch_to_be_rolled }
 
 let make
   (order: order)
