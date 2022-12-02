@@ -60,26 +60,28 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
   (inverse_rate, batch)
 
 let progress_batch_set
-   (batch_set: batch_set) : (bool *  batch_set) =
+   (batch_set: batch_set)
+   (storage: storage): (bool *  batch_set) =
+   let batches = batch_set.batches in
    match Batch.get_current_batch batch_set with
    | None -> (false, batch_set)
    | Some current_batch -> let current_time = Tezos.get_now () in
-                           let (roll, updated_batch) : Batch.t =
+                           let (roll, updated_batch) =
                              if Batch.should_be_closed current_batch current_time then
                                let updated_batches = Batch.close current_batch in
-                               (false,{ batch_set with batches = updated_batches })
+                               (false,updated_batches)
                              else if Batch.should_be_cleared current_batch current_time then
                                let (_inverse_rate, finalized_batch) = finalize current_batch storage current_time in
                                (true, finalized_batch)
                              else
                                (false,current_batch)
                            in
-                           (roll, Big_map.update current_batch.batch_number (Some(updated_batch)) batches)
-
+                           let updated_batches = Big_map.update current_batch.batch_number (Some(updated_batch)) batches in
+                           (roll, {batch_set with batches = updated_batches} )
 
 let tick_current_batches (storage : storage) : storage =
   let batch_set = storage.batch_set in
-  let (should_roll, updated_batch_set) = progress_batch_set batch_set in
+  let (should_roll, updated_batch_set) = progress_batch_set batch_set storage in
   let rolled_if_needed = if should_roll then Batch.roll_batch_off updated_batch_set else updated_batch_set in
   { storage with batch_set = rolled_if_needed }
 
@@ -141,7 +143,7 @@ let deposit (external_order: external_order) (storage : storage) : result =
   let current_batch = Batch.get_current_batch storage.batch_set in
   let (last_order_number, batch_number) = match current_batch with
                                              | None -> (0n, storage.batch_set.last_batch_number + 1n)
-                                             | Some cb -> (cb.last_order_number, cb.current_batch_number) in
+                                             | Some cb -> (cb.last_order_number, storage.batch_set.current_batch_number) in
   let order : order = external_to_order external_order last_order_number batch_number  in
   let ticked_storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
@@ -152,7 +154,7 @@ let deposit (external_order: external_order) (storage : storage) : result =
       try_to_append_order order ticked_storage.batch_set
   in
   let updated_user_orderbook = Userorderbook.push_open_order external_order.trader order storage.user_orderbook in
-  let updated_storage = { ticked_storage with batch_set = updated_batches; user_orderbook = updated_user_orderbook } in
+  let updated_storage = { ticked_storage with batch_set = updated_batch_set; user_orderbook = updated_user_orderbook } in
   let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
   ([ tokens_transfer_op ], storage_after_treasury_update)
 
