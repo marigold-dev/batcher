@@ -17,8 +17,12 @@ type tolerance = Types.Types.tolerance
 type user_orders = Types.Types.user_orders
 type token_amount_option = Types.Types.token_amount option
 
+
 module Utils = struct
   type adjustment = INCREASE | DECREASE
+  type order_list = order list
+  type token_amount_map = (address, token_amount) map
+
 
  type atomic_trans =
     [@layout:comb] {
@@ -160,15 +164,56 @@ module Utils = struct
     | _ -> None
 
 
+  let get_cleared_payout
+    (order: order)
+    (clearing: clearing) : token_amount =
+    order.swap.from
+
   let collect_order_payout_from_clearing
-    (order:order)
-    (clearing:clearing) : (order * token_amount) =
-    let redeemed_order = { order with redeemed = true} in
-    let was_in_clearing = Utils.was_in_clearing redeemed_order clearing in
-    if was_in_clearing then
-      (redeemed_order, redeemed_order.swap.from)
-    else
-      (redeemed_order, redeemed_order.swap.from)
+    (order, clearing: order * clearing option) :  token_amount =
+    match clearing with
+    | None -> order.swap.from
+    | Some c -> if was_in_clearing order c then
+                  let cleared_token_amount = get_cleared_payout order c in
+                  cleared_token_amount
+                else
+                  order.swap.from
+
+  let redeemed_order
+    (order: order) = { order with redeemed = true }
+
+
+  let collate_token_amounts
+    (acc, ta : token_amount_map * token_amount) : token_amount_map =
+    let addr = ta.token.address in
+    let token_map : (address, token_amount) map = acc in
+    match Map.find_opt addr token_map with
+    | None ->  Map.add addr ta token_map
+    | Some t ->  let new_amount = ta.amount + t.amount in
+                 let new_token_amount = { t with amount = new_amount } in
+                 Big_map.update addr (Some new_token_amount) token_map
+
+  let collect_order_payouts
+    (user_orders: user_orders)
+    (batch_set: batch_set)
+    (storage : storage) : operation list * storage =
+    let open_orders : (order list) option = Map.find_opt Constants.open user_orders in
+    let (redeemed_orders, payout_token_amount_options) = match open_orders with
+                                                         | None -> (([]: order list), ([]: token_amount_option list))
+                                                         | Some ords -> let match_order_to_batch
+                                                                        (order: order) : (order * clearing option) =
+                                                                           match Big_map.find_opt order.batch_number batch_set.batches with
+                                                                           | None -> (order, None)
+                                                                           | Some b -> (order, get_clearing b)
+                                                                       in
+                                                                       let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
+                                                                       let redeemed_orders  = List.map redeemed_order ords in
+                                                                       let payouts: token_amount list = List.map collect_order_payout_from_clearing orders_and_clearing in
+                                                                       (([]: order list), ([]: token_amount_option list))
+       in
+       let operations = ([]: operation list)  in
+       (operations,  storage)
+
 
   let redeem_holdings
     (holder : address)
@@ -177,19 +222,9 @@ module Utils = struct
        let user_orders: user_orders option = Big_map.find_opt holder storage.user_orderbook in
        let batch_set = storage.batch_set in
        let empty_ops = ([]: operation list)  in
-       match user_orders with
-       | None ->  (empty_ops, storage)
-       | Some uords -> let open_orders : (order list) option = Map.find_opt Constants.open uords in
-                       let (redeemed_orders, payout_token_amount_options) = match open_orders with
-                                                                            | None -> (([]: order list), ([]: token_amount_option list))
-                                                                            | Some ords -> let match_order_to_batch
-                                                                                               (order: order) : (order * batch option) =
-                                                                                               match Big_map.find_opt order.batch_number batch_set.batches with
-                                                                                               | None -> (order, None)
-                                                                                               | Some b -> (order, Some b)
-                                                                                           in
-                                                                                           let _orders_and_batches = List.map match_order_to_batch ords in
-                                                                                           (([]: order list), ([]: token_amount_option list))
+       let redeemed_ops_and_storage =  match user_orders with
+                                       | None ->  (empty_ops, storage)
+                                       | Some uords -> collect_order_payouts uords batch_set storage
        in
        (* let operations = transfer_holdings treasury_vault holder holdings in *)
        let operations = ([]: operation list)  in
@@ -224,8 +259,8 @@ let deposit
       (op, update_storage)
 
 let redeem
-    (_redeem_address : address)
+    (redeem_address : address)
     (storage : storage) : operation list * storage =
-      let _treasury_vault = get_treasury_vault () in
+      let treasury_vault = get_treasury_vault () in
       let (ops, updated_storage) = Utils.redeem_holdings redeem_address treasury_vault storage in
       (ops, updated_storage)

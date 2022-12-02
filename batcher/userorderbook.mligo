@@ -27,6 +27,16 @@ let add_open_order
   | None -> make_new_order_map order
   | Some op_ords -> Map.update Constants.open (Some (order::op_ords)) user_orders
 
+let push_redeemed_orders
+  (redeemed_orders: order list)
+  (user_orders : user_orders): user_orders =
+  let previously_redeemed = Map.find_opt Constants.redeemed user_orders in
+  let all_redemptions = match previously_redeemed with
+                        | None -> Map.add Constants.redeemed previously_redeemed user_orders
+                        | Some prev -> let joined_redemptions = concat (order) (redeemed_orders) prev in
+                                       Map.update Constants.redeemed (Some joined_redemptions) user_orders
+  in
+  Big_map.update Constants.open (Some []) user_orders
 
 let push_open_order
   (holder: address)
