@@ -20,6 +20,7 @@ type tolerance = Types.Types.tolerance
 type exchange_rate = Types.Types.exchange_rate
 type inverse_exchange_rate = exchange_rate
 type batch_set = Types.Types.batch_set
+type user_orders = Types.Types.user_orders
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 

@@ -14,6 +14,8 @@ type batch_set = Types.Types.batch_set
 type order = Types.Types.swap_order
 type clearing = Types.Types.clearing
 type tolerance = Types.Types.tolerance
+type user_orders = Types.Types.user_orders
+type token_amount_option = Types.Types.token_amount option
 
 module Utils = struct
   type adjustment = INCREASE | DECREASE
@@ -151,10 +153,63 @@ module Utils = struct
     | BUY -> was_in_clearing_for_buy clearing_tolerance order_tolerance
     | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
 
+  let get_clearing
+    (batch: batch) : clearing option =
+    match batch.status with
+    | Cleared { at = _ ; clearing = c; rate = _ } -> Some c
+    | _ -> None
+
+
+  let collect_order_payout_from_clearing
+    (order:order)
+    (clearing:clearing) : (order * token_amount) =
+    let redeemed_order = { order with redeemed = true} in
+    let was_in_clearing = Utils.was_in_clearing redeemed_order clearing in
+    if was_in_clearing then
+      (redeemed_order, redeemed_order.swap.from)
+    else
+      (redeemed_order, redeemed_order.swap.from)
+
+  let redeem_holdings
+    (holder : address)
+    (treasury_vault : address)
+    (storage : storage) : operation list * storage =
+       let user_orders: user_orders option = Big_map.find_opt holder storage.user_orderbook in
+       let batch_set = storage.batch_set in
+       let empty_ops = ([]: operation list)  in
+       match user_orders with
+       | None ->  (empty_ops, storage)
+       | Some uords -> let open_orders : (order list) option = Map.find_opt Constants.open uords in
+                       let (redeemed_orders, payout_token_amount_options) = match open_orders with
+                                                                            | None -> (([]: order list), ([]: token_amount_option list))
+                                                                            | Some ords -> let match_order_to_batch
+                                                                                               (order: order) : (order * batch option) =
+                                                                                               match Big_map.find_opt order.batch_number batch_set.batches with
+                                                                                               | None -> (order, None)
+                                                                                               | Some b -> (order, Some b)
+                                                                                           in
+                                                                                           let _orders_and_batches = List.map match_order_to_batch ords in
+                                                                                           (([]: order list), ([]: token_amount_option list))
+       in
+       (* let operations = transfer_holdings treasury_vault holder holdings in *)
+       let operations = ([]: operation list)  in
+       (operations,  storage)
 end
 
 
 let get_treasury_vault () : address = Tezos.get_self_address ()
+
+
+
+let collect_order_payout
+  (order: order)
+  (batch : batch): (order * token_amount option) =  (order, None)
+
+(*  let clearing = (get_clearing ob) in
+                 match clearing with
+                 | None -> (order, None)
+                 | Some(c) ->  collect_order_payout_from_clearing order clearing  *)
+
 
 let deposit
     (deposit_address : address)
@@ -172,7 +227,5 @@ let redeem
     (_redeem_address : address)
     (storage : storage) : operation list * storage =
       let _treasury_vault = get_treasury_vault () in
-      (* let (ops, updated_batches) = Utils.redeem_holdings_from_batches redeem_address treasury_vault storage.batch_set in *)
-      (* let btchs : batch_set = updated_batches in *)
-      (* (ops, { storage with batch_set = btchs }) *)
-      (([]: operation list), storage)
+      let (ops, updated_storage) = Utils.redeem_holdings redeem_address treasury_vault storage in
+      (ops, updated_storage)
