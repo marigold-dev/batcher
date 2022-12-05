@@ -3,6 +3,7 @@
 #import "errors.mligo" "Errors"
 #include "utils.mligo"
 #import "constants.mligo" "Constants"
+#import "../math_lib/lib/float.mligo" "Float"
 
 type storage = Storage.Types.t
 type token_amount = Types.Types.token_amount
@@ -164,34 +165,76 @@ module Utils = struct
     | _ -> None
 
 
+  let get_clearing_volume
+    (clearing:clearing) = nat =
+    match clearing.clearing_tolerance with
+    | MINUS -> clearing.clearing_volumes.minus
+    | EXACT -> clearing.clearing_volumes.exact
+    | PLUS -> clearing.clearing_volumes.plus
+
+  let get_cleared_buy_side_payout
+    (swap:swap)
+    (clearing:clearing) : token_amount list =
+    let f_buy_side_actual_volume = Float.new clearing.prorata_equivalence.buy_side_actual_volume 0 in
+    let f_amount = Float.new swap.from.amount 0 in
+    let prorata_allocation = Float.div f_amount f_buy_side_actual_volume in
+    let f_buy_side_clearing_volume = Float.new (get_clearing_volume clearing) 0 in
+    let sell_side_clearing_volume = Float.mul clearing.clearing_rate f_amount f_buy_side_clearing_volume in
+    let payout = Float.mul prorata_allocation sell_side_clearing_volume in
+    let payout_equiv = Float.div clearing.clearing_rate payout in
+    let remaining = Float.sub f_amount payout_equiv in
+    let fill_payout = {
+      token = swap.to;
+      amount = Math.get_rounded_number payout;
+    } in
+    if Float.gt remaining (Float.new 0 0) then
+      let token_rem = {
+         token = swap.from.token;
+         amount = Math.get_rounded_number remaining;
+      } in
+      [ fill_payout, token_rem ]
+    else
+      [ fill_payout ]
+
+
   let get_cleared_payout
     (order: order)
-    (clearing: clearing) : token_amount =
-    order.swap.from
+    (clearing: clearing) : token_amount list =
+    match order.side with
+    | BUY -> get_cleared_buy_side_payout order.swap clearing
+    | SELL -> get_cleared_buy_side_payout order.swap clearing
 
   let collect_order_payout_from_clearing
-    (order, clearing: order * clearing option) :  token_amount =
+    (order, clearing: order * clearing option) :  token_amount list =
     match clearing with
     | None -> order.swap.from
     | Some c -> if was_in_clearing order c then
                   let cleared_token_amount = get_cleared_payout order c in
                   cleared_token_amount
                 else
-                  order.swap.from
+                  [ order.swap.from ]
 
   let redeemed_order
     (order: order) = { order with redeemed = true }
 
 
+  let add_or_update_token_amount_in_map
+    (addr: address)
+    (ta: token_amount)
+    (tam: token_amount_map) : token_amount_map =
+    match (Map.find_opt addr tam) with
+    | None ->  Map.add addr ta tam
+    | Some t -> let new_amount = ta.amount + t.amount in
+                let new_token_amount = { t with amount = new_amount } in
+                Map.update addr (Some new_token_amount) tam
+
+
   let collate_token_amounts
-    (acc, ta : token_amount_map * token_amount) : token_amount_map =
-    let addr = ta.token.address in
-    let token_map : (address, token_amount) map = acc in
-    match Map.find_opt addr token_map with
-    | None ->  Map.add addr ta token_map
-    | Some t ->  let new_amount = ta.amount + t.amount in
-                 let new_token_amount = { t with amount = new_amount } in
-                 Big_map.update addr (Some new_token_amount) token_map
+    (token_map, ta : token_amount_map * token_amount) : token_amount_map =
+    match ta.token.address with
+    | None -> (Map.empty : token_amount_map)
+    | Some addr ->  add_or_update_token_amount_in_map addr ta token_map
+
 
   let collect_order_payouts
     (user_orders: user_orders)
@@ -236,14 +279,6 @@ let get_treasury_vault () : address = Tezos.get_self_address ()
 
 
 
-let collect_order_payout
-  (order: order)
-  (batch : batch): (order * token_amount option) =  (order, None)
-
-(*  let clearing = (get_clearing ob) in
-                 match clearing with
-                 | None -> (order, None)
-                 | Some(c) ->  collect_order_payout_from_clearing order clearing  *)
 
 
 let deposit
