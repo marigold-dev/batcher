@@ -1,5 +1,6 @@
 #import "types.mligo" "Types"
 #import "storage.mligo" "Storage"
+#import "math.mligo" "Math"
 #import "errors.mligo" "Errors"
 #include "utils.mligo"
 #import "constants.mligo" "Constants"
@@ -13,6 +14,7 @@ type pair = Types.Types.token * Types.Types.token
 type batch = Types.Types.batch
 type batch_set = Types.Types.batch_set
 type order = Types.Types.swap_order
+type swap = Types.Types.swap
 type clearing = Types.Types.clearing
 type tolerance = Types.Types.tolerance
 type user_orders = Types.Types.user_orders
@@ -166,7 +168,7 @@ module Utils = struct
 
 
   let get_clearing_volume
-    (clearing:clearing) = nat =
+    (clearing:clearing) : nat =
     match clearing.clearing_tolerance with
     | MINUS -> clearing.clearing_volumes.minus
     | EXACT -> clearing.clearing_volumes.exact
@@ -175,36 +177,36 @@ module Utils = struct
   let get_cleared_sell_side_payout
     (swap:swap)
     (clearing:clearing) : token_amount list =
-    let f_sell_side_actual_volume = Float.new clearing.prorata_equivalence.sell_side_actual_volume 0 in
-    let f_amount = Float.new swap.from.amount 0 in
+    let f_sell_side_actual_volume = Float.new (int clearing.prorata_equivalence.sell_side_actual_volume) 0 in
+    let f_amount = Float.new (int swap.from.amount) 0 in
     let prorata_allocation = Float.div f_amount f_sell_side_actual_volume in
-    let f_buy_side_clearing_volume = Float.new (get_clearing_volume clearing) 0 in
-    let payout = Float.mul prorata_allocation buy_side_clearing_volume in
-    let payout_equiv = Float.mul clearing.clearing_rate payout in
+    let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
+    let payout = Float.mul prorata_allocation f_buy_side_clearing_volume in
+    let payout_equiv = Float.mul clearing.clearing_rate.rate payout in
     let remaining = Float.sub f_amount payout_equiv in
-    let fill_payout = {
+    let fill_payout: token_amount = {
       token = swap.to;
       amount = Math.get_rounded_number payout;
     } in
     if Float.gt remaining (Float.new 0 0) then
-      let token_rem = {
+      let token_rem : token_amount = {
          token = swap.from.token;
          amount = Math.get_rounded_number remaining;
       } in
-      [ fill_payout, token_rem ]
+      [ fill_payout; token_rem ]
     else
       [ fill_payout ]
 
   let get_cleared_buy_side_payout
     (swap:swap)
     (clearing:clearing) : token_amount list =
-    let f_buy_side_actual_volume = Float.new clearing.prorata_equivalence.buy_side_actual_volume 0 in
-    let f_amount = Float.new swap.from.amount 0 in
+    let f_buy_side_actual_volume = Float.new (int clearing.prorata_equivalence.buy_side_actual_volume) 0 in
+    let f_amount = Float.new (int swap.from.amount) 0 in
     let prorata_allocation = Float.div f_amount f_buy_side_actual_volume in
-    let f_buy_side_clearing_volume = Float.new (get_clearing_volume clearing) 0 in
-    let sell_side_clearing_volume = Float.mul clearing.clearing_rate f_amount f_buy_side_clearing_volume in
-    let payout = Float.mul prorata_allocation sell_side_clearing_volume in
-    let payout_equiv = Float.div clearing.clearing_rate payout in
+    let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
+    let f_sell_side_clearing_volume = Float.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
+    let payout = Float.mul prorata_allocation f_sell_side_clearing_volume in
+    let payout_equiv = Float.div clearing.clearing_rate.rate payout in
     let remaining = Float.sub f_amount payout_equiv in
     let fill_payout = {
       token = swap.to;
@@ -215,7 +217,7 @@ module Utils = struct
          token = swap.from.token;
          amount = Math.get_rounded_number remaining;
       } in
-      [ fill_payout, token_rem ]
+      [ fill_payout; token_rem ]
     else
       [ fill_payout ]
 
