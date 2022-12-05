@@ -232,7 +232,7 @@ module Utils = struct
   let collect_order_payout_from_clearing
     (order, clearing: order * clearing option) :  token_amount list =
     match clearing with
-    | None -> order.swap.from
+    | None -> [ order.swap.from ]
     | Some c -> if was_in_clearing order c then
                   let cleared_token_amount = get_cleared_payout order c in
                   cleared_token_amount
@@ -255,10 +255,13 @@ module Utils = struct
 
 
   let collate_token_amounts
-    (token_map, ta : token_amount_map * token_amount) : token_amount_map =
-    match ta.token.address with
-    | None -> (Map.empty : token_amount_map)
-    | Some addr ->  add_or_update_token_amount_in_map addr ta token_map
+    (token_map, tal : token_amount_map * token_amount list) : token_amount_map =
+    let aux (tmap,ta : token_amount_map * token_amount) : token_amount_map =
+         match ta.token.address with
+         | None -> token_map
+         | Some addr ->  add_or_update_token_amount_in_map addr ta token_map
+    in
+    List.fold aux tal token_map
 
 
   let collect_order_payouts
@@ -276,7 +279,7 @@ module Utils = struct
                                                                        in
                                                                        let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
                                                                        let redeemed_orders  = List.map redeemed_order ords in
-                                                                       let payouts: token_amount list = List.map collect_order_payout_from_clearing orders_and_clearing in
+                                                                       let payouts: (token_amount list) list = List.map collect_order_payout_from_clearing orders_and_clearing in
                                                                        (([]: order list), ([]: token_amount_option list))
        in
        let operations = ([]: operation list)  in
