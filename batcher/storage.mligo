@@ -14,6 +14,8 @@ module Types = struct
 
   type batch_set = CommonTypes.Types.batch_set
 
+  type user_orders = CommonTypes.Types.user_orders
+
   type user_orderbook = CommonTypes.Types.user_orderbook
 
   type t = {

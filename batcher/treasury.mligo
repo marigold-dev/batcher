@@ -258,19 +258,40 @@ module Utils = struct
     (token_map, tal : token_amount_map * token_amount list) : token_amount_map =
     let aux (tmap,ta : token_amount_map * token_amount) : token_amount_map =
          match ta.token.address with
-         | None -> token_map
-         | Some addr ->  add_or_update_token_amount_in_map addr ta token_map
+         | None -> tmap
+         | Some addr ->  add_or_update_token_amount_in_map addr ta tmap
     in
     List.fold aux tal token_map
 
+let push_redeemed_orders
+  (redeemed_orders: order list)
+  (user_orders : user_orders): user_orders =
+  let previously_redeemed  = Map.find_opt Constants.redeemed user_orders in
+  let all_redemptions:user_orders  = match previously_redeemed with
+                                     | None -> Map.add Constants.redeemed redeemed_orders user_orders
+                                     | Some prev -> let joined_redemptions = List.fold_right (fun (o, ords: order * order list) -> o :: ords) redeemed_orders prev in
+                                                    Map.update Constants.redeemed (Some joined_redemptions) user_orders
+  in
+  Map.update Constants.open (Some []) all_redemptions
+
+ let transfer_holdings (treasury_vault : address) (holder: address)  (holdings : token_amount_map) : operation list =
+    let atomic_transfer (operations, (_addr,ta) : operation list * ( address * token_amount)) : operation list =
+      let op: operation = handle_transfer treasury_vault holder ta in
+      op :: operations
+    in
+    let op_list = Map.fold atomic_transfer holdings ([] : operation list)
+    in
+    op_list
 
   let collect_order_payouts
+    (holder : address)
+    (treasury_vault : address)
     (user_orders: user_orders)
     (batch_set: batch_set)
     (storage : storage) : operation list * storage =
     let open_orders : (order list) option = Map.find_opt Constants.open user_orders in
-    let (redeemed_orders, payout_token_amount_options) = match open_orders with
-                                                         | None -> (([]: order list), ([]: token_amount_option list))
+    let (redeemed_orders, payout_token_map) = match open_orders with
+                                                         | None -> (([]: order list), (Map.empty: token_amount_map))
                                                          | Some ords -> let match_order_to_batch
                                                                         (order: order) : (order * clearing option) =
                                                                            match Big_map.find_opt order.batch_number batch_set.batches with
@@ -280,10 +301,13 @@ module Utils = struct
                                                                        let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
                                                                        let redeemed_orders  = List.map redeemed_order ords in
                                                                        let payouts: (token_amount list) list = List.map collect_order_payout_from_clearing orders_and_clearing in
-                                                                       (([]: order list), ([]: token_amount_option list))
-       in
-       let operations = ([]: operation list)  in
-       (operations,  storage)
+                                                                       let collated_payouts = List.fold collate_token_amounts payouts Map.empty in
+                                                                       (redeemed_orders,collated_payouts)
+    in
+    let updated_user_orders = push_redeemed_orders redeemed_orders user_orders in
+    let updated_user_orderbook = Big_map.update holder (Some updated_user_orders) storage.user_orderbook in
+    let operations = transfer_holdings treasury_vault holder payout_token_map in
+    (operations,  { storage with user_orderbook = updated_user_orderbook })
 
 
   let redeem_holdings
@@ -295,11 +319,9 @@ module Utils = struct
        let empty_ops = ([]: operation list)  in
        let redeemed_ops_and_storage =  match user_orders with
                                        | None ->  (empty_ops, storage)
-                                       | Some uords -> collect_order_payouts uords batch_set storage
+                                       | Some uords -> collect_order_payouts treasury_vault holder uords batch_set storage
        in
-       (* let operations = transfer_holdings treasury_vault holder holdings in *)
-       let operations = ([]: operation list)  in
-       (operations,  storage)
+       redeemed_ops_and_storage
 end
 
 
