@@ -209,3 +209,9 @@ export enum BatcherStatus {
 export type BatcherStepperProps = {
   status: string;
 };
+
+export type BatchSet = {
+  batches: number;
+  last_batch_number: string;
+  current_batch_number: string;
+};
