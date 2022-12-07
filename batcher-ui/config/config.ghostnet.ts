@@ -78,7 +78,7 @@ export default defineConfig({
     },
     {
       property: 'og:site_name',
-      content: 'Batcher DEX',
+      content: 'Batcher',
     },
     {
       property: 'og:image',
