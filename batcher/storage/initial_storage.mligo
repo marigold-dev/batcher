@@ -4,13 +4,13 @@ let f(_:unit) = {
   valid_tokens = [
     {
       name = "tzBTC";
-      address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
+      address = Some(("KT1FRyR3ohQ59N54BJMg9KjDUGh4z5hWuYab" : address));
       decimals = 8;
       standard = Some "FA1.2 token";
     };
     {
       name = "USDT";
-      address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
+      address = Some(("KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF" : address));
       decimals = 6;
       standard = Some "FA2 token";
     };
@@ -27,14 +27,14 @@ let f(_:unit) = {
           amount = 1n;
           token = {
             name = "tzBTC";
-            address = Some(("KT1XBUuCDb7ruPcLCpHz4vrh9jL9ogRFYTpr" : address));
+            address = Some(("KT1FRyR3ohQ59N54BJMg9KjDUGh4z5hWuYab" : address));
             decimals = 8;
             standard = Some "FA1.2 token";
           };
         };
         to = {
           name = "USDT";
-          address = Some(("KT1AqXVEApbizK6ko4RqtCVdgw8CQd1xaLsF" : address));
+          address = Some(("KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF" : address));
           decimals = 6;
           standard = Some "FA2 token";
         }
@@ -42,9 +42,11 @@ let f(_:unit) = {
     )
   ];
   rates_current = (Big_map.empty : Storage.Types.rates_current);
-  batches = {
-     current = (None : Storage.Types.batch option);
-   	 previous = ([] : Storage.Types.batch list);
+  user_orderbook = (Big_map.empty : (address, Storage.Types.user_orders) big_map);
+  batch_set = {
+     current_batch_number =  0n;
+     last_batch_number = 0n;
+   	 batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
   };
 }
 

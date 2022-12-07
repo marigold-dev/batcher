@@ -38,7 +38,7 @@ post_rate_contract () {
   USDT_token="Pair (Pair (Some \"$USDT_address\") 6) (Pair \"USDT\" (Some \"FA2 token\"))"
   timestamp=$(date +%s)
 
-  octez-client transfer 0 from oracle_account to $1 \
+  octez-client transfer 0 from oracle_account to $batcher_address \
     --entrypoint post \
     --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
     --burn-cap 2

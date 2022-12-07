@@ -52,3 +52,5 @@ let unable_to_parse_side_from_external_order : nat = 124n
 let unable_to_parse_tolerance_from_external_order : nat = 125n
 
 let not_found_token_standard : nat = 126n
+
+let unable_to_find_side_in_orderbook : nat = 127n

@@ -37,6 +37,7 @@ module Types = struct
     [@layout:comb]
     holder: address;
     token_amount : token_amount;
+    redeemed: bool;
   }
 
   type swap = {
@@ -55,11 +56,14 @@ module Types = struct
 
   type swap_order = {
     [@layout:comb]
+    order_number: nat;
+    batch_number: nat;
     trader : address;
     swap  : swap;
     created_at : timestamp;
     side : side;
     tolerance : tolerance;
+    redeemed:bool;
   }
 
   type external_swap_order = {
@@ -75,19 +79,30 @@ module Types = struct
     [@layout:comb]
     NOT_OPEN | OPEN | CLOSED | FINALIZED
 
-  type clearing = {
+  type prorata_equivalence = {
     [@layout:comb]
-    clearing_volumes : (tolerance, nat) map;
-    clearing_tolerance : tolerance;
+    buy_side_actual_volume: nat;
+    buy_side_actual_volume_equivalence: nat;
+    sell_side_actual_volume: nat;
+    sell_side_actual_volume_equivalence: nat
   }
 
-  type treasury_item_status =
+  type clearing_volumes = {
     [@layout:comb]
-    DEPOSITED | EXCHANGED | CLAIMED
+    minus: nat;
+    exact: nat;
+    plus: nat;
+  }
 
-  type treasury_holding = (string, token_holding) map
 
-  type treasury = (address, treasury_holding) big_map
+  type clearing = {
+    [@layout:comb]
+    clearing_volumes : clearing_volumes;
+    clearing_tolerance : tolerance;
+    prorata_equivalence: prorata_equivalence;
+    clearing_rate: exchange_rate;
+  }
+
 
   (* These types are used in math module *)
   type buy_minus_token = int
@@ -103,14 +118,15 @@ module Types = struct
   (*
     A bid : the price a buyer is willing to pay for an asset
     A ask : the price a seller is willing to auxept for an asset
-    Here, the orderbook is a list of bids orders and asks orders
+    Here, the orderbook is a map of bids orders list  and asks order list
   *)
-  type orderbook = {
-    [@layout:comb]
-    bids : swap_order list;
-    asks : swap_order list
-  }
+  type orderbook = (string, swap_order list) map
 
+ (* Holds all the orders associated with a user: redeemed and unredeemed *)
+  type user_orders = (string, swap_order list) map
+
+ (* Holds all the orders associated with all users *)
+  type user_orderbook = (address, user_orders) big_map
 
   type batch_status =
     | Open of { start_time : timestamp }
@@ -120,9 +136,10 @@ module Types = struct
   (* Batch of orders for the same pair of tokens *)
   type batch = {
     [@layout:comb]
+    batch_number: nat;
     status : batch_status;
-    treasury : treasury;
     orderbook : orderbook;
+    last_order_number: nat;
     pair : token * token;
   }
 
@@ -130,13 +147,26 @@ module Types = struct
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
-    [@layout:comb]
-    current : batch option;
-    previous : batch list;
-  }
+    current_batch_number: nat;
+    last_batch_number: nat;
+    batches: (nat, batch) big_map;
+    }
 end
 
 module Utils = struct
+
+  type order = Types.swap_order
+  type batch_set = Types.batch_set
+  type batch = Types.batch
+
+  let empty_prorata_equivalence : Types.prorata_equivalence = {
+    buy_side_actual_volume = 0n;
+    buy_side_actual_volume_equivalence = 0n;
+    sell_side_actual_volume = 0n;
+    sell_side_actual_volume_equivalence = 0n;
+  }
+
+
   let get_rate_name_from_swap (s : Types.swap) : string =
     let base_name = s.from.token.name in
     let quote_name = s.to.name in
@@ -148,7 +178,7 @@ module Utils = struct
     let quote_name = quote.name in
     base_name ^ "/" ^ quote_name
 
-  let get_inverse_rate_name_from_pair (s : Types.token * Types.token) : string = 
+  let get_inverse_rate_name_from_pair (s : Types.token * Types.token) : string =
     let (base, quote) = s in
     let quote_name = quote.name in
     let base_name = base.name in
@@ -194,22 +224,24 @@ module Utils = struct
   (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding
     (holder : address)
-    (token_amount : Types.token_amount) : Types.token_holding =
+    (token_amount : Types.token_amount)
+    (redeemed : bool): Types.token_holding =
     {
       holder =  holder;
       token_amount = token_amount;
+      redeemed = redeemed;
     }
 
 
   let nat_to_side
   (order_side : nat) : Types.side =
     if order_side = 0n then BUY
-    else 
+    else
       if order_side = 1n then SELL
       else failwith Errors.unable_to_parse_side_from_external_order
 
   let nat_to_tolerance (tolerance : nat) : Types.tolerance =
-    if tolerance = 0n then MINUS 
+    if tolerance = 0n then MINUS
     else if tolerance = 1n then EXACT
     else if tolerance = 2n then PLUS
     else failwith Errors.unable_to_parse_tolerance_from_external_order
@@ -222,5 +254,16 @@ module Utils = struct
     | MINUS -> 0n
     | EXACT -> 1n
     | PLUS -> 2n
+
+  let get_current_batch
+    (batch_set: batch_set) : batch option =
+    let cbn = batch_set.current_batch_number in
+    if cbn = 0n then
+      None
+    else
+      let bts = batch_set.batches in
+      let cbf: batch option = Big_map.find_opt cbn bts in
+      cbf
+
 end
 
