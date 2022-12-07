@@ -5,21 +5,13 @@ import About from '@/components/About';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
-import {
-  ContentType,
-  ContractStorage,
-  token,
-  batch,
-  batch_set,
-  order_book,
-  BatcherStatus,
-} from '@/extra_utils/types';
+import { ContentType, token, order_book, BatcherStatus, BatchSet } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
-import { connection,  init } from '@/extra_utils/webSocketUtils';
+import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
 
 const Welcome: React.FC = () => {
@@ -53,7 +45,6 @@ const Welcome: React.FC = () => {
     version: '',
     withCredentials: false,
   });
-  const [batches, setBatches] = useState<batch_set>();
   const [previousTreasuries, setPreviousTreasuries] = useState<Array<number>>([]);
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
@@ -73,13 +64,30 @@ const Welcome: React.FC = () => {
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
   const [openTime, setOpenTime] = useState<string>(null);
 
-  const process_batches_and_order_book = (order_book: order_book, treasuries: Array<number>) => {
+  const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
-      setOrderBook(order_book);
-      setPreviousTreasuries(treasuries);
-    } catch (error: any) {
-      setPreviousTreasuries([]);
-      setOrderBook(getEmptyOrderBook());
+      const currentBatchNumber = batchSet.current_batch_number;
+
+      if (parseInt(currentBatchNumber) === 0) {
+        setStatus(BatcherStatus.NONE);
+        setOrderBook(getEmptyOrderBook());
+      } else {
+        const currentBatchURI = bigMapsByIdUri + batchSet.batches + '/keys/' + currentBatchNumber;
+        const data = await fetch(currentBatchURI, {
+          method: 'GET',
+        });
+        const jsonData = await data.json();
+        const status = Object.keys(jsonData.value.status)[0];
+        setStatus(status);
+        if (status === BatcherStatus.OPEN) {
+          setOpenTime(jsonData.value.status.open);
+        }
+
+        console.log('%cMain.tsx line:114 jsonData.value', 'color: #007acc;', jsonData.value);
+        setOrderBook(jsonData.value.orderbook);
+      }
+    } catch (error) {
+      console.log('Batcher error', error);
     }
   };
 
@@ -90,24 +98,9 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    try {
-      process_batches_and_order_book(
-        storage.batches.current ? storage.batches.current.orderbook : getEmptyOrderBook(),
-        storage.batches.previous ? storage.batches.previous.map((p: batch) => p.treasury) : [],
-      );
+    console.log('%cMain.tsx line:93 storage', 'color: #007acc;', storage);
 
-      if (!storage.batches.current) {
-        setStatus(BatcherStatus.NONE);
-      } else {
-        const status = Object.keys(storage.batches.current.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
-          setOpenTime(storage.batches.current.status.open);
-        }
-      }
-    } catch (error) {
-      console.log('Batcher error', error);
-    }
+    await getCurrentOrderbook(storage.batch_set);
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -115,7 +108,12 @@ const Welcome: React.FC = () => {
       if (!userAddress) return;
 
       console.log('Balance', msg);
-      const updatedBuyBalance = getSocketTokenAmount(msg.data, userAddress, buyBalance, buyTokenAddress);
+      const updatedBuyBalance = getSocketTokenAmount(
+        msg.data,
+        userAddress,
+        buyBalance,
+        buyTokenAddress,
+      );
       if (updatedBuyBalance !== 0) {
         setBuyBalance({
           ...buyBalance,
@@ -123,7 +121,12 @@ const Welcome: React.FC = () => {
         });
       }
 
-      const updatedSellBalance = getSocketTokenAmount(msg.data, userAddress, sellBalance, sellTokenAddress);
+      const updatedSellBalance = getSocketTokenAmount(
+        msg.data,
+        userAddress,
+        sellBalance,
+        sellTokenAddress,
+      );
       if (updatedSellBalance !== 0) {
         setSellBalance({
           ...sellBalance,
@@ -137,27 +140,7 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       console.log('Operations', msg);
-
-      const batches = msg.data[0].storage.batches;
-
-      process_batches_and_order_book(
-        batches.current ? batches.current.orderbook : getEmptyOrderBook(),
-        batches.previous ? batches.previous.map((p: batch) => p.treasury) : [],
-      );
-
-      try {
-        if (!batches.current) {
-          setStatus(BatcherStatus.NONE);
-        } else {
-          const status = Object.keys(batches.current.status)[0];
-          setStatus(status);
-          if (status === BatcherStatus.OPEN) {
-            setOpenTime(batches.current.status.open);
-          }
-        }
-      } catch (error: any) {
-        console.log(error);
-      }
+      getCurrentOrderbook(msg.data[0].storage.batch_set);
     });
 
     connection.on('bigmaps', (msg: any) => {
@@ -237,9 +220,7 @@ const Welcome: React.FC = () => {
           />
         );
       case ContentType.ABOUT:
-        return (
-          <About />
-        );
+        return <About />;
       default:
         return (
           <Exchange
