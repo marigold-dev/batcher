@@ -65,7 +65,7 @@ export default defineConfig({
     },
     {
       property: 'og:title',
-      content: 'Batcher DEX',
+      content: 'Batcher',
     },
     {
       property: 'og:description',
