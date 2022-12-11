@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Exchange from '@/components/Exchange';
-import Holdings from '@/components/Holdings';
 import About from '@/components/About';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
@@ -10,9 +9,10 @@ import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
-import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
+import { getSocketTokenAmount, getTokenAmount, scaleAmountDown } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
+import NewHoldings from '@/components/NewHoldings';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -63,6 +63,8 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
   const [openTime, setOpenTime] = useState<string>(null);
+  const [buySideAmount, setBuySideAmount] = useState<number>(0);
+  const [sellSideAmount, setSellSideAmount] = useState<number>(0);
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
@@ -82,13 +84,88 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
-
-        console.log('%cMain.tsx line:114 jsonData.value', 'color: #007acc;', jsonData.value);
         setOrderBook(jsonData.value.orderbook);
       }
     } catch (error) {
       console.log('Batcher error', error);
     }
+  };
+
+  const getClearedPayoutOfUserAddress = async () => {
+    if (!userAddress) {
+      setSellSideAmount(0);
+      setBuySideAmount(0);
+      return;
+    }
+
+    const storage = await contractsService.getStorage({
+      address: contractAddress,
+      level: 0,
+      path: null,
+    });
+
+    const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
+    const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
+    const userOrderBooks = await userOrderBookData.json();
+    if (!Array.isArray(userOrderBooks.value.open) || userOrderBooks.value.open.length == 0) {
+      return;
+    }
+
+    const openOrderBooks = userOrderBooks.value.open;
+
+    console.log(344, openOrderBooks);
+
+    let initialBuySideAmount = 0;
+    let initialSellSideAmount = 0;
+
+    for (var i = 0; i < openOrderBooks.length; i++) {
+      const batchURI =
+        bigMapsByIdUri + storage.batch_set.batches + '/keys/' + openOrderBooks.at(i).batch_number;
+      const batchData = await fetch(batchURI, { method: 'GET' });
+      const batch = await batchData.json();
+      console.log(1444, batch);
+
+      const clearingRate =
+        parseInt(batch.value.status.cleared.rate.rate.val) *
+        10 ** parseInt(batch.value.status.cleared.rate.rate.pow);
+
+      const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
+      const clearing = parseInt(
+        batch.value.status.cleared.clearing.clearing_volumes[clearingKey.toLowerCase()],
+      );
+
+      console.log(2222, clearingRate);
+
+      const buySideActualVolume = parseInt(
+        batch.value.status.cleared.clearing.prorata_equivalence.buy_side_actual_volume,
+      );
+      const sellSideActualVolume = parseInt(
+        batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
+      );
+
+      if (Object.keys(openOrderBooks.at(i).side)[0] === 'bUY') {
+        const depositedBuySideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
+        const unconvertedBuySideAmount =
+          depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
+        const unconvertedSellSideAmount =
+          (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
+        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
+        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
+      } else {
+        const depositedSellSideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
+        const unconvertedBuySideAmount =
+          (depositedSellSideAmount / sellSideActualVolume) * clearing;
+        const unconvertedSellSideAmount =
+          depositedSellSideAmount -
+          (depositedSellSideAmount / sellSideActualVolume) * clearing * clearingRate;
+
+        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
+        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
+      }
+    }
+
+    setSellSideAmount(initialSellSideAmount);
+    setBuySideAmount(initialBuySideAmount);
   };
 
   const getBatches = async () => {
@@ -98,7 +175,7 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    console.log('%cMain.tsx line:93 storage', 'color: #007acc;', storage);
+    console.log('%cMain.tsx line:109 storage', 'color: #007acc;', storage);
 
     await getCurrentOrderbook(storage.batch_set);
   };
@@ -209,14 +286,14 @@ const Welcome: React.FC = () => {
         return <OrderBook orderBook={orderBook} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return (
-          <Holdings
+          <NewHoldings
             tezos={Tezos}
-            bigMapsByIdUri={bigMapsByIdUri}
             userAddress={userAddress}
             contractAddress={contractAddress}
-            previousTreasuries={previousTreasuries}
             buyToken={buyToken}
             sellToken={sellToken}
+            buyTokenHolding={buySideAmount}
+            sellTokenHolding={sellSideAmount}
           />
         );
       case ContentType.ABOUT:
@@ -239,6 +316,7 @@ const Welcome: React.FC = () => {
     getTokenBalance();
     getOraclePrice();
     handleWebsocket();
+    getClearedPayoutOfUserAddress();
   }, [userAddress]);
 
   return (
