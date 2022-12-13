@@ -4,7 +4,15 @@ import About from '@/components/About';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
-import { ContentType, token, order_book, BatcherStatus, BatchSet } from '@/extra_utils/types';
+import {
+  ContentType,
+  token,
+  order_book,
+  BatcherStatus,
+  BatchSet,
+  CLEARED,
+  BUY,
+} from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
@@ -65,7 +73,6 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
-  const buySide = 'bUY';
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
@@ -98,19 +105,38 @@ const Welcome: React.FC = () => {
       setBuySideAmount(0);
       return;
     }
+
+    const currentBatchNumber = storage.batch_set.current_batch_number;
     const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
-    const userOrderBooks = await userOrderBookData.json();
+    let userOrderBooks = null;
+    try {
+      userOrderBooks = await userOrderBookData.json();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    console.log(3333, userOrderBooks);
     if (!Array.isArray(userOrderBooks.value.open) || userOrderBooks.value.open.length == 0) {
       return;
     }
 
     const openOrderBooks = userOrderBooks.value.open;
-    const openOrderBookKeys = userOrderBooks.value.open.map((orderbook) => orderbook.batch_number);
+    const openOrderBookKeys = userOrderBooks.value.open.map((orderbook) => {
+      if (orderbook.batch_number !== currentBatchNumber) orderbook.batch_number;
+    });
 
     const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
     const batchesData = await fetch(batchesURI, { method: 'GET' });
-    const batches = await batchesData.json();
+    let batches = null;
+    try {
+      batches = await batchesData.json();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
     // This is the open batches this current user has
     const chosenBatches = batches.filter((batch) => openOrderBookKeys.includes(batch.key));
 
@@ -139,7 +165,7 @@ const Welcome: React.FC = () => {
         batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
       );
 
-      if (Object.keys(openOrderBooks.at(i).side)[0] === buySide) {
+      if (Object.keys(openOrderBooks.at(i).side)[0] === BUY) {
         const depositedBuySideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
         const unconvertedBuySideAmount =
           depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
@@ -170,6 +196,8 @@ const Welcome: React.FC = () => {
       level: 0,
       path: null,
     });
+
+    console.log(999, storage);
 
     await updateHoldings(storage);
   };

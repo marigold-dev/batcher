@@ -225,3 +225,6 @@ export type NewHoldingsProps = {
   buyTokenHolding: number;
   sellTokenHolding: number;
 };
+
+export const BUY = 'bUY';
+export const CLEARED = 'cleared';
