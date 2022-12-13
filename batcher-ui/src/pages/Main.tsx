@@ -65,6 +65,7 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
+  const buySide = 'bUY';
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
@@ -91,19 +92,12 @@ const Welcome: React.FC = () => {
     }
   };
 
-  const getClearedPayoutOfUserAddress = async () => {
+  const updateHoldings = async (storage: any) => {
     if (!userAddress) {
       setSellSideAmount(0);
       setBuySideAmount(0);
       return;
     }
-
-    const storage = await contractsService.getStorage({
-      address: contractAddress,
-      level: 0,
-      path: null,
-    });
-
     const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
     const userOrderBooks = await userOrderBookData.json();
@@ -112,18 +106,20 @@ const Welcome: React.FC = () => {
     }
 
     const openOrderBooks = userOrderBooks.value.open;
+    const openOrderBookKeys = userOrderBooks.value.open.map((orderbook) => orderbook.batch_number);
 
-    console.log(344, openOrderBooks);
+    const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
+    const batchesData = await fetch(batchesURI, { method: 'GET' });
+    const batches = await batchesData.json();
+    // This is the open batches this current user has
+    const chosenBatches = batches.filter((batch) => openOrderBookKeys.includes(batch.key));
 
     let initialBuySideAmount = 0;
     let initialSellSideAmount = 0;
 
-    for (var i = 0; i < openOrderBooks.length; i++) {
-      const batchURI =
-        bigMapsByIdUri + storage.batch_set.batches + '/keys/' + openOrderBooks.at(i).batch_number;
-      const batchData = await fetch(batchURI, { method: 'GET' });
-      const batch = await batchData.json();
-      console.log(1444, batch);
+    for (var i = 0; i < chosenBatches.length; i++) {
+      console.log(444, chosenBatches);
+      const batch = chosenBatches.at(i);
 
       const clearingRate =
         parseInt(batch.value.status.cleared.rate.rate.val) *
@@ -143,7 +139,7 @@ const Welcome: React.FC = () => {
         batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
       );
 
-      if (Object.keys(openOrderBooks.at(i).side)[0] === 'bUY') {
+      if (Object.keys(openOrderBooks.at(i).side)[0] === buySide) {
         const depositedBuySideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
         const unconvertedBuySideAmount =
           depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
@@ -166,6 +162,16 @@ const Welcome: React.FC = () => {
 
     setSellSideAmount(initialSellSideAmount);
     setBuySideAmount(initialBuySideAmount);
+  };
+
+  const updateHoldingsFromStorage = async () => {
+    const storage = await contractsService.getStorage({
+      address: contractAddress,
+      level: 0,
+      path: null,
+    });
+
+    await updateHoldings(storage);
   };
 
   const getBatches = async () => {
@@ -218,6 +224,7 @@ const Welcome: React.FC = () => {
 
       console.log('Operations', msg);
       getCurrentOrderbook(msg.data[0].storage.batch_set);
+      updateHoldings(msg.data[0].storage);
     });
 
     connection.on('bigmaps', (msg: any) => {
@@ -316,7 +323,7 @@ const Welcome: React.FC = () => {
     getTokenBalance();
     getOraclePrice();
     handleWebsocket();
-    getClearedPayoutOfUserAddress();
+    updateHoldingsFromStorage();
   }, [userAddress]);
 
   return (
