@@ -228,3 +228,7 @@ export type NewHoldingsProps = {
 
 export const BUY = 'bUY';
 export const CLEARED = 'cleared';
+
+export const MINUS = 'mINUS';
+export const EXACT = 'eXACT';
+export const PLUS = 'pLUS';

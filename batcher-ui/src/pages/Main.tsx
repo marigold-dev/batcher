@@ -10,8 +10,9 @@ import {
   order_book,
   BatcherStatus,
   BatchSet,
-  CLEARED,
   BUY,
+  MINUS,
+  EXACT,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
@@ -53,7 +54,6 @@ const Welcome: React.FC = () => {
     version: '',
     withCredentials: false,
   });
-  const [previousTreasuries, setPreviousTreasuries] = useState<Array<number>>([]);
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
@@ -117,15 +117,17 @@ const Welcome: React.FC = () => {
       return;
     }
 
-    console.log(3333, userOrderBooks);
     if (!Array.isArray(userOrderBooks.value.open) || userOrderBooks.value.open.length == 0) {
       return;
     }
 
-    const openOrderBooks = userOrderBooks.value.open;
-    const openOrderBookKeys = userOrderBooks.value.open.map((orderbook) => {
-      if (orderbook.batch_number !== currentBatchNumber) orderbook.batch_number;
+    const openHoldingOrderBooks = userOrderBooks.value.open.map((orderbook) => {
+      if (orderbook.batch_number !== currentBatchNumber) {
+        return orderbook;
+      }
     });
+
+    console.log(2333, openHoldingOrderBooks);
 
     const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
     const batchesData = await fetch(batchesURI, { method: 'GET' });
@@ -137,8 +139,12 @@ const Welcome: React.FC = () => {
       return;
     }
 
-    // This is the open batches this current user has
-    const chosenBatches = batches.filter((batch) => openOrderBookKeys.includes(batch.key));
+    const openHoldingOrderBookKeys = openHoldingOrderBooks.map(
+      (orderbook) => orderbook.batch_number,
+    );
+    // This is the open batches this current user is included
+    const chosenBatches = batches.filter((batch) => openHoldingOrderBookKeys.includes(batch.key));
+    console.log(333, chosenBatches);
 
     let initialBuySideAmount = 0;
     let initialSellSideAmount = 0;
@@ -147,14 +153,22 @@ const Welcome: React.FC = () => {
       console.log(444, chosenBatches);
       const batch = chosenBatches.at(i);
 
-      const clearingRate =
-        parseInt(batch.value.status.cleared.rate.rate.val) *
-        10 ** parseInt(batch.value.status.cleared.rate.rate.pow);
-
       const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
       const clearing = parseInt(
         batch.value.status.cleared.clearing.clearing_volumes[clearingKey.toLowerCase()],
       );
+
+      let clearingRate = 0;
+      const originalClearingRate =
+        parseInt(batch.value.status.cleared.rate.rate.val) *
+        10 ** parseInt(batch.value.status.cleared.rate.rate.pow);
+      if (clearingKey === MINUS) {
+        clearingRate = originalClearingRate / 1.0001;
+      } else if (clearingKey === EXACT) {
+        clearingRate = originalClearingRate;
+      } else {
+        clearingRate = originalClearingRate * 1.0001;
+      }
 
       console.log(2222, clearingRate);
 
@@ -165,8 +179,8 @@ const Welcome: React.FC = () => {
         batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
       );
 
-      if (Object.keys(openOrderBooks.at(i).side)[0] === BUY) {
-        const depositedBuySideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
+      if (Object.keys(openHoldingOrderBooks.at(i).side)[0] === BUY) {
+        const depositedBuySideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
         const unconvertedBuySideAmount =
           depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
         const unconvertedSellSideAmount =
@@ -174,7 +188,7 @@ const Welcome: React.FC = () => {
         initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
         initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
       } else {
-        const depositedSellSideAmount = parseInt(openOrderBooks.at(i).swap.from.amount);
+        const depositedSellSideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
         const unconvertedBuySideAmount =
           (depositedSellSideAmount / sellSideActualVolume) * clearing;
         const unconvertedSellSideAmount =
@@ -218,7 +232,6 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
       if (!userAddress) return;
 
-      console.log('Balance', msg);
       const updatedBuyBalance = getSocketTokenAmount(
         msg.data,
         userAddress,
