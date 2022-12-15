@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Button, Space, Typography, Col, message } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
-import { HoldingsProps, NewHoldingsProps, token_amount } from '@/extra_utils/types';
-import { scaleAmountDown } from '@/extra_utils/utils';
-import { JSONPath } from 'jsonpath-plus';
+import { NewHoldingsProps } from '@/extra_utils/types';
 
 const NewHoldings: React.FC<NewHoldingsProps> = ({
   tezos,
@@ -16,6 +14,36 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
   buyTokenHolding,
   sellTokenHolding,
 }: NewHoldingsProps) => {
+  const redeemHoldings = async (): Promise<void> => {
+    let loading = function () {
+      return undefined;
+    };
+
+    try {
+      const contractWallet = await tezos.wallet.at(contractAddress);
+      let redeem_op = await contractWallet.methods.redeem().send();
+
+      if (redeem_op) {
+        loading = message.loading('Attempting to redeem holdings...', 0);
+        const confirm = await redeem_op.confirmation();
+        if (!confirm.completed) {
+          message.error('Failed to redeem holdings');
+          console.error('Failed to redeem holdings' + confirm);
+        } else {
+          loading();
+
+          message.success('Successfully redeemed holdings');
+        }
+      } else {
+        throw new Error('Failed to redeem tokens');
+      }
+    } catch (error: any) {
+      loading();
+      message.error('Unable to redeem holdings : ' + error.message);
+      console.error('Unable to redeem holdings' + error);
+    }
+  };
+
   useEffect(() => {
     console.log('Address', userAddress);
   }, [userAddress]);
@@ -35,7 +63,7 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
           </Space>
         </Col>
         <Col className="batcher-redeem-btn">
-          <Button className="btn-content mtb-25" type="primary" onClick={null} danger>
+          <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
             Redeem
           </Button>
         </Col>
