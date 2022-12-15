@@ -121,13 +121,15 @@ const Welcome: React.FC = () => {
       return;
     }
 
-    const openHoldingOrderBooks = userOrderBooks.value.open.map((orderbook) => {
-      if (orderbook.batch_number !== currentBatchNumber) {
-        return orderbook;
-      }
-    });
-
-    console.log(2333, openHoldingOrderBooks);
+    const openHoldingOrderBooks = userOrderBooks.value.open.filter(
+      (orderbook) => orderbook.batch_number !== currentBatchNumber,
+    );
+    if (!Array.isArray(openHoldingOrderBooks) || openHoldingOrderBooks.length == 0) {
+      return;
+    }
+    const openHoldingOrderBookKeys = openHoldingOrderBooks.map(
+      (orderbook) => orderbook.batch_number,
+    );
 
     const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
     const batchesData = await fetch(batchesURI, { method: 'GET' });
@@ -139,9 +141,6 @@ const Welcome: React.FC = () => {
       return;
     }
 
-    const openHoldingOrderBookKeys = openHoldingOrderBooks.map(
-      (orderbook) => orderbook.batch_number,
-    );
     // This is the open batches this current user is included
     const chosenBatches = batches.filter((batch) => openHoldingOrderBookKeys.includes(batch.key));
     console.log(333, chosenBatches);
@@ -222,8 +221,6 @@ const Welcome: React.FC = () => {
       level: 0,
       path: null,
     });
-
-    console.log('%cMain.tsx line:109 storage', 'color: #007acc;', storage);
 
     await getCurrentOrderbook(storage.batch_set);
   };
