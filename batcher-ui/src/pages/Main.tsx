@@ -13,6 +13,7 @@ import {
   BUY,
   MINUS,
   EXACT,
+  PLUS,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
@@ -99,6 +100,81 @@ const Welcome: React.FC = () => {
     }
   };
 
+  const getClearing = (clearingKey: any, clearingRate: number, batch: any) => {
+    console.log('%cMain.tsx line:104 batch', 'color: #007acc;', batch);
+
+    if (clearingKey === MINUS) {
+      let sellSideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.asks) && batch.value.orderbook.asks.length > 0) {
+        sellSideAmount = batch.value.orderbook.asks.reduce((currentAmount, order) => {
+          console.log(23333, order);
+          if (Object.keys(order.tolerance)[0] === MINUS) {
+            currentAmount += order.swap.from.amount;
+          }
+          return currentAmount;
+        }, 0);
+      }
+
+      let buySideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.bids) && batch.value.orderbook.bids.length > 0) {
+        buySideAmount = batch.value.orderbook.bids.reduce((currentAmount, order) => {
+          currentAmount += order.swap.from.amount;
+          return currentAmount;
+        }, 0);
+      }
+
+      return Math.min(buySideAmount, sellSideAmount / clearingRate);
+    } else if (clearingKey === EXACT) {
+      let sellSideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.asks) && batch.value.orderbook.asks.length > 0) {
+        sellSideAmount = batch.value.orderbook.asks.reduce((currentAmount, order) => {
+          if (
+            Object.keys(order.tolerance)[0] === MINUS ||
+            Object.keys(order.tolerance)[0] === EXACT
+          ) {
+            currentAmount += order.swap.from.amount;
+          }
+          return currentAmount;
+        }, 0);
+      }
+
+      let buySideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.bids) && batch.value.orderbook.bids.length > 0) {
+        buySideAmount = batch.value.orderbook.bids.reduce((currentAmount, order) => {
+          if (
+            Object.keys(order.tolerance)[0] === EXACT ||
+            Object.keys(order.tolerance)[0] === PLUS
+          ) {
+            currentAmount += order.swap.from.amount;
+          }
+          return currentAmount;
+        }, 0);
+      }
+
+      return Math.min(buySideAmount, sellSideAmount / clearingRate);
+    } else {
+      let sellSideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.asks) && batch.value.orderbook.asks.length > 0) {
+        sellSideAmount = batch.value.orderbook.asks.reduce((currentAmount, order) => {
+          currentAmount += order.swap.from.amount;
+          return currentAmount;
+        }, 0);
+      }
+
+      let buySideAmount = 0;
+      if (Array.isArray(batch.value.orderbook.bids) && batch.value.orderbook.bids.length > 0) {
+        buySideAmount = batch.value.orderbook.bids.reduce((currentAmount, order) => {
+          if (Object.keys(order.tolerance)[0] === EXACT) {
+            currentAmount += order.swap.from.amount;
+          }
+          return currentAmount;
+        }, 0);
+      }
+
+      return Math.min(buySideAmount, sellSideAmount / clearingRate);
+    }
+  };
+
   const updateHoldings = async (storage: any) => {
     if (!userAddress) {
       setSellSideAmount(0);
@@ -149,13 +225,9 @@ const Welcome: React.FC = () => {
     let initialSellSideAmount = 0;
 
     for (var i = 0; i < chosenBatches.length; i++) {
-      console.log(444, chosenBatches);
       const batch = chosenBatches.at(i);
 
       const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
-      const clearing = parseInt(
-        batch.value.status.cleared.clearing.clearing_volumes[clearingKey.toLowerCase()],
-      );
 
       let clearingRate = 0;
       const originalClearingRate =
@@ -169,7 +241,7 @@ const Welcome: React.FC = () => {
         clearingRate = originalClearingRate * 1.0001;
       }
 
-      console.log(2222, clearingRate);
+      console.log('clearing Rate', clearingRate);
 
       const buySideActualVolume = parseInt(
         batch.value.status.cleared.clearing.prorata_equivalence.buy_side_actual_volume,
@@ -177,6 +249,8 @@ const Welcome: React.FC = () => {
       const sellSideActualVolume = parseInt(
         batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
       );
+
+      const clearing = getClearing(clearingKey, clearingRate, batch);
 
       if (Object.keys(openHoldingOrderBooks.at(i).side)[0] === BUY) {
         const depositedBuySideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
