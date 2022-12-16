@@ -22,7 +22,7 @@ import { useModel } from 'umi';
 import { getSocketTokenAmount, getTokenAmount, scaleAmountDown } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
-import NewHoldings from '@/components/NewHoldings';
+import NewHoldings from '@/components/Holdings';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
