@@ -259,10 +259,11 @@ const Welcome: React.FC = () => {
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
+      if (userAddress) {
+        updateHoldings(msg.data[0].storage);
+      }
 
-      console.log('Operations', msg);
       getCurrentOrderbook(msg.data[0].storage.batch_set);
-      updateHoldings(msg.data[0].storage);
     });
 
     connection.on('bigmaps', (msg: any) => {
