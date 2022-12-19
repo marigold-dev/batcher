@@ -19,11 +19,17 @@ import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
-import { getSocketTokenAmount, getTokenAmount, scaleAmountDown } from '@/extra_utils/utils';
+import {
+  getNetworkType,
+  getSocketTokenAmount,
+  getTokenAmount,
+  scaleAmountDown,
+} from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
 import NewHoldings from '@/components/Holdings';
 import { getClearing } from '@/extra_utils/holdingUtils';
+import { BeaconWallet } from '@taquito/beacon-wallet';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -59,7 +65,7 @@ const Welcome: React.FC = () => {
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
-  const { initialState } = useModel('@@initialState');
+  const { initialState, setInitialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
   const [buyBalance, setBuyBalance] = useState({
     token: buyToken,
@@ -278,7 +284,6 @@ const Welcome: React.FC = () => {
     });
 
     init(userAddress);
-    Tezos.setWalletProvider(wallet);
   };
 
   const getTokenBalance = async () => {
@@ -313,6 +318,20 @@ const Welcome: React.FC = () => {
         Number.parseFloat(pow) + buyBalance.token.decimals - sellBalance.token.decimals;
       const currentRate = scaleAmountUp(Number.parseFloat(scaledRate), scaledPow);
       setRate(currentRate);
+    }
+  };
+
+  const persistWallet = () => {
+    if (!userAddress) {
+      const restoredUserAddress = localStorage.getItem('userAddress');
+      const wallet = new BeaconWallet({
+        name: 'batcher',
+        preferredNetwork: getNetworkType(),
+      });
+      Tezos.setWalletProvider(wallet);
+      setInitialState({ ...initialState, wallet: wallet, userAddress: restoredUserAddress });
+    } else {
+      Tezos.setWalletProvider(wallet);
     }
   };
 
@@ -363,6 +382,7 @@ const Welcome: React.FC = () => {
     getOraclePrice();
     handleWebsocket();
     updateHoldingsFromStorage();
+    persistWallet();
   }, [userAddress]);
 
   return (

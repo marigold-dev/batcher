@@ -17,7 +17,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
-  const { wallet, userAddress } = initialState;
+  const { userAddress } = initialState;
 
   const [form] = Form.useForm();
 
@@ -25,7 +25,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     setInversion(!inversion);
   };
   const depositToken = async () => {
-    if (!wallet) {
+    if (!userAddress) {
       return;
     }
 
@@ -226,7 +226,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             To {inversion ? sellBalance.token.name : buyBalance.token.name}
           </Typography>
         </Col>
-        {wallet ? (
+        {userAddress ? (
           <Form.Item>
             <div className="tx-align">
               <Button className="swap-btn mtb-25" type="primary" htmlType="submit" danger>

@@ -22,7 +22,9 @@ export const getSocketTokenAmount = (
   standardBalance: types.token_balance,
   tokenAddress: string,
 ) => {
-  const item = balances.find((item) => item.account.address === userAddress && item.token.contract.address === tokenAddress);
+  const item = balances.find(
+    (item) => item.account.address === userAddress && item.token.contract.address === tokenAddress,
+  );
   return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
 };
 
@@ -43,4 +45,13 @@ export const getEmptyOrderBook = () => {
     bids: [],
     asks: [],
   };
+};
+
+export const getNetworkType = () => {
+  const network = REACT_APP_NETWORK_TARGET;
+  if (network?.includes('GHOSTNET')) {
+    return types.NetworkType.GHOSTNET;
+  } else {
+    return types.NetworkType.KATHMANDUNET;
+  }
 };
