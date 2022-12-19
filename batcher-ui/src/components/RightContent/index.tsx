@@ -5,7 +5,7 @@ import styles from '@/components/RightContent/index.less';
 import { MenuOutlined } from '@ant-design/icons';
 import { TezosToolkit } from '@taquito/taquito';
 import { BeaconWallet } from '@taquito/beacon-wallet';
-import { NetworkType } from '@/extra_utils/types';
+import { getNetworkType } from '@/extra_utils/utils';
 import '@/components/RightContent/index.less';
 
 export type SiderTheme = 'light' | 'dark';
@@ -44,15 +44,6 @@ const GlobalHeaderRight: React.FC = () => {
 
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
-  const getNetworkType = () => {
-    const network = REACT_APP_NETWORK_TARGET;
-    if (network?.includes('GHOSTNET')) {
-      return NetworkType.GHOSTNET;
-    } else {
-      return NetworkType.KATHMANDUNET;
-    }
-  };
-
   const connectWallet = async () => {
     if (!userAddress) {
       const updatedWallet = new BeaconWallet({
@@ -70,11 +61,13 @@ const GlobalHeaderRight: React.FC = () => {
       const activeAccount = await updatedWallet.client.getActiveAccount();
       const userAddress = activeAccount ? await updatedWallet.getPKH() : null;
       setInitialState({ ...initialState, wallet: updatedWallet, userAddress });
+      localStorage.setItem('userAddress', userAddress);
     }
   };
 
   const disconnectWallet = async () => {
     setInitialState({ ...initialState, wallet: null, userAddress: null });
+    localStorage.removeItem('userAddress');
   };
 
   const scrollToTop = () => {
