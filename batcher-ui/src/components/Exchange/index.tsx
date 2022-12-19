@@ -41,9 +41,19 @@ const Exchange: React.FC<ExchangeProps> = ({
       : scaleAmountUp(amount, sellBalance.token.decimals);
 
     // This is for fa2 token standard. I.e, USDT token
-    const fa2_operator_params = [
+    const fa2_add_operator_params = [
       {
         add_operator: {
+          owner: userAddress,
+          operator: REACT_APP_BATCHER_CONTRACT_HASH,
+          token_id: 0,
+        },
+      },
+    ];
+
+    const fa2_remove_operator_params = [
+      {
+        remove_operator: {
           owner: userAddress,
           operator: REACT_APP_BATCHER_CONTRACT_HASH,
           token_id: 0,
@@ -99,8 +109,9 @@ const Exchange: React.FC<ExchangeProps> = ({
       if (selectedToken.standard === 'FA2 token') {
         order_batcher_op = await tezos.wallet
           .batch()
-          .withContractCall(tokenContract.methods.update_operators(fa2_operator_params))
+          .withContractCall(tokenContract.methods.update_operators(fa2_add_operator_params))
           .withContractCall(batcherContract.methodsObject.deposit(swap_params))
+          .withContractCall(tokenContract.methods.update_operators(fa2_remove_operator_params))
           .send();
       }
 

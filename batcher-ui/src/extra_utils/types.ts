@@ -215,3 +215,20 @@ export type BatchSet = {
   last_batch_number: string;
   current_batch_number: string;
 };
+
+export type NewHoldingsProps = {
+  tezos: TezosToolkit;
+  userAddress: string;
+  contractAddress: string;
+  buyToken: token;
+  sellToken: token;
+  buyTokenHolding: number;
+  sellTokenHolding: number;
+};
+
+export const BUY = 'bUY';
+export const CLEARED = 'cleared';
+
+export const MINUS = 'mINUS';
+export const EXACT = 'eXACT';
+export const PLUS = 'pLUS';

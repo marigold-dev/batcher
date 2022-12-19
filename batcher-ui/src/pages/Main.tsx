@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import Exchange from '@/components/Exchange';
-import Holdings from '@/components/Holdings';
 import About from '@/components/About';
 import OrderBook from '@/components/OrderBook';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
-import { ContentType, token, order_book, BatcherStatus, BatchSet } from '@/extra_utils/types';
+import {
+  ContentType,
+  token,
+  order_book,
+  BatcherStatus,
+  BatchSet,
+  BUY,
+  MINUS,
+  EXACT,
+  PLUS,
+} from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
-import { getSocketTokenAmount, getTokenAmount } from '@/extra_utils/utils';
+import { getSocketTokenAmount, getTokenAmount, scaleAmountDown } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
+import NewHoldings from '@/components/Holdings';
+import { getClearing } from '@/extra_utils/holdingUtils';
 
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
@@ -45,7 +56,6 @@ const Welcome: React.FC = () => {
     version: '',
     withCredentials: false,
   });
-  const [previousTreasuries, setPreviousTreasuries] = useState<Array<number>>([]);
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
@@ -63,6 +73,8 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
   const [openTime, setOpenTime] = useState<string>(null);
+  const [buySideAmount, setBuySideAmount] = useState<number>(0);
+  const [sellSideAmount, setSellSideAmount] = useState<number>(0);
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
@@ -82,13 +94,125 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
-
-        console.log('%cMain.tsx line:114 jsonData.value', 'color: #007acc;', jsonData.value);
         setOrderBook(jsonData.value.orderbook);
       }
     } catch (error) {
       console.log('Batcher error', error);
     }
+  };
+
+  const updateHoldings = async (storage: any) => {
+    if (!userAddress) {
+      setSellSideAmount(0);
+      setBuySideAmount(0);
+      return;
+    }
+
+    const currentBatchNumber = storage.batch_set.current_batch_number;
+    const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
+    const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
+    let userOrderBooks = null;
+    try {
+      userOrderBooks = await userOrderBookData.json();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    if (!Array.isArray(userOrderBooks.value.open) || userOrderBooks.value.open.length == 0) {
+      return;
+    }
+
+    const openHoldingOrderBooks = userOrderBooks.value.open.filter(
+      (orderbook) => orderbook.batch_number !== currentBatchNumber,
+    );
+    if (!Array.isArray(openHoldingOrderBooks) || openHoldingOrderBooks.length == 0) {
+      return;
+    }
+    const openHoldingOrderBookKeys = openHoldingOrderBooks.map(
+      (orderbook) => orderbook.batch_number,
+    );
+
+    const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
+    const batchesData = await fetch(batchesURI, { method: 'GET' });
+    let batches = null;
+    try {
+      batches = await batchesData.json();
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    // This is the open batches this current user is included
+    const chosenBatches = batches.filter((batch) => openHoldingOrderBookKeys.includes(batch.key));
+    console.log(333, chosenBatches);
+
+    let initialBuySideAmount = 0;
+    let initialSellSideAmount = 0;
+
+    for (var i = 0; i < chosenBatches.length; i++) {
+      const batch = chosenBatches.at(i);
+
+      const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
+
+      let clearingRate = 0;
+      const originalClearingRate =
+        parseInt(batch.value.status.cleared.rate.rate.val) *
+        10 ** parseInt(batch.value.status.cleared.rate.rate.pow);
+      if (clearingKey === MINUS) {
+        clearingRate = originalClearingRate / 1.0001;
+      } else if (clearingKey === EXACT) {
+        clearingRate = originalClearingRate;
+      } else {
+        clearingRate = originalClearingRate * 1.0001;
+      }
+
+      console.log('clearing Rate', clearingRate);
+
+      const buySideActualVolume = parseInt(
+        batch.value.status.cleared.clearing.prorata_equivalence.buy_side_actual_volume,
+      );
+      const sellSideActualVolume = parseInt(
+        batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
+      );
+
+      const clearing = getClearing(clearingKey, clearingRate, batch);
+
+      if (Object.keys(openHoldingOrderBooks.at(i).side)[0] === BUY) {
+        const depositedBuySideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
+        const unconvertedBuySideAmount =
+          depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
+        const unconvertedSellSideAmount =
+          (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
+        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
+        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
+      } else {
+        const depositedSellSideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
+        const unconvertedBuySideAmount =
+          (depositedSellSideAmount / sellSideActualVolume) * clearing;
+        const unconvertedSellSideAmount =
+          depositedSellSideAmount -
+          (depositedSellSideAmount / sellSideActualVolume) * clearing * clearingRate;
+
+        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
+        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
+      }
+    }
+
+    setSellSideAmount(initialSellSideAmount);
+    setBuySideAmount(initialBuySideAmount);
+  };
+
+  const updateHoldingsFromStorage = async () => {
+    const storage = await contractsService.getStorage({
+      address: contractAddress,
+      level: 0,
+      path: null,
+    });
+
+    console.log(999, storage);
+
+    await updateHoldings(storage);
   };
 
   const getBatches = async () => {
@@ -98,8 +222,6 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    console.log('%cMain.tsx line:93 storage', 'color: #007acc;', storage);
-
     await getCurrentOrderbook(storage.batch_set);
   };
   const handleWebsocket = () => {
@@ -107,7 +229,6 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
       if (!userAddress) return;
 
-      console.log('Balance', msg);
       const updatedBuyBalance = getSocketTokenAmount(
         msg.data,
         userAddress,
@@ -138,8 +259,10 @@ const Welcome: React.FC = () => {
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
+      if (userAddress) {
+        updateHoldings(msg.data[0].storage);
+      }
 
-      console.log('Operations', msg);
       getCurrentOrderbook(msg.data[0].storage.batch_set);
     });
 
@@ -209,14 +332,14 @@ const Welcome: React.FC = () => {
         return <OrderBook orderBook={orderBook} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return (
-          <Holdings
+          <NewHoldings
             tezos={Tezos}
-            bigMapsByIdUri={bigMapsByIdUri}
             userAddress={userAddress}
             contractAddress={contractAddress}
-            previousTreasuries={previousTreasuries}
             buyToken={buyToken}
             sellToken={sellToken}
+            buyTokenHolding={buySideAmount}
+            sellTokenHolding={sellSideAmount}
           />
         );
       case ContentType.ABOUT:
@@ -239,6 +362,7 @@ const Welcome: React.FC = () => {
     getTokenBalance();
     getOraclePrice();
     handleWebsocket();
+    updateHoldingsFromStorage();
   }, [userAddress]);
 
   return (
