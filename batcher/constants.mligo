@@ -22,6 +22,8 @@
 
 [@inline] let redeemed : string = "redeemed"
 
+(* Number of seconds after order placement time should the order be removed if it has been redeemed - current default 1 day *)
+[@inline] let redeemed_order_removal_time : int = 86400
 
 
 
