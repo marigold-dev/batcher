@@ -107,19 +107,10 @@ module Utils = struct
     | None ->
       failwith Errors.not_found_token_standard
 
-  (* Transfer the XTZ to the appropriate address *)
-  let transfer_xtz (receiver : address) (amount : tez) : operation =
-    let received_contract : unit contract =
-      match (Tezos.get_contract_opt receiver : unit contract option) with
-      | None -> failwith Errors.invalid_tezos_address
-      | Some address -> address in
-    Tezos.transaction () amount received_contract
 
   let handle_transfer (sender : address) (receiver : address) (received_token : token_amount) : operation =
     match received_token.token.address with
-    | None ->
-      let xtz_amount = received_token.amount * 1tez in
-      transfer_xtz receiver xtz_amount
+    | None -> failwith Errors.xtz_not_currently_supported
     | Some token_address ->
       transfer_token sender receiver token_address received_token
 
