@@ -68,7 +68,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     };
 
     const swap_params = {
-      trader: userAddress,
       swap: {
         from: {
           token: {

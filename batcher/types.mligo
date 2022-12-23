@@ -68,7 +68,6 @@ module Types = struct
 
   type external_swap_order = {
     [@layout:comb]
-    trader : address;
     swap  : swap;
     created_at : timestamp;
     side : nat;

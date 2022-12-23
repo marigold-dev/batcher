@@ -111,11 +111,12 @@ let external_to_order
   (batch_number: nat) : order =
   let side = Types.Utils.nat_to_side(order.side) in
   let tolerance = Types.Utils.nat_to_tolerance(order.tolerance) in
+  let sender = Tezos.get_sender () in
   let converted_swap : order =
     {
       order_number = last_order_number + 1n;
       batch_number = batch_number;
-      trader = order.trader;
+      trader = sender;
       swap  = order.swap;
       created_at = order.created_at;
       side = side;
@@ -129,7 +130,6 @@ let order_to_external (order: order) : external_order =
   let tolerance = Types.Utils.tolerance_to_nat(order.tolerance) in
   let converted_swap : external_order =
     {
-      trader = order.trader;
       swap  = order.swap;
       created_at = order.created_at;
       side = side;
@@ -153,7 +153,7 @@ let deposit (external_order: external_order) (storage : storage) : result =
     else
       try_to_append_order order ticked_storage.batch_set
   in
-  let updated_user_orderbook = Userorderbook.push_open_order external_order.trader order storage.user_orderbook in
+  let updated_user_orderbook = Userorderbook.push_open_order order.trader order storage.user_orderbook in
   let updated_storage = { ticked_storage with batch_set = updated_batch_set; user_orderbook = updated_user_orderbook } in
   let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
   ([ tokens_transfer_op ], storage_after_treasury_update)
