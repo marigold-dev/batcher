@@ -57,3 +57,4 @@ let unable_to_find_side_in_orderbook : nat = 127n
 
 let xtz_not_currently_supported : nat = 128n
 
+let unsupported_swap_type : nat = 129n

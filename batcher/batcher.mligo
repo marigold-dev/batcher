@@ -14,6 +14,8 @@
 type storage  = Storage.Types.t
 type result = (operation list) * storage
 type order = Types.Types.swap_order
+type swap = Types.Types.swap
+type valid_swaps = Storage.Types.valid_swaps
 type external_order = Types.Types.external_swap_order
 type side = Types.Types.side
 type tolerance = Types.Types.tolerance
@@ -105,10 +107,18 @@ let try_to_append_order (order : order)
           let updated_batches = Big_map.update current_batch_number (Some current) batch_set.batches in
           { batch_set with batches = updated_batches }
 
+let is_valid_swap_pair
+  (order: order)
+  (valid_swaps: valid_swaps): order =
+  let token_pair = Types.Utils.pair_of_swap order in
+  let rate_name = Types.Utils.get_rate_name_from_pair token_pair in
+  if Map.mem rate_name valid_swaps then order else failwith Errors.unsupported_swap_type
+
 let external_to_order
   (order: external_order)
   (last_order_number: nat)
-  (batch_number: nat) : order =
+  (batch_number: nat)
+  (valid_swaps: valid_swaps): order =
   let side = Types.Utils.nat_to_side(order.side) in
   let tolerance = Types.Utils.nat_to_tolerance(order.tolerance) in
   let sender = Tezos.get_sender () in
@@ -123,7 +133,7 @@ let external_to_order
       tolerance = tolerance;
       redeemed = false;
     } in
-  converted_swap
+  is_valid_swap_pair converted_swap valid_swaps
 
 let order_to_external (order: order) : external_order =
   let side = Types.Utils.side_to_nat(order.side) in
@@ -144,7 +154,7 @@ let deposit (external_order: external_order) (storage : storage) : result =
   let (last_order_number, batch_number) = match current_batch with
                                              | None -> (0n, storage.batch_set.last_batch_number + 1n)
                                              | Some cb -> (cb.last_order_number, storage.batch_set.current_batch_number) in
-  let order : order = external_to_order external_order last_order_number batch_number  in
+  let order : order = external_to_order external_order last_order_number batch_number storage.valid_swaps in
   let ticked_storage = tick_current_batches storage in
   let current_time = Tezos.get_now () in
   let updated_batch_set =
