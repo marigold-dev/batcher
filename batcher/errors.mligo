@@ -29,7 +29,7 @@ let not_found_clearing_level : nat = 113n
 
 let no_current_batch_available : nat = 114n
 
-let not_open_batch : nat = 115n
+let no_open_batch : nat = 115n
 
 let not_previous_batches : nat = 116n
 
@@ -58,3 +58,5 @@ let unable_to_find_side_in_orderbook : nat = 127n
 let xtz_not_currently_supported : nat = 128n
 
 let unsupported_swap_type : nat = 129n
+
+let unable_to_determine_current_or_previous_batch : nat = 130n

@@ -14,10 +14,10 @@ type pair = Types.Types.token * Types.Types.token
 type batch = Types.Types.batch
 type batch_set = Types.Types.batch_set
 type order = Types.Types.swap_order
+type orderbook = Types.Types.orderbook
 type swap = Types.Types.swap
 type clearing = Types.Types.clearing
 type tolerance = Types.Types.tolerance
-type user_orders = Types.Types.user_orders
 type token_amount_option = Types.Types.token_amount option
 
 
@@ -254,17 +254,6 @@ module Utils = struct
     in
     List.fold aux tal token_map
 
-let push_redeemed_orders
-  (redeemed_orders: order list)
-  (user_orders : user_orders): user_orders =
-  let previously_redeemed  = Map.find_opt Constants.redeemed user_orders in
-  let all_redemptions:user_orders  = match previously_redeemed with
-                                     | None -> Map.add Constants.redeemed redeemed_orders user_orders
-                                     | Some prev -> let joined_redemptions = List.fold_right (fun (o, ords: order * order list) -> o :: ords) redeemed_orders prev in
-                                                    Map.update Constants.redeemed (Some joined_redemptions) user_orders
-  in
-  Map.update Constants.open (Some []) all_redemptions
-
  let transfer_holdings (treasury_vault : address) (holder: address)  (holdings : token_amount_map) : operation list =
     let atomic_transfer (operations, (_addr,ta) : operation list * ( address * token_amount)) : operation list =
       let op: operation = handle_transfer treasury_vault holder ta in
@@ -274,45 +263,78 @@ let push_redeemed_orders
     in
     op_list
 
-  let collect_order_payouts
+
+
+  let mark_orders_as_redeemed
+    (orders_to_redeem: order list)
+    (orderbook: orderbook) : orderbook =
+    let mark_redeemed (ob, o: orderbook * order) : orderbook =
+       let on = o.order_number in
+       match Big_map.find_opt on orderbook with
+       | None -> ob
+       | Some o -> let ro = redeemed_order o in
+                   Big_map.update on (Some ro) ob in
+    List.fold mark_redeemed orders_to_redeem orderbook
+
+
+
+  let payout_orders
     (holder : address)
     (treasury_vault : address)
-    (user_orders: user_orders)
     (batch_set: batch_set)
+    (orders_to_redeem: order list)
     (storage : storage) : operation list * storage =
-    let open_orders : (order list) option = Map.find_opt Constants.open user_orders in
-    let (redeemed_orders, payout_token_map) = match open_orders with
-                                                         | None -> (([]: order list), (Map.empty: token_amount_map))
-                                                         | Some ords -> let match_order_to_batch
-                                                                        (order: order) : (order * clearing option) =
-                                                                           match Big_map.find_opt order.batch_number batch_set.batches with
-                                                                           | None -> (order, None)
-                                                                           | Some b -> (order, get_clearing b)
-                                                                       in
-                                                                       let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
-                                                                       let redeemed_orders  = List.map redeemed_order ords in
-                                                                       let payouts: (token_amount list) list = List.map collect_order_payout_from_clearing orders_and_clearing in
-                                                                       let collated_payouts = List.fold collate_token_amounts payouts Map.empty in
-                                                                       (redeemed_orders,collated_payouts)
+    let orderbook = storage.orderbook in
+    let payout_token_map = match orders_to_redeem with
+                           | [] -> (Map.empty: token_amount_map)
+                           | ords -> let match_order_to_batch
+                                     (order: order) : (order * clearing option) =
+                                     match Big_map.find_opt order.batch_number batch_set.batches with
+                                     | None -> (order, None)
+                                     | Some b -> (order, get_clearing b)
+                                     in
+                                     let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
+                                     let payouts: (token_amount list) list = List.map collect_order_payout_from_clearing orders_and_clearing in
+                                     List.fold collate_token_amounts payouts Map.empty
     in
-    let updated_user_orders = push_redeemed_orders redeemed_orders user_orders in
-    let updated_user_orderbook = Big_map.update holder (Some updated_user_orders) storage.user_orderbook in
     let operations = transfer_holdings treasury_vault holder payout_token_map in
-    (operations,  { storage with user_orderbook = updated_user_orderbook })
+    let updated_order_book = mark_orders_as_redeemed orders_to_redeem orderbook in
+    (operations,  { storage with orderbook = updated_order_book })
 
+
+
+
+  let order_can_be_redeemed
+    (holder : address)
+    (order: order) : bool = (order.redeemed = false && order.trader = holder)
+
+  let validate_order_numbers_and_collect_orders
+    (holder : address)
+    (order_numbers : nat list)
+    (orderbook: orderbook) : order list =
+    let validate (acc,on: nat list * nat) : nat list =
+      match Big_map.find_opt on orderbook with
+       | None -> acc
+       | Some o -> if order_can_be_redeemed holder o  then
+                   on :: acc
+                 else
+                   acc in
+    let validated_order_numbers = List.fold validate order_numbers [] in
+    let collect (acc,on: order list * nat) : order list =
+      match Big_map.find_opt on orderbook with
+       | None -> acc
+       | Some o -> o :: acc in
+    List.fold collect validated_order_numbers []
 
   let redeem_holdings
     (holder : address)
+    (order_numbers : nat list)
     (treasury_vault : address)
     (storage : storage) : operation list * storage =
-       let user_orders: user_orders option = Big_map.find_opt holder storage.user_orderbook in
-       let batch_set = storage.batch_set in
-       let empty_ops = ([]: operation list)  in
-       let redeemed_ops_and_storage =  match user_orders with
-                                       | None ->  (empty_ops, storage)
-                                       | Some uords -> collect_order_payouts treasury_vault holder uords batch_set storage
-       in
-       redeemed_ops_and_storage
+      let order_book = storage.orderbook in
+      let batch_set = storage.batch_set in
+      let validated_orders = validate_order_numbers_and_collect_orders holder order_numbers order_book in
+      payout_orders holder treasury_vault batch_set validated_orders storage
 end
 
 
@@ -324,19 +346,15 @@ let get_treasury_vault () : address = Tezos.get_self_address ()
 
 let deposit
     (deposit_address : address)
-    (deposited_token : token_amount)
-    (storage : storage) : operation * storage =
-      let (op, update_storage) = match Types.Utils.get_current_batch storage.batch_set with
-                                 | None -> (failwith Errors.no_current_batch_available : operation * storage)
-                                 | Some _batch -> let treasury_vault = get_treasury_vault () in
-                                                  let transfer_operation = Utils.handle_transfer deposit_address treasury_vault deposited_token in
-                                                  (transfer_operation, storage )
-      in
-      (op, update_storage)
+    (deposited_token : token_amount): operation  =
+      let treasury_vault = get_treasury_vault () in
+      Utils.handle_transfer deposit_address treasury_vault deposited_token
+
 
 let redeem
     (redeem_address : address)
+    (order_numbers : nat list)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let (ops, updated_storage) = Utils.redeem_holdings redeem_address treasury_vault storage in
+      let (ops, updated_storage) = Utils.redeem_holdings redeem_address order_numbers treasury_vault storage in
       (ops, updated_storage)

@@ -119,27 +119,33 @@ module Types = struct
     A ask : the price a seller is willing to auxept for an asset
     Here, the orderbook is a map of bids orders list  and asks order list
   *)
-  type orderbook = (string, swap_order list) map
-
- (* Holds all the orders associated with a user: redeemed and unredeemed *)
-  type user_orders = (string, swap_order list) map
-
- (* Holds all the orders associated with all users *)
-  type user_orderbook = (address, user_orders) big_map
+  type orderbook = (nat, swap_order) big_map
 
   type batch_status =
     | Open of { start_time : timestamp }
     | Closed of { start_time : timestamp ; closing_time : timestamp }
     | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
+
+  type volumes = {
+    [@layout:comb]
+    buy_minus_volume : nat;
+    buy_exact_volume : nat;
+    buy_plus_volume : nat;
+    sell_minus_volume : nat;
+    sell_exact_volume : nat;
+    sell_plus_volume : nat;
+  }
+
+  type pair = token * token
+
   (* Batch of orders for the same pair of tokens *)
   type batch = {
     [@layout:comb]
     batch_number: nat;
     status : batch_status;
-    orderbook : orderbook;
-    last_order_number: nat;
-    pair : token * token;
+    volumes : volumes;
+    pair : pair;
   }
 
   (* Set of batches, containing the current batch and the previous (finalized) batches.
@@ -166,6 +172,28 @@ module Utils = struct
   }
 
 
+  let nat_to_side
+  (order_side : nat) : Types.side =
+    if order_side = 0n then BUY
+    else
+      if order_side = 1n then SELL
+      else failwith Errors.unable_to_parse_side_from_external_order
+
+  let nat_to_tolerance (tolerance : nat) : Types.tolerance =
+    if tolerance = 0n then MINUS
+    else if tolerance = 1n then EXACT
+    else if tolerance = 2n then PLUS
+    else failwith Errors.unable_to_parse_tolerance_from_external_order
+
+  let side_to_nat (side : Types.side) : nat = match side with
+    | BUY -> 9n
+    | SELL -> 1n
+
+  let tolerance_to_nat (tolerance : Types.tolerance) : nat = match tolerance with
+    | MINUS -> 0n
+    | EXACT -> 1n
+    | PLUS -> 2n
+
   let get_rate_name_from_swap (s : Types.swap) : string =
     let base_name = s.from.token.name in
     let quote_name = s.to.name in
@@ -188,12 +216,25 @@ module Utils = struct
     let quote_name = r.swap.to.name in
     base_name ^ "/" ^ quote_name
 
+  let pair_of_swap
+    (side: Types.side)
+    (swap: Types.swap): (Types.token * Types.token) =
+    match side with
+    | BUY -> (swap.from.token, swap.to)
+    | SELL -> (swap.to, swap.from.token)
+
+  let pair_of_rate (r : Types.exchange_rate) : (Types.token * Types.token) = pair_of_swap BUY r.swap
+
+  let pair_of_external_swap (order : Types.external_swap_order) : (Types.token * Types.token) =
+    (* Note:  we assume left-handedness - i.e. direction is buy side*)
+    let swap = order.swap in
+    let side = nat_to_side order.side in
+    pair_of_swap side swap
+
   let pair_of_swap (order : Types.swap_order) : (Types.token * Types.token) =
     (* Note:  we assume left-handedness - i.e. direction is buy side*)
     let swap = order.swap in
-    match order.side with
-    | BUY -> (swap.from.token, swap.to)
-    | SELL -> (swap.to, swap.from.token)
+    pair_of_swap order.side swap
 
   let get_token_name_from_token_amount
     (ta : Types.token_amount) : string =
@@ -232,37 +273,6 @@ module Utils = struct
     }
 
 
-  let nat_to_side
-  (order_side : nat) : Types.side =
-    if order_side = 0n then BUY
-    else
-      if order_side = 1n then SELL
-      else failwith Errors.unable_to_parse_side_from_external_order
-
-  let nat_to_tolerance (tolerance : nat) : Types.tolerance =
-    if tolerance = 0n then MINUS
-    else if tolerance = 1n then EXACT
-    else if tolerance = 2n then PLUS
-    else failwith Errors.unable_to_parse_tolerance_from_external_order
-
-  let side_to_nat (side : Types.side) : nat = match side with
-    | BUY -> 9n
-    | SELL -> 1n
-
-  let tolerance_to_nat (tolerance : Types.tolerance) : nat = match tolerance with
-    | MINUS -> 0n
-    | EXACT -> 1n
-    | PLUS -> 2n
-
-  let get_current_batch
-    (batch_set: batch_set) : batch option =
-    let cbn = batch_set.current_batch_number in
-    if cbn = 0n then
-      None
-    else
-      let bts = batch_set.batches in
-      let cbf: batch option = Big_map.find_opt cbn bts in
-      cbf
 
 end
 
