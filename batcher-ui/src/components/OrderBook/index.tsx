@@ -53,11 +53,11 @@ const OrderBook: React.FC<OrderBookProps> = ({
     }
 
     if (tolerance.mINUS != undefined) {
-      return 'W. price/ B.fill';
+      return 'W.price/ B.fill';
     }
 
     if (tolerance.pLUS != undefined) {
-      return 'B. price/ W.fill';
+      return 'B.price/ W.fill';
     }
 
     return 'Oracle Price';

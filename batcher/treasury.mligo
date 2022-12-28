@@ -310,7 +310,7 @@ let push_redeemed_orders
        let empty_ops = ([]: operation list)  in
        let redeemed_ops_and_storage =  match user_orders with
                                        | None ->  (empty_ops, storage)
-                                       | Some uords -> collect_order_payouts treasury_vault holder uords batch_set storage
+                                       | Some uords -> collect_order_payouts holder treasury_vault uords batch_set storage
        in
        redeemed_ops_and_storage
 end
