@@ -5,6 +5,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
+#import "userbatchordertype.mligo" "Ubot"
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
@@ -141,10 +142,15 @@ let deposit (external_order: external_order) (old_storage : storage) : result =
                          let next_order_number = ticked_storage.last_order_number + 1n in
                          let order : order = external_to_order external_order next_order_number current_batch_number ticked_storage.valid_swaps in
                          let new_orderbook = Big_map.add next_order_number order ticked_storage.orderbook in
+                         let new_ubot = Ubot.add_order order.trader current_batch_number order old_storage.user_batch_ordertypes in
                          let updated_volumes = Batch.update_volumes order current_batch in
                          let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
                          let updated_batch_set = { current_batch_set with batches = updated_batches } in
-                         let updated_storage = { ticked_storage with batch_set = updated_batch_set; orderbook = new_orderbook; last_order_number = next_order_number; } in
+                         let updated_storage = {
+                           ticked_storage with batch_set = updated_batch_set;
+                           orderbook = new_orderbook;
+                           last_order_number = next_order_number;
+                           user_batch_ordertypes = new_ubot; } in
                          let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
                          ([ tokens_transfer_op ], updated_storage)
 

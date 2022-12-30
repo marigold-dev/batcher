@@ -139,6 +139,22 @@ module Types = struct
 
   type pair = token * token
 
+  (* This represents the type of order.  I.e. buy/sell and which level*)
+  type ordertype = {
+     side: side;
+     tolerance: tolerance;
+  }
+
+  (* Mapping order type to total amount of placed orders  *)
+  type ordertypes = (ordertype, nat) map
+
+  (* pairing of batch_id and ordertypes. *)
+  type batch_ordertypes = (nat,  ordertypes) map
+
+  (* Associated user address to a given set of batches and ordertypes  *)
+  type user_batch_ordertypes = (address, batch_ordertypes) big_map
+
+
   (* Batch of orders for the same pair of tokens *)
   type batch = {
     [@layout:comb]
