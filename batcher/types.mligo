@@ -32,6 +32,8 @@ module Types = struct
      amount : nat;
   }
 
+  type token_amount_map = (address, token_amount) map
+
   (* A token amount 'held' by a specific address *)
   type token_holding = {
     [@layout:comb]

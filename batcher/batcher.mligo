@@ -29,7 +29,7 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 type entrypoint =
   | Deposit of external_order
   | Post of exchange_rate
-  | Redeem of nat list
+  | Redeem
 
 let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types.rates_current) : inverse_exchange_rate * exchange_rate =
   match Big_map.find_opt rate_name current_rate with
@@ -155,10 +155,9 @@ let deposit (external_order: external_order) (old_storage : storage) : result =
                          ([ tokens_transfer_op ], updated_storage)
 
 let redeem
- (order_numbers: nat list)
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  let (tokens_transfer_ops, new_storage) = Treasury.redeem holder order_numbers storage in
+  let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
 
@@ -205,5 +204,5 @@ let main
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
-   | Redeem order_numbers -> redeem order_numbers storage
+   | Redeem -> redeem storage
 
