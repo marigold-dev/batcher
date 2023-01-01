@@ -135,24 +135,28 @@ let order_to_external (order: order) : external_order =
 let deposit (external_order: external_order) (old_storage : storage) : result =
   let pair = Types.Utils.pair_of_external_swap external_order in
   let ticked_storage = tick_current_batches pair old_storage in
-  let (current_batch_op, current_batch_set) = Batch.get_current_batch pair ticked_storage.batch_set in
-  match current_batch_op with
+  let (current_batch_opt, current_batch_set) = Batch.get_current_batch pair ticked_storage.batch_set in
+  match current_batch_opt with
   | None -> failwith Errors.no_open_batch
   | Some current_batch-> let current_batch_number = current_batch.batch_number in
                          let next_order_number = ticked_storage.last_order_number + 1n in
                          let order : order = external_to_order external_order next_order_number current_batch_number ticked_storage.valid_swaps in
-                         let new_orderbook = Big_map.add next_order_number order ticked_storage.orderbook in
-                         let new_ubot = Ubot.add_order order.trader current_batch_number order old_storage.user_batch_ordertypes in
-                         let updated_volumes = Batch.update_volumes order current_batch in
-                         let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
-                         let updated_batch_set = { current_batch_set with batches = updated_batches } in
-                         let updated_storage = {
-                           ticked_storage with batch_set = updated_batch_set;
-                           orderbook = new_orderbook;
-                           last_order_number = next_order_number;
-                           user_batch_ordertypes = new_ubot; } in
-                         let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
-                         ([ tokens_transfer_op ], updated_storage)
+                         (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
+                         if Ubot.is_within_limit order.trader old_storage.user_batch_ordertypes then
+                           let new_orderbook = Big_map.add next_order_number order ticked_storage.orderbook in
+                           let new_ubot = Ubot.add_order order.trader current_batch_number order old_storage.user_batch_ordertypes in
+                           let updated_volumes = Batch.update_volumes order current_batch in
+                           let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
+                           let updated_batch_set = { current_batch_set with batches = updated_batches } in
+                           let updated_storage = {
+                             ticked_storage with batch_set = updated_batch_set;
+                             orderbook = new_orderbook;
+                             last_order_number = next_order_number;
+                             user_batch_ordertypes = new_ubot; } in
+                           let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
+                           ([ tokens_transfer_op ], updated_storage)
+                          else
+                            failwith Errors.too_many_unredeemed_orders
 
 let redeem
  (storage : storage) : result =
@@ -186,18 +190,6 @@ let post_rate (rate : exchange_rate) (storage : storage) : result =
   let moved_storage = move_current_to_previous_if_finalized pair ticked_storage in
   no_op (moved_storage)
 
-[@inline]
-let filter_orders_by_user
-  (user : address)
-  (orders : order list)
-  (new_orders : order list) : order list =
-    let filter (new_orders, order : order list * order) : order list =
-      if order.trader = user then
-        order :: new_orders
-      else
-        new_orders
-    in
-    List.fold_left filter new_orders orders
 
 let main
   (action, storage : entrypoint * storage) : result =

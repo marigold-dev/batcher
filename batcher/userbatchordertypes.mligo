@@ -55,6 +55,9 @@ let update
     | Some amt -> let new_amt = amt + order.swap.from.amount in
                   Map.update ot (Some new_amt) bot
 
+let count
+  (ots: t) : nat = Map.size ots
+
 
 end
 
@@ -80,6 +83,18 @@ let add_or_update
   | Some bot -> let updated_bot : OrderTypes.t = OrderTypes.update order bot in
                 let temp: t = Map.update batch_id (Some updated_bot) bots in
                 temp
+
+
+let count
+  (bots: t) : nat =
+  let count_aux
+    (acc, (_batch_number, ots): nat * (nat * ordertypes)) : nat =
+    let ots_count = OrderTypes.count ots in
+    acc + ots_count
+  in
+  Map.fold count_aux bots 0n
+
+
 
 end
 
@@ -227,18 +242,18 @@ let get_clearing
 
 
 let collect_redemptions
-    ((bots, tam, bts),(batch_id,otps) : (batch_ordertypes * token_amount_map * batch_set) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set) =
+    ((bots, tam, bts),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set) =
     let batches = bts.batches in
-    match Big_map.find_opt batch_id batches with
+    match Big_map.find_opt batch_number batches with
     | None -> (bots, tam, bts)
     | Some batch -> let current_batch_number = bts.current_batch_number in
-                    if batch_id = current_batch_number then
+                    if batch_number = current_batch_number then
                       (bots, tam, bts)
                     else
                       (match get_clearing batch with
                        | None ->  (bots, tam, bts)
                        | Some c -> let (_c, u_tam) = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
-                                   let u_bots = Map.remove batch_id bots in
+                                   let u_bots = Map.remove batch_number bots in
                                    (u_bots,u_tam, bts))
 
 let collect_redemption_payouts
@@ -253,6 +268,13 @@ let collect_redemption_payouts
                    (updated_ubots, u_tam)
 
 
+let is_within_limit
+  (holder: address)
+  (ubots: t) : bool =
+  match Big_map.find_opt holder ubots with
+  | None  -> true
+  | Some bots -> let outstanding_token_items = Batch_OrderTypes.count bots in
+                 outstanding_token_items <= Constants.limit_of_redeemable_items
 
 
 
