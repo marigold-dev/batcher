@@ -16,7 +16,6 @@ define compile_storage
     $(LIGO_DOCKER) compile expression cameligo --michelson-format text --init-file $(1) 'f()' > $(2)
 endef
 
-
 build:
 	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
 	$(call compile_storage,batcher/storage/initial_storage.mligo, batcher-storage.tz)

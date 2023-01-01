@@ -2,12 +2,10 @@
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/float.mligo" "Float"
 
-
 module Types = struct
 
   (* Associate alias to token address *)
   type token = {
-    [@layout:comb]
     name : string;
     address : address option;
     decimals : int;
@@ -22,42 +20,39 @@ module Types = struct
 
   (* Tolerance of the order against the oracle price  *)
   type tolerance =
-    [@layout:comb]
     PLUS | EXACT | MINUS
 
   (* A token value ascribes an amount to token metadata *)
   type token_amount = {
-     [@layout:comb]
-     token : token;
-     amount : nat;
+    token : token;
+    amount : nat;
   }
 
-  type token_amount_map = (address, token_amount) map
+  type token_amount_map = (string, token_amount) map
+
+  type token_holding_map = (address, token_amount_map) map
+
 
   (* A token amount 'held' by a specific address *)
   type token_holding = {
-    [@layout:comb]
     holder: address;
     token_amount : token_amount;
     redeemed: bool;
   }
 
   type swap = {
-   [@layout:comb]
    from : token_amount;
    to : token;
   }
 
   (*I change the type of the rate from tez to nat for sake of simplicity*)
   type exchange_rate = {
-    [@layout:comb]
     swap : swap;
     rate: Float.t;
     when : timestamp;
   }
 
   type swap_order = {
-    [@layout:comb]
     order_number: nat;
     batch_number: nat;
     trader : address;
@@ -69,7 +64,6 @@ module Types = struct
   }
 
   type external_swap_order = {
-    [@layout:comb]
     swap  : swap;
     created_at : timestamp;
     side : nat;
@@ -77,11 +71,9 @@ module Types = struct
   }
 
   type batch_status  =
-    [@layout:comb]
     NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type prorata_equivalence = {
-    [@layout:comb]
     buy_side_actual_volume: nat;
     buy_side_actual_volume_equivalence: nat;
     sell_side_actual_volume: nat;
@@ -89,7 +81,6 @@ module Types = struct
   }
 
   type clearing_volumes = {
-    [@layout:comb]
     minus: nat;
     exact: nat;
     plus: nat;
@@ -97,7 +88,6 @@ module Types = struct
 
 
   type clearing = {
-    [@layout:comb]
     clearing_volumes : clearing_volumes;
     clearing_tolerance : tolerance;
     prorata_equivalence: prorata_equivalence;
@@ -159,7 +149,6 @@ module Types = struct
 
   (* Batch of orders for the same pair of tokens *)
   type batch = {
-    [@layout:comb]
     batch_number: nat;
     status : batch_status;
     volumes : volumes;
@@ -174,6 +163,62 @@ module Types = struct
     last_batch_number: nat;
     batches: (nat, batch) big_map;
     }
+end
+
+module TokenAmount = struct
+
+  type t = Types.token_amount
+
+  let recover
+  (ot: Types.ordertype)
+  (amt: nat)
+  (c: Types.clearing): t =
+  let swap = c.clearing_rate.swap in
+  let token = match ot.side with
+             | BUY -> swap.from.token
+             | SELL -> swap.to
+  in
+  {
+    token = token;
+    amount = amt;
+  }
+
+
+end
+
+module TokenAmountMap = struct
+
+  type t = Types.token_amount_map
+
+  type op = INCREASE | DECREASE
+
+  let amend
+  (ta: Types.token_amount)
+  (op: op)
+  (tam : t): t =
+  let token_name = ta.token.name in
+  match Map.find_opt token_name tam with
+  | None -> Map.add token_name ta tam
+  | Some prev -> let new_amt: nat = match op with
+                                    | INCREASE -> ta.amount + prev.amount
+                                    | DECREASE -> if ta.amount > prev.amount then
+                                                    (failwith Errors.unable_to_reduce_token_amount_to_less_than_zero : nat)
+                                                  else
+                                                    abs (prev.amount - ta.amount)
+                 in
+                 let new_tamt = { ta with amount = new_amt } in
+                 Map.update token_name (Some new_tamt) tam
+
+  let increase
+  (ta: Types.token_amount)
+  (tam : t): t =
+  amend ta INCREASE tam
+
+  let decrease
+  (ta: Types.token_amount)
+  (tam: t) : t =
+  amend ta DECREASE tam
+
 end
 
 module Utils = struct

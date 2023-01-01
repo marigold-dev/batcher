@@ -60,3 +60,6 @@ let xtz_not_currently_supported : nat = 128n
 let unsupported_swap_type : nat = 129n
 
 let unable_to_determine_current_or_previous_batch : nat = 130n
+
+let unable_to_reduce_token_amount_to_less_than_zero : nat = 131n
+

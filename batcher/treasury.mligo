@@ -4,7 +4,7 @@
 #import "errors.mligo" "Errors"
 #include "utils.mligo"
 #import "constants.mligo" "Constants"
-#import "userbatchordertype.mligo" "Ubots"
+#import "userbatchordertypes.mligo" "Ubots"
 #import "../math_lib/lib/float.mligo" "Float"
 
 module Types = CommonTypes.Types
@@ -115,63 +115,17 @@ module Utils = struct
     match received_token.token.address with
     | None -> failwith Errors.xtz_not_currently_supported
     | Some token_address ->
-      transfer_token sender receiver token_address received_token
+        transfer_token sender receiver token_address received_token
 
-
-  let redeemed_order
-    (order: order) = { order with redeemed = true }
-
-  let add_or_update_token_amount_in_map
-    (addr: address)
-    (ta: token_amount)
-    (tam: token_amount_map) : token_amount_map =
-    match (Map.find_opt addr tam) with
-    | None ->  Map.add addr ta tam
-    | Some t -> let new_amount = ta.amount + t.amount in
-                let new_token_amount = { t with amount = new_amount } in
-                Map.update addr (Some new_token_amount) tam
-
-
-  let collate_token_amounts
-    (token_map, tal : token_amount_map * token_amount list) : token_amount_map =
-    let aux (tmap,ta : token_amount_map * token_amount) : token_amount_map =
-         match ta.token.address with
-         | None -> tmap
-         | Some addr ->  add_or_update_token_amount_in_map addr ta tmap
-    in
-    List.fold aux tal token_map
 
  let transfer_holdings (treasury_vault : address) (holder: address)  (holdings : token_amount_map) : operation list =
-    let atomic_transfer (operations, (_addr,ta) : operation list * ( address * token_amount)) : operation list =
+    let atomic_transfer (operations, (_token_name,ta) : operation list * ( string * token_amount)) : operation list =
       let op: operation = handle_transfer treasury_vault holder ta in
       op :: operations
     in
     let op_list = Map.fold atomic_transfer holdings ([] : operation list)
     in
     op_list
-
-
-  let order_can_be_redeemed
-    (holder : address)
-    (order: order) : bool = (order.redeemed = false && order.trader = holder)
-
-  let validate_order_numbers_and_collect_orders
-    (holder : address)
-    (order_numbers : nat list)
-    (orderbook: orderbook) : order list =
-    let validate (acc,on: nat list * nat) : nat list =
-      match Big_map.find_opt on orderbook with
-       | None -> acc
-       | Some o -> if order_can_be_redeemed holder o  then
-                   on :: acc
-                 else
-                   acc in
-    let validated_order_numbers = List.fold validate order_numbers [] in
-    let collect (acc,on: order list * nat) : order list =
-      match Big_map.find_opt on orderbook with
-       | None -> acc
-       | Some o -> o :: acc in
-    List.fold collect validated_order_numbers []
 
 end
 

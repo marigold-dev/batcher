@@ -5,7 +5,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
-#import "userbatchordertype.mligo" "Ubot"
+#import "userbatchordertypes.mligo" "Ubot"
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"

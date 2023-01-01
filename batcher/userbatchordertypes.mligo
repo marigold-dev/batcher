@@ -5,6 +5,8 @@
 #import "../math_lib/lib/float.mligo" "Float"
 
 module Types = CommonTypes.Types
+module TokenAmountMap = CommonTypes.TokenAmountMap
+module TokenAmount = CommonTypes.TokenAmount
 
 
 type ordertype = Types.ordertype
@@ -18,6 +20,7 @@ type batch_ordertypes = Types.batch_ordertypes
 type order = Types.swap_order
 type batch_set = Types.batch_set
 type token_amount_map = Types.token_amount_map
+type token = Types.token
 
 
 module OrderType = struct
@@ -55,14 +58,6 @@ let update
 
 end
 
-  (*
-  type ordertype = {
-     side: side;
-     tolerance: tolerance;
-  }
-  type ordertypes = (ordertype, nat) map
-  type batch_ordertypes = (nat,  ordertypes) map
-  type user_batch_ordertypes = (address, batch_ordertypes) big_map *)
 
 module Batch_OrderTypes = struct
 
@@ -115,20 +110,14 @@ module Redemption_Utils = struct
       | (_,_) -> true
 
   let was_in_clearing
-    (order:order)
+    (ot: ordertype)
     (clearing: clearing) : bool =
-    let order_tolerance = order.tolerance in
-    let order_side = order.side in
+    let order_tolerance = ot.tolerance in
+    let order_side = ot.side in
     let clearing_tolerance = clearing.clearing_tolerance in
     match order_side with
     | BUY -> was_in_clearing_for_buy clearing_tolerance order_tolerance
     | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
-
-  let get_clearing
-    (batch: batch) : clearing option =
-    match batch.status with
-    | Cleared { at = _ ; clearing = c; rate = _ } -> Some c
-    | _ -> None
 
 
   let get_clearing_volume
@@ -139,33 +128,40 @@ module Redemption_Utils = struct
     | PLUS -> clearing.clearing_volumes.plus
 
   let get_cleared_sell_side_payout
-    (swap:swap)
-    (clearing:clearing) : token_amount list =
-    let f_sell_side_actual_volume = Float.new (int clearing.prorata_equivalence.sell_side_actual_volume) 0 in
-    let f_amount = Float.new (int swap.from.amount) 0 in
+    (from: token)
+    (to: token)
+    (amount: nat)
+    (clearing: clearing)
+    (tam: TokenAmountMap.t): TokenAmountMap.t =
+    let f_sell_side_actual_volume: Float.t = Float.new (int clearing.prorata_equivalence.sell_side_actual_volume) 0 in
+    let f_amount = Float.new (int amount) 0 in
     let prorata_allocation = Float.div f_amount f_sell_side_actual_volume in
     let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
     let payout = Float.mul prorata_allocation f_buy_side_clearing_volume in
     let payout_equiv = Float.mul payout clearing.clearing_rate.rate in
     let remaining = Float.sub f_amount payout_equiv in
     let fill_payout: token_amount = {
-      token = swap.to;
+      token = to;
       amount = Math.get_rounded_number payout;
     } in
     if Float.gt remaining (Float.new 0 0) then
       let token_rem : token_amount = {
-         token = swap.from.token;
+         token = from;
          amount = Math.get_rounded_number remaining;
       } in
-      [ fill_payout; token_rem ]
+      let u_tam = TokenAmountMap.increase fill_payout tam in
+      TokenAmountMap.increase token_rem u_tam
     else
-      [ fill_payout ]
+      TokenAmountMap.increase fill_payout tam
 
   let get_cleared_buy_side_payout
-    (swap:swap)
-    (clearing:clearing) : token_amount list =
+    (from: token)
+    (to: token)
+    (amount: nat)
+    (clearing:clearing)
+    (tam: token_amount_map): token_amount_map =
     let f_buy_side_actual_volume = Float.new (int clearing.prorata_equivalence.buy_side_actual_volume) 0 in
-    let f_amount = Float.new (int swap.from.amount) 0 in
+    let f_amount = Float.new (int amount) 0 in
     let prorata_allocation = Float.div f_amount f_buy_side_actual_volume in
     let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
     let f_sell_side_clearing_volume = Float.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
@@ -173,34 +169,41 @@ module Redemption_Utils = struct
     let payout_equiv = Float.div payout clearing.clearing_rate.rate in
     let remaining = Float.sub f_amount payout_equiv in
     let fill_payout = {
-      token = swap.to;
+      token = to;
       amount = Math.get_rounded_number payout;
     } in
     if Float.gt remaining (Float.new 0 0) then
       let token_rem = {
-         token = swap.from.token;
+         token = from;
          amount = Math.get_rounded_number remaining;
       } in
-      [ fill_payout; token_rem ]
+      let u_tam = TokenAmountMap.increase fill_payout tam in
+      TokenAmountMap.increase token_rem u_tam
     else
-      [ fill_payout ]
+      TokenAmountMap.increase fill_payout tam
 
   let get_cleared_payout
-    (order: order)
-    (clearing: clearing) : token_amount list =
-    match order.side with
-    | BUY -> get_cleared_buy_side_payout order.swap clearing
-    | SELL -> get_cleared_buy_side_payout order.swap clearing
+    (ot: ordertype)
+    (amt: nat)
+    (clearing: clearing)
+    (tam: token_amount_map): token_amount_map =
+    let s = ot.side in
+    let swap = clearing.clearing_rate.swap in
+    match s with
+    | BUY -> get_cleared_buy_side_payout swap.from.token swap.to amt clearing tam
+    | SELL -> get_cleared_buy_side_payout swap.to swap.from.token amt clearing tam
+
 
   let collect_order_payout_from_clearing
-    (order, clearing: order * clearing option) :  token_amount list =
-    match clearing with
-    | None -> [ order.swap.from ]
-    | Some c -> if was_in_clearing order c then
-                  let cleared_token_amount = get_cleared_payout order c in
-                  cleared_token_amount
-                else
-                  [ order.swap.from ]
+    ((c, tam), (ot, amt): (clearing * token_amount_map) * (ordertype * nat)) :  (clearing * token_amount_map) =
+    let u_tam: token_amount_map  = if was_in_clearing ot c then
+                                     get_cleared_payout ot amt c tam
+                                   else
+                                     let ta: token_amount = TokenAmount.recover ot amt c in
+                                     TokenAmountMap.increase ta tam
+    in
+    (c, u_tam)
+
 end
 
 type t = Types.user_batch_ordertypes
@@ -209,21 +212,45 @@ let add_order
     (holder: address)
     (batch_id: nat)
     (order : order)
-    (ubot : t ) : t =
-    match Big_map.find_opt holder ubot with
+    (ubots: t ) : t =
+    match Big_map.find_opt holder ubots with
     | None -> let new_bots = Batch_OrderTypes.make batch_id order in
-              Big_map.add holder new_bots ubot
+              Big_map.add holder new_bots ubots
     | Some bots -> let updated_bots = Batch_OrderTypes.add_or_update batch_id order bots in
-                   Big_map.update holder (Some updated_bots) ubot
+                   Big_map.update holder (Some updated_bots) ubots
+
+let get_clearing
+   (batch: batch) : clearing option =
+   match batch.status with
+   | Cleared ci -> Some ci.clearing
+   | _ -> None
+
+
+let collect_redemptions
+    ((bots, tam, bts),(batch_id,otps) : (batch_ordertypes * token_amount_map * batch_set) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set) =
+    let batches = bts.batches in
+    match Big_map.find_opt batch_id batches with
+    | None -> (bots, tam, bts)
+    | Some batch -> let current_batch_number = bts.current_batch_number in
+                    if batch_id = current_batch_number then
+                      (bots, tam, bts)
+                    else
+                      (match get_clearing batch with
+                       | None ->  (bots, tam, bts)
+                       | Some c -> let (_c, u_tam) = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
+                                   let u_bots = Map.remove batch_id bots in
+                                   (u_bots,u_tam, bts))
 
 let collect_redemption_payouts
     (holder: address)
     (batch_set: batch_set)
-    (ubot: t) :  (t * token_amount_map) =
-    match Big_map.find_opt holder ubot with
-    | None -> (ubot, (Map.empty : token_amount_map))
-    | Some _bot -> (ubot, (Map.empty : token_amount_map))
-
+    (ubots: t) :  (t * token_amount_map) =
+    let empty_tam = (Map.empty : token_amount_map) in
+    match Big_map.find_opt holder ubots with
+    | None -> (ubots, empty_tam)
+    | Some bots -> let (u_bots, u_tam, _bs) = Map.fold collect_redemptions bots (bots, empty_tam, batch_set) in
+                   let updated_ubots = Big_map.update holder (Some u_bots) ubots in
+                   (updated_ubots, u_tam)
 
 
 
