@@ -5,7 +5,7 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "orderbook.mligo" "Order"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 type storage  = CommonStorage.Types.t
 type side  = CommonTypes.Types.side
@@ -31,11 +31,11 @@ let get_clearing_rate
   (exchange_rate: exchange_rate) : exchange_rate =
   match clearing.clearing_tolerance with
   | EXACT -> exchange_rate
-  | PLUS -> let val : Float.t = exchange_rate.rate in
-            let rate =  (Float.mul val Constants.ten_bips_constant) in
+  | PLUS -> let val : Rational.t = exchange_rate.rate in
+            let rate =  (Rational.mul val Constants.ten_bips_constant) in
             { exchange_rate with rate = rate}
   | MINUS -> let val = exchange_rate.rate in
-             let rate = (Float.div val Constants.ten_bips_constant) in
+             let rate = (Rational.div val Constants.ten_bips_constant) in
              { exchange_rate with rate = rate}
 
 [@inline]
@@ -53,11 +53,11 @@ let filter_volumes
 
 [@inline]
 let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (invert: bool) : nat =
-  let float_amount = Float.new (int (amount)) 0 in
+  let float_amount = Rational.new (int (amount)) in
   if invert then
-    Math.get_rounded_number (Float.div float_amount rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
   else
-    Math.get_rounded_number (Float.mul float_amount rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
 
 (*
   This function builds the order equivalence for the pro-rata redeemption.

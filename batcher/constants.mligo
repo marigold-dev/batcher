@@ -1,8 +1,8 @@
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 
 (* The constant which represents a 10 basis point difference *)
-[@inline] let ten_bips_constant = Float.add (Float.new 1 0) (Float.new 1 (-4))
+[@inline] let ten_bips_constant = Rational.div (Rational.new 10) (Rational.new 10000)
 
 (* The constant which represents the period during which users can deposit, in seconds. *)
 [@inline] let deposit_time_window : int = 600

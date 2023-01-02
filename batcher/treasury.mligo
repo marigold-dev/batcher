@@ -5,7 +5,7 @@
 #include "utils.mligo"
 #import "constants.mligo" "Constants"
 #import "userbatchordertypes.mligo" "Ubots"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = CommonTypes.Types
 type storage = Storage.Types.t
