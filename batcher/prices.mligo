@@ -1,6 +1,7 @@
 #import "types.mligo" "CommonTypes"
 #import "storage.mligo" "CommonStorage"
 #import "errors.mligo" "PriceErrors"
+#import "math.mligo" "Math"
 #import "../math_lib/lib/rational.mligo" "Rational"
 
 module Utils = struct
@@ -15,17 +16,21 @@ module Utils = struct
                           | None -> Big_map.add (rate_name) (rate) storage.rates_current
                           | Some (_p) -> Big_map.update (rate_name) (Some(rate)) (storage.rates_current)) in
     { storage with rates_current = updated_rates }
-  let pow (base : int) (pow : int) : int =
-    let rec iter (acc : int) (rem_pow : int) : int = (if rem_pow = 0 then acc else iter (acc * base) (rem_pow - 1)) in
-    iter (1) (pow)
+
 
   let get_rate_scaling_power_of_10 (rate : rate) : Rational.t =
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    (* FIXME:  Need to represent powers of 10 in rational format *)
-    (* THIS IS INCORRECT *)
-    Rational.new diff
+    let abs_diff = int (abs diff) in
+    let power10 = Math.pow 10 abs_diff in
+    if diff = 0 then
+      Rational.new 1
+    else
+      if diff < 0 then
+        Rational.div (Rational.new 1) (Rational.new power10)
+      else
+        (Rational.new power10)
 
   let scale_on_post (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in

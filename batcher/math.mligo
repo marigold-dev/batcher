@@ -18,6 +18,10 @@ let gte (a : Rational.t) (b : Rational.t) : bool = not (Rational.lt a b)
 end
 
 
+let pow (base : int) (pow : int) : int =
+  let rec iter (acc : int) (rem_pow : int) : int = (if rem_pow = 0 then acc else iter (acc * base) (rem_pow - 1)) in
+  iter (1) (pow)
+
 (* Get the number with 0 decimal accuracy *)
 let get_rounded_number_lower_bound (number : Rational.t) : nat =
   let zero_decimal_number = Rational.resolve number 0n in
