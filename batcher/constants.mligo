@@ -2,7 +2,7 @@
 
 
 (* The constant which represents a 10 basis point difference *)
-[@inline] let ten_bips_constant = Rational.div (Rational.new 10) (Rational.new 10000)
+[@inline] let ten_bips_constant = Rational.div (Rational.new 10001) (Rational.new 10000)
 
 (* The constant which represents the period during which users can deposit, in seconds. *)
 [@inline] let deposit_time_window : int = 600
