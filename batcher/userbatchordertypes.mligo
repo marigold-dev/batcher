@@ -206,7 +206,7 @@ module Redemption_Utils = struct
     let swap = clearing.clearing_rate.swap in
     match s with
     | BUY -> get_cleared_buy_side_payout swap.from.token swap.to amt clearing tam
-    | SELL -> get_cleared_buy_side_payout swap.to swap.from.token amt clearing tam
+    | SELL -> get_cleared_sell_side_payout swap.to swap.from.token amt clearing tam
 
 
   let collect_order_payout_from_clearing
