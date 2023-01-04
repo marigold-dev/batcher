@@ -14,6 +14,7 @@ import {
   MINUS,
   EXACT,
   PLUS,
+  CLEARED,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
@@ -159,6 +160,14 @@ const Welcome: React.FC = () => {
     for (var i = 0; i < chosenBatches.length; i++) {
       const batch = chosenBatches.at(i);
 
+      console.log(
+        '%cMain.tsx line:163 Object.keys(batch.value.status[0]',
+        'color: #007acc;',
+        Object.keys(batch.value.status)[0],
+      );
+
+      if (Object.keys(batch.value.status)[0] !== CLEARED) continue;
+
       const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
 
       let clearingRate = 0;
@@ -190,6 +199,15 @@ const Welcome: React.FC = () => {
           depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
         const unconvertedSellSideAmount =
           (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
+
+        console.log(
+          '%cMain.tsx line:203 ',
+          'color: #007acc;',
+          depositedBuySideAmount,
+          buySideActualVolume,
+          clearing,
+          clearingRate,
+        );
         initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
         initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
       } else {
