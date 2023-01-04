@@ -5,10 +5,10 @@ RUN apk update &&\
     apk add curl &&\
     apk add jq &&\
     octez-client --endpoint https://ghostnet.tezos.marigold.dev config update &&\
-    octez-client import secret key oracle_account unencrypted:edskRjhFZjpq6j8Xq4WmXPNFKofjW5DC1CzDLmPyFrJYrnVvegGxc9EoWN4VUXiPStMey92a8SSNVH3nNHYpf1hkLcBHc8NuyM --force
+    octez-client import secret key oracle_account unencrypted:edskRzJUQ1xqCPkVXzT8EiUXjcCsXXkhpiHWE19fAV2JmqW68T6nVoXVPJyx99mjJzUa98NEeGr3kLcEh6NQGcpFKj7BoPRd88 --force
 
 WORKDIR /etc/run
 
 COPY ./sandbox.sh /etc/run/
 
-CMD [ "/etc/run/sandbox.sh", "-u", "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm", "-t", "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS", "-b", "KT1G7ziTpUgXQR9QymGj348jM5B8KdZgBp1B" ]
+CMD [ "/etc/run/sandbox.sh", "-u", "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm", "-t", "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS", "-b", "KT1FUnu1rGvJijMxTb5AGDuzJJpnDjZ77RMc" ]
