@@ -9,7 +9,7 @@
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 type storage  = Storage.Types.t
 type result = (operation list) * storage
@@ -41,7 +41,7 @@ let get_inverse_exchange_rate (rate_name : string) (current_rate : Storage.Types
       let new_quote_token = base_token in
       let inverse_rate : inverse_exchange_rate = {
         swap = { from = new_base_token; to = new_quote_token };
-        rate = Float.inverse r.rate;
+        rate = Rational.inverse r.rate;
         when = r.when;
       } in
       (inverse_rate, r)

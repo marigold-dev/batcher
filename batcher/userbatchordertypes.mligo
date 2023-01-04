@@ -2,11 +2,12 @@
 #import "constants.mligo" "Constants"
 #import "errors.mligo" "Errors"
 #import "math.mligo" "Math"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = CommonTypes.Types
 module TokenAmountMap = CommonTypes.TokenAmountMap
 module TokenAmount = CommonTypes.TokenAmount
+module RationalUtils = Math.RationalUtils
 
 
 type ordertype = Types.ordertype
@@ -148,21 +149,21 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing: clearing)
     (tam: TokenAmountMap.t): TokenAmountMap.t =
-    let f_sell_side_actual_volume: Float.t = Float.new (int clearing.prorata_equivalence.sell_side_actual_volume) 0 in
-    let f_amount = Float.new (int amount) 0 in
-    let prorata_allocation = Float.div f_amount f_sell_side_actual_volume in
-    let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
-    let payout = Float.mul prorata_allocation f_buy_side_clearing_volume in
-    let payout_equiv = Float.mul payout clearing.clearing_rate.rate in
-    let remaining = Float.sub f_amount payout_equiv in
+    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_volume) in
+    let f_amount = Rational.new (int amount) in
+    let prorata_allocation = Rational.div f_amount f_sell_side_actual_volume in
+    let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    let payout = Rational.mul prorata_allocation f_buy_side_clearing_volume in
+    let payout_equiv = Rational.mul payout clearing.clearing_rate.rate in
+    let remaining = Rational.sub f_amount payout_equiv in
     let fill_payout: token_amount = {
       token = to;
-      amount = Math.get_rounded_number payout;
+      amount = Math.get_rounded_number_lower_bound payout;
     } in
-    if Float.gt remaining (Float.new 0 0) then
+    if RationalUtils.gt remaining (Rational.new 1) then
       let token_rem : token_amount = {
          token = from;
-         amount = Math.get_rounded_number remaining;
+         amount = Math.get_rounded_number_lower_bound remaining;
       } in
       let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
@@ -175,22 +176,22 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing:clearing)
     (tam: token_amount_map): token_amount_map =
-    let f_buy_side_actual_volume = Float.new (int clearing.prorata_equivalence.buy_side_actual_volume) 0 in
-    let f_amount = Float.new (int amount) 0 in
-    let prorata_allocation = Float.div f_amount f_buy_side_actual_volume in
-    let f_buy_side_clearing_volume = Float.new (int (get_clearing_volume clearing)) 0 in
-    let f_sell_side_clearing_volume = Float.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
-    let payout = Float.mul prorata_allocation f_sell_side_clearing_volume in
-    let payout_equiv = Float.div payout clearing.clearing_rate.rate in
-    let remaining = Float.sub f_amount payout_equiv in
+    let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_volume) in
+    let f_amount = Rational.new (int amount) in
+    let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
+    let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    let f_sell_side_clearing_volume = Rational.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
+    let payout = Rational.mul prorata_allocation f_sell_side_clearing_volume in
+    let payout_equiv = Rational.div payout clearing.clearing_rate.rate in
+    let remaining = Rational.sub f_amount payout_equiv in
     let fill_payout = {
       token = to;
-      amount = Math.get_rounded_number payout;
+      amount = Math.get_rounded_number_lower_bound payout;
     } in
-    if Float.gt remaining (Float.new 0 0) then
+    if RationalUtils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
-         amount = Math.get_rounded_number remaining;
+         amount = Math.get_rounded_number_lower_bound remaining;
       } in
       let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
@@ -206,7 +207,7 @@ module Redemption_Utils = struct
     let swap = clearing.clearing_rate.swap in
     match s with
     | BUY -> get_cleared_buy_side_payout swap.from.token swap.to amt clearing tam
-    | SELL -> get_cleared_sell_side_payout swap.to swap.from.token amt clearing tam
+    | SELL -> get_cleared_buy_side_payout swap.to swap.from.token amt clearing tam
 
 
   let collect_order_payout_from_clearing

@@ -3,7 +3,7 @@
 #import "errors.mligo" "Errors"
 #import "types.mligo" "CommonTypes"
 #import "math.mligo" "Math"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 #import "treasury.mligo" "Treasury"
 #import "constants.mligo" "Constants"
 
@@ -18,19 +18,19 @@ let empty () : t = Big_map.empty
 
 [@inline]
 let compute_equivalent_amount (amount : nat) (exchange_rate : exchange_rate) (invert: bool) : nat =
-  let float_amount = Float.new (int (amount)) 0 in
+  let float_amount = Rational.new (int (amount)) in
   if invert then
-    Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.div float_amount exchange_rate.rate)
   else
-    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.mul float_amount exchange_rate.rate)
 
 [@inline]
 let compute_equivalent_token (order : order) (exchange_rate : exchange_rate) : nat =
-  let float_amount = Float.new (int (order.swap.from.amount)) 0 in
+  let float_amount = Rational.new (int (order.swap.from.amount)) in
   if order.swap.from.token = exchange_rate.swap.from.token then
-    Math.get_rounded_number (Float.mul float_amount exchange_rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.mul float_amount exchange_rate.rate)
   else
-    Math.get_rounded_number (Float.div float_amount exchange_rate.rate)
+    Math.get_rounded_number_lower_bound (Rational.div float_amount exchange_rate.rate)
 
 [@inline]
 let make_new_order (order : order) (amt: nat) : order =

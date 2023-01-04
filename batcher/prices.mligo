@@ -1,13 +1,14 @@
 #import "types.mligo" "CommonTypes"
 #import "storage.mligo" "CommonStorage"
 #import "errors.mligo" "PriceErrors"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "math.mligo" "Math"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 module Utils = struct
 
   type rate = CommonTypes.Types.exchange_rate
 
-  let is_valid_rate_type (rate_name : string) (valid_swaps : CommonStorage.Types.valid_swaps) : bool = 
+  let is_valid_rate_type (rate_name : string) (valid_swaps : CommonStorage.Types.valid_swaps) : bool =
     Map.mem rate_name valid_swaps
 
   let update_current_rate (rate_name : string) (rate : CommonTypes.Types.exchange_rate) (storage : CommonStorage.Types.t) =
@@ -15,24 +16,30 @@ module Utils = struct
                           | None -> Big_map.add (rate_name) (rate) storage.rates_current
                           | Some (_p) -> Big_map.update (rate_name) (Some(rate)) (storage.rates_current)) in
     { storage with rates_current = updated_rates }
-  let pow (base : int) (pow : int) : int =
-    let rec iter (acc : int) (rem_pow : int) : int = (if rem_pow = 0 then acc else iter (acc * base) (rem_pow - 1)) in
-    iter (1) (pow)
 
-  let get_rate_scaling_power_of_10 (rate : rate) : Float.t =
+
+  let get_rate_scaling_power_of_10 (rate : rate) : Rational.t =
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    Float.new 1 diff
+    let abs_diff = int (abs diff) in
+    let power10 = Math.pow 10 abs_diff in
+    if diff = 0 then
+      Rational.new 1
+    else
+      if diff < 0 then
+        Rational.div (Rational.new 1) (Rational.new power10)
+      else
+        (Rational.new power10)
 
   let scale_on_post (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let adjusted_rate = Float.mul rate.rate scaling_rate in
+    let adjusted_rate = Rational.mul rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
   let scale_on_get (rate : rate) : rate =
     let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let adjusted_rate = Float.div rate.rate scaling_rate in
+    let adjusted_rate = Rational.div rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
 end

@@ -1,6 +1,6 @@
 #import "constants.mligo" "Constants"
 #import "errors.mligo" "Errors"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = struct
 
@@ -48,7 +48,7 @@ module Types = struct
   (*I change the type of the rate from tez to nat for sake of simplicity*)
   type exchange_rate = {
     swap : swap;
-    rate: Float.t;
+    rate: Rational.t;
     when : timestamp;
   }
 

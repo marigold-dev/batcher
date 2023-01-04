@@ -5,7 +5,7 @@
 #include "utils.mligo"
 #import "constants.mligo" "Constants"
 #import "userbatchordertypes.mligo" "Ubots"
-#import "../math_lib/lib/float.mligo" "Float"
+#import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = CommonTypes.Types
 type storage = Storage.Types.t
@@ -127,46 +127,8 @@ module Utils = struct
     in
     op_list
 
+end
 
-  let collect_order_payouts
-    (holder : address)
-    (treasury_vault : address)
-    (user_orders: user_orders)
-    (batch_set: batch_set)
-    (storage : storage) : operation list * storage =
-    let open_orders : (order list) option = Map.find_opt Constants.open user_orders in
-    let (redeemed_orders, payout_token_map) = match open_orders with
-                                                         | None -> (([]: order list), (Map.empty: token_amount_map))
-                                                         | Some ords -> let match_order_to_batch
-                                                                        (order: order) : (order * clearing option) =
-                                                                           match Big_map.find_opt order.batch_number batch_set.batches with
-                                                                           | None -> (order, None)
-                                                                           | Some b -> (order, get_clearing b)
-                                                                       in
-                                                                       let orders_and_clearing: (order * clearing option) list = List.map match_order_to_batch ords in
-                                                                       let redeemed_orders  = List.map redeemed_order ords in
-                                                                       let payouts: (token_amount list) list = List.map collect_order_payout_from_clearing orders_and_clearing in
-                                                                       let collated_payouts = List.fold collate_token_amounts payouts Map.empty in
-                                                                       (redeemed_orders,collated_payouts)
-    in
-    let updated_user_orders = push_redeemed_orders redeemed_orders user_orders in
-    let updated_user_orderbook = Big_map.update holder (Some updated_user_orders) storage.user_orderbook in
-    let operations = transfer_holdings treasury_vault holder payout_token_map in
-    (operations,  { storage with user_orderbook = updated_user_orderbook })
-
-
-  let redeem_holdings
-    (holder : address)
-    (treasury_vault : address)
-    (storage : storage) : operation list * storage =
-       let user_orders: user_orders option = Big_map.find_opt holder storage.user_orderbook in
-       let batch_set = storage.batch_set in
-       let empty_ops = ([]: operation list)  in
-       let redeemed_ops_and_storage =  match user_orders with
-                                       | None ->  (empty_ops, storage)
-                                       | Some uords -> collect_order_payouts holder treasury_vault uords batch_set storage
-       in
-       redeemed_ops_and_storage
 
 
 let get_treasury_vault () : address = Tezos.get_self_address ()
