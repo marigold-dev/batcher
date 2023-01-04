@@ -7,6 +7,7 @@ module Types = CommonTypes.Types
 
 type batch_set = Types.batch_set
 type order = Types.swap_order
+type pair = Types.pair
 
 type batch_status =
   | Open of { start_time : timestamp }
@@ -24,25 +25,50 @@ let roll_batch_off
     let batch_to_be_rolled = batch_set.current_batch_number in
     { batch_set with current_batch_number = 0n; last_batch_number = batch_to_be_rolled }
 
+let set_buy_side_volume
+  (order: Types.swap_order)
+  (volumes : Types.volumes) : Types.volumes =
+  match order.tolerance with
+  | MINUS -> { volumes with buy_minus_volume = volumes.buy_minus_volume + order.swap.from.amount; }
+  | EXACT -> { volumes with buy_exact_volume = volumes.buy_exact_volume + order.swap.from.amount; }
+  | PLUS -> { volumes with buy_plus_volume = volumes.buy_plus_volume + order.swap.from.amount; }
+
+let set_sell_side_volume
+  (order: Types.swap_order)
+  (volumes : Types.volumes) : Types.volumes =
+  match order.tolerance with
+  | MINUS -> { volumes with sell_minus_volume = volumes.sell_minus_volume + order.swap.from.amount; }
+  | EXACT -> { volumes with sell_exact_volume = volumes.sell_exact_volume + order.swap.from.amount; }
+  | PLUS -> { volumes with sell_plus_volume = volumes.sell_plus_volume + order.swap.from.amount; }
+
+let update_volumes
+  (order: Types.swap_order)
+  (batch : t)  : t =
+  let vols = batch.volumes in
+  let updated_vols = match order.side with
+                     | BUY -> set_buy_side_volume order vols
+                     | SELL -> set_sell_side_volume order vols
+  in
+  { batch with volumes = updated_vols;  }
+
 let make
-  (order: order)
   (batch_number: nat)
   (timestamp: timestamp)
-  (orderbook: Orderbook.t)
   (pair: Types.token * Types.token) : t =
+  let volumes: Types.volumes = {
+      buy_minus_volume = 0n;
+      buy_exact_volume = 0n;
+      buy_plus_volume = 0n;
+      sell_minus_volume = 0n;
+      sell_exact_volume = 0n;
+      sell_plus_volume = 0n;
+    } in
   {
     batch_number= batch_number;
     status = Open { start_time = timestamp } ;
-    orderbook = orderbook;
-    last_order_number = order.order_number;
     pair = pair;
+    volumes = volumes;
   }
-
-
-(* Append an order to a batch *withouth checks* *)
-let append_order (order : Types.swap_order) (batch : t) : t =
-  let new_orderbook = Orderbook.push_order order batch.orderbook in
-  { batch with orderbook = new_orderbook }
 
 let finalize (batch : t) (current_time : timestamp) (clearing : Types.clearing)
   (rate : Types.exchange_rate) : t =
@@ -88,37 +114,23 @@ let should_be_cleared
       current_time > closing_time + Constants.price_wait_window
     | _ -> false
 
-let get_current_batch
-  (batch_set: batch_set) : t option =
-  let cbn = batch_set.current_batch_number in
-  if cbn = 0n then
-    None
-  else
-    let bts = batch_set.batches in
-    let cbf: t option = Big_map.find_opt cbn bts in
-    cbf
 
 let should_open_new
-  (batch_set : batch_set)
-  (_current_time : timestamp) : bool =
-  let cb = get_current_batch batch_set in
-  match cb with
+  (current_batch_op : t option) : bool =
+  match current_batch_op with
   | None -> true
   | Some batch ->
       is_cleared batch
 
 
-
 let start_period
-  (order : Types.swap_order)
+  (pair : pair)
   (batch_set : batch_set)
-  (current_time : timestamp) : batch_set =
-    let pair = CommonTypes.Utils.pair_of_swap order in
-    let orderbook = Orderbook.push_order order (Orderbook.empty ()) in
-    let new_batch_number = batch_set.last_batch_number + 1n in
-    let new_batch = make order new_batch_number current_time orderbook pair in
-    let batches = Big_map.add new_batch_number new_batch batch_set.batches in
-    { batch_set with batches = batches; current_batch_number = new_batch_number }
+  (current_time : timestamp) : (t * batch_set) =
+  let new_batch_number = batch_set.last_batch_number + 1n in
+  let new_batch = make new_batch_number current_time pair in
+  let batches = Big_map.add new_batch_number new_batch batch_set.batches in
+  (new_batch, { batch_set with batches = batches; current_batch_number = new_batch_number })
 
 let close (batch : t) : t =
   match batch.status with
@@ -141,3 +153,36 @@ let new_batch_set : batch_set =
     last_batch_number= 0n;
     batches= (Big_map.empty: (nat, t) big_map);
   }
+
+
+[@inline]
+let reset_batch_set
+  (batch_set: batch_set) : (t option * batch_set) =
+  let last_batch_number = batch_set.last_batch_number in
+  let batches = batch_set.batches in
+  match Big_map.find_opt last_batch_number batches with
+  | None -> failwith Errors.unable_to_determine_current_or_previous_batch
+  | Some b -> let updated_batch_set = { batch_set with current_batch_number = last_batch_number } in
+              (Some b, updated_batch_set)
+
+
+[@inline]
+let get_current_batch
+  (pair: pair)
+  (batch_set: batch_set) : (t option * batch_set) =
+  let current_time = Tezos.get_now () in
+  let current_batch_number = batch_set.current_batch_number in
+  if current_batch_number = 0n then
+    let (b,bs) = start_period pair batch_set current_time in
+    (Some b, bs)
+  else
+    let batches = batch_set.batches in
+    match Big_map.find_opt current_batch_number batches with
+    | None ->  (* This should never happen but if it does then we should set back to last batch number *)
+               reset_batch_set batch_set
+    | Some cb -> if should_open_new (Some cb) then
+                   let (b,bs) = start_period pair batch_set current_time in
+                   (Some b, bs)
+                 else
+                   (Some cb, batch_set)
+

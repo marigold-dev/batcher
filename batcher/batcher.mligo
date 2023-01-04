@@ -5,9 +5,9 @@
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
 #import "clearing.mligo" "Clearing"
+#import "userbatchordertypes.mligo" "Ubot"
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
-#import "userorderbook.mligo" "Userorderbook"
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/float.mligo" "Float"
 
@@ -22,7 +22,7 @@ type tolerance = Types.Types.tolerance
 type exchange_rate = Types.Types.exchange_rate
 type inverse_exchange_rate = exchange_rate
 type batch_set = Types.Types.batch_set
-type user_orders = Types.Types.user_orders
+type pair = Types.Types.pair
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
@@ -62,11 +62,12 @@ let finalize (batch : Batch.t) (storage : storage) (current_time : timestamp) : 
   (inverse_rate, batch)
 
 let progress_batch_set
-   (batch_set: batch_set)
+   (pair : pair)
+   (batch_sets: batch_set)
    (storage: storage): (bool *  batch_set) =
-   let batches = batch_set.batches in
-   match Batch.get_current_batch batch_set with
-   | None -> (false, batch_set)
+   let (cb_opt, bs) = Batch.get_current_batch pair batch_sets in
+   match cb_opt with
+   | None -> (false, bs)
    | Some current_batch -> let current_time = Tezos.get_now () in
                            let (roll, updated_batch) =
                              if Batch.should_be_closed current_batch current_time then
@@ -78,34 +79,16 @@ let progress_batch_set
                              else
                                (false,current_batch)
                            in
-                           let updated_batches = Big_map.update current_batch.batch_number (Some(updated_batch)) batches in
-                           (roll, {batch_set with batches = updated_batches} )
+                           let updated_batches = Big_map.update current_batch.batch_number (Some(updated_batch)) bs.batches in
+                           (roll, {bs with batches = updated_batches} )
 
-let tick_current_batches (storage : storage) : storage =
+let tick_current_batches
+  (pair: pair)
+  (storage : storage) : storage =
   let batch_set = storage.batch_set in
-  let (should_roll, updated_batch_set) = progress_batch_set batch_set storage in
+  let (should_roll, updated_batch_set) = progress_batch_set pair batch_set storage in
   let rolled_if_needed = if should_roll then Batch.roll_batch_off updated_batch_set else updated_batch_set in
   { storage with batch_set = rolled_if_needed }
-
-let try_to_append_order (order : order)
-  (batch_set : Batch.batch_set) : Batch.batch_set =
-  let current_batch_number = batch_set.current_batch_number in
-  let current_batch = Batch.get_current_batch batch_set in
-  match current_batch with
-    | None ->
-      failwith Errors.append_an_order_with_no_current_batch
-    | Some current ->
-      if not (Batch.is_open current) then
-        failwith Errors.append_an_order_to_a_non_open_batch
-      else
-        let current_pair = current.pair in
-        let order_pair = Types.Utils.pair_of_swap order in
-        if current_pair <> order_pair then
-          failwith Errors.order_pair_doesnt_match
-        else
-          let current = Batch.append_order order current in
-          let updated_batches = Big_map.update current_batch_number (Some current) batch_set.batches in
-          { batch_set with batches = updated_batches }
 
 let is_valid_swap_pair
   (order: order)
@@ -116,7 +99,7 @@ let is_valid_swap_pair
 
 let external_to_order
   (order: external_order)
-  (last_order_number: nat)
+  (order_number: nat)
   (batch_number: nat)
   (valid_swaps: valid_swaps): order =
   let side = Types.Utils.nat_to_side(order.side) in
@@ -124,7 +107,7 @@ let external_to_order
   let sender = Tezos.get_sender () in
   let converted_swap : order =
     {
-      order_number = last_order_number + 1n;
+      order_number = order_number;
       batch_number = batch_number;
       trader = sender;
       swap  = order.swap;
@@ -149,40 +132,50 @@ let order_to_external (order: order) : external_order =
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
-let deposit (external_order: external_order) (storage : storage) : result =
-  let current_batch = Batch.get_current_batch storage.batch_set in
-  let (last_order_number, batch_number) = match current_batch with
-                                             | None -> (0n, storage.batch_set.last_batch_number + 1n)
-                                             | Some cb -> (cb.last_order_number, storage.batch_set.current_batch_number) in
-  let order : order = external_to_order external_order last_order_number batch_number storage.valid_swaps in
-  let ticked_storage = tick_current_batches storage in
-  let current_time = Tezos.get_now () in
-  let updated_batch_set =
-    if Batch.should_open_new ticked_storage.batch_set current_time then
-      Batch.start_period order ticked_storage.batch_set current_time
-    else
-      try_to_append_order order ticked_storage.batch_set
-  in
-  let updated_user_orderbook = Userorderbook.push_open_order order.trader order storage.user_orderbook in
-  let updated_storage = { ticked_storage with batch_set = updated_batch_set; user_orderbook = updated_user_orderbook } in
-  let (tokens_transfer_op, storage_after_treasury_update) = Treasury.deposit order.trader order.swap.from updated_storage in
-  ([ tokens_transfer_op ], storage_after_treasury_update)
+let deposit (external_order: external_order) (old_storage : storage) : result =
+  let pair = Types.Utils.pair_of_external_swap external_order in
+  let ticked_storage = tick_current_batches pair old_storage in
+  let (current_batch_opt, current_batch_set) = Batch.get_current_batch pair ticked_storage.batch_set in
+  match current_batch_opt with
+  | None -> failwith Errors.no_open_batch
+  | Some current_batch-> let current_batch_number = current_batch.batch_number in
+                         let next_order_number = ticked_storage.last_order_number + 1n in
+                         let order : order = external_to_order external_order next_order_number current_batch_number ticked_storage.valid_swaps in
+                         (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
+                         if Ubot.is_within_limit order.trader old_storage.user_batch_ordertypes then
+                           let new_orderbook = Big_map.add next_order_number order ticked_storage.orderbook in
+                           let new_ubot = Ubot.add_order order.trader current_batch_number order old_storage.user_batch_ordertypes in
+                           let updated_volumes = Batch.update_volumes order current_batch in
+                           let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
+                           let updated_batch_set = { current_batch_set with batches = updated_batches } in
+                           let updated_storage = {
+                             ticked_storage with batch_set = updated_batch_set;
+                             orderbook = new_orderbook;
+                             last_order_number = next_order_number;
+                             user_batch_ordertypes = new_ubot; } in
+                           let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
+                           ([ tokens_transfer_op ], updated_storage)
+                          else
+                            failwith Errors.too_many_unredeemed_orders
 
-let redeem (storage : storage) : result =
+let redeem
+ (storage : storage) : result =
   let holder = Tezos.get_sender () in
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
 
-let move_current_to_previous_if_finalized (storage : storage) : storage =
+let move_current_to_previous_if_finalized
+  (pair: pair)
+  (storage : storage) : storage =
   let batch_set = storage.batch_set in
-  let current = Batch.get_current_batch batch_set in
-  match current with
+  let (current_batch_op, current_batch_set) = Batch.get_current_batch pair batch_set in
+  match current_batch_op with
   | None -> storage
   | Some current_batch ->
      if (Batch.is_cleared current_batch) then
        let current_batch_number = batch_set.current_batch_number in
-       let new_batch_set = { batch_set with current_batch_number = 0n; last_batch_number = current_batch_number; } in
+       let new_batch_set = { current_batch_set with current_batch_number = 0n; last_batch_number = current_batch_number; } in
        { storage with batch_set = new_batch_set }
      else
        storage
@@ -192,22 +185,11 @@ let move_current_to_previous_if_finalized (storage : storage) : storage =
    TODO: actually update the rate *)
 let post_rate (rate : exchange_rate) (storage : storage) : result =
   let updated_rate_storage = Pricing.Rates.post_rate rate storage in
-  let ticked_storage = tick_current_batches updated_rate_storage in
-  let moved_storage = move_current_to_previous_if_finalized ticked_storage in
+  let pair = Types.Utils.pair_of_rate rate in
+  let ticked_storage = tick_current_batches pair updated_rate_storage in
+  let moved_storage = move_current_to_previous_if_finalized pair ticked_storage in
   no_op (moved_storage)
 
-[@inline]
-let filter_orders_by_user
-  (user : address)
-  (orders : order list)
-  (new_orders : order list) : order list =
-    let filter (new_orders, order : order list * order) : order list =
-      if order.trader = user then
-        order :: new_orders
-      else
-        new_orders
-    in
-    List.fold_left filter new_orders orders
 
 let main
   (action, storage : entrypoint * storage) : result =
@@ -215,3 +197,4 @@ let main
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
+

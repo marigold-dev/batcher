@@ -2,12 +2,10 @@
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/float.mligo" "Float"
 
-
 module Types = struct
 
   (* Associate alias to token address *)
   type token = {
-    [@layout:comb]
     name : string;
     address : address option;
     decimals : int;
@@ -22,40 +20,39 @@ module Types = struct
 
   (* Tolerance of the order against the oracle price  *)
   type tolerance =
-    [@layout:comb]
     PLUS | EXACT | MINUS
 
   (* A token value ascribes an amount to token metadata *)
   type token_amount = {
-     [@layout:comb]
-     token : token;
-     amount : nat;
+    token : token;
+    amount : nat;
   }
+
+  type token_amount_map = (string, token_amount) map
+
+  type token_holding_map = (address, token_amount_map) map
+
 
   (* A token amount 'held' by a specific address *)
   type token_holding = {
-    [@layout:comb]
     holder: address;
     token_amount : token_amount;
     redeemed: bool;
   }
 
   type swap = {
-   [@layout:comb]
    from : token_amount;
    to : token;
   }
 
   (*I change the type of the rate from tez to nat for sake of simplicity*)
   type exchange_rate = {
-    [@layout:comb]
     swap : swap;
     rate: Float.t;
     when : timestamp;
   }
 
   type swap_order = {
-    [@layout:comb]
     order_number: nat;
     batch_number: nat;
     trader : address;
@@ -67,7 +64,6 @@ module Types = struct
   }
 
   type external_swap_order = {
-    [@layout:comb]
     swap  : swap;
     created_at : timestamp;
     side : nat;
@@ -75,11 +71,9 @@ module Types = struct
   }
 
   type batch_status  =
-    [@layout:comb]
     NOT_OPEN | OPEN | CLOSED | FINALIZED
 
   type prorata_equivalence = {
-    [@layout:comb]
     buy_side_actual_volume: nat;
     buy_side_actual_volume_equivalence: nat;
     sell_side_actual_volume: nat;
@@ -87,7 +81,6 @@ module Types = struct
   }
 
   type clearing_volumes = {
-    [@layout:comb]
     minus: nat;
     exact: nat;
     plus: nat;
@@ -95,7 +88,6 @@ module Types = struct
 
 
   type clearing = {
-    [@layout:comb]
     clearing_volumes : clearing_volumes;
     clearing_tolerance : tolerance;
     prorata_equivalence: prorata_equivalence;
@@ -119,27 +111,48 @@ module Types = struct
     A ask : the price a seller is willing to auxept for an asset
     Here, the orderbook is a map of bids orders list  and asks order list
   *)
-  type orderbook = (string, swap_order list) map
-
- (* Holds all the orders associated with a user: redeemed and unredeemed *)
-  type user_orders = (string, swap_order list) map
-
- (* Holds all the orders associated with all users *)
-  type user_orderbook = (address, user_orders) big_map
+  type orderbook = (nat, swap_order) big_map
 
   type batch_status =
     | Open of { start_time : timestamp }
     | Closed of { start_time : timestamp ; closing_time : timestamp }
     | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
+
+  type volumes = {
+    [@layout:comb]
+    buy_minus_volume : nat;
+    buy_exact_volume : nat;
+    buy_plus_volume : nat;
+    sell_minus_volume : nat;
+    sell_exact_volume : nat;
+    sell_plus_volume : nat;
+  }
+
+  type pair = token * token
+
+  (* This represents the type of order.  I.e. buy/sell and which level*)
+  type ordertype = {
+     side: side;
+     tolerance: tolerance;
+  }
+
+  (* Mapping order type to total amount of placed orders  *)
+  type ordertypes = (ordertype, nat) map
+
+  (* pairing of batch_id and ordertypes. *)
+  type batch_ordertypes = (nat,  ordertypes) map
+
+  (* Associated user address to a given set of batches and ordertypes  *)
+  type user_batch_ordertypes = (address, batch_ordertypes) big_map
+
+
   (* Batch of orders for the same pair of tokens *)
   type batch = {
-    [@layout:comb]
     batch_number: nat;
     status : batch_status;
-    orderbook : orderbook;
-    last_order_number: nat;
-    pair : token * token;
+    volumes : volumes;
+    pair : pair;
   }
 
   (* Set of batches, containing the current batch and the previous (finalized) batches.
@@ -150,6 +163,62 @@ module Types = struct
     last_batch_number: nat;
     batches: (nat, batch) big_map;
     }
+end
+
+module TokenAmount = struct
+
+  type t = Types.token_amount
+
+  let recover
+  (ot: Types.ordertype)
+  (amt: nat)
+  (c: Types.clearing): t =
+  let swap = c.clearing_rate.swap in
+  let token = match ot.side with
+             | BUY -> swap.from.token
+             | SELL -> swap.to
+  in
+  {
+    token = token;
+    amount = amt;
+  }
+
+
+end
+
+module TokenAmountMap = struct
+
+  type t = Types.token_amount_map
+
+  type op = INCREASE | DECREASE
+
+  let amend
+  (ta: Types.token_amount)
+  (op: op)
+  (tam : t): t =
+  let token_name = ta.token.name in
+  match Map.find_opt token_name tam with
+  | None -> Map.add token_name ta tam
+  | Some prev -> let new_amt: nat = match op with
+                                    | INCREASE -> ta.amount + prev.amount
+                                    | DECREASE -> if ta.amount > prev.amount then
+                                                    (failwith Errors.unable_to_reduce_token_amount_to_less_than_zero : nat)
+                                                  else
+                                                    abs (prev.amount - ta.amount)
+                 in
+                 let new_tamt = { ta with amount = new_amt } in
+                 Map.update token_name (Some new_tamt) tam
+
+  let increase
+  (ta: Types.token_amount)
+  (tam : t): t =
+  amend ta INCREASE tam
+
+  let decrease
+  (ta: Types.token_amount)
+  (tam: t) : t =
+  amend ta DECREASE tam
+
 end
 
 module Utils = struct
@@ -165,6 +234,28 @@ module Utils = struct
     sell_side_actual_volume_equivalence = 0n;
   }
 
+
+  let nat_to_side
+  (order_side : nat) : Types.side =
+    if order_side = 0n then BUY
+    else
+      if order_side = 1n then SELL
+      else failwith Errors.unable_to_parse_side_from_external_order
+
+  let nat_to_tolerance (tolerance : nat) : Types.tolerance =
+    if tolerance = 0n then MINUS
+    else if tolerance = 1n then EXACT
+    else if tolerance = 2n then PLUS
+    else failwith Errors.unable_to_parse_tolerance_from_external_order
+
+  let side_to_nat (side : Types.side) : nat = match side with
+    | BUY -> 9n
+    | SELL -> 1n
+
+  let tolerance_to_nat (tolerance : Types.tolerance) : nat = match tolerance with
+    | MINUS -> 0n
+    | EXACT -> 1n
+    | PLUS -> 2n
 
   let get_rate_name_from_swap (s : Types.swap) : string =
     let base_name = s.from.token.name in
@@ -188,12 +279,25 @@ module Utils = struct
     let quote_name = r.swap.to.name in
     base_name ^ "/" ^ quote_name
 
+  let pair_of_swap
+    (side: Types.side)
+    (swap: Types.swap): (Types.token * Types.token) =
+    match side with
+    | BUY -> (swap.from.token, swap.to)
+    | SELL -> (swap.to, swap.from.token)
+
+  let pair_of_rate (r : Types.exchange_rate) : (Types.token * Types.token) = pair_of_swap BUY r.swap
+
+  let pair_of_external_swap (order : Types.external_swap_order) : (Types.token * Types.token) =
+    (* Note:  we assume left-handedness - i.e. direction is buy side*)
+    let swap = order.swap in
+    let side = nat_to_side order.side in
+    pair_of_swap side swap
+
   let pair_of_swap (order : Types.swap_order) : (Types.token * Types.token) =
     (* Note:  we assume left-handedness - i.e. direction is buy side*)
     let swap = order.swap in
-    match order.side with
-    | BUY -> (swap.from.token, swap.to)
-    | SELL -> (swap.to, swap.from.token)
+    pair_of_swap order.side swap
 
   let get_token_name_from_token_amount
     (ta : Types.token_amount) : string =
@@ -232,37 +336,6 @@ module Utils = struct
     }
 
 
-  let nat_to_side
-  (order_side : nat) : Types.side =
-    if order_side = 0n then BUY
-    else
-      if order_side = 1n then SELL
-      else failwith Errors.unable_to_parse_side_from_external_order
-
-  let nat_to_tolerance (tolerance : nat) : Types.tolerance =
-    if tolerance = 0n then MINUS
-    else if tolerance = 1n then EXACT
-    else if tolerance = 2n then PLUS
-    else failwith Errors.unable_to_parse_tolerance_from_external_order
-
-  let side_to_nat (side : Types.side) : nat = match side with
-    | BUY -> 9n
-    | SELL -> 1n
-
-  let tolerance_to_nat (tolerance : Types.tolerance) : nat = match tolerance with
-    | MINUS -> 0n
-    | EXACT -> 1n
-    | PLUS -> 2n
-
-  let get_current_batch
-    (batch_set: batch_set) : batch option =
-    let cbn = batch_set.current_batch_number in
-    if cbn = 0n then
-      None
-    else
-      let bts = batch_set.batches in
-      let cbf: batch option = Big_map.find_opt cbn bts in
-      cbf
 
 end
 

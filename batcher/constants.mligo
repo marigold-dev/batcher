@@ -26,6 +26,7 @@
 [@inline] let redeemed_order_removal_time : int = 86400
 
 
+[@inline] let limit_of_redeemable_items : nat = 10n
 
 
 

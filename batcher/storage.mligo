@@ -14,9 +14,9 @@ module Types = struct
 
   type batch_set = CommonTypes.Types.batch_set
 
-  type user_orders = CommonTypes.Types.user_orders
+  type orderbook = CommonTypes.Types.orderbook
 
-  type user_orderbook = CommonTypes.Types.user_orderbook
+  type user_batch_ordertypes = CommonTypes.Types.user_batch_ordertypes
 
   type t = {
     [@layout:comb]
@@ -24,7 +24,9 @@ module Types = struct
     valid_swaps : valid_swaps;
     rates_current : rates_current;
     batch_set : batch_set;
-    user_orderbook : user_orderbook;
+    orderbook : orderbook;
+    last_order_number : nat;
+    user_batch_ordertypes: user_batch_ordertypes
   }
 
 end
