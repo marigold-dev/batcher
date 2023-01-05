@@ -40,9 +40,9 @@ const OrderBook: React.FC<OrderBookProps> = ({
   const leftAggName = buyToken.name + ' -> ' + sellToken.name;
   const rightAggName = sellToken.name + ' -> ' + buyToken.name;
 
-  const aggregateAmounts = (orders: Array<swap_order>) => {
+  const aggregateAmounts = (orders: Array<any>) => {
     return orders.reduce((prev, order) => {
-      prev += Number(order.swap.from.amount);
+      prev += Number(order.amount);
       return prev;
     }, 0);
   };
@@ -63,13 +63,13 @@ const OrderBook: React.FC<OrderBookProps> = ({
     return 'Oracle Price';
   };
 
-  const to_order_for_list = (isBuySide: boolean, order: swap_order) => {
+  const to_order_for_list = (isBuySide: boolean, order: any) => {
     return {
       ordertype: isBuySide ? leftAggName : rightAggName,
       price: to_string_tolerance(order.tolerance),
       value: isBuySide
-        ? scaleAmountDown(order.swap.from.amount, buyToken.decimals)
-        : scaleAmountDown(order.swap.from.amount, sellToken.decimals),
+        ? scaleAmountDown(order.amount, buyToken.decimals)
+        : scaleAmountDown(order.amount, sellToken.decimals),
     };
   };
 

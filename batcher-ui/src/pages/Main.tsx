@@ -9,27 +9,25 @@ import {
   token,
   order_book,
   BatcherStatus,
-  BatchSet,
   BUY,
   MINUS,
   EXACT,
-  PLUS,
   CLEARED,
+  SELL,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import {
+  getEmptyOrderBook,
   getNetworkType,
   getSocketTokenAmount,
   getTokenAmount,
-  scaleAmountDown,
 } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
-import { scaleAmountUp, getEmptyOrderBook } from '@/extra_utils/utils';
+import { scaleAmountUp } from '@/extra_utils/utils';
 import NewHoldings from '@/components/Holdings';
-import { getClearing } from '@/extra_utils/holdingUtils';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 
 const Welcome: React.FC = () => {
@@ -83,15 +81,46 @@ const Welcome: React.FC = () => {
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
 
-  const getCurrentOrderbook = async (batchSet: BatchSet) => {
+  const filterOrderBook = (currentOrderBooks: Array<any>) => {
+    if (currentOrderBooks.length === 0) {
+      return getEmptyOrderBook();
+    } else {
+      let bidsOrderBook = [];
+      let asksOrderBook = [];
+
+      for (var i = 0; i < currentOrderBooks.length; i++) {
+        const order = currentOrderBooks.at(i);
+
+        if (Object.keys(order.key.side)[0] === SELL) {
+          asksOrderBook.push({
+            tolerance: Object.keys(order.key.tolerance)[0],
+            amount: order.value,
+          });
+        } else {
+          bidsOrderBook.push({
+            tolerance: Object.keys(order.key.tolerance)[0],
+            amount: order.value,
+          });
+        }
+      }
+
+      return {
+        bids: bidsOrderBook,
+        asks: asksOrderBook,
+      };
+    }
+  };
+
+  const getCurrentOrderbook = async (storage: any) => {
     try {
-      const currentBatchNumber = batchSet.current_batch_number;
+      const currentBatchNumber = storage.batch_set.current_batch_number;
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);
         setOrderBook(getEmptyOrderBook());
       } else {
-        const currentBatchURI = bigMapsByIdUri + batchSet.batches + '/keys/' + currentBatchNumber;
+        const currentBatchURI =
+          bigMapsByIdUri + storage.batch_set.batches + '/keys/' + currentBatchNumber;
         const data = await fetch(currentBatchURI, {
           method: 'GET',
         });
@@ -101,7 +130,10 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
-        setOrderBook(jsonData.value.orderbook);
+
+        const filteredOrderBook = filterOrderBook(storage.current_batch_ordertypes);
+
+        setOrderBook(filteredOrderBook);
       }
     } catch (error) {
       console.log('Batcher error', error);
@@ -115,74 +147,55 @@ const Welcome: React.FC = () => {
       return;
     }
 
-    const currentBatchNumber = storage.batch_set.current_batch_number;
-    const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
-    const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
-    let userOrderBooks = null;
+    const userBatcherURI = bigMapsByIdUri + storage.user_batch_ordertypes + '/keys/' + userAddress;
+    const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
+    let userBatches = null;
     try {
-      userOrderBooks = await userOrderBookData.json();
+      userBatches = await userOrderBookData.json();
     } catch (error) {
       console.error(error);
       return;
     }
 
-    if (!Array.isArray(userOrderBooks.value.open) || userOrderBooks.value.open.length == 0) {
+    if (Object.keys(userBatches.value).length == 0) {
       return;
     }
-
-    const openHoldingOrderBooks = userOrderBooks.value.open.filter(
-      (orderbook) => orderbook.batch_number !== currentBatchNumber,
-    );
-    if (!Array.isArray(openHoldingOrderBooks) || openHoldingOrderBooks.length == 0) {
-      return;
-    }
-    const openHoldingOrderBookKeys = openHoldingOrderBooks.map(
-      (orderbook) => orderbook.batch_number,
-    );
-
-    const batchesURI = bigMapsByIdUri + storage.batch_set.batches + '/keys';
-    const batchesData = await fetch(batchesURI, { method: 'GET' });
-    let batches = null;
-    try {
-      batches = await batchesData.json();
-    } catch (error) {
-      console.error(error);
-      return;
-    }
-
-    // This is the open batches this current user is included
-    const chosenBatches = batches.filter((batch) => openHoldingOrderBookKeys.includes(batch.key));
-    console.log(333, chosenBatches);
 
     let initialBuySideAmount = 0;
     let initialSellSideAmount = 0;
 
-    for (var i = 0; i < chosenBatches.length; i++) {
-      const batch = chosenBatches.at(i);
+    for (var i = 0; i < Object.keys(userBatches.value).length; i++) {
+      const batchId = Object.keys(userBatches.value).at(i);
 
-      console.log(
-        '%cMain.tsx line:163 Object.keys(batch.value.status[0]',
-        'color: #007acc;',
-        Object.keys(batch.value.status)[0],
-      );
+      const batchURI = bigMapsByIdUri + storage.batch_set.batches + '/keys/' + batchId;
+      const batchData = await fetch(batchURI, { method: 'GET' });
+      let batch = null;
+      try {
+        batch = await batchData.json();
+      } catch (error) {
+        console.error(error);
+        return;
+      }
 
       if (Object.keys(batch.value.status)[0] !== CLEARED) continue;
 
       const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
-
       let clearingRate = 0;
+      let clearing = 0;
+
       const originalClearingRate =
-        parseInt(batch.value.status.cleared.rate.rate.val) *
-        10 ** parseInt(batch.value.status.cleared.rate.rate.pow);
+        parseInt(batch.value.status.cleared.rate.rate.p) /
+        parseInt(batch.value.status.cleared.rate.rate.q);
       if (clearingKey === MINUS) {
         clearingRate = originalClearingRate / 1.0001;
+        clearing = batch.value.status.cleared.clearing.clearing_volumes.minus;
       } else if (clearingKey === EXACT) {
         clearingRate = originalClearingRate;
+        clearing = batch.value.status.cleared.clearing.clearing_volumes.exact;
       } else {
         clearingRate = originalClearingRate * 1.0001;
+        clearing = batch.value.status.cleared.clearing.clearing_volumes.plus;
       }
-
-      console.log('clearing Rate', clearingRate);
 
       const buySideActualVolume = parseInt(
         batch.value.status.cleared.clearing.prorata_equivalence.buy_side_actual_volume,
@@ -190,36 +203,29 @@ const Welcome: React.FC = () => {
       const sellSideActualVolume = parseInt(
         batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
       );
+      const userBatchLength = userBatches.value[batchId].length;
 
-      const clearing = getClearing(clearingKey, clearingRate, batch);
+      for (var j = 0; j < userBatchLength; j++) {
+        if (Object.keys(userBatches.value[batchId].at(j).key.side)[0] === BUY) {
+          const depositedBuySideAmount = parseInt(userBatches.value[batchId].at(j).value);
+          const unconvertedBuySideAmount =
+            depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
+          const unconvertedSellSideAmount =
+            (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
 
-      if (Object.keys(openHoldingOrderBooks.at(i).side)[0] === BUY) {
-        const depositedBuySideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
-        const unconvertedBuySideAmount =
-          depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
-        const unconvertedSellSideAmount =
-          (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
+          initialBuySideAmount += Math.floor(unconvertedBuySideAmount) / 10 ** buyTokenDecimals;
+          initialSellSideAmount += Math.floor(unconvertedSellSideAmount) / 10 ** sellTokenDecimals;
+        } else {
+          const depositedSellSideAmount = parseInt(userBatches.value[batchId].at(j).value);
+          const unconvertedBuySideAmount =
+            (depositedSellSideAmount / sellSideActualVolume) * clearing;
+          const unconvertedSellSideAmount =
+            depositedSellSideAmount -
+            (depositedSellSideAmount / sellSideActualVolume) * clearing * clearingRate;
 
-        console.log(
-          '%cMain.tsx line:203 ',
-          'color: #007acc;',
-          depositedBuySideAmount,
-          buySideActualVolume,
-          clearing,
-          clearingRate,
-        );
-        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
-        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
-      } else {
-        const depositedSellSideAmount = parseInt(openHoldingOrderBooks.at(i).swap.from.amount);
-        const unconvertedBuySideAmount =
-          (depositedSellSideAmount / sellSideActualVolume) * clearing;
-        const unconvertedSellSideAmount =
-          depositedSellSideAmount -
-          (depositedSellSideAmount / sellSideActualVolume) * clearing * clearingRate;
-
-        initialBuySideAmount += scaleAmountDown(unconvertedBuySideAmount, buyTokenDecimals);
-        initialSellSideAmount += scaleAmountDown(unconvertedSellSideAmount, sellTokenDecimals);
+          initialBuySideAmount += Math.floor(unconvertedBuySideAmount) / 10 ** buyTokenDecimals;
+          initialSellSideAmount += Math.floor(unconvertedSellSideAmount) / 10 ** sellTokenDecimals;
+        }
       }
     }
 
@@ -246,7 +252,7 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    await getCurrentOrderbook(storage.batch_set);
+    await getCurrentOrderbook(storage);
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -284,21 +290,22 @@ const Welcome: React.FC = () => {
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
       if (userAddress) {
+        console.log('66666666643333');
         updateHoldings(msg.data[0].storage);
       }
 
-      getCurrentOrderbook(msg.data[0].storage.batch_set);
+      getCurrentOrderbook(msg.data[0].storage);
     });
 
     connection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
 
-      const scaledRate = msg.data[0].content.value.rate.val;
-      const pow = msg.data[0].content.value.rate.pow;
-      const scaledPow =
-        Number.parseFloat(pow) + buyBalance.token.decimals - sellBalance.token.decimals;
-      const currentRate = scaleAmountUp(Number.parseFloat(scaledRate), scaledPow);
-      setRate(currentRate);
+      const numerator = msg.data[0].content.value.rate.p;
+      const denominator = msg.data[0].content.value.rate.q;
+
+      const scaledPow = buyBalance.token.decimals - sellBalance.token.decimals;
+      const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
+      setRate(scaledRate);
     });
 
     init(userAddress);
@@ -330,12 +337,11 @@ const Welcome: React.FC = () => {
 
     if (rates.length != 0) {
       const rate = rates.filter((r) => r.key == tokenPair)[0].value;
-      const scaledRate = rate.rate.val;
-      const pow = rate.rate.pow;
-      const scaledPow =
-        Number.parseFloat(pow) + buyBalance.token.decimals - sellBalance.token.decimals;
-      const currentRate = scaleAmountUp(Number.parseFloat(scaledRate), scaledPow);
-      setRate(currentRate);
+      const numerator = rate.rate.p;
+      const denominator = rate.rate.q;
+      const scaledPow = buyBalance.token.decimals - sellBalance.token.decimals;
+      const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
+      setRate(scaledRate);
     }
   };
 
