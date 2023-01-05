@@ -40,7 +40,7 @@ post_rate_contract () {
 
   octez-client transfer 0 from oracle_account to $batcher_address \
     --entrypoint post \
-    --arg "Pair (Pair (Pair -8 $round_tzBTC_usdt_price) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
+    --arg "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
     --burn-cap 2
 }
 

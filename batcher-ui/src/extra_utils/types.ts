@@ -88,8 +88,8 @@ export class swap_order {
 }
 
 export class order_book {
-  bids!: Array<swap_order>;
-  asks!: Array<swap_order>;
+  bids!: Array<any>;
+  asks!: Array<any>;
 }
 
 export class token_holding {
@@ -227,6 +227,7 @@ export type NewHoldingsProps = {
 };
 
 export const BUY = 'bUY';
+export const SELL = 'sELL';
 export const CLEARED = 'cleared';
 
 export const MINUS = 'mINUS';
