@@ -16,7 +16,6 @@ module Types = struct
 
   type orderbook = CommonTypes.Types.orderbook
 
-  type ordertypes = CommonTypes.Types.ordertypes
 
   type user_batch_ordertypes = CommonTypes.Types.user_batch_ordertypes
 
@@ -28,8 +27,7 @@ module Types = struct
     batch_set : batch_set;
     orderbook : orderbook;
     last_order_number : nat;
-    user_batch_ordertypes: user_batch_ordertypes;
-    current_batch_ordertypes: ordertypes
+    user_batch_ordertypes: user_batch_ordertypes
   }
 
 end

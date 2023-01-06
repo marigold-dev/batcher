@@ -45,7 +45,6 @@ let f(_:unit) = {
   orderbook = (Big_map.empty : Storage.Types.orderbook);
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Storage.Types.user_batch_ordertypes);
-  current_batch_ordertypes = (Map.empty: Storage.Types.ordertypes);
   batch_set = {
      current_batch_number =  0n;
      last_batch_number = 0n;
