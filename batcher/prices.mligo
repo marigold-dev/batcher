@@ -8,9 +8,6 @@ module Utils = struct
 
   type rate = CommonTypes.Types.exchange_rate
 
-  let is_valid_rate_type (rate_name : string) (valid_swaps : CommonStorage.Types.valid_swaps) : bool =
-    Map.mem rate_name valid_swaps
-
   let update_current_rate (rate_name : string) (rate : CommonTypes.Types.exchange_rate) (storage : CommonStorage.Types.t) =
     let updated_rates = (match Big_map.find_opt rate_name storage.rates_current with
                           | None -> Big_map.add (rate_name) (rate) storage.rates_current
@@ -55,7 +52,6 @@ module Rates = struct
   let post_rate (rate : rate) (storage : storage) : storage =
     let rate_name = CommonTypes.Utils.get_rate_name(rate) in
     let scaled_rate = Utils.scale_on_post rate in
-    let _ = Utils.is_valid_rate_type (rate_name) (storage.valid_swaps) in
     let s = Utils.update_current_rate (rate_name) (scaled_rate) (storage) in
     s
 
