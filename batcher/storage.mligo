@@ -2,7 +2,7 @@
 
 module Types = struct
   (* The tokens that are valid within the contract  *)
-  type valid_tokens = CommonTypes.Types.token list
+  type valid_tokens = (string, CommonTypes.Types.token) map
 
   (* The swaps of valid tokens that are accepted by the contract  *)
   type valid_swaps =  (string, CommonTypes.Types.swap) map

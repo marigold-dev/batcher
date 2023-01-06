@@ -1,25 +1,19 @@
 #import "../storage.mligo" "Storage"
 
 let f(_:unit) = {
-  valid_tokens = [
-    {
+  valid_tokens = Map.literal [
+    ("tzBTC", {
       name = "tzBTC";
       address = Some(("KT1FRyR3ohQ59N54BJMg9KjDUGh4z5hWuYab" : address));
       decimals = 8;
       standard = Some "FA1.2 token";
-    };
-    {
+    }),
+    ("USDT",{
       name = "USDT";
       address = Some(("KT1QVV45Rj9r6WbjLczoDxViP9s1JpiCsxVF" : address));
       decimals = 6;
       standard = Some "FA2 token";
-    };
-    {
-      name = "XTZ";
-      address = (None : address option);
-      decimals = 6;
-      standard = None;
-    }
+    })
   ];
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
