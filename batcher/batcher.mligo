@@ -23,7 +23,6 @@ type exchange_rate = Types.Types.exchange_rate
 type inverse_exchange_rate = exchange_rate
 type batch_set = Types.Types.batch_set
 type pair = Types.Types.pair
-
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
@@ -82,13 +81,14 @@ let progress_batch_set
                            let updated_batches = Big_map.update current_batch.batch_number (Some(updated_batch)) bs.batches in
                            (roll, {bs with batches = updated_batches} )
 
+
 let tick_current_batches
   (pair: pair)
   (storage : storage) : storage =
   let batch_set = storage.batch_set in
   let (should_roll, updated_batch_set) = progress_batch_set pair batch_set storage in
   let rolled_if_needed = if should_roll then Batch.roll_batch_off updated_batch_set else updated_batch_set in
-  { storage with batch_set = rolled_if_needed }
+  { storage with batch_set = rolled_if_needed; }
 
 let is_valid_swap_pair
   (order: order)
@@ -130,11 +130,14 @@ let order_to_external (order: order) : external_order =
     } in
   converted_swap
 
+
+
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
-let deposit (external_order: external_order) (old_storage : storage) : result =
+let deposit (external_order: external_order) (storage : storage) : result =
   let pair = Types.Utils.pair_of_external_swap external_order in
-  let ticked_storage = tick_current_batches pair old_storage in
+  let ticked_storage = tick_current_batches pair storage in
   let (current_batch_opt, current_batch_set) = Batch.get_current_batch pair ticked_storage.batch_set in
   match current_batch_opt with
   | None -> failwith Errors.no_open_batch
@@ -142,9 +145,9 @@ let deposit (external_order: external_order) (old_storage : storage) : result =
                          let next_order_number = ticked_storage.last_order_number + 1n in
                          let order : order = external_to_order external_order next_order_number current_batch_number ticked_storage.valid_swaps in
                          (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
-                         if Ubot.is_within_limit order.trader old_storage.user_batch_ordertypes then
+                         if Ubot.is_within_limit order.trader ticked_storage.user_batch_ordertypes then
                            let new_orderbook = Big_map.add next_order_number order ticked_storage.orderbook in
-                           let new_ubot = Ubot.add_order order.trader current_batch_number order old_storage.user_batch_ordertypes in
+                           let new_ubot = Ubot.add_order order.trader current_batch_number order ticked_storage.user_batch_ordertypes in
                            let updated_volumes = Batch.update_volumes order current_batch in
                            let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
                            let updated_batch_set = { current_batch_set with batches = updated_batches } in

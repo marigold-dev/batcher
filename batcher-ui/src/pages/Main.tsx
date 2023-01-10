@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import Exchange from '@/components/Exchange';
 import About from '@/components/About';
-import OrderBook from '@/components/OrderBook';
+import Volume from '@/components/Volume';
 import BatcherInfo from '@/components/BatcherInfo';
 import BatcherAction from '@/components/BatcherAction';
 import {
   ContentType,
   token,
-  order_book,
   BatcherStatus,
   BUY,
   MINUS,
   EXACT,
   CLEARED,
-  SELL,
+  Volumes,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Col, Row } from 'antd';
 import { useModel } from 'umi';
 import {
-  getEmptyOrderBook,
+  getEmptyVolumes,
   getNetworkType,
   getSocketTokenAmount,
   getTokenAmount,
+  scaleStringAmountDown,
 } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp } from '@/extra_utils/utils';
@@ -62,7 +62,6 @@ const Welcome: React.FC = () => {
     withCredentials: false,
   });
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
-  const [orderBook, setOrderBook] = useState<order_book | undefined>(undefined);
   const [inversion, setInversion] = useState(true);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
@@ -80,44 +79,26 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
+  const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
 
-  const filterOrderBook = (currentOrderBooks: Array<any>) => {
-    if (currentOrderBooks.length === 0) {
-      return getEmptyOrderBook();
-    } else {
-      let bidsOrderBook = [];
-      let asksOrderBook = [];
-
-      for (var i = 0; i < currentOrderBooks.length; i++) {
-        const order = currentOrderBooks.at(i);
-
-        if (Object.keys(order.key.side)[0] === SELL) {
-          asksOrderBook.push({
-            tolerance: Object.keys(order.key.tolerance)[0],
-            amount: order.value,
-          });
-        } else {
-          bidsOrderBook.push({
-            tolerance: Object.keys(order.key.tolerance)[0],
-            amount: order.value,
-          });
-        }
-      }
-
-      return {
-        bids: bidsOrderBook,
-        asks: asksOrderBook,
-      };
-    }
+  const scaleVolumeDown = (volumes: any) => {
+    return {
+      buyMinusVolume: scaleStringAmountDown(volumes.buy_minus_volume, buyTokenDecimals),
+      buyExactVolume: scaleStringAmountDown(volumes.buy_exact_volume, buyTokenDecimals),
+      buyPlusVolume: scaleStringAmountDown(volumes.buy_plus_volume, buyTokenDecimals),
+      sellMinusVolume: scaleStringAmountDown(volumes.sell_minus_volume, sellTokenDecimals),
+      sellExactVolume: scaleStringAmountDown(volumes.sell_exact_volume, sellTokenDecimals),
+      sellPlusVolume: scaleStringAmountDown(volumes.sell_plus_volume, sellTokenDecimals),
+    };
   };
 
-  const getCurrentOrderbook = async (storage: any) => {
+  const getCurrentVolume = async (storage: any) => {
     try {
       const currentBatchNumber = storage.batch_set.current_batch_number;
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);
-        setOrderBook(getEmptyOrderBook());
+        setVolumes(getEmptyVolumes());
       } else {
         const currentBatchURI =
           bigMapsByIdUri + storage.batch_set.batches + '/keys/' + currentBatchNumber;
@@ -130,10 +111,7 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
-
-        const filteredOrderBook = filterOrderBook(storage.current_batch_ordertypes);
-
-        setOrderBook(filteredOrderBook);
+        setVolumes(scaleVolumeDown(jsonData.value.volumes));
       }
     } catch (error) {
       console.log('Batcher error', error);
@@ -252,7 +230,7 @@ const Welcome: React.FC = () => {
       path: null,
     });
 
-    await getCurrentOrderbook(storage);
+    await getCurrentVolume(storage);
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
@@ -290,11 +268,10 @@ const Welcome: React.FC = () => {
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
       if (userAddress) {
-        console.log('66666666643333');
         updateHoldings(msg.data[0].storage);
       }
 
-      getCurrentOrderbook(msg.data[0].storage);
+      getCurrentVolume(msg.data[0].storage);
     });
 
     connection.on('bigmaps', (msg: any) => {
@@ -371,8 +348,8 @@ const Welcome: React.FC = () => {
             tezos={Tezos}
           />
         );
-      case ContentType.ORDER_BOOK:
-        return <OrderBook orderBook={orderBook} buyToken={buyToken} sellToken={sellToken} />;
+      case ContentType.VOLUME:
+        return <Volume volumes={volumes} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return (
           <NewHoldings
