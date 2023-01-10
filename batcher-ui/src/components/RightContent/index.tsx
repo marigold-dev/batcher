@@ -7,6 +7,7 @@ import { TezosToolkit } from '@taquito/taquito';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { getNetworkType } from '@/extra_utils/utils';
 import '@/components/RightContent/index.less';
+import { connection } from '@/extra_utils/webSocketUtils';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -66,6 +67,7 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const disconnectWallet = async () => {
+    await connection.stop();
     setInitialState({ ...initialState, wallet: null, userAddress: null });
     localStorage.removeItem('userAddress');
   };

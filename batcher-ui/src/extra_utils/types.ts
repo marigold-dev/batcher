@@ -151,15 +151,6 @@ export class ApiTokenBalanceData {
   lastLevel!: number;
   lastTime!: string;
 }
-export type HoldingsProps = {
-  tezos: TezosToolkit;
-  bigMapsByIdUri: string;
-  userAddress: string;
-  contractAddress: string;
-  previousTreasuries: Array<number>;
-  buyToken: token;
-  sellToken: token;
-};
 
 export type OrderBookProps = {
   orderBook: order_book;
@@ -218,7 +209,7 @@ export type BatchSet = {
   current_batch_number: string;
 };
 
-export type NewHoldingsProps = {
+export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
@@ -226,6 +217,8 @@ export type NewHoldingsProps = {
   sellToken: token;
   buyTokenHolding: number;
   sellTokenHolding: number;
+  setBuySideAmount: Dispatch<SetStateAction<number>>;
+  setSellSideAmount: Dispatch<SetStateAction<number>>;
 };
 
 export type Volumes = {

@@ -27,7 +27,7 @@ import {
 } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp } from '@/extra_utils/utils';
-import NewHoldings from '@/components/Holdings';
+import Holdings from '@/components/Holdings';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 
 const Welcome: React.FC = () => {
@@ -217,9 +217,6 @@ const Welcome: React.FC = () => {
       level: 0,
       path: null,
     });
-
-    console.log(999, storage);
-
     await updateHoldings(storage);
   };
 
@@ -270,7 +267,6 @@ const Welcome: React.FC = () => {
       if (userAddress) {
         updateHoldings(msg.data[0].storage);
       }
-
       getCurrentVolume(msg.data[0].storage);
     });
 
@@ -352,7 +348,7 @@ const Welcome: React.FC = () => {
         return <Volume volumes={volumes} buyToken={buyToken} sellToken={sellToken} />;
       case ContentType.REDEEM_HOLDING:
         return (
-          <NewHoldings
+          <Holdings
             tezos={Tezos}
             userAddress={userAddress}
             contractAddress={contractAddress}
@@ -360,6 +356,8 @@ const Welcome: React.FC = () => {
             sellToken={sellToken}
             buyTokenHolding={buySideAmount}
             sellTokenHolding={sellSideAmount}
+            setBuySideAmount={setBuySideAmount}
+            setSellSideAmount={setSellSideAmount}
           />
         );
       case ContentType.ABOUT:
