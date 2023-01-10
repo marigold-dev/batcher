@@ -247,8 +247,8 @@ let collect_redemptions
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
     | None -> (bots, tam, bts)
-    | Some batch -> let current_batch_number = bts.current_batch_number in
-                    if batch_number = current_batch_number then
+    | Some batch -> let current_batch_index = bts.current_batch_index in
+                    if batch_number = current_batch_index then
                       (bots, tam, bts)
                     else
                       (match get_clearing batch with
