@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
+import { StringNullableChain } from 'lodash';
 
 export enum NetworkType {
   MAINNET = 'mainnet',
@@ -22,6 +23,7 @@ export enum ContentType {
   ORDER_BOOK = 'order_book',
   REDEEM_HOLDING = 'redeem_holding',
   ABOUT = 'about',
+  VOLUME = 'volume',
 }
 
 export enum selected_tolerance {
@@ -224,6 +226,21 @@ export type NewHoldingsProps = {
   sellToken: token;
   buyTokenHolding: number;
   sellTokenHolding: number;
+};
+
+export type Volumes = {
+  buyMinusVolume: string;
+  buyExactVolume: string;
+  buyPlusVolume: string;
+  sellMinusVolume: string;
+  sellExactVolume: string;
+  sellPlusVolume: string;
+};
+
+export type VolumeProps = {
+  volumes: Volumes;
+  buyToken: token;
+  sellToken: token;
 };
 
 export const BUY = 'bUY';

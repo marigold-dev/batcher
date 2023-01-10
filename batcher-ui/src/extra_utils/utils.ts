@@ -55,3 +55,19 @@ export const getNetworkType = () => {
     return types.NetworkType.KATHMANDUNET;
   }
 };
+
+export const getEmptyVolumes = () => {
+  return {
+    buyMinusVolume: '0',
+    buyExactVolume: '0',
+    buyPlusVolume: '0',
+    sellMinusVolume: '0',
+    sellExactVolume: '0',
+    sellPlusVolume: '0',
+  };
+};
+
+export const scaleStringAmountDown = (amount: string, decimals: number) => {
+  let scale = 10 ** -decimals;
+  return (Number.parseInt(amount) * scale).toString();
+};
