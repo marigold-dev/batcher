@@ -127,9 +127,9 @@ gantt
    Mainnet launch                                                 :mn, after ft, 3d
 
    section Engagement
-   Blog post for fee burning                                      :bpfb, 2023-01-20, 1d
-   Blog post for token pools                                      :bptp, 2023-01-27, 1d
-   Blog post for oracle                                           :bpor, 2023-02-10, 1d
-   Blog post for mainnet                                          :bpmn, 2023-02-20, 1d
+   Blog post for fee burning                                      :bpfb, 2023-01-20, 5d
+   Blog post for token pools                                      :bptp, 2023-01-27, 5d
+   Blog post for oracle                                           :bpor, 2023-02-10, 5d
+   Blog post for mainnet                                          :bpmn, 2023-02-20, 5d
 
 ```
