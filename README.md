@@ -108,3 +108,28 @@ Once we know the clearing level and the volume that can be cleared at that level
 ## Claiming
 
 After clearing, users can claim their 'results', whether that be their original deposits, a partially matched order result or a fully filled order for the opposing token.
+
+# Timelines
+
+
+```mermaid
+gantt
+   dateFormat YYYY-MM-DD
+   title Timelines for Batcher going to mainnet
+   excludes weekends
+
+   section Development
+   End of internal audit                                          :ia, 2023-01-09, 4d
+   Fee Burning                                                    :fb, 2023-01-09, 4d
+   Oracle                                                         :or, 2023-01-09, 10d
+   Multiple Token Pools (incl. contract management and multisig)  :mtp, after fb, 3w
+   Stabilisation / Final Testing                                  :ft, after mtp, 5d
+   Mainnet launch                                                 :mn, after ft, 3d
+
+   section Engagement
+   Blog post for fee burning                                      :bpfb, 2023-01-20, 1d
+   Blog post for token pools                                      :bptp, 2023-01-27, 1d
+   Blog post for oracle                                           :bpor, 2023-02-10, 1d
+   Blog post for mainnet                                          :bpmn, 2023-02-20, 1d
+
+```
