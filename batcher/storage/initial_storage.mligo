@@ -40,9 +40,9 @@ let f(_:unit) = {
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Storage.Types.user_batch_ordertypes);
   batch_set = {
-     current_batch_number =  0n;
-     last_batch_number = 0n;
-   	 batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
+    current_batch_index =  0n;
+    current_batch_status =  2n;
+   	batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
   };
 }
 
