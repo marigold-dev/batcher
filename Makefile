@@ -1,7 +1,7 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.52.0
-TEZOS_PROTOCOL:=kathmandu
+LIGO_COMPILER_VERSION:=0.59.0
+TEZOS_PROTOCOL:=lima
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
 define test_ligo
@@ -13,7 +13,7 @@ define compile_contract
 endef
 
 define compile_storage
-    $(LIGO_DOCKER) compile expression cameligo --michelson-format text --init-file $(1) 'f()' > $(2)
+    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --werror --init-file $(1) 'f()' > $(2)
 endef
 
 build:
