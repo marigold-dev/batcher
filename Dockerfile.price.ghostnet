@@ -4,7 +4,7 @@ RUN apk update &&\
     apk add bash &&\
     apk add curl &&\
     apk add jq &&\
-    octez-client --endpoint https://ghostnet.tezos.marigold.dev config update &&\
+    octez-client --endpoint https://ghostnet.ecadinfra.com config update &&\
     octez-client import secret key oracle_account unencrypted:edskRzJUQ1xqCPkVXzT8EiUXjcCsXXkhpiHWE19fAV2JmqW68T6nVoXVPJyx99mjJzUa98NEeGr3kLcEh6NQGcpFKj7BoPRd88 --force
 
 WORKDIR /etc/run
