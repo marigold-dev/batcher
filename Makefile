@@ -18,7 +18,10 @@ endef
 
 build:
 	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage.mligo, batcher-storage.tz)
+	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
+build-lima:
+	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
+	$(call compile_storage,batcher/storage/initial_storage_limanet.mligo, batcher-storage.tz)
 build-tzBTC:
 	$(call compile_contract,token/main.mligo, tzBTC_token.tz)
 	$(call compile_storage,token/storage/tzBTC_storage.mligo, tzBTC_token_storage.tz)
