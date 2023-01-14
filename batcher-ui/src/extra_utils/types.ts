@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
+import { StringNullableChain } from 'lodash';
 
 export enum NetworkType {
   MAINNET = 'mainnet',
@@ -22,6 +23,7 @@ export enum ContentType {
   ORDER_BOOK = 'order_book',
   REDEEM_HOLDING = 'redeem_holding',
   ABOUT = 'about',
+  VOLUME = 'volume',
 }
 
 export enum selected_tolerance {
@@ -88,8 +90,8 @@ export class swap_order {
 }
 
 export class order_book {
-  bids!: Array<swap_order>;
-  asks!: Array<swap_order>;
+  bids!: Array<any>;
+  asks!: Array<any>;
 }
 
 export class token_holding {
@@ -149,15 +151,6 @@ export class ApiTokenBalanceData {
   lastLevel!: number;
   lastTime!: string;
 }
-export type HoldingsProps = {
-  tezos: TezosToolkit;
-  bigMapsByIdUri: string;
-  userAddress: string;
-  contractAddress: string;
-  previousTreasuries: Array<number>;
-  buyToken: token;
-  sellToken: token;
-};
 
 export type OrderBookProps = {
   orderBook: order_book;
@@ -216,7 +209,7 @@ export type BatchSet = {
   current_batch_number: string;
 };
 
-export type NewHoldingsProps = {
+export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
@@ -224,9 +217,27 @@ export type NewHoldingsProps = {
   sellToken: token;
   buyTokenHolding: number;
   sellTokenHolding: number;
+  setBuySideAmount: Dispatch<SetStateAction<number>>;
+  setSellSideAmount: Dispatch<SetStateAction<number>>;
+};
+
+export type Volumes = {
+  buyMinusVolume: string;
+  buyExactVolume: string;
+  buyPlusVolume: string;
+  sellMinusVolume: string;
+  sellExactVolume: string;
+  sellPlusVolume: string;
+};
+
+export type VolumeProps = {
+  volumes: Volumes;
+  buyToken: token;
+  sellToken: token;
 };
 
 export const BUY = 'bUY';
+export const SELL = 'sELL';
 export const CLEARED = 'cleared';
 
 export const MINUS = 'mINUS';

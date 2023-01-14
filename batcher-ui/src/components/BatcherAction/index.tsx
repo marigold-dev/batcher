@@ -19,11 +19,8 @@ const BatcherAction: React.FC<BatcherActionProps> = ({ setContent }: BatcherActi
                 <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)}>
                   <Text underline>Swap</Text>
                 </Button>
-                <Button
-                  className="batcher-nav-btn"
-                  onClick={() => setContent(ContentType.ORDER_BOOK)}
-                >
-                  <Text underline>Order Book</Text>
+                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.VOLUME)}>
+                  <Text underline>Volume</Text>
                 </Button>
                 <Button
                   className="batcher-nav-btn"
