@@ -85,7 +85,7 @@ const Welcome: React.FC = () => {
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
-      const currentBatchNumber = batchSet.current_batch_number;
+      const currentBatchNumber = batchSet.current_batch_index;
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);
