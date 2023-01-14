@@ -59,19 +59,11 @@ let make
     volumes = volumes;
   }
 
-let batch_status_to_nat
-  (batch:t) : nat =
-  match batch.status with
-  | Open _ -> 0n
-  | Closed _ -> 1n
-  | Cleared _ -> 2n
-
 let update_current_batch_in_set
   (batch : t)
   (batch_set : batch_set) : (t * batch_set)=
   let updated_batches = Big_map.update batch.batch_number (Some batch) batch_set.batches in
-  let updated_status = batch_status_to_nat batch in
-  ( batch, { batch_set with batches = updated_batches; current_batch_status = updated_status; current_batch_index = batch.batch_number; } )
+  ( batch, { batch_set with batches = updated_batches; current_batch_index = batch.batch_number; } )
 
 
 
@@ -95,8 +87,7 @@ let start_period
   let new_batch_number = batch_set.current_batch_index + 1n in
   let new_batch = make new_batch_number current_time pair in
   let batches = Big_map.add new_batch_number new_batch batch_set.batches in
-  let current_batch_status = batch_status_to_nat new_batch in
-  (new_batch, { batch_set with batches = batches; current_batch_index = new_batch_number; current_batch_status = current_batch_status; })
+  (new_batch, { batch_set with batches = batches; current_batch_index = new_batch_number; })
 
 let close (batch : t) : t =
   match batch.status with
@@ -110,7 +101,6 @@ let close (batch : t) : t =
 let new_batch_set : batch_set =
   {
     current_batch_index = 0n;
-    current_batch_status = 2n;
     batches= (Big_map.empty: (nat, t) big_map);
   }
 

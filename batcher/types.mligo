@@ -160,7 +160,6 @@ module Types = struct
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
     current_batch_index: nat;
-    current_batch_status: nat;  (* Current batch status is a helper for the UI  *)
     batches: (nat, batch) big_map;
     }
 end
