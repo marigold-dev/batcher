@@ -3,9 +3,9 @@ import { Button, Space, Typography, Col, message } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
-import { NewHoldingsProps } from '@/extra_utils/types';
+import { HoldingsProps } from '@/extra_utils/types';
 
-const NewHoldings: React.FC<NewHoldingsProps> = ({
+const Holdings: React.FC<HoldingsProps> = ({
   tezos,
   userAddress,
   contractAddress,
@@ -13,7 +13,9 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
   sellToken,
   buyTokenHolding,
   sellTokenHolding,
-}: NewHoldingsProps) => {
+  setBuySideAmount,
+  setSellSideAmount,
+}: HoldingsProps) => {
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
       return undefined;
@@ -30,8 +32,9 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
           message.error('Failed to redeem holdings');
           console.error('Failed to redeem holdings' + confirm);
         } else {
+          setSellSideAmount(0);
+          setBuySideAmount(0);
           loading();
-
           message.success('Successfully redeemed holdings');
         }
       } else {
@@ -43,10 +46,6 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
       console.error('Unable to redeem holdings' + error);
     }
   };
-
-  useEffect(() => {
-    console.log('Address', userAddress);
-  }, [userAddress]);
 
   return (
     <Col className="base-content br-t br-b br-l br-r">
@@ -72,4 +71,4 @@ const NewHoldings: React.FC<NewHoldingsProps> = ({
   );
 };
 
-export default NewHoldings;
+export default Holdings;
