@@ -141,8 +141,8 @@ let deposit (external_order: external_order) (storage : storage) : result =
          orderbook = new_orderbook;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
-       let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
-       ([ tokens_transfer_op ], updated_storage)
+       let treasury_ops = Treasury.deposit order.trader order.swap.from fee_amount_in_mutez in
+       (treasury_ops, updated_storage)
       else
         failwith Errors.too_many_unredeemed_orders
   else
