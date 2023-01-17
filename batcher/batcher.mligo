@@ -120,6 +120,9 @@ let external_to_order
 let deposit (external_order: external_order) (storage : storage) : result =
   let pair = Types.Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
+  let fee_amount_in_mutez = storage.fee_in_mutez in
+  let fee_provided = Tezos.get_amount () in
+  if fee_provided < fee_amount_in_mutez then failwith Errors.insufficient_swap_fee else
   let (current_batch, current_batch_set) = Batch.get_current_batch pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch.can_deposit current_batch then
