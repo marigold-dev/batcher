@@ -120,6 +120,11 @@ let external_to_order
 let deposit (external_order: external_order) (storage : storage) : result =
   let pair = Types.Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
+
+  let fee_amount_in_mutez = storage.fee_in_mutez in
+  let fee_provided = Tezos.get_amount () in
+  if fee_provided < fee_amount_in_mutez then failwith Errors.insufficient_swap_fee else
+
   let (current_batch, current_batch_set) = Batch.get_current_batch pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch.can_deposit current_batch then
@@ -138,8 +143,10 @@ let deposit (external_order: external_order) (storage : storage) : result =
          orderbook = new_orderbook;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
-       let tokens_transfer_op = Treasury.deposit order.trader order.swap.from in
-       ([ tokens_transfer_op ], updated_storage)
+       let fee_recipient = storage.fee_recipient in
+       let treasury_ops = Treasury.deposit order.trader order.swap.from fee_recipient fee_amount_in_mutez in
+       (treasury_ops, updated_storage)
+
       else
         failwith Errors.too_many_unredeemed_orders
   else

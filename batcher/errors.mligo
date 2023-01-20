@@ -65,3 +65,4 @@ let unable_to_reduce_token_amount_to_less_than_zero : nat = 131n
 
 let too_many_unredeemed_orders : nat = 132n
 
+let insufficient_swap_fee : nat =  133n

@@ -157,6 +157,7 @@ export type OrderBookProps = {
   buyToken: token;
   sellToken: token;
 };
+
 type TokenBalance = {
   token: token;
   balance: number;
@@ -168,6 +169,7 @@ export type ExchangeProps = {
   inversion: boolean;
   setInversion: Dispatch<SetStateAction<boolean>>;
   tezos: TezosToolkit;
+  fee_in_mutez: number;
 };
 
 export type BatcherInfoProps = {
@@ -205,8 +207,7 @@ export type BatcherStepperProps = {
 
 export type BatchSet = {
   batches: number;
-  last_batch_number: string;
-  current_batch_number: string;
+  current_batch_index: string;
 };
 
 export type HoldingsProps = {

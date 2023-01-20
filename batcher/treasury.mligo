@@ -127,6 +127,11 @@ module Utils = struct
     in
     op_list
 
+ let transfer_fee (receiver : address) (amount : tez) : operation =
+      match (Tezos.get_contract_opt receiver : unit contract option) with
+      | None -> failwith Errors.invalid_tezos_address
+      | Some rec_address -> Tezos.transaction () amount rec_address
+
 end
 
 
@@ -136,9 +141,13 @@ let get_treasury_vault () : address = Tezos.get_self_address ()
 
 let deposit
     (deposit_address : address)
-    (deposited_token : token_amount): operation  =
+    (deposited_token : token_amount)
+    (fee_recipient: address)
+    (fee_amount: tez) : operation list  =
       let treasury_vault = get_treasury_vault () in
-      Utils.handle_transfer deposit_address treasury_vault deposited_token
+      let fee_transfer_op = Utils.transfer_fee fee_recipient fee_amount in
+      let deposit_op = Utils.handle_transfer deposit_address treasury_vault deposited_token in
+      [ fee_transfer_op ; deposit_op]
 
 
 let redeem

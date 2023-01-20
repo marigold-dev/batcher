@@ -79,6 +79,9 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
+
+  const [feeInMutez, setFeeInMutez] = useState<number>(0);
+
   const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
 
   const scaleVolumeDown = (volumes: any) => {
@@ -91,6 +94,7 @@ const Welcome: React.FC = () => {
       sellPlusVolume: scaleStringAmountDown(volumes.sell_plus_volume, sellTokenDecimals),
     };
   };
+
 
   const getCurrentVolume = async (storage: any) => {
     try {
@@ -125,9 +129,15 @@ const Welcome: React.FC = () => {
       return;
     }
 
+
+    const currentBatchNumber = storage.batch_set.current_batch_number;
+    const fee  = storage.fee_in_mutez;
+    setFeeInMutez(fee);
+
     const userBatcherURI = bigMapsByIdUri + storage.user_batch_ordertypes + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
     let userBatches = null;
+
     try {
       userBatches = await userOrderBookData.json();
     } catch (error) {
@@ -342,6 +352,7 @@ const Welcome: React.FC = () => {
             inversion={inversion}
             setInversion={setInversion}
             tezos={Tezos}
+            fee_in_mutez={feeInMutez}
           />
         );
       case ContentType.VOLUME:
@@ -370,6 +381,7 @@ const Welcome: React.FC = () => {
             inversion={inversion}
             setInversion={setInversion}
             tezos={Tezos}
+            fee_in_mutez={feeInMutez}
           />
         );
     }

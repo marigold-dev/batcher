@@ -27,7 +27,11 @@ module Types = struct
     batch_set : batch_set;
     orderbook : orderbook;
     last_order_number : nat;
-    user_batch_ordertypes: user_batch_ordertypes
+    user_batch_ordertypes: user_batch_ordertypes;
+    fee_in_mutez: tez;
+    fee_recipient : address;
+    administrator : address
+
   }
 
 end
