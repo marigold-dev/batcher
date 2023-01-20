@@ -46,5 +46,6 @@ let f(_:unit) = {
   fee_in_mutez = 10000n;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address)
+
 }
 
