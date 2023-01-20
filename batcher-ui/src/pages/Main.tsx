@@ -82,6 +82,7 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
+  const [feeInMutez, setFeeInMutez] = useState<number>(0);
 
   const getCurrentOrderbook = async (batchSet: BatchSet) => {
     try {
@@ -116,6 +117,8 @@ const Welcome: React.FC = () => {
     }
 
     const currentBatchNumber = storage.batch_set.current_batch_number;
+    const fee  = storage.fee_in_mutez;
+    setFeeInMutez(fee);
     const userOrderBookURI = bigMapsByIdUri + storage.user_orderbook + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userOrderBookURI, { method: 'GET' });
     let userOrderBooks = null;
@@ -363,6 +366,7 @@ const Welcome: React.FC = () => {
             inversion={inversion}
             setInversion={setInversion}
             tezos={Tezos}
+            fee_in_mutez={feeInMutez}
           />
         );
       case ContentType.ORDER_BOOK:
@@ -389,6 +393,7 @@ const Welcome: React.FC = () => {
             inversion={inversion}
             setInversion={setInversion}
             tezos={Tezos}
+            fee_in_mutez={feeInMutez}
           />
         );
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row, message, Form } from 'antd';
+import { BigMapAbstraction, compose, OpKind, TezosToolkit, WalletContract, WalletOperationBatch, WalletParamsWithKind } from "@taquito/taquito";
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
@@ -13,6 +14,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   inversion,
   setInversion,
   tezos,
+  fee_in_mutez,
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [amount, setAmount] = useState(0);
@@ -96,24 +98,42 @@ const Exchange: React.FC<ExchangeProps> = ({
 
     try {
       let order_batcher_op = null;
+      const operations: WalletParamsWithKind[] = [];
 
       if (selectedToken.standard === 'FA1.2 token') {
-        order_batcher_op = await tezos.wallet
-          .batch()
-          .withContractCall(tokenContract.methodsObject.approve(fa12_operation_params))
-          .withContractCall(batcherContract.methodsObject.deposit(swap_params))
-          .send();
+         operations.push({
+           kind: OpKind.TRANSACTION,
+           ...tokenContract.methodsObject.approve(fa12_operation_params).toTransferParams()
+         });
+         operations.push({
+           kind: OpKind.TRANSACTION,
+           ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+           amount: fee_in_mutez,
+         });
+
       }
 
       if (selectedToken.standard === 'FA2 token') {
-        order_batcher_op = await tezos.wallet
-          .batch()
-          .withContractCall(tokenContract.methods.update_operators(fa2_add_operator_params))
-          .withContractCall(batcherContract.methodsObject.deposit(swap_params))
-          .withContractCall(tokenContract.methods.update_operators(fa2_remove_operator_params))
-          .send();
+         operations.push({
+           kind: OpKind.TRANSACTION,
+           ...tokenContract.methods.update_operators(fa2_add_operator_params).toTransferParams()
+         });
+
+
+         operations.push({
+           kind: OpKind.TRANSACTION,
+           ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+           amount: fee_in_mutez,
+         });
+
+         operations.push({
+           kind: OpKind.TRANSACTION,
+           ...tokenContract.methods.update_operators(fa2_remove_operator_params).toTransferParams()
+         });
+
       }
 
+      order_batcher_op = await tezos.wallet.batch(operations).send();
       loading = message.loading('Attempting to place swap order for ' + tokenName, 0);
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
