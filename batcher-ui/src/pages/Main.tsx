@@ -94,7 +94,7 @@ const Welcome: React.FC = () => {
 
   const getCurrentVolume = async (storage: any) => {
     try {
-      const currentBatchNumber = storage.batch_set.current_batch_number;
+      const currentBatchNumber = batchSet.current_batch_index;
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);

@@ -159,8 +159,7 @@ module Types = struct
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
-    current_batch_number: nat;
-    last_batch_number: nat;
+    current_batch_index: nat;
     batches: (nat, batch) big_map;
     }
 end
@@ -234,7 +233,6 @@ module Utils = struct
     sell_side_actual_volume_equivalence = 0n;
   }
 
-
   let nat_to_side
   (order_side : nat) : Types.side =
     if order_side = 0n then BUY
@@ -247,15 +245,6 @@ module Utils = struct
     else if tolerance = 1n then EXACT
     else if tolerance = 2n then PLUS
     else failwith Errors.unable_to_parse_tolerance_from_external_order
-
-  let side_to_nat (side : Types.side) : nat = match side with
-    | BUY -> 9n
-    | SELL -> 1n
-
-  let tolerance_to_nat (tolerance : Types.tolerance) : nat = match tolerance with
-    | MINUS -> 0n
-    | EXACT -> 1n
-    | PLUS -> 2n
 
   let get_rate_name_from_swap (s : Types.swap) : string =
     let base_name = s.from.token.name in
@@ -294,10 +283,6 @@ module Utils = struct
     let side = nat_to_side order.side in
     pair_of_swap side swap
 
-  let pair_of_swap (order : Types.swap_order) : (Types.token * Types.token) =
-    (* Note:  we assume left-handedness - i.e. direction is buy side*)
-    let swap = order.swap in
-    pair_of_swap order.side swap
 
   let get_token_name_from_token_amount
     (ta : Types.token_amount) : string =

@@ -1,7 +1,7 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.52.0
-TEZOS_PROTOCOL:=kathmandu
+LIGO_COMPILER_VERSION:=0.59.0
+TEZOS_PROTOCOL:=lima
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
 define test_ligo
@@ -13,12 +13,15 @@ define compile_contract
 endef
 
 define compile_storage
-    $(LIGO_DOCKER) compile expression cameligo --michelson-format text --init-file $(1) 'f()' > $(2)
+    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --werror --init-file $(1) 'f()' > $(2)
 endef
 
 build:
 	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage.mligo, batcher-storage.tz)
+	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
+build-lima:
+	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
+	$(call compile_storage,batcher/storage/initial_storage_limanet.mligo, batcher-storage.tz)
 build-tzBTC:
 	$(call compile_contract,token/main.mligo, tzBTC_token.tz)
 	$(call compile_storage,token/storage/tzBTC_storage.mligo, tzBTC_token_storage.tz)
