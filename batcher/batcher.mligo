@@ -33,6 +33,16 @@ type entrypoint =
   | Deposit of external_order
   | Post of rate
   | Redeem
+  | ChangeFee of tez
+  | ChangeAdminAddress of address
+
+
+let is_administrator
+  (storage : storage) : unit =
+  let sender = Tezos.get_sender () in
+  let is_administrator = sender = storage.administrator in
+  if (not is_administrator) then failwith Errors.sender_not_administrator
+
 
 let are_equivalent_tokens
   (given: token)
@@ -170,10 +180,29 @@ let post_rate (rate : rate) (storage : storage) : result =
   let storage = { storage with batch_set = current_batch_set } in
   no_op (storage)
 
+
+let change_fee
+    (new_fee: tez)
+    (storage: storage) : result =
+    let _ = is_administrator storage in
+    let storage = { storage with fee_in_mutez = new_fee; } in
+    no_op (storage)
+
+let change_admin_address
+    (new_admin_address: address)
+    (storage: storage) : result =
+    let _ = is_administrator storage in
+    let storage = { storage with administrator = new_admin_address; } in
+    no_op (storage)
+
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
+   | ChangeFee new_fee -> change_fee new_fee storage
+   | ChangeAdminAddress new_admin_address -> change_admin_address new_admin_address storage
+
 

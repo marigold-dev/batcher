@@ -98,7 +98,7 @@ const Welcome: React.FC = () => {
 
   const getCurrentVolume = async (storage: any) => {
     try {
-      const currentBatchNumber = batchSet.current_batch_index;
+      const currentBatchNumber = storage.batch_set.current_batch_index;
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);
@@ -129,8 +129,8 @@ const Welcome: React.FC = () => {
       return;
     }
 
+    console.log('Storage', storage);
 
-    const currentBatchNumber = storage.batch_set.current_batch_number;
     const fee  = storage.fee_in_mutez;
     setFeeInMutez(fee);
 
@@ -241,6 +241,7 @@ const Welcome: React.FC = () => {
   };
   const handleWebsocket = () => {
     connection.on('token_balances', (msg: any) => {
+      console.log('token_balances msg', msg);
       if (!msg.data) return;
       if (!userAddress) return;
 
@@ -274,6 +275,8 @@ const Welcome: React.FC = () => {
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
+      if (!msg.data[0].storage) return;
+      console.log('operations msg storage', msg.data[0].storage);
       if (userAddress) {
         updateHoldings(msg.data[0].storage);
       }
@@ -281,6 +284,7 @@ const Welcome: React.FC = () => {
     });
 
     connection.on('bigmaps', (msg: any) => {
+      console.log('bigmaps msg', msg);
       if (!msg.data) return;
 
       const numerator = msg.data[0].content.value.rate.p;

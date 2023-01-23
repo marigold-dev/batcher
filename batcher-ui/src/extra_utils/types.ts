@@ -65,6 +65,14 @@ export class exchange_rate {
   when!: string;
 }
 
+export interface Side {
+  bUY?: BUy;
+  sELL?: SEll;
+}
+
+export interface BUy {}
+export interface SEll {}
+
 export interface Tolerance {
   eXACT?: EXact;
   mINUS?: MInus;
@@ -81,11 +89,16 @@ export enum ToleranceType {
   PLUS = 2,
 }
 
+export enum SideType {
+  BUY = 0,
+  SELL = 1,
+}
+
 export class swap_order {
   trader!: string;
   swap!: swap;
   created_at!: string;
-  side!: string;
+  side!: Side;
   tolerance!: Tolerance;
 }
 

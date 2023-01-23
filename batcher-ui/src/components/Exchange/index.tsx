@@ -5,7 +5,7 @@ import { BigMapAbstraction, compose, OpKind, TezosToolkit, WalletContract, Walle
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps, ToleranceType } from '@/extra_utils/types';
+import { ExchangeProps, ToleranceType, SideType } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 
 const Exchange: React.FC<ExchangeProps> = ({
@@ -17,6 +17,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
+  const [side, setSide] = useState(SideType.BUY);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
   const { userAddress } = initialState;
@@ -25,6 +26,8 @@ const Exchange: React.FC<ExchangeProps> = ({
 
   const inverseTokenType = () => {
     setInversion(!inversion);
+    const s = inversion ? 0 : 1;
+    setSide(s);
   };
   const depositToken = async () => {
     if (!userAddress) {
@@ -34,7 +37,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     const tokenName = inversion ? buyBalance.token.name : sellBalance.token.name;
     const selectedToken = inversion ? buyBalance.token : sellBalance.token;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
-    const tokenContract = await tezos.wallet.at(
+    const tokenContract : WalletContract = await tezos.wallet.at(
       inversion ? buyBalance.token.address : sellBalance.token.address,
     );
 
@@ -69,28 +72,8 @@ const Exchange: React.FC<ExchangeProps> = ({
       value: scaled_amount,
     };
 
-    const swap_params = {
-      swap: {
-        from: {
-          token: {
-            name: inversion ? buyBalance.token.name : sellBalance.token.name,
-            address: inversion ? buyBalance.token.address : sellBalance.token.address,
-            decimals: inversion ? buyBalance.token.decimals : sellBalance.token.decimals,
-            standard: inversion ? buyBalance.token.standard : sellBalance.token.standard,
-          },
-          amount: scaled_amount,
-        },
-        to: {
-          name: inversion ? sellBalance.token.name : buyBalance.token.name,
-          address: inversion ? sellBalance.token.address : buyBalance.token.address,
-          decimals: inversion ? sellBalance.token.decimals : buyBalance.token.decimals,
-          standard: inversion ? sellBalance.token.standard : buyBalance.token.standard,
-        },
-      },
-      created_at: new Date(),
-      side: inversion ? 0 : 1,
-      tolerance: tolerance,
-    };
+
+
 
     let loading = function () {
       return undefined;
@@ -100,15 +83,12 @@ const Exchange: React.FC<ExchangeProps> = ({
       let order_batcher_op = null;
       const operations: WalletParamsWithKind[] = [];
 
+
+
       if (selectedToken.standard === 'FA1.2 token') {
          operations.push({
            kind: OpKind.TRANSACTION,
-           ...tokenContract.methodsObject.approve(fa12_operation_params).toTransferParams()
-         });
-         operations.push({
-           kind: OpKind.TRANSACTION,
-           ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-           amount: fee_in_mutez,
+           ...tokenContract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
          });
 
       }
@@ -119,13 +99,36 @@ const Exchange: React.FC<ExchangeProps> = ({
            ...tokenContract.methods.update_operators(fa2_add_operator_params).toTransferParams()
          });
 
+      }
 
-         operations.push({
-           kind: OpKind.TRANSACTION,
-           ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-           amount: fee_in_mutez,
-         });
+      operations.push({
+          kind: OpKind.TRANSACTION,
+          ...batcherContract.methods.deposit([{
+                                              swap: {
+                                                from: {
+                                                  token: {
+                                                    name: inversion ? buyBalance.token.name : sellBalance.token.name,
+                                                    address: inversion ? buyBalance.token.address : sellBalance.token.address,
+                                                    decimals: inversion ? buyBalance.token.decimals : sellBalance.token.decimals,
+                                                    standard: inversion ? buyBalance.token.standard : sellBalance.token.standard,
+                                                  },
+                                                  amount: scaled_amount,
+                                                },
+                                                to: {
+                                                  name: inversion ? sellBalance.token.name : buyBalance.token.name,
+                                                  address: inversion ? sellBalance.token.address : buyBalance.token.address,
+                                                  decimals: inversion ? sellBalance.token.decimals : buyBalance.token.decimals,
+                                                  standard: inversion ? sellBalance.token.standard : buyBalance.token.standard,
+                                                },
+                                              },
+                                              created_at: new Date(),
+                                              side: side,
+                                              tolerance: tolerance,
+                                             }]).toTransferParams(),
+      });
 
+
+      if (selectedToken.standard === 'FA2 token') {
          operations.push({
            kind: OpKind.TRANSACTION,
            ...tokenContract.methods.update_operators(fa2_remove_operator_params).toTransferParams()
@@ -133,8 +136,8 @@ const Exchange: React.FC<ExchangeProps> = ({
 
       }
 
-      order_batcher_op = await tezos.wallet.batch(operations).send();
       loading = message.loading('Attempting to place swap order for ' + tokenName, 0);
+      order_batcher_op = await tezos.wallet.batch(operations).send();
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
         message.error('Failed to deposit ' + tokenName);
@@ -149,6 +152,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         message.success('Successfully deposited ' + tokenName);
       }
     } catch (error) {
+      console.log('deposit error', error);
       loading();
       form.resetFields();
       message.error(getErrorMess(error));
