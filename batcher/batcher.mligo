@@ -39,9 +39,9 @@ type entrypoint =
 
 let is_administrator
   (storage : storage) : unit =
-  let sender = Tezos.get_sender () in
-  let is_administrator = sender = storage.administrator in
-  if (not is_administrator) then failwith Errors.sender_not_administrator
+  assert_with_error
+   (Tezos.get_sender () = storage.administrator)
+   Errors.sender_not_administrator
 
 
 let are_equivalent_tokens
