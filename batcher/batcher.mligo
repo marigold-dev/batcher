@@ -33,8 +33,8 @@ type entrypoint =
   | Deposit of external_order
   | Post of rate
   | Redeem
-  | ChangeFee of tez
-  | ChangeAdminAddress of address
+  | Change_fee of tez
+  | Change_admin_address of address
 
 
 let is_administrator
@@ -170,7 +170,7 @@ let redeem
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
 let post_rate (rate : rate) (storage : storage) : result =
-  let validated_swap = validate BUY rate.swap storage.valid_tokens storage.valid_swaps in
+  let validated_swap = validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
   let rate  = { rate with swap = validated_swap; } in
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
@@ -202,7 +202,7 @@ let main
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
-   | ChangeFee new_fee -> change_fee new_fee storage
-   | ChangeAdminAddress new_admin_address -> change_admin_address new_admin_address storage
+   | Change_fee new_fee -> change_fee new_fee storage
+   | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
 
 

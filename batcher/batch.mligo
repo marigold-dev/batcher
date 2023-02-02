@@ -27,17 +27,17 @@ let set_buy_side_volume
   (order: Types.swap_order)
   (volumes : Types.volumes) : Types.volumes =
   match order.tolerance with
-  | MINUS -> { volumes with buy_minus_volume = volumes.buy_minus_volume + order.swap.from.amount; }
-  | EXACT -> { volumes with buy_exact_volume = volumes.buy_exact_volume + order.swap.from.amount; }
-  | PLUS -> { volumes with buy_plus_volume = volumes.buy_plus_volume + order.swap.from.amount; }
+  | Minus -> { volumes with buy_minus_volume = volumes.buy_minus_volume + order.swap.from.amount; }
+  | Exact -> { volumes with buy_exact_volume = volumes.buy_exact_volume + order.swap.from.amount; }
+  | Plus -> { volumes with buy_plus_volume = volumes.buy_plus_volume + order.swap.from.amount; }
 
 let set_sell_side_volume
   (order: Types.swap_order)
   (volumes : Types.volumes) : Types.volumes =
   match order.tolerance with
-  | MINUS -> { volumes with sell_minus_volume = volumes.sell_minus_volume + order.swap.from.amount; }
-  | EXACT -> { volumes with sell_exact_volume = volumes.sell_exact_volume + order.swap.from.amount; }
-  | PLUS -> { volumes with sell_plus_volume = volumes.sell_plus_volume + order.swap.from.amount; }
+  | Minus -> { volumes with sell_minus_volume = volumes.sell_minus_volume + order.swap.from.amount; }
+  | Exact -> { volumes with sell_exact_volume = volumes.sell_exact_volume + order.swap.from.amount; }
+  | Plus -> { volumes with sell_plus_volume = volumes.sell_plus_volume + order.swap.from.amount; }
 
 
 let make
@@ -128,8 +128,8 @@ let update_volumes
   (batch : t)  : t =
   let vols = batch.volumes in
   let updated_vols = match order.side with
-                     | BUY -> BatchPriv.set_buy_side_volume order vols
-                     | SELL -> BatchPriv.set_sell_side_volume order vols
+                     | Buy -> BatchPriv.set_buy_side_volume order vols
+                     | Sell -> BatchPriv.set_sell_side_volume order vols
   in
   { batch with volumes = updated_vols;  }
 
