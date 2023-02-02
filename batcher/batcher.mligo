@@ -41,7 +41,7 @@ let is_administrator
   (storage : storage) : unit =
   assert_with_error
    (Tezos.get_sender () = storage.administrator)
-   Errors.sender_not_administrator
+   (failwith Errors.sender_not_administrator)
 
 
 let are_equivalent_tokens
@@ -184,7 +184,7 @@ let post_rate (rate : rate) (storage : storage) : result =
 let change_fee
     (new_fee: tez)
     (storage: storage) : result =
-    let _ = is_administrator storage in
+    let () = is_administrator storage in
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op (storage)
 
