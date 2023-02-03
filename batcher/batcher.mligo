@@ -33,6 +33,16 @@ type entrypoint =
   | Deposit of external_order
   | Post of rate
   | Redeem
+  | Change_fee of tez
+  | Change_admin_address of address
+
+
+let is_administrator
+  (storage : storage) : unit =
+  assert_with_error
+   (Tezos.get_sender () = storage.administrator)
+   (failwith Errors.sender_not_administrator)
+
 
 let are_equivalent_tokens
   (given: token)
@@ -160,7 +170,7 @@ let redeem
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
 let post_rate (rate : rate) (storage : storage) : result =
-  let validated_swap = validate BUY rate.swap storage.valid_tokens storage.valid_swaps in
+  let validated_swap = validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
   let rate  = { rate with swap = validated_swap; } in
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
@@ -170,10 +180,29 @@ let post_rate (rate : rate) (storage : storage) : result =
   let storage = { storage with batch_set = current_batch_set } in
   no_op (storage)
 
+
+let change_fee
+    (new_fee: tez)
+    (storage: storage) : result =
+    let () = is_administrator storage in
+    let storage = { storage with fee_in_mutez = new_fee; } in
+    no_op (storage)
+
+let change_admin_address
+    (new_admin_address: address)
+    (storage: storage) : result =
+    let _ = is_administrator storage in
+    let storage = { storage with administrator = new_admin_address; } in
+    no_op (storage)
+
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
+   | Change_fee new_fee -> change_fee new_fee storage
+   | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+
 

@@ -105,24 +105,24 @@ module Redemption_Utils = struct
    (clearing_tolerance: tolerance)
    (order_tolerance: tolerance) : bool =
       match (order_tolerance, clearing_tolerance) with
-      | (EXACT,MINUS) -> true
-      | (PLUS,MINUS) -> true
-      | (MINUS,EXACT) -> false
-      | (PLUS,EXACT) -> true
-      | (MINUS,PLUS) -> false
-      | (EXACT,PLUS) -> false
+      | (Exact,Minus) -> true
+      | (Plus,Minus) -> true
+      | (Minus,Exact) -> false
+      | (Plus,Exact) -> true
+      | (Minus,Plus) -> false
+      | (Exact,Plus) -> false
       | (_,_) -> true
 
   let was_in_clearing_for_sell
    (clearing_tolerance: tolerance)
    (order_tolerance: tolerance) : bool =
       match (order_tolerance, clearing_tolerance) with
-      | (EXACT,MINUS) -> false
-      | (PLUS,MINUS) -> false
-      | (MINUS,EXACT) -> true
-      | (PLUS,EXACT) -> false
-      | (MINUS,PLUS) -> true
-      | (EXACT,PLUS) -> true
+      | (Exact,Minus) -> false
+      | (Plus,Minus) -> false
+      | (Minus,Exact) -> true
+      | (Plus,Exact) -> false
+      | (Minus,Plus) -> true
+      | (Exact,Plus) -> true
       | (_,_) -> true
 
   let was_in_clearing
@@ -132,16 +132,16 @@ module Redemption_Utils = struct
     let order_side = ot.side in
     let clearing_tolerance = clearing.clearing_tolerance in
     match order_side with
-    | BUY -> was_in_clearing_for_buy clearing_tolerance order_tolerance
-    | SELL -> was_in_clearing_for_sell clearing_tolerance order_tolerance
+    | Buy -> was_in_clearing_for_buy clearing_tolerance order_tolerance
+    | Sell -> was_in_clearing_for_sell clearing_tolerance order_tolerance
 
 
   let get_clearing_volume
     (clearing:clearing) : nat =
     match clearing.clearing_tolerance with
-    | MINUS -> clearing.clearing_volumes.minus
-    | EXACT -> clearing.clearing_volumes.exact
-    | PLUS -> clearing.clearing_volumes.plus
+    | Minus -> clearing.clearing_volumes.minus
+    | Exact -> clearing.clearing_volumes.exact
+    | Plus -> clearing.clearing_volumes.plus
 
   let get_cleared_sell_side_payout
     (from: token)
@@ -206,8 +206,8 @@ module Redemption_Utils = struct
     let s = ot.side in
     let swap = clearing.clearing_rate.swap in
     match s with
-    | BUY -> get_cleared_buy_side_payout swap.from.token swap.to amt clearing tam
-    | SELL -> get_cleared_sell_side_payout swap.to swap.from.token amt clearing tam
+    | Buy -> get_cleared_buy_side_payout swap.from.token swap.to amt clearing tam
+    | Sell -> get_cleared_sell_side_payout swap.to swap.from.token amt clearing tam
 
 
   let collect_order_payout_from_clearing

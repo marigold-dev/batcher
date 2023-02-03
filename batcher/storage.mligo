@@ -16,7 +16,6 @@ module Types = struct
 
   type orderbook = CommonTypes.Types.orderbook
 
-
   type user_batch_ordertypes = CommonTypes.Types.user_batch_ordertypes
 
   type t = {
@@ -31,7 +30,6 @@ module Types = struct
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address
-
   }
 
 end
