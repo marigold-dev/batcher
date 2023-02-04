@@ -297,17 +297,6 @@ module Utils = struct
     (token_holding : Types.token_holding) : Types.token_holding =
     { token_holding with holder = new_holder}
 
-  let check_token_equality
-    (this : Types.token_amount)
-    (that : Types.token_amount) : Types.token_amount =
-    if this.token.name = that.token.name then
-      if this.token.address = that.token.address then
-        that
-      else
-        (failwith Errors.tokens_do_not_match : Types.token_amount )
-    else
-      (failwith Errors.tokens_do_not_match : Types.token_amount )
-
 
   (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding

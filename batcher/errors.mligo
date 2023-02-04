@@ -68,3 +68,11 @@ let too_many_unredeemed_orders : nat = 132n
 let insufficient_swap_fee : nat =  133n
 
 let sender_not_administrator : nat =  134n
+
+let token_already_exists_but_details_are_different: nat = 135n
+
+let swap_already_exists: nat = 136n
+
+let swap_does_not_exist: nat = 137n
+
+let inverted_swap_already_exists: nat = 138n

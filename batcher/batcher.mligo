@@ -5,9 +5,11 @@
 #import "prices.mligo" "Pricing"
 #import "clearing.mligo" "Clearing"
 #import "math.mligo" "Math"
+#import "tokens.mligo" "Tokens"
 #import "userbatchordertypes.mligo" "Ubot"
 #import "batch.mligo" "Batch"
 #import "orderbook.mligo" "Orderbook"
+#import "tokens.mligo" "Tokens"
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/rational.mligo" "Rational"
 
@@ -35,7 +37,8 @@ type entrypoint =
   | Redeem
   | ChangeFee of tez
   | ChangeAdminAddress of address
-
+  | Add_token_swap_pair of swap
+  | Remove_token_swap_pair of swap
 
 let is_administrator
   (storage : storage) : unit =
@@ -44,37 +47,6 @@ let is_administrator
   if (not is_administrator) then failwith Errors.sender_not_administrator
 
 
-let are_equivalent_tokens
-  (given: token)
-  (test: token) : bool =
-    given.name = test.name &&
-    given.address = test.address &&
-    given.decimals = test.decimals &&
-    given.standard = test.standard
-
- let is_valid_swap_pair
-  (side: side)
-  (swap: swap)
-  (valid_swaps: valid_swaps): swap =
-  let token_pair = Types.Utils.pair_of_swap side swap in
-  let rate_name = Types.Utils.get_rate_name_from_pair token_pair in
-  if Map.mem rate_name valid_swaps then swap else failwith Errors.unsupported_swap_type
-
-let validate
-  (side: side)
-  (swap: swap)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): swap =
-  let from = swap.from.token in
-  let to = swap.to in
-  match Map.find_opt from.name valid_tokens with
-  | None ->  failwith Errors.unsupported_swap_type
-  | Some ft -> (match Map.find_opt to.name valid_tokens with
-                | None -> failwith Errors.unsupported_swap_type
-                | Some tt -> if (are_equivalent_tokens from ft) && (are_equivalent_tokens to tt) then
-                              is_valid_swap_pair side swap valid_swaps
-                            else
-                              failwith Errors.unsupported_swap_type)
 
 let invert_rate_for_clearing
   (rate : rate) : rate  =
@@ -122,7 +94,7 @@ let external_to_order
       tolerance = tolerance;
       redeemed = false;
     } in
-  let validated_swap = validate side order.swap valid_tokens valid_swaps in
+  let validated_swap = Tokens.validate side order.swap valid_tokens valid_swaps in
   { converted_order with swap = validated_swap; }
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
@@ -170,7 +142,7 @@ let redeem
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
 let post_rate (rate : rate) (storage : storage) : result =
-  let validated_swap = validate BUY rate.swap storage.valid_tokens storage.valid_swaps in
+  let validated_swap = Tokens.validate BUY rate.swap storage.valid_tokens storage.valid_swaps in
   let rate  = { rate with swap = validated_swap; } in
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
@@ -195,6 +167,21 @@ let change_admin_address
     let storage = { storage with administrator = new_admin_address; } in
     no_op (storage)
 
+let add_token_swap_pair
+  (swap: swap)
+  (storage: storage) : result =
+   let () = is_administrator storage in
+   let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
+   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
+   no_op (storage)
+
+let remove_token_swap_pair
+  (swap: swap)
+  (storage: storage) : result =
+   let () = is_administrator storage in
+   let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
+   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
+   no_op (storage)
 
 let main
   (action, storage : entrypoint * storage) : result =
@@ -204,5 +191,8 @@ let main
    | Redeem -> redeem storage
    | ChangeFee new_fee -> change_fee new_fee storage
    | ChangeAdminAddress new_admin_address -> change_admin_address new_admin_address storage
+   | Add_token_swap_pair swap -> add_token_swap_pair swap storage
+   | Remove_token_swap_pair token -> remove_token_swap_pair token storage
+
 
 
