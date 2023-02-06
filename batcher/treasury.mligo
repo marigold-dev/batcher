@@ -106,9 +106,9 @@ module Utils = struct
       else if standard = Constants.fa2_token then
         transfer_fa2_token sender receiver token_address token_amount.amount
       else
-        failwith Errors.not_found_token_standard
+        failwith Errors.token_standard_not_found
     | None ->
-      failwith Errors.not_found_token_standard
+        failwith Errors.token_standard_not_found
 
 
   let handle_transfer (sender : address) (receiver : address) (received_token : token_amount) : operation =
