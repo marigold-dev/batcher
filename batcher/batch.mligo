@@ -1,6 +1,5 @@
 #import "types.mligo" "CommonTypes"
 #import "constants.mligo" "Constants"
-#import "orderbook.mligo" "Orderbook"
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/rational.mligo" "Rational"
 
