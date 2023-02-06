@@ -5,12 +5,14 @@
 #import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = CommonTypes.Types
+module Utils = CommonTypes.Utils
 module TokenAmountMap = CommonTypes.TokenAmountMap
 module TokenAmount = CommonTypes.TokenAmount
 module RationalUtils = Math.RationalUtils
 
 
 type ordertype = Types.ordertype
+type batch_indices = Types.batch_indices
 type tolerance = Types.tolerance
 type clearing = Types.clearing
 type batch = Types.batch
@@ -245,17 +247,18 @@ let get_clearing
 let collect_redemptions
     ((bots, tam, bts),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set) =
     let batches = bts.batches in
+    let batch_indices = bts.current_batch_indices in
     match Big_map.find_opt batch_number batches with
     | None -> (bots, tam, bts)
-    | Some batch -> let current_batch_index = bts.current_batch_index in
-                    if batch_number = current_batch_index then
-                      (bots, tam, bts)
-                    else
-                      (match get_clearing batch with
-                       | None ->  (bots, tam, bts)
-                       | Some c -> let (_c, u_tam) = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
+    | Some batch -> (let name = Utils.get_rate_name_from_pair batch.pair in
+                     match Map.find_opt name batch_indices with
+                     | Some _ -> (bots, tam, bts)
+                     | None ->
+                       (match get_clearing batch with
+                        | None ->  (bots, tam, bts)
+                        | Some c -> let (_c, u_tam) = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
                                    let u_bots = Map.remove batch_number bots in
-                                   (u_bots,u_tam, bts))
+                                   (u_bots,u_tam, bts)))
 
 let collect_redemption_payouts
     (holder: address)

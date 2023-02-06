@@ -2,7 +2,6 @@ let not_a_valid_rate_pair : nat = 100n
 
 let no_rate_available_for_swap : nat = 101n
 
-(* Treasury errors *)
 let incorrect_address : nat = 102n
 
 let greater_than_owned_token : nat = 103n
@@ -76,3 +75,5 @@ let swap_already_exists: nat = 136n
 let swap_does_not_exist: nat = 137n
 
 let inverted_swap_already_exists: nat = 138n
+
+let batch_index_does_not_exist_for_specified_pair: nat = 139n

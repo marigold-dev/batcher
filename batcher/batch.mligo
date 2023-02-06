@@ -5,6 +5,7 @@
 #import "../math_lib/lib/rational.mligo" "Rational"
 
 module Types = CommonTypes.Types
+module Utils = CommonTypes.Utils
 
 type batch_set = Types.batch_set
 type order = Types.swap_order
@@ -63,7 +64,9 @@ let update_current_batch_in_set
   (batch : t)
   (batch_set : batch_set) : (t * batch_set)=
   let updated_batches = Big_map.update batch.batch_number (Some batch) batch_set.batches in
-  ( batch, { batch_set with batches = updated_batches; current_batch_index = batch.batch_number; } )
+  let name = Utils.get_rate_name_from_pair batch.pair in
+  let updated_batch_indices = Map.update name (Some batch.batch_number) batch_set.current_batch_indices in
+  ( batch, { batch_set with batches = updated_batches; current_batch_indices = updated_batch_indices; } )
 
 
 
@@ -84,10 +87,10 @@ let start_period
   (pair : pair)
   (batch_set : batch_set)
   (current_time : timestamp) : (t * batch_set) =
-  let new_batch_number = batch_set.current_batch_index + 1n in
+  let highest_batch_index = Utils.get_highest_batch_index batch_set.current_batch_indices in
+  let new_batch_number = highest_batch_index + 1n in
   let new_batch = make new_batch_number current_time pair in
-  let batches = Big_map.add new_batch_number new_batch batch_set.batches in
-  (new_batch, { batch_set with batches = batches; current_batch_index = new_batch_number; })
+  update_current_batch_in_set new_batch batch_set
 
 let close (batch : t) : t =
   match batch.status with
@@ -100,7 +103,7 @@ let close (batch : t) : t =
 
 let new_batch_set : batch_set =
   {
-    current_batch_index = 0n;
+    current_batch_indices = (Map.empty: (string, nat) map);
     batches= (Big_map.empty: (nat, t) big_map);
   }
 
@@ -165,7 +168,7 @@ let get_current_batch
   (pair: pair)
   (current_time: timestamp)
   (batch_set: batch_set) : (t * batch_set) =
-  let current_batch_index = batch_set.current_batch_index in
+  let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  BatchPriv.start_period pair batch_set current_time
   | Some cb ->  BatchPriv.progress_batch pair cb batch_set current_time
