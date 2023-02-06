@@ -33,9 +33,9 @@ let get_min_number (a : Rational.t) (b : Rational.t) =
   else b
 
 let get_clearing_tolerance (cp_minus : Rational.t) (cp_exact : Rational.t) (cp_plus : Rational.t) : Types.tolerance =
-  if (RationalUtils.gte cp_minus cp_exact) && (RationalUtils.gte cp_minus cp_plus) then MINUS
-  else if (RationalUtils.gte cp_exact cp_minus) && (RationalUtils.gte cp_exact cp_plus) then EXACT
-  else PLUS
+  if (RationalUtils.gte cp_minus cp_exact) && (RationalUtils.gte cp_minus cp_plus) then Minus
+  else if (RationalUtils.gte cp_exact cp_minus) && (RationalUtils.gte cp_exact cp_plus) then Exact
+  else Plus
 
 let get_cp_minus (rate : Rational.t) (buy_side : Types.buy_side) (sell_side : Types.sell_side) : Rational.t =
   let (buy_minus_token, buy_exact_token, buy_plus_token) = buy_side in

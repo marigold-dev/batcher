@@ -30,11 +30,11 @@ let get_clearing_rate
   (clearing: clearing)
   (exchange_rate: exchange_rate) : exchange_rate =
   match clearing.clearing_tolerance with
-  | EXACT -> exchange_rate
-  | PLUS -> let val : Rational.t = exchange_rate.rate in
+  | Exact -> exchange_rate
+  | Plus -> let val : Rational.t = exchange_rate.rate in
             let rate =  (Rational.mul val Constants.ten_bips_constant) in
             { exchange_rate with rate = rate}
-  | MINUS -> let val = exchange_rate.rate in
+  | Minus -> let val = exchange_rate.rate in
              let rate = (Rational.div val Constants.ten_bips_constant) in
              { exchange_rate with rate = rate}
 
@@ -43,12 +43,12 @@ let filter_volumes
   (volumes: volumes)
   (clearing: clearing) : (nat * nat) =
   match clearing.clearing_tolerance with
-  | MINUS -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
+  | Minus -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
              (buy_vol, volumes.sell_minus_volume)
-  | EXACT -> let buy_vol = volumes.buy_exact_volume + volumes.buy_plus_volume in
+  | Exact -> let buy_vol = volumes.buy_exact_volume + volumes.buy_plus_volume in
              let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume in
              (buy_vol, sell_vol)
-  | PLUS -> let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume + volumes.sell_plus_volume in
+  | Plus -> let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume + volumes.sell_plus_volume in
             (volumes.buy_plus_volume, sell_vol)
 
 [@inline]

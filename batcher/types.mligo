@@ -15,12 +15,12 @@ module Types = struct
   (* Side of an order, either BUY side or SELL side  *)
   type side =
     [@layout:comb]
-    BUY
-    | SELL
+    Buy
+    | Sell
 
   (* Tolerance of the order against the oracle price  *)
   type tolerance =
-    PLUS | EXACT | MINUS
+    Plus | Exact | Minus
 
   (* A token value ascribes an amount to token metadata *)
   type token_amount = {
@@ -176,8 +176,8 @@ module TokenAmount = struct
   (c: Types.clearing): t =
   let swap = c.clearing_rate.swap in
   let token = match ot.side with
-             | BUY -> swap.from.token
-             | SELL -> swap.to
+             | Buy -> swap.from.token
+             | Sell -> swap.to
   in
   {
     token = token;
@@ -191,7 +191,7 @@ module TokenAmountMap = struct
 
   type t = Types.token_amount_map
 
-  type op = INCREASE | DECREASE
+  type op = Increase | Decrease
 
   let amend
   (ta: Types.token_amount)
@@ -201,8 +201,8 @@ module TokenAmountMap = struct
   match Map.find_opt token_name tam with
   | None -> Map.add token_name ta tam
   | Some prev -> let new_amt: nat = match op with
-                                    | INCREASE -> ta.amount + prev.amount
-                                    | DECREASE -> if ta.amount > prev.amount then
+                                    | Increase -> ta.amount + prev.amount
+                                    | Decrease -> if ta.amount > prev.amount then
                                                     (failwith Errors.unable_to_reduce_token_amount_to_less_than_zero : nat)
                                                   else
                                                     abs (prev.amount - ta.amount)
@@ -213,12 +213,12 @@ module TokenAmountMap = struct
   let increase
   (ta: Types.token_amount)
   (tam : t): t =
-  amend ta INCREASE tam
+  amend ta Increase tam
 
   let decrease
   (ta: Types.token_amount)
   (tam: t) : t =
-  amend ta DECREASE tam
+  amend ta Decrease tam
 
 end
 
@@ -237,15 +237,15 @@ module Utils = struct
 
   let nat_to_side
   (order_side : nat) : Types.side =
-    if order_side = 0n then BUY
+    if order_side = 0n then Buy
     else
-      if order_side = 1n then SELL
+      if order_side = 1n then Sell
       else failwith Errors.unable_to_parse_side_from_external_order
 
   let nat_to_tolerance (tolerance : nat) : Types.tolerance =
-    if tolerance = 0n then MINUS
-    else if tolerance = 1n then EXACT
-    else if tolerance = 2n then PLUS
+    if tolerance = 0n then Minus
+    else if tolerance = 1n then Exact
+    else if tolerance = 2n then Plus
     else failwith Errors.unable_to_parse_tolerance_from_external_order
 
   let get_rate_name_from_swap (s : Types.swap) : string =
@@ -274,10 +274,10 @@ module Utils = struct
     (side: Types.side)
     (swap: Types.swap): (Types.token * Types.token) =
     match side with
-    | BUY -> (swap.from.token, swap.to)
-    | SELL -> (swap.to, swap.from.token)
+    | Buy -> (swap.from.token, swap.to)
+    | Sell -> (swap.to, swap.from.token)
 
-  let pair_of_rate (r : Types.exchange_rate) : (Types.token * Types.token) = pair_of_swap BUY r.swap
+  let pair_of_rate (r : Types.exchange_rate) : (Types.token * Types.token) = pair_of_swap Buy r.swap
 
   let pair_of_external_swap (order : Types.external_swap_order) : (Types.token * Types.token) =
     (* Note:  we assume left-handedness - i.e. direction is buy side*)

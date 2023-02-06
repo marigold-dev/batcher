@@ -77,3 +77,4 @@ let swap_does_not_exist: nat = 137n
 let inverted_swap_already_exists: nat = 138n
 
 let batch_index_does_not_exist_for_specified_pair: nat = 139n
+

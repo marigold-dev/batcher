@@ -42,11 +42,9 @@ type entrypoint =
 
 let is_administrator
   (storage : storage) : unit =
-  let sender = Tezos.get_sender () in
-  let is_administrator = sender = storage.administrator in
-  if (not is_administrator) then failwith Errors.sender_not_administrator
-
-
+  assert_with_error
+   (Tezos.get_sender () = storage.administrator)
+   (failwith Errors.sender_not_administrator)
 
 let invert_rate_for_clearing
   (rate : rate) : rate  =
@@ -142,7 +140,7 @@ let redeem
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
 let post_rate (rate : rate) (storage : storage) : result =
-  let validated_swap = Tokens.validate BUY rate.swap storage.valid_tokens storage.valid_swaps in
+  let validated_swap = Tokens.validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
   let rate  = { rate with swap = validated_swap; } in
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
@@ -156,7 +154,7 @@ let post_rate (rate : rate) (storage : storage) : result =
 let change_fee
     (new_fee: tez)
     (storage: storage) : result =
-    let _ = is_administrator storage in
+    let () = is_administrator storage in
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op (storage)
 
@@ -166,6 +164,7 @@ let change_admin_address
     let _ = is_administrator storage in
     let storage = { storage with administrator = new_admin_address; } in
     no_op (storage)
+
 
 let add_token_swap_pair
   (swap: swap)
