@@ -55,3 +55,7 @@ tzBTC_fa12_token.tz
 tzBTC_fa12_token_storage.tz
 USDT_token.tz
 USDT_token_storage.tz
+
+# Tezos client artefacts
+.tezos-client/
+
