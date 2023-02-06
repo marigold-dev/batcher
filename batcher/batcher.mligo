@@ -142,10 +142,13 @@ let post_rate (rate : rate) (storage : storage) : result =
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
   let current_time = Tezos.get_now () in
-  let (batch, current_batch_set) = Batch.get_current_batch pair current_time storage.batch_set in
-  let current_batch_set = finalize batch current_time rate current_batch_set in
-  let storage = { storage with batch_set = current_batch_set } in
-  no_op (storage)
+  let batch_set = storage.batch_set in
+  let (batch_opt, batch_set) = Batch.get_current_batch_without_opening pair current_time batch_set in
+  match batch_opt with
+  | Some b -> let batch_set = finalize b current_time rate batch_set in
+              let storage = { storage with batch_set = batch_set } in
+              no_op (storage)
+  | None ->   no_op (storage)
 
 
 let change_fee

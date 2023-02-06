@@ -163,6 +163,16 @@ let finalize_batch
   let (_, ucb) = BatchPriv.update_current_batch_in_set finalized_batch batch_set in
   ucb
 
+let get_current_batch_without_opening
+  (pair: pair)
+  (current_time: timestamp)
+  (batch_set: batch_set) : (t option * batch_set) =
+  let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
+  match Big_map.find_opt current_batch_index batch_set.batches with
+  | None ->  (None, batch_set)
+  | Some cb ->  let (batch, batch_set) = BatchPriv.progress_batch pair cb batch_set current_time in
+                (Some batch, batch_set)
+
 let get_current_batch
   (pair: pair)
   (current_time: timestamp)
