@@ -333,7 +333,7 @@ module Utils = struct
      match (index_found, inv_index_found) with
      | (Some cbi,_) -> cbi
      | (None, Some cbi) -> cbi
-     | (None, None) -> failwith Errors.batch_index_does_not_exist_for_specified_pair
+     | (None, None) -> 0n
 
 
    let update_batch_index
