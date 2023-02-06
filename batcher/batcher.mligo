@@ -113,14 +113,12 @@ let deposit (external_order: external_order) (storage : storage) : result =
      let order : order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubot.is_within_limit order.trader storage.user_batch_ordertypes then
-       let new_orderbook = Big_map.add next_order_number order storage.orderbook in
        let new_ubot = Ubot.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_volumes = Batch.update_volumes order current_batch in
        let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
        let updated_batch_set = { current_batch_set with batches = updated_batches } in
        let updated_storage = {
          storage with batch_set = updated_batch_set;
-         orderbook = new_orderbook;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
        let fee_recipient = storage.fee_recipient in
