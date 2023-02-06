@@ -37,12 +37,12 @@ let f(_:unit) = {
   ];
   rates_current = (Big_map.empty : Storage.Types.rates_current);
   batch_set = {
-    current_batch_indices = (Map.empty : Storage.Types.batch_indices);
+    current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
   };
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Storage.Types.user_batch_ordertypes);
-  fee_in_mutez = 10000n;
+  fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address)
 
