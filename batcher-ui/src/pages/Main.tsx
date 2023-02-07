@@ -13,6 +13,7 @@ import {
   EXACT,
   CLEARED,
   Volumes,
+  swap,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
@@ -33,15 +34,16 @@ import { BeaconWallet } from '@taquito/beacon-wallet';
 const Welcome: React.FC = () => {
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [Tezos] = useState<TezosToolkit>(new TezosToolkit(REACT_APP_TEZOS_NODE_URI));
-  const buyTokenName = 'tzBTC';
-  const buyTokenAddress = REACT_APP_TZBTC_HASH;
-  const buyTokenDecimals = 8;
-  const buyTokenStandard = 'FA1.2 token';
-  const sellTokenName = 'USDT';
-  const sellTokenAddress = REACT_APP_USDT_HASH;
-  const sellTokenDecimals = 6;
-  const sellTokenStandard = 'FA2 token';
-  const tokenPair = buyTokenName + '/' + sellTokenName;
+  const [tokenMap, setTokenMap] = useState<Map<string,swap>>(new Map());
+  const [buyTokenName, setBuyTokenName] = useState<string>('tzBTC');
+  const [buyTokenAddress, setBuyTokenAddress] = useState<string>(REACT_APP_TZBTC_HASH);
+  const [buyTokenDecimals, setBuyTokenDecimals] = useState<number>(8);
+  const [buyTokenStandard, setBuyTokenStandard] = useState<string>('FA1.2 token');
+  const [sellTokenName, setSellTokenName] = useState<string>('USDT');
+  const [sellTokenAddress, setSellTokenAddress] = useState<string>(REACT_APP_USDT_HASH);
+  const [sellTokenDecimals, setSellTokenDecimals] = useState<number>(6);
+  const [sellTokenStandard, setSellTokenStandard] = useState<string>('FA2 token');
+  const [tokenPair, setTokenPair] = useState<string>(buyTokenName + '/' + sellTokenName);
   const buyToken: token = {
     name: buyTokenName,
     address: buyTokenAddress,
@@ -98,7 +100,11 @@ const Welcome: React.FC = () => {
 
   const getCurrentVolume = async (storage: any) => {
     try {
-      const currentBatchNumber = storage.batch_set.current_batch_index;
+     const currentBatchIndices = storage.batch_set.current_batch_indices;
+     const index_map = new Map(Object.keys(currentBatchIndices).map(k => [k, currentBatchIndices[k] as swap]));
+     const currentBatchNumber = index_map.get(tokenPair);
+
+     console.log('current_batch_number', currentBatchNumber);
 
       if (parseInt(currentBatchNumber) === 0) {
         setStatus(BatcherStatus.NONE);
@@ -133,6 +139,14 @@ const Welcome: React.FC = () => {
 
     const fee  = storage.fee_in_mutez;
     setFeeInMutez(fee);
+
+    const valid_swaps = storage.valid_swaps;
+
+    const swap_map = new Map(Object.keys(valid_swaps).map(k => [k, valid_swaps[k]]));
+    console.log('swap_map', swap_map);
+    setTokenMap(swap_map);
+
+    console.log('valid_swaps', valid_swaps);
 
     const userBatcherURI = bigMapsByIdUri + storage.user_batch_ordertypes + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
@@ -410,7 +424,21 @@ const Welcome: React.FC = () => {
         status={status}
         openTime={openTime}
       />
-      <BatcherAction setContent={setContent} />
+      <BatcherAction
+        setContent={setContent}
+        tezos={Tezos}
+        tokenMap={tokenMap}
+        setBuyTokenName={setBuyTokenName}
+        setBuyTokenAddress={setBuyTokenAddress}
+        setBuyTokenDecimals={setBuyTokenDecimals}
+        setBuyTokenStandard={setBuyTokenStandard}
+        setSellTokenName={setSellTokenName}
+        setSellTokenAddress={setSellTokenAddress}
+        setSellTokenDecimals={setSellTokenDecimals}
+        setSellTokenStandard={setSellTokenStandard}
+        tokenPair={tokenPair}
+        setTokenPair={setTokenPair}
+        />
       <div>
         <Row className="batcher-content">
           <Col lg={3} />

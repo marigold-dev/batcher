@@ -196,6 +196,18 @@ export type BatcherInfoProps = {
 
 export type BatcherActionProps = {
   setContent: Dispatch<SetStateAction<ContentType>>;
+  tezos: TezosToolkit;
+  tokenMap: Map<string,swap>;
+  setBuyTokenName: Dispatch<SetStateAction<string>>;
+  setBuyTokenAddress: Dispatch<SetStateAction<string>>;
+  setBuyTokenDecimals: Dispatch<SetStateAction<number>>;
+  setBuyTokenStandard: Dispatch<SetStateAction<string>>;
+  setSellTokenName: Dispatch<SetStateAction<string>>;
+  setSellTokenAddress: Dispatch<SetStateAction<string>>;
+  setSellTokenDecimals: Dispatch<SetStateAction<number>>;
+  setSellTokenStandard: Dispatch<SetStateAction<string>>;
+  tokenPair: string;
+  setTokenPair: Dispatch<SetStateAction<string>>;
 };
 export class aggregate_orders {
   buyside!: number;
@@ -218,10 +230,6 @@ export type BatcherStepperProps = {
   status: string;
 };
 
-export type BatchSet = {
-  batches: number;
-  current_batch_index: string;
-};
 
 export type HoldingsProps = {
   tezos: TezosToolkit;
