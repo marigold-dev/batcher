@@ -36,11 +36,11 @@ const Welcome: React.FC = () => {
   const [Tezos] = useState<TezosToolkit>(new TezosToolkit(REACT_APP_TEZOS_NODE_URI));
   const [tokenMap, setTokenMap] = useState<Map<string,swap>>(new Map());
   const [buyTokenName, setBuyTokenName] = useState<string>('tzBTC');
-  const [buyTokenAddress, setBuyTokenAddress] = useState<string>(REACT_APP_TZBTC_HASH);
+  const [buyTokenAddress, setBuyTokenAddress] = useState<string>("");
   const [buyTokenDecimals, setBuyTokenDecimals] = useState<number>(8);
   const [buyTokenStandard, setBuyTokenStandard] = useState<string>('FA1.2 token');
   const [sellTokenName, setSellTokenName] = useState<string>('USDT');
-  const [sellTokenAddress, setSellTokenAddress] = useState<string>(REACT_APP_USDT_HASH);
+  const [sellTokenAddress, setSellTokenAddress] = useState<string>("");
   const [sellTokenDecimals, setSellTokenDecimals] = useState<number>(6);
   const [sellTokenStandard, setSellTokenStandard] = useState<string>('FA2 token');
   const [tokenPair, setTokenPair] = useState<string>(buyTokenName + '/' + sellTokenName);
@@ -309,7 +309,7 @@ const Welcome: React.FC = () => {
       setRate(scaledRate);
     });
 
-    init(userAddress);
+    init(userAddress, buyTokenAddress, sellTokenAddress);
   };
 
   const getTokenBalance = async () => {

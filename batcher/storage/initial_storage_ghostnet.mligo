@@ -8,6 +8,12 @@ let f(_:unit) = {
       decimals = 8;
       standard = Some "FA1.2 token";
     });
+    (("EURL"),{
+      name = "EURL";
+      address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
+      decimals = 6;
+      standard = Some "FA2 token";
+    });
     (("USDT"),{
       name = "USDT";
       address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
@@ -29,6 +35,24 @@ let f(_:unit) = {
         to = {
           name = "USDT";
           address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
+          decimals = 6;
+          standard = Some "FA2 token";
+        }
+      }
+    );
+    ("tzBTC/EURL", {
+        from = {
+          amount = 1n;
+          token = {
+            name = "tzBTC";
+            address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
+            decimals = 8;
+            standard = Some "FA1.2 token";
+          };
+        };
+        to = {
+          name = "EURL";
+          address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
           decimals = 6;
           standard = Some "FA2 token";
         }
