@@ -55,8 +55,6 @@ export default defineConfig({
     REACT_APP_TEZOS_NODE_URI: 'https://ghostnet.tezos.marigold.dev',
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT19sEwhVU771yjVLRPCRG1jPFxwZuhuCvxZ',
-    REACT_APP_TZBTC_HASH: 'KT1VKdK1ZdSCKqqeCCuuHVLiZL6Ua44EYMhv',
-    REACT_APP_USDT_HASH: 'KT1LY8iGL29e47knBfbgFBFc67EfUVmHetHv',
   },
   metas: [
     {
