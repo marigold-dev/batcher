@@ -54,7 +54,7 @@ export default defineConfig({
     REACT_APP_PATH_TO_BATCHER_LOGO: BATCHER_LOGO,
     REACT_APP_TEZOS_NODE_URI: 'https://limanet.tezos.marigold.dev',
     REACT_APP_TZKT_URI_API: 'https://api.limanet.tzkt.io',
-    REACT_APP_BATCHER_CONTRACT_HASH: 'KT1KS5W5xwSQ32o3VernH6NBSGRt1EkbehjW',
+    REACT_APP_BATCHER_CONTRACT_HASH: 'KT1DQLVnhD3XVbqgxLzJTd9pDpvdJJpqryNo',
   },
   metas: [
     {
