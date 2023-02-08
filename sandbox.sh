@@ -2,7 +2,7 @@
 
 set -e
 
-while getopts u:t:b: flag
+while getopts c:e:k:t:u:b: flag
 do
   case "${flag}" in
     c) CTEZ_address=${OPTARG};;
