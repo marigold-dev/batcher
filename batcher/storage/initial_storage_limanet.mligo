@@ -13,7 +13,7 @@ let f(_:unit) = {
       address = Some(("KT1V1MdS2wr8Skozq65rGXqpipdubyFrq3NK" : address));
       decimals = 6;
       standard = Some "FA2 token";
-    })
+    });
     (("USDT"),{
       name = "USDT";
       address = Some(("KT1XuPsWSD3unSzCwTtDWb7JhjPPja8GfQBr" : address));
