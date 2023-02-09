@@ -14,8 +14,10 @@ do
   esac
 done
 
+
+ARG=""
+
 post_op (){
-  ARG=$1
 
   sleep 5
 
@@ -69,13 +71,17 @@ post_rate_contract () {
   USDT_token="Pair (Pair (Some \"$USDT_address\") 6) (Pair \"USDT\" (Some \"FA2 token\"))"
   timestamp=$(date +%s)
 
-  post_op "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" || true
+  ARG="Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp"
+  post_op|| true
 
-  post_op "Pair (Pair (Pair $round_tzBTC_EURL_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($EURL_token))) $timestamp" || true
+  ARG="Pair (Pair (Pair $round_tzBTC_EURL_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($EURL_token))) $timestamp"
+  post_op || true
 
-  post_op "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($KUSD_token))) $timestamp" || true
+  ARG="Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($KUSD_token))) $timestamp"
+  post_op || true
 
-  post_op "Pair (Pair (Pair $round_tzBTC_CTEZ_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($CTEZ_token))) $timestamp" || true
+  ARG="Pair (Pair (Pair $round_tzBTC_CTEZ_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($CTEZ_token))) $timestamp"
+  post_op || true
 }
 
 while true
