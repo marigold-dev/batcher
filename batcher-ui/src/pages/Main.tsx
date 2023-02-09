@@ -412,7 +412,10 @@ const Welcome: React.FC = () => {
     handleWebsocket();
     updateHoldingsFromStorage();
     persistWallet();
-  }, [userAddress]);
+  }, [userAddress,buyTokenName, sellTokenName]);
+
+
+
 
   return (
     <div>
