@@ -64,9 +64,9 @@ post_rate_contract () {
   round_tzBTC_CTEZ_price=$(echo "scale=0; $xtz_usdt_price * 100000000 * 1.11 / $xtz_tzBTC_price" | bc)
 
   # Compute exchange rate and post this rate to the batcher contract
-  CTEZ_token="Pair (Pair (Some \"$CTEZ_address\") 6) (Pair \"\" (Some \"FA1.2 token\"))"
-  EURL_token="Pair (Pair (Some \"$EURL_address\") 6) (Pair \"tzBTC\" (Some \"FA2 token\"))"
-  KUSD_token="Pair (Pair (Some \"$KUSD_address\") 18) (Pair \"tzBTC\" (Some \"FA1.2 token\"))"
+  CTEZ_token="Pair (Pair (Some \"$CTEZ_address\") 6) (Pair \"cTEZ\" (Some \"FA1.2 token\"))"
+  EURL_token="Pair (Pair (Some \"$EURL_address\") 6) (Pair \"EURL\" (Some \"FA2 token\"))"
+  KUSD_token="Pair (Pair (Some \"$KUSD_address\") 18) (Pair \"kUSD\" (Some \"FA1.2 token\"))"
   tzBTC_token="Pair (Pair (Some \"$tzBTC_address\") 8) (Pair \"tzBTC\" (Some \"FA1.2 token\"))"
   USDT_token="Pair (Pair (Some \"$USDT_address\") 6) (Pair \"USDT\" (Some \"FA2 token\"))"
   timestamp=$(date +%s)
