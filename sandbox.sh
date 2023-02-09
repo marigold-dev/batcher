@@ -14,6 +14,22 @@ do
   esac
 done
 
+post_op (){
+  ARG=$1
+
+  sleep 5
+
+  echo "Post rate to chain"
+  echo $ARG
+
+  octez-client transfer 0 from oracle_account to $batcher_address \
+    --entrypoint post \
+    --arg "$ARG" \
+    --burn-cap 2
+
+
+}
+
 post_rate_contract () {
   quote_data=$(curl --silent https://api.tzkt.io/v1/quotes/last)
 
@@ -53,29 +69,17 @@ post_rate_contract () {
   USDT_token="Pair (Pair (Some \"$USDT_address\") 6) (Pair \"USDT\" (Some \"FA2 token\"))"
   timestamp=$(date +%s)
 
-  octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint post \
-    --arg "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" \
-    --burn-cap 2
+  post_op "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($USDT_token))) $timestamp" || true
 
-  octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint post \
-    --arg "Pair (Pair (Pair $round_tzBTC_EURL_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($EURL_token))) $timestamp" \
-    --burn-cap 2
+  post_op "Pair (Pair (Pair $round_tzBTC_EURL_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($EURL_token))) $timestamp" || true
 
-  octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint post \
-    --arg "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($KUSD_token))) $timestamp" \
-    --burn-cap 2
+  post_op "Pair (Pair (Pair $round_tzBTC_usdt_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($KUSD_token))) $timestamp" || true
 
-  octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint post \
-    --arg "Pair (Pair (Pair $round_tzBTC_CTEZ_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($CTEZ_token))) $timestamp" \
-    --burn-cap 2
+  post_op "Pair (Pair (Pair $round_tzBTC_CTEZ_price 100000000) (Pair (Pair 1 ($tzBTC_token)) ($CTEZ_token))) $timestamp" || true
 }
 
 while true
 do
 	post_rate_contract $batcher_address
-	sleep 120
+	sleep 100
 done
