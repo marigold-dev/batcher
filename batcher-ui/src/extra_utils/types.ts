@@ -183,11 +183,22 @@ export type ExchangeProps = {
   setInversion: Dispatch<SetStateAction<boolean>>;
   tezos: TezosToolkit;
   fee_in_mutez: number;
+  buyTokenName: string;
+  buyTokenAddress: string;
+  buyTokenDecimals: number;
+  buyTokenStandard: string;
+  sellTokenName: string;
+  sellTokenAddress: string;
+  sellTokenDecimals: number;
+  sellTokenStandard: string;
 };
 
 export type BatcherInfoProps = {
+  tokenPair: string;
   buyBalance: TokenBalance;
   sellBalance: TokenBalance;
+  buyTokenName: string;
+  sellTokenName: string;
   inversion: boolean;
   rate: number;
   status: string;

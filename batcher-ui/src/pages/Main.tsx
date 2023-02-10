@@ -44,18 +44,6 @@ const Welcome: React.FC = () => {
   const [sellTokenDecimals, setSellTokenDecimals] = useState<number>(6);
   const [sellTokenStandard, setSellTokenStandard] = useState<string>('FA2 token');
   const [tokenPair, setTokenPair] = useState<string>(buyTokenName + '/' + sellTokenName);
-  const buyToken: token = {
-    name: buyTokenName,
-    address: buyTokenAddress,
-    decimals: buyTokenDecimals,
-    standard: buyTokenStandard,
-  };
-  const sellToken: token = {
-    name: sellTokenName,
-    address: sellTokenAddress,
-    decimals: sellTokenDecimals,
-    standard: sellTokenStandard,
-  };
   const [contractAddress] = useState<string>(REACT_APP_BATCHER_CONTRACT_HASH);
   const chain_api_url = REACT_APP_TZKT_URI_API;
   const contractsService = new ContractsService({
@@ -67,6 +55,18 @@ const Welcome: React.FC = () => {
   const [inversion, setInversion] = useState(true);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { wallet, userAddress } = initialState;
+  const [buyToken, setBuyToken] = useState<token>({
+        name: buyTokenName,
+        address: buyTokenAddress,
+        decimals: buyTokenDecimals,
+        standard: buyTokenStandard,
+      });
+  const [sellToken, setSellToken] = useState<token>({
+        name: sellTokenName,
+        address: sellTokenAddress,
+        decimals: sellTokenDecimals,
+        standard: sellTokenStandard,
+      });
   const [buyBalance, setBuyBalance] = useState({
     token: buyToken,
     balance: 0,
@@ -130,6 +130,7 @@ const Welcome: React.FC = () => {
 
   const updateHoldings = async (storage: any) => {
     if (!userAddress) {
+      console.log('updateHoldings-no-address');
       setSellSideAmount(0);
       setBuySideAmount(0);
       return;
@@ -312,6 +313,35 @@ const Welcome: React.FC = () => {
     init(userAddress, buyTokenAddress, sellTokenAddress);
   };
 
+
+  const updateTokenDetails = async () => {
+
+      setTokenPair(buyTokenName + '/' +  sellTokenName);
+
+      setBuyToken({
+        name: buyTokenName,
+        address: buyTokenAddress,
+        decimals: buyTokenDecimals,
+        standard: buyTokenStandard,
+      });
+      setSellToken({
+        name: sellTokenName,
+        address: sellTokenAddress,
+        decimals: sellTokenDecimals,
+        standard: sellTokenStandard,
+      });
+
+     setBuyBalance({
+       token: buyToken,
+       balance: 0,
+     });
+
+     setSellBalance({
+       token: sellToken,
+       balance: 0,
+     });
+  };
+
   const getTokenBalance = async () => {
     if (userAddress) {
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
@@ -361,6 +391,7 @@ const Welcome: React.FC = () => {
   };
 
   const renderRightContent = (content: ContentType) => {
+    console.log('rendering content');
     switch (content) {
       case ContentType.SWAP:
         return (
@@ -371,6 +402,14 @@ const Welcome: React.FC = () => {
             setInversion={setInversion}
             tezos={Tezos}
             fee_in_mutez={feeInMutez}
+            buyTokenName={buyTokenName}
+            buyTokenAddress={buyTokenAddress}
+            buyTokenDecimals={buyTokenDecimals}
+            buyTokenStandard={buyTokenStandard}
+            sellTokenName={sellTokenName}
+            sellTokenAddress={sellTokenAddress}
+            sellTokenDecimals={sellTokenDecimals}
+            sellTokenStandard={sellTokenStandard}
           />
         );
       case ContentType.VOLUME:
@@ -407,11 +446,13 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     getBatches();
+    updateTokenDetails();
     getTokenBalance();
     getOraclePrice();
     handleWebsocket();
     updateHoldingsFromStorage();
     persistWallet();
+    renderRightContent(content);
   }, [userAddress,buyTokenName, sellTokenName]);
 
 
@@ -420,8 +461,11 @@ const Welcome: React.FC = () => {
   return (
     <div>
       <BatcherInfo
+       tokenPair={tokenPair}
         buyBalance={buyBalance}
         sellBalance={sellBalance}
+        buyTokenName={buyTokenName}
+        sellTokenName={sellTokenName}
         inversion={inversion}
         rate={rate}
         status={status}

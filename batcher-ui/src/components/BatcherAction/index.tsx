@@ -74,7 +74,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
             {
             swaps.map((swap) =>
                 <React.Fragment key={swap}>
-                       <Radio.Button value={swap} onChange={changeTokenPair} >{swap}</Radio.Button>
+                       <Radio.Button className="batcher-nav-btn" value={swap} onChange={changeTokenPair} >{swap}</Radio.Button>
                 </React.Fragment>
             )}
         </>
@@ -134,6 +134,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
                    onClose={onClose}
                    open={open}
                    closable={false}
+                   width="10%"
                   >
                   <Radio.Group defaultValue={tokenPair} buttonStyle="solid">
                    <Space direction="vertical">
