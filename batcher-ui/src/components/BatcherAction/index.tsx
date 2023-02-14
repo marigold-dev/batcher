@@ -1,24 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import '@/components/BatcherAction/index.less';
 import '@/global.less';
-import type { DrawerProps, RadioChangeEvent } from 'antd';
+import type {  RadioChangeEvent } from 'antd';
 import { Button, Col, Space, Row, Typography, Drawer, Radio, } from 'antd';
-import { BatcherActionProps, ContentType, token, swap } from '@/extra_utils/types';
+import { BatcherActionProps, ContentType } from '@/extra_utils/types';
 
 const { Text } = Typography;
 
 const BatcherAction: React.FC<BatcherActionProps> = ({
   setContent,
-  tezos,
   tokenMap,
-  setBuyTokenName,
-  setBuyTokenAddress,
-  setBuyTokenDecimals,
-  setBuyTokenStandard,
-  setSellTokenName,
-  setSellTokenAddress,
-  setSellTokenDecimals,
-  setSellTokenStandard,
+  setBuyToken,
+  setSellToken,
   tokenPair,
   setTokenPair,
   }: BatcherActionProps) => {
@@ -35,9 +28,9 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
 
 
   const getPairs = () => {
-    let swps = [];
+    const swps = [];
      console.log('swap_map', tokenMap);
-     for (let keyvalue of tokenMap)  {
+     for (const keyvalue of tokenMap)  {
          console.log(keyvalue);
          swps.push(keyvalue[0]);
      }
@@ -50,21 +43,13 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
     const pair = e.target.value;
     console.log('pair changed', pair);
     setTokenPair(pair);
-    let swap = tokenMap.get(pair);
+    const swap = tokenMap.get(pair);
     console.log('pair changed to ', swap);
-
-
     // Set Buy Token Details
-    setBuyTokenName(swap.from.token.name);
-    setBuyTokenAddress(swap.from.token.address);
-    setBuyTokenDecimals(swap.from.token.decimals);
-    setBuyTokenStandard(swap.from.token.standard);
+    setBuyToken(swap.from.token);
 
     // Set Sell Token Details
-    setSellTokenName(swap.to.name);
-    setSellTokenAddress(swap.to.address);
-    setSellTokenDecimals(swap.to.decimals);
-    setSellTokenStandard(swap.to.standard);
+    setSellToken(swap.to);
 
  };
 
@@ -87,16 +72,6 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
   useEffect(() => {
     getPairs();
   }, [tokenMap]);
-
-
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    height: 200,
-    padding: 48,
-    overflow: 'hidden',
-    textAlign: 'center',
-  };
-
 
   return (
     <div>

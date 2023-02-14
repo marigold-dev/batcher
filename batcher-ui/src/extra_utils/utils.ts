@@ -1,28 +1,33 @@
+import { StringIterator } from 'lodash';
 import * as types from './types';
 
-export const getTokenAmount = (balances: Array<any>, standardBalance: types.token_balance) => {
+export const getTokenAmount = (balances: any[], standardBalance: number, tokenAddress: string, tokenDecimals: number) => {
+  console.log("getTokenAmount standardBalance", standardBalance);
   const item = balances.find(
-    (item) => item.token.contract.address === standardBalance.token.address,
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    (item) => item.token.contract.address === tokenAddress,
   );
-  return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
+  console.log("getTokenAmount item", item);
+  return item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
 };
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
-  let scale = 10 ** -decimals;
+  const scale = 10 ** -decimals;
   return amount * scale;
 };
 export const scaleAmountUp = (amount: number, decimals: number) => {
-  let scale = 10 ** decimals;
+  const scale = 10 ** decimals;
   return amount * scale;
 };
 
 export const getSocketTokenAmount = (
-  balances: Array<any>,
+  balances: any[],
   userAddress: string,
   standardBalance: types.token_balance,
   tokenAddress: string,
 ) => {
   const item = balances.find(
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     (item) => item.account.address === userAddress && item.token.contract.address === tokenAddress,
   );
   return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
@@ -58,16 +63,16 @@ export const getNetworkType = () => {
 
 export const getEmptyVolumes = () => {
   return {
-    buyMinusVolume: '0',
-    buyExactVolume: '0',
-    buyPlusVolume: '0',
-    sellMinusVolume: '0',
-    sellExactVolume: '0',
-    sellPlusVolume: '0',
+    buy_minus_volume: '0',
+    buy_exact_volume: '0',
+    buy_plus_volume: '0',
+    sell_minus_volume: '0',
+    sell_exact_volume: '0',
+    sell_plus_volume: '0',
   };
 };
 
 export const scaleStringAmountDown = (amount: string, decimals: number) => {
-  let scale = 10 ** -decimals;
+  const scale = 10 ** -decimals;
   return (Number.parseInt(amount) * scale).toString();
 };

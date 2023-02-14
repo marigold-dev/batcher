@@ -18,14 +18,8 @@ const Exchange: React.FC<ExchangeProps> = ({
   setInversion,
   tezos,
   fee_in_mutez,
-  buyTokenName,
-  buyTokenAddress,
-  buyTokenDecimals,
-  buyTokenStandard,
-  sellTokenName,
-  sellTokenAddress,
-  sellTokenDecimals,
-  sellTokenStandard,
+  buyToken,
+  sellToken,
 }: ExchangeProps) => {
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [side, setSide] = useState(SideType.BUY);
@@ -47,16 +41,16 @@ const Exchange: React.FC<ExchangeProps> = ({
       return;
     }
 
-    const tokenName = inversion ? buyTokenName : sellTokenName;
-    const selectedToken = inversion ? buyBalance.token : sellBalance.token;
+    const tokenName = inversion ? buyToken.name : sellToken.name;
+    const selectedToken = inversion ? buyToken : sellToken;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract : WalletContract = await tezos.wallet.at(
-      inversion ? buyTokenAddress : sellTokenAddress, compose(tzip12,tzip16));
+      inversion ? buyToken.address : sellToken.address, compose(tzip12,tzip16));
 
 
     const scaled_amount = inversion
-      ? scaleAmountUp(amount, buyTokenDecimals)
-      : scaleAmountUp(amount, sellTokenDecimals);
+      ? scaleAmountUp(amount, buyToken.decimals)
+      : scaleAmountUp(amount, sellToken.decimals);
 
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
@@ -126,18 +120,18 @@ const Exchange: React.FC<ExchangeProps> = ({
                                               swap: {
                                                 from: {
                                                   token: {
-                                                    name: inversion ? buyTokenName : sellTokenName,
-                                                    address: inversion ? buyTokenAddress : sellTokenAddress,
-                                                    decimals: inversion ? buyTokenDecimals : sellTokenDecimals,
-                                                    standard: inversion ? buyTokenStandard : sellTokenStandard,
+                                                    name: inversion ? buyToken.name : sellToken.name,
+                                                    address: inversion ? buyToken.address : sellToken.address,
+                                                    decimals: inversion ? buyToken.decimals : sellToken.decimals,
+                                                    standard: inversion ? buyToken.standard : sellToken.standard,
                                                   },
                                                   amount: scaled_amount,
                                                 },
                                                 to: {
-                                                  name: inversion ? sellTokenName : buyTokenName,
-                                                  address: inversion ? sellTokenAddress : buyTokenAddress,
-                                                  decimals: inversion ? sellTokenDecimals : buyTokenDecimals,
-                                                  standard: inversion ? sellTokenStandard : buyTokenStandard,
+                                                  name: inversion ? sellToken.name : buyToken.name,
+                                                  address: inversion ? sellToken.address : buyToken.address,
+                                                  decimals: inversion ? sellToken.decimals : buyToken.decimals,
+                                                  standard: inversion ? sellToken.standard : buyToken.standard,
                                                 },
                                               },
                                               created_at: new Date(),
@@ -167,7 +161,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         message.error('Failed to deposit ' + tokenName);
         throw new Error(
           'Failed to deposit ' +
-            (inversion ? buyTokenName : sellTokenName) +
+            (inversion ? buyToken.name : sellToken.name) +
             ' token',
         );
       } else {
@@ -192,7 +186,7 @@ const Exchange: React.FC<ExchangeProps> = ({
               className="batcher-amount mb-0"
               label={
                 <Typography className="batcher-title p-16">
-                  From {inversion ? buyTokenName : sellTokenName}
+                  From {inversion ? buyToken.name : sellToken.name}
                 </Typography>
               }
               name="amount"
@@ -201,9 +195,9 @@ const Exchange: React.FC<ExchangeProps> = ({
                 { pattern: new RegExp(/^[+-]?([0-9]*[.])?[0-9]+$/), message: 'Invalid number' },
                 () => ({
                   validator(_, value) {
-                    if (inversion && Number.parseFloat(value) > buyBalance.balance) {
+                    if (inversion && Number.parseFloat(value) > buyBalance) {
                       return Promise.reject('Greater than the balance');
-                    } else if (!inversion && Number.parseFloat(value) > sellBalance.balance) {
+                    } else if (!inversion && Number.parseFloat(value) > sellBalance) {
                       return Promise.reject('Greater than the balance');
                     }
                     return Promise.resolve();
@@ -270,7 +264,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         />
         <Col className="quote-content grid-padding br-t br-b br-l br-r">
           <Typography className="batcher-title p-16">
-            To {inversion ? sellTokenName : buyTokenName}
+            To {inversion ? sellToken.name : buyToken.name}
           </Typography>
         </Col>
         {userAddress ? (

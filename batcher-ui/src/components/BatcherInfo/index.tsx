@@ -10,6 +10,7 @@ import { parseISO, add, differenceInMinutes } from 'date-fns';
 const { Text } = Typography;
 
 const BatcherInfo: React.FC<BatcherInfoProps> = ({
+  userAddress,
   tokenPair,
   buyBalance,
   sellBalance,
@@ -21,7 +22,6 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   openTime,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
-  const { userAddress } = initialState;
 
   const get_time_difference = () => {
     if (status === BatcherStatus.OPEN && openTime) {
@@ -63,8 +63,8 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
               <Typography className="batcher-title p-16">Balance</Typography>
               <Typography className="batcher-title p-13">
                 {inversion
-                  ? buyBalance.balance + ' ' + buyTokenName
-                  : sellBalance.balance + ' ' + sellTokenName}
+                  ? buyBalance + ' ' + buyTokenName
+                  : sellBalance + ' ' + sellTokenName}
               </Typography>
             </Space>
           </Col>

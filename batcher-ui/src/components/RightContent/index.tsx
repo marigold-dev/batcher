@@ -8,6 +8,7 @@ import { BeaconWallet } from '@taquito/beacon-wallet';
 import { getNetworkType } from '@/extra_utils/utils';
 import '@/components/RightContent/index.less';
 import { connection } from '@/extra_utils/webSocketUtils';
+import { RightContentProps } from '@/extra_utils/types';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -25,14 +26,14 @@ const GlobalHeaderRight: React.FC = () => {
     className = `${styles.right}  ${styles.dark}`;
   }
 
-  const { userAddress } = initialState;
+  const { storedUserAddress } = initialState;
 
   const items: MenuProps['items'] = [
     {
       key: '1',
       label: (
         <Typography className="p-12">
-          {!userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
+          {!storedUserAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
         </Typography>
       ),
     },
@@ -40,13 +41,13 @@ const GlobalHeaderRight: React.FC = () => {
 
   const menuProps = {
     items,
-    onClick: !userAddress ? () => connectWallet() : () => disconnectWallet(),
+    onClick: !storedUserAddress ? () => connectWallet() : () => disconnectWallet(),
   };
 
   const Tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
 
   const connectWallet = async () => {
-    if (!userAddress) {
+    if (!storedUserAddress) {
       const updatedWallet = new BeaconWallet({
         name: 'batcher',
         preferredNetwork: getNetworkType(),
@@ -60,16 +61,16 @@ const GlobalHeaderRight: React.FC = () => {
 
       Tezos.setWalletProvider(updatedWallet);
       const activeAccount = await updatedWallet.client.getActiveAccount();
-      const userAddress = activeAccount ? await updatedWallet.getPKH() : null;
-      setInitialState({ ...initialState, wallet: updatedWallet, userAddress });
-      localStorage.setItem('userAddress', userAddress);
+      const userAddressFromWallet = activeAccount ? await updatedWallet.getPKH() : null;
+      setInitialState({ ...initialState, wallet: updatedWallet, userAddressFromWallet });
+      localStorage.setItem('storedUserAddress', userAddressFromWallet);
     }
   };
 
   const disconnectWallet = async () => {
     await connection.stop();
     setInitialState({ ...initialState, wallet: null, userAddress: null });
-    localStorage.removeItem('userAddress');
+    localStorage.removeItem('storedUserAddress');
   };
 
   const scrollToTop = () => {
@@ -86,10 +87,10 @@ const GlobalHeaderRight: React.FC = () => {
         <Button
           className="batcher-connect-wallet"
           type="primary"
-          onClick={!userAddress ? connectWallet : disconnectWallet}
+          onClick={!storedUserAddress ? connectWallet : disconnectWallet}
           danger
         >
-          {!userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
+          {!storedUserAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
         </Button>
         <div onClick={scrollToTop}>
           <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
