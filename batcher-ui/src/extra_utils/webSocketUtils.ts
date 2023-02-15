@@ -17,6 +17,7 @@ export const init = async (userAddress: string) => {
   });
 
   // Subscription to token balances
+   console.log("CONN userAddress",userAddress);
   await connection.invoke('SubscribeToTokenBalances', {
       account: userAddress,
   });

@@ -8,7 +8,6 @@ import { BeaconWallet } from '@taquito/beacon-wallet';
 import { getNetworkType } from '@/extra_utils/utils';
 import '@/components/RightContent/index.less';
 import { connection } from '@/extra_utils/webSocketUtils';
-import { RightContentProps } from '@/extra_utils/types';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -62,14 +61,15 @@ const GlobalHeaderRight: React.FC = () => {
       Tezos.setWalletProvider(updatedWallet);
       const activeAccount = await updatedWallet.client.getActiveAccount();
       const userAddressFromWallet = activeAccount ? await updatedWallet.getPKH() : null;
-      setInitialState({ ...initialState, wallet: updatedWallet, userAddressFromWallet });
-      localStorage.setItem('storedUserAddress', userAddressFromWallet);
+      setInitialState({ ...initialState, wallet: updatedWallet, storedUserAddress: userAddressFromWallet });
+      console.log("Setting initialState", initialState);
+      //localStorage.setItem('storedUserAddress', userAddressFromWallet);
     }
   };
 
   const disconnectWallet = async () => {
     await connection.stop();
-    setInitialState({ ...initialState, wallet: null, userAddress: null });
+    setInitialState({ ...initialState, wallet: null, storedUserAddress: null });
     localStorage.removeItem('storedUserAddress');
   };
 

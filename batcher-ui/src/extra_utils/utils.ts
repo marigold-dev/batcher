@@ -1,14 +1,14 @@
 import { StringIterator } from 'lodash';
 import * as types from './types';
+import { Dispatch, SetStateAction } from 'react';
 
-export const getTokenAmount = (balances: any[], standardBalance: number, tokenAddress: string, tokenDecimals: number) => {
-  console.log("getTokenAmount standardBalance", standardBalance);
+export const setTokenAmount = (balances: any[], standardBalance: number, tokenAddress: string, tokenDecimals: number, setBalance: Dispatch<SetStateAction<number>>) => {
   const item = balances.find(
     // eslint-disable-next-line @typescript-eslint/no-shadow
     (item) => item.token.contract.address === tokenAddress,
   );
-  console.log("getTokenAmount item", item);
-  return item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
+  const tokAmount = item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
+  setBalance(tokAmount);
 };
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
@@ -20,17 +20,18 @@ export const scaleAmountUp = (amount: number, decimals: number) => {
   return amount * scale;
 };
 
-export const getSocketTokenAmount = (
+export const setSocketTokenAmount = (
   balances: any[],
   userAddress: string,
-  standardBalance: types.token_balance,
-  tokenAddress: string,
+  token: types.token,
+  setBalance: Dispatch<SetStateAction<number>>,
 ) => {
   const item = balances.find(
     // eslint-disable-next-line @typescript-eslint/no-shadow
-    (item) => item.account.address === userAddress && item.token.contract.address === tokenAddress,
+    (item) => item.account.address === userAddress && item.token.contract.address === token.address,
   );
-  return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
+  const tokAmount = item ? parseInt(item.balance) / 10 ** token.decimals : 0;
+  setBalance(tokAmount);
 };
 
 export const getErrorMess = (error: unknown) => {
@@ -73,6 +74,12 @@ export const getEmptyVolumes = () => {
 };
 
 export const scaleStringAmountDown = (amount: string, decimals: number) => {
-  const scale = 10 ** -decimals;
-  return (Number.parseInt(amount) * scale).toString();
+  if(!amount){
+    console.error("scaleStringAmountDown - amount is undefined", amount)
+    return '0';
+  } else {
+    const scale = 10 ** -decimals;
+    return (Number.parseInt(amount) * scale).toString();
+  }
 };
+

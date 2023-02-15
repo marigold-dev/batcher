@@ -14,7 +14,6 @@ import {
   CLEARED,
   Volumes,
   swap,
-  MainProps
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
@@ -23,7 +22,8 @@ import { useModel } from 'umi';
 import {
   getEmptyVolumes,
   getNetworkType,
-  getTokenAmount,
+  setTokenAmount,
+  setSocketTokenAmount,
   scaleStringAmountDown,
 } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
@@ -49,17 +49,17 @@ const Welcome: React.FC = () => {
   const [inversion, setInversion] = useState(true);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { wallet, storedUserAddress } = initialState;
-  const [userAddress, setUserAddress] = useState<string>('');
+  const [userAddress, setUsrAddress] = useState<string>(undefined);
 
   const [buyToken, setBuyToken] = useState<token>({
         name: 'tzBTC',
-        address: '',
+        address: undefined,
         decimals: 8,
         standard: 'FA1.2 token',
       });
   const [sellToken, setSellToken] = useState<token>({
         name: 'USDT',
-        address: '',
+        address: undefined,
         decimals: 6,
         standard: 'FA2 token',
       });
@@ -73,7 +73,7 @@ const Welcome: React.FC = () => {
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
   const [feeInMutez, setFeeInMutez] = useState<number>(0);
-  const [volumes, setVolumes] = useState<Volumes>();
+  const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
 
   const pullStorage = async () => {
     const storage = await contractsService.getStorage({
@@ -97,7 +97,6 @@ const Welcome: React.FC = () => {
   };
 
 
-  
   const getCurrentVolume = async (storage: any) => {
     try {
      const currentBatchIndices = storage.batch_set.current_batch_indices;
@@ -122,42 +121,38 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
-        const scaledVolumes: Volumes = scaleVolumeDown(jsonData.value.volumes);
+        const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
         setVolumes(scaledVolumes);
       }
     } catch (error) {
-      console.log('Unable to get current volume', error);
+      console.error('Unable to get current volume', error);
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-shadow
   const setFee = async (storage: any) => {
     try{
-    console.log('storage', storage);
     const fee  = storage.fee_in_mutez;
     setFeeInMutez(fee);
     } catch (error) {
-      console.log('Unable to set fee', error);
+      console.error('Unable to set fee', error);
     }
   };
 
 
    const updateSwapMap = async (storage: any) => {
    try{
-    console.log('storage', storage);
     const valid_swaps = storage.valid_swaps;
     const swap_map = new Map(Object.keys(valid_swaps).map(k => [k, valid_swaps[k]]));
-    console.log('swap_map', swap_map);
     setTokenMap(swap_map);
     } catch (error) {
-      console.log('Unable to update swap map', error);
+      console.error('Unable to update swap map', error);
     }
    };
 
   const updateHoldings = async (storage: any) => {
     try{
     if (!userAddress) {
-      console.log('updateHoldings-no-address');
       setSellSideAmount(0);
       setBuySideAmount(0);
       return;
@@ -250,7 +245,7 @@ const Welcome: React.FC = () => {
     setSellSideAmount(initialSellSideAmount);
     setBuySideAmount(initialBuySideAmount);
     } catch (error) {
-      console.log('Unable to update holdings', error);
+      console.error('Unable to update holdings', error);
     }
   };
 
@@ -259,42 +254,30 @@ const Welcome: React.FC = () => {
     await getCurrentVolume(storage);
   };
 
-  // const updateTokenBalances = (tokenBalances: any) => {
-  //     try{
-  //   console.log('tokenbalances', tokenBalances);
-  //   console.log('buyBalance', buyBalance);
-  //   console.log('buyTokenAddress', buyTokenAddress);
-  //     const updatedBuyBalance = getSocketTokenAmount(
-  //       tokenBalances,
-  //       userAddress,
-  //       buyBalance,
-  //       buyTokenAddress,
-  //     );
-  //     if (updatedBuyBalance !== 0) {
-  //       setBuyBalance({
-  //         ...buyBalance,
-  //         balance: updatedBuyBalance,
-  //       });
-  //     }
-  //
-  //     const updatedSellBalance = getSocketTokenAmount(
-  //       tokenBalances,
-  //       userAddress,
-  //       sellBalance,
-  //       sellTokenAddress,
-  //     );
-  //     if (updatedSellBalance !== 0) {
-  //       setSellBalance({
-  //         ...sellBalance,
-  //         balance: updatedSellBalance,
-  //       });
-  //     }
-  //
-  //   } catch (error) {
-  //     console.log('Unable to update token balances', error);
-  //   }
-  // };
-  //
+   const updateTokenBalances = (tokenBalances: any) => {
+       try{
+     console.log('tokenbalances', tokenBalances);
+      setSocketTokenAmount(
+         tokenBalances,
+         userAddress,
+         buyToken,
+         setBuyBalance,
+       );
+     console.log('updateBuyBalance', buyBalance);
+
+       setSocketTokenAmount(
+         tokenBalances,
+         userAddress,
+         sellToken,
+         setSellBalance,
+       );
+     console.log('updateSellBalance', sellBalance);
+
+     } catch (error) {
+       console.error('Unable to update token balances', error);
+     }
+   };
+
 
   const updateRate= (bigmaps: any) => {
      try{
@@ -306,7 +289,7 @@ const Welcome: React.FC = () => {
       const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
       setRate(scaledRate);
     } catch (error) {
-      console.log('Unable to update rate', error);
+      console.error('Unable to update rate', error);
     }
 
   };
@@ -321,10 +304,8 @@ const Welcome: React.FC = () => {
       const token_map = new Map(Object.keys(valid_tokens).map(k => [k, valid_tokens[k]]));
 
       const buyTokenData = token_map.get(buyToken.name);
-      console.log("buyTokenData",buyTokenData);
        console.log("buyTokenAddress",buyToken.address);
       const sellTokenData = token_map.get(sellToken.name);
-       console.log("sellTokenData",sellTokenData);
        console.log("sellTokenAddress",sellToken.address);
 
       const bToken : token = {
@@ -340,27 +321,15 @@ const Welcome: React.FC = () => {
         standard: sellTokenData.standard,
       };
 
-      console.log("bToken",bToken);
-      console.log("sToken",sToken);
 
-      setBuyToken(bToken);
-      setSellToken(sToken);
+      if(buyToken != bToken)
+        setBuyToken(bToken);
 
-     setBuyBalance(0);
-
-     setSellBalance(0);
-
-       console.log("bToken",bToken);
-       console.log("sToken",sToken);
-       console.log("##-## Buy Token",buyToken);
-       console.log("##-## Sell Token",sellToken);
-       console.log("##-## Buy Token Balance",buyBalance);
-       console.log("##-## Sell Token Balance ",sellBalance);
-
-
+      if(sellToken != sToken)
+        setSellToken(sToken);
 
     } catch (error) {
-      console.log('Unable to update token details', error);
+      console.error('Unable to update token details', error);
     }
   };
 
@@ -386,14 +355,13 @@ const Welcome: React.FC = () => {
 
   const persistWallet = () => {
     if (!userAddress) {
-      const restoredUserAddress = localStorage.getItem('userAddress');
       // eslint-disable-next-line @typescript-eslint/no-shadow
       const wallet = new BeaconWallet({
         name: 'batcher',
         preferredNetwork: getNetworkType(),
       });
       Tezos.setWalletProvider(wallet);
-      setInitialState({...initialState, wallet: wallet, userAddress: restoredUserAddress}).then(r => console.log(r));
+      setInitialState({...initialState, wallet: wallet, storedUserAddress: userAddress}).then(r => console.log(r));
     } else {
       Tezos.setWalletProvider(wallet);
     }
@@ -456,30 +424,29 @@ const Welcome: React.FC = () => {
      setUserBatchOrderTypesBigMapId(storage.user_batch_ordertypes);
      setBatchesBigMapId(storage.batch_set.batches);
     } catch (error) {
-      console.log('Unable to update bigmap ids', error);
+      console.error('Unable to update bigmap ids', error);
     }
 
   };
+
   const getTokenBalance = async () => {
-    try {
+    try{
+      console.log('getTokenBalance-userAddress',userAddress);
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
-      const data = await fetch(balanceURI, { method: 'GET', mode: 'no-cors' });
-      const balance = await data.json();
-      console.log('getTokenBalance balance', balance);
+      console.log('getTokenBalance-balanceURI',balanceURI);
+      const data = await fetch(balanceURI, { method: 'GET' });
+      await data.json().then(balance => {
       if (Array.isArray(balance)) {
-        console.log('buyBalance', buyBalance);
-        console.log('sellBalance', sellBalance);
-        const baseAmount = getTokenAmount(balance, buyBalance, buyToken.address);
-        const quoteAmount = getTokenAmount(balance, sellBalance, sellToken.address);
-        setBuyBalance(baseAmount);
-        setSellBalance(quoteAmount);
+        setTokenAmount(balance, buyBalance, buyToken.address, buyToken.decimals, setBuyBalance);
+        setTokenAmount(balance, sellBalance, sellToken.address, sellToken.decimals, setSellBalance);
       }
+      });
     } catch (error) {
+      console.error('getTokenBalance-error',error);
       if(!userAddress) {
       setBuyBalance(0);
       setSellBalance(0);
       } else {
-      console.error('getTokenBalance',error);
       setBuyBalance(-1);
       setSellBalance(-1);
       }
@@ -488,39 +455,33 @@ const Welcome: React.FC = () => {
 
   const updateFromStorage = async (storage: any) => {
     updateBigMapIds(storage);
+    await updateTokenDetails(storage);
     await getBatches(storage);
     await updateSwapMap(storage);
-    await updateTokenDetails(storage);
     await setFee(storage);
     await getOraclePrice();
     await getTokenBalance();
     await updateHoldings(storage);
     await getCurrentVolume(storage);
     persistWallet();
-    // renderRightContent(content);
 
   };
 
 
   const handleWebsocket = () => {
-    console.log('########  Handle WebSocket');
     connection.on('token_balances', (msg: any) => {
       if (!msg.data) return;
-      console.log('WS:token_balances ##############################################', msg);
-      if (!userAddress) return;
-    //  updateTokenBalances(msg.data);
+      updateTokenBalances(msg.data);
     });
 
     // This is the place handling operations and storages
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
       if (!msg.data[0].storage) return;
-      console.log('WS:operations', msg.data[0]);
       updateFromStorage(msg.data[0].storage).then(r => console.log(r));
     });
 
     connection.on('bigmaps', (msg: any) => {
-      console.log('WS:bigmaps', msg);
       if (!msg.data) return;
 
       const bigmapsdata = msg.data[0];
@@ -530,7 +491,10 @@ const Welcome: React.FC = () => {
       }
     });
 
+   if (userAddress) {
     init(userAddress).then(r => console.log(r));
+    }
+
   };
 
   const refreshStorage = async () => {
@@ -544,18 +508,17 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     refreshStorage().then(r => console.log(r));
-  }, [userAddress,buyToken.name, sellToken.name]);
-
-  const loadUserAddress = async () => {
-    
-      const uadd = localStorage.getItem('storedUserAddress');
-      setUserAddress(uadd);
-  };
+  }, [buyToken.address, sellToken.address]);
 
   useEffect(() => {
-    loadUserAddress().then(r => console.log(r));
-  }, [storedUserAddress]);
+    console.log("User address changed - refreshing from storage")
+    refreshStorage().then(r => console.log(r));
+  }, [userAddress]);
 
+  useEffect(() => {
+     if(userAddress != storedUserAddress)
+        setUsrAddress(storedUserAddress);
+  }, [storedUserAddress]);
 
 
   return (
