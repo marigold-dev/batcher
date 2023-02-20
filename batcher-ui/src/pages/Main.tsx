@@ -374,6 +374,7 @@ const Welcome: React.FC = () => {
       case ContentType.SWAP:
         return (
           <Exchange
+            userAddress={userAddress}
             buyBalance={buyBalance}
             sellBalance={sellBalance}
             inversion={inversion}
@@ -405,6 +406,7 @@ const Welcome: React.FC = () => {
       default:
         return (
           <Exchange
+            userAddress={userAddress}
             buyBalance={buyBalance}
             sellBalance={sellBalance}
             inversion={inversion}

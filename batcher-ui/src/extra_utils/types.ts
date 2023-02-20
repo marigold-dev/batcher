@@ -173,6 +173,7 @@ export type OrderBookProps = {
 
 
 export type ExchangeProps = {
+  userAddress: string;
   buyBalance: number;
   sellBalance: number;
   inversion: boolean;
