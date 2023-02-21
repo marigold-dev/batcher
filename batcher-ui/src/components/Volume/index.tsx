@@ -10,16 +10,16 @@ const Volume: React.FC<VolumeProps> = ({ volumes, buyToken, sellToken }: VolumeP
 
   const sellVolumes = [
     {
-      sellMinusVolume: volumes.sellMinusVolume,
-      sellExactVolume: volumes.sellExactVolume,
-      sellPlusVolume: volumes.sellPlusVolume,
+      sellMinusVolume: volumes.sell_minus_volume,
+      sellExactVolume: volumes.sell_exact_volume,
+      sellPlusVolume: volumes.sell_plus_volume,
     },
   ];
   const buyVolumes = [
     {
-      buyMinusVolume: volumes.buyMinusVolume,
-      buyExactVolume: volumes.buyExactVolume,
-      buyPlusVolume: volumes.buyPlusVolume,
+      buyMinusVolume: volumes.buy_minus_volume,
+      buyExactVolume: volumes.buy_exact_volume,
+      buyPlusVolume: volumes.buy_plus_volume,
     },
   ];
 

@@ -155,11 +155,13 @@ module Types = struct
     pair : pair;
   }
 
+  type batch_indices = (string,  nat) map
+
   (* Set of batches, containing the current batch and the previous (finalized) batches.
      The current batch can be open for deposits, closed for deposits (awaiting clearing) or
      finalized, as we wait for a new deposit to start a new batch *)
   type batch_set = {
-    current_batch_index: nat;
+    current_batch_indices: batch_indices;
     batches: (nat, batch) big_map;
     }
 end
@@ -297,17 +299,6 @@ module Utils = struct
     (token_holding : Types.token_holding) : Types.token_holding =
     { token_holding with holder = new_holder}
 
-  let check_token_equality
-    (this : Types.token_amount)
-    (that : Types.token_amount) : Types.token_amount =
-    if this.token.name = that.token.name then
-      if this.token.address = that.token.address then
-        that
-      else
-        (failwith Errors.tokens_do_not_match : Types.token_amount )
-    else
-      (failwith Errors.tokens_do_not_match : Types.token_amount )
-
 
   (* Converts a token_amount to a token holding by assigning a holder address *)
   let token_amount_to_token_holding
@@ -320,7 +311,60 @@ module Utils = struct
       redeemed = redeemed;
     }
 
+   let get_rate_names
+     (pair: Types.pair): (string * string) =
+     let rate_name = get_rate_name_from_pair pair in
+     let inverse_rate_name = get_inverse_rate_name_from_pair pair in
+     (rate_name, inverse_rate_name)
 
+   let search_batches
+     (rate_name: string)
+     (inverse_rate_name: string)
+     (batch_indices: Types.batch_indices): (nat option * nat option) =
+     let index_found =  Map.find_opt rate_name batch_indices in
+     let inv_index_found =  Map.find_opt inverse_rate_name batch_indices in
+     (index_found, inv_index_found)
+
+   let get_current_batch_index
+     (pair: Types.pair)
+     (batch_indices: Types.batch_indices): nat =
+     let (rate_name, inverse_rate_name) : string * string = get_rate_names pair in
+     let (index_found, inv_index_found) : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
+     match (index_found, inv_index_found) with
+     | (Some cbi,_) -> cbi
+     | (None, Some cbi) -> cbi
+     | (None, None) -> 0n
+
+
+   let update_batch_index
+     (name:string)
+     (index: nat)
+     (batch_indices:  Types.batch_indices) : Types.batch_indices =
+     if Map.mem name batch_indices then
+       Map.update name (Some index) batch_indices
+     else
+       Map.add name index batch_indices
+
+
+   let set_current_batch_index
+     (index: nat)
+     (swap: Types.swap)
+     (batch_indices: Types.batch_indices): Types.batch_indices =
+     let (rate_name, inverse_rate_name) : string * string = get_rate_names (swap.from.token, swap.to) in
+     let (index_found, inv_index_found) : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
+     match (index_found, inv_index_found) with
+     | (Some _,_) -> update_batch_index rate_name index batch_indices
+     | (None, Some _) -> update_batch_index inverse_rate_name index batch_indices
+     | (None, None) -> update_batch_index rate_name index batch_indices
+
+  let get_highest_batch_index
+    (batch_indices: Types.batch_indices) : nat =
+    let return_highest (acc, (_s, i) :  nat * (string * nat)) : nat = if i > acc then
+                                                                        i
+                                                                      else
+                                                                        acc
+    in
+    Map.fold return_highest batch_indices 0n
 
 end
 

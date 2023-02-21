@@ -4,13 +4,19 @@ let f(_:unit) = {
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
-      address = Some(("KT1VKdK1ZdSCKqqeCCuuHVLiZL6Ua44EYMhv" : address));
+      address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
       decimals = 8;
       standard = Some "FA1.2 token";
     });
+    (("EURL"),{
+      name = "EURL";
+      address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
+      decimals = 6;
+      standard = Some "FA2 token";
+    });
     (("USDT"),{
       name = "USDT";
-      address = Some(("KT1LY8iGL29e47knBfbgFBFc67EfUVmHetHv" : address));
+      address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
       decimals = 6;
       standard = Some "FA2 token";
     })
@@ -21,14 +27,32 @@ let f(_:unit) = {
           amount = 1n;
           token = {
             name = "tzBTC";
-            address = Some(("KT1VKdK1ZdSCKqqeCCuuHVLiZL6Ua44EYMhv" : address));
+            address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
             decimals = 8;
             standard = Some "FA1.2 token";
           };
         };
         to = {
           name = "USDT";
-          address = Some(("KT1LY8iGL29e47knBfbgFBFc67EfUVmHetHv" : address));
+          address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
+          decimals = 6;
+          standard = Some "FA2 token";
+        }
+      }
+    );
+    ("tzBTC/EURL", {
+        from = {
+          amount = 1n;
+          token = {
+            name = "tzBTC";
+            address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
+            decimals = 8;
+            standard = Some "FA1.2 token";
+          };
+        };
+        to = {
+          name = "EURL";
+          address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
           decimals = 6;
           standard = Some "FA2 token";
         }
@@ -37,10 +61,9 @@ let f(_:unit) = {
   ];
   rates_current = (Big_map.empty : Storage.Types.rates_current);
   batch_set = {
-    current_batch_index = 0n;
+    current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
   };
-  orderbook = (Big_map.empty : Storage.Types.orderbook);
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Storage.Types.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;

@@ -1,4 +1,5 @@
 import Footer from '@/components/Footer';
+import React, { useState, useEffect } from 'react';
 import RightContent from '@/components/RightContent';
 import { PageLoading } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from 'umi';
@@ -16,7 +17,7 @@ export const initialStateConfig = {
 export async function getInitialState(): Promise<any> {
   return {
     wallet: null,
-    userAddress: null,
+    storedUserAddress: null,
     settings: defaultSettings,
   };
 }

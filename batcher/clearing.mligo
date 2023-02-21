@@ -4,7 +4,6 @@
 #import "storage.mligo" "CommonStorage"
 #import "prices.mligo" "Pricing"
 #import "math.mligo" "Math"
-#import "orderbook.mligo" "Order"
 #import "../math_lib/lib/rational.mligo" "Rational"
 
 type storage  = CommonStorage.Types.t
@@ -14,8 +13,6 @@ type clearing = CommonTypes.Types.clearing
 type exchange_rate = CommonTypes.Types.exchange_rate
 type order = CommonTypes.Types.swap_order
 type volumes = CommonTypes.Types.volumes
-
-type orderbook = Order.t
 
 type orders = order list
 type buy_side = CommonTypes.Types.buy_side

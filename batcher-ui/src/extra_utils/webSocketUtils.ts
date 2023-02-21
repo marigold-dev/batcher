@@ -1,25 +1,25 @@
 // Tzkt Websocket
 import { HubConnectionBuilder } from '@microsoft/signalr';
-
 export const connection = new HubConnectionBuilder()
   .withUrl(REACT_APP_TZKT_URI_API + '/v1/ws')
   .build();
 
 export const init = async (userAddress: string) => {
-  await connection.stop();
+  try{
+   await connection.stop();
+   console.log("CONN state",connection.state);
 
   await connection.start();
 
-  // Subscription to tzBTC contract
-  await connection.invoke('SubscribeToTokenBalances', {
-    account: userAddress,
-    contract: REACT_APP_TZBTC_HASH,
+  // Subscription to Batcher oracle rates
+  await connection.invoke('SubscribeToBigMaps', {
+    contract: REACT_APP_BATCHER_CONTRACT_HASH,
   });
 
-  // Subscription to USDT contract
+  // Subscription to token balances
+   console.log("CONN userAddress",userAddress);
   await connection.invoke('SubscribeToTokenBalances', {
-    account: userAddress,
-    contract: REACT_APP_USDT_HASH,
+      account: userAddress,
   });
 
   // Subscription to Batcher operations
@@ -27,9 +27,9 @@ export const init = async (userAddress: string) => {
     address: REACT_APP_BATCHER_CONTRACT_HASH,
     types: 'transaction',
   });
+    console.log('CONNECTION', connection);
+    } catch (error) {
+      console.error('Unable to init connection', error);
+    }
 
-  // Subscription to Batcher oracle rates
-  await connection.invoke('SubscribeToBigMaps', {
-    contract: REACT_APP_BATCHER_CONTRACT_HASH,
-  });
 };

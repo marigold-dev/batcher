@@ -5,9 +5,10 @@
 #import "prices.mligo" "Pricing"
 #import "clearing.mligo" "Clearing"
 #import "math.mligo" "Math"
+#import "tokens.mligo" "Tokens"
 #import "userbatchordertypes.mligo" "Ubot"
 #import "batch.mligo" "Batch"
-#import "orderbook.mligo" "Orderbook"
+#import "tokens.mligo" "Tokens"
 #import "errors.mligo" "Errors"
 #import "../math_lib/lib/rational.mligo" "Rational"
 
@@ -33,48 +34,16 @@ type entrypoint =
   | Deposit of external_order
   | Post of rate
   | Redeem
-  | Change_fee of tez
-  | Change_admin_address of address
-
+  | ChangeFee of tez
+  | ChangeAdminAddress of address
+  | Add_token_swap_pair of swap
+  | Remove_token_swap_pair of swap
 
 let is_administrator
   (storage : storage) : unit =
   assert_with_error
    (Tezos.get_sender () = storage.administrator)
    (failwith Errors.sender_not_administrator)
-
-
-let are_equivalent_tokens
-  (given: token)
-  (test: token) : bool =
-    given.name = test.name &&
-    given.address = test.address &&
-    given.decimals = test.decimals &&
-    given.standard = test.standard
-
- let is_valid_swap_pair
-  (side: side)
-  (swap: swap)
-  (valid_swaps: valid_swaps): swap =
-  let token_pair = Types.Utils.pair_of_swap side swap in
-  let rate_name = Types.Utils.get_rate_name_from_pair token_pair in
-  if Map.mem rate_name valid_swaps then swap else failwith Errors.unsupported_swap_type
-
-let validate
-  (side: side)
-  (swap: swap)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): swap =
-  let from = swap.from.token in
-  let to = swap.to in
-  match Map.find_opt from.name valid_tokens with
-  | None ->  failwith Errors.unsupported_swap_type
-  | Some ft -> (match Map.find_opt to.name valid_tokens with
-                | None -> failwith Errors.unsupported_swap_type
-                | Some tt -> if (are_equivalent_tokens from ft) && (are_equivalent_tokens to tt) then
-                              is_valid_swap_pair side swap valid_swaps
-                            else
-                              failwith Errors.unsupported_swap_type)
 
 let invert_rate_for_clearing
   (rate : rate) : rate  =
@@ -122,7 +91,7 @@ let external_to_order
       tolerance = tolerance;
       redeemed = false;
     } in
-  let validated_swap = validate side order.swap valid_tokens valid_swaps in
+  let validated_swap = Tokens.validate side order.swap valid_tokens valid_swaps in
   { converted_order with swap = validated_swap; }
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
@@ -143,14 +112,12 @@ let deposit (external_order: external_order) (storage : storage) : result =
      let order : order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubot.is_within_limit order.trader storage.user_batch_ordertypes then
-       let new_orderbook = Big_map.add next_order_number order storage.orderbook in
        let new_ubot = Ubot.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_volumes = Batch.update_volumes order current_batch in
        let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
        let updated_batch_set = { current_batch_set with batches = updated_batches } in
        let updated_storage = {
          storage with batch_set = updated_batch_set;
-         orderbook = new_orderbook;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
        let fee_recipient = storage.fee_recipient in
@@ -170,15 +137,18 @@ let redeem
 
 (* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
 let post_rate (rate : rate) (storage : storage) : result =
-  let validated_swap = validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
+  let validated_swap = Tokens.validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
   let rate  = { rate with swap = validated_swap; } in
   let storage = Pricing.Rates.post_rate rate storage in
   let pair = Types.Utils.pair_of_rate rate in
   let current_time = Tezos.get_now () in
-  let (batch, current_batch_set) = Batch.get_current_batch pair current_time storage.batch_set in
-  let current_batch_set = finalize batch current_time rate current_batch_set in
-  let storage = { storage with batch_set = current_batch_set } in
-  no_op (storage)
+  let batch_set = storage.batch_set in
+  let (batch_opt, batch_set) = Batch.get_current_batch_without_opening pair current_time batch_set in
+  match batch_opt with
+  | Some b -> let batch_set = finalize b current_time rate batch_set in
+              let storage = { storage with batch_set = batch_set } in
+              no_op (storage)
+  | None ->   no_op (storage)
 
 
 let change_fee
@@ -196,13 +166,32 @@ let change_admin_address
     no_op (storage)
 
 
+let add_token_swap_pair
+  (swap: swap)
+  (storage: storage) : result =
+   let () = is_administrator storage in
+   let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
+   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
+   no_op (storage)
+
+let remove_token_swap_pair
+  (swap: swap)
+  (storage: storage) : result =
+   let () = is_administrator storage in
+   let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
+   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
+   no_op (storage)
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
-   | Change_fee new_fee -> change_fee new_fee storage
-   | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | ChangeFee new_fee -> change_fee new_fee storage
+   | ChangeAdminAddress new_admin_address -> change_admin_address new_admin_address storage
+   | Add_token_swap_pair swap -> add_token_swap_pair swap storage
+   | Remove_token_swap_pair token -> remove_token_swap_pair token storage
+
 
 

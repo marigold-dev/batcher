@@ -11,4 +11,4 @@ WORKDIR /etc/run
 
 COPY ./sandbox.sh /etc/run/
 
-CMD [ "/etc/run/sandbox.sh", "-u", "KT1KK8MyohuuxXDEDuhTqJBUQbxVKJ6PG1Em", "-t", "KT1HiU7EVWwxTFWK4C2DeiwiFYB9GLBDNkP2", "-b", "KT1P6AfnUxdSF4QWaQa2fXdWLZKDAfFCqf6Y" ]
+CMD [ "/etc/run/sandbox.sh","-c","KT1VXDi3hHu5bygz5Bq7n9kkRf2gpH74MC83","-e","KT1V1MdS2wr8Skozq65rGXqpipdubyFrq3NK","-k","KT1GWTLLWjRYLyHoBoX1yXBiuHvoqfbgarQV", "-t", "KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP", "-u", "KT1XuPsWSD3unSzCwTtDWb7JhjPPja8GfQBr", "-b", "KT1H8myUy1mVahUZcDXLHuP4ggsG5dt2BWHZ" ]

@@ -171,23 +171,26 @@ export type OrderBookProps = {
   sellToken: token;
 };
 
-type TokenBalance = {
-  token: token;
-  balance: number;
-};
 
 export type ExchangeProps = {
-  buyBalance: TokenBalance;
-  sellBalance: TokenBalance;
+  userAddress: string;
+  buyBalance: number;
+  sellBalance: number;
   inversion: boolean;
   setInversion: Dispatch<SetStateAction<boolean>>;
   tezos: TezosToolkit;
   fee_in_mutez: number;
+  buyToken: token;
+  sellToken: token;
 };
 
 export type BatcherInfoProps = {
-  buyBalance: TokenBalance;
-  sellBalance: TokenBalance;
+  userAddress: string;
+  tokenPair: string;
+  buyBalance: number;
+  sellBalance: number;
+  buyTokenName: string;
+  sellTokenName: string;
   inversion: boolean;
   rate: number;
   status: string;
@@ -196,6 +199,11 @@ export type BatcherInfoProps = {
 
 export type BatcherActionProps = {
   setContent: Dispatch<SetStateAction<ContentType>>;
+  tokenMap: Map<string,swap>;
+  setBuyToken: Dispatch<SetStateAction<token>>;
+  setSellToken: Dispatch<SetStateAction<token>>;
+  tokenPair: string;
+  setTokenPair: Dispatch<SetStateAction<string>>;
 };
 export class aggregate_orders {
   buyside!: number;
@@ -218,10 +226,6 @@ export type BatcherStepperProps = {
   status: string;
 };
 
-export type BatchSet = {
-  batches: number;
-  current_batch_index: string;
-};
 
 export type HoldingsProps = {
   tezos: TezosToolkit;
@@ -235,13 +239,14 @@ export type HoldingsProps = {
   setSellSideAmount: Dispatch<SetStateAction<number>>;
 };
 
+
 export type Volumes = {
-  buyMinusVolume: string;
-  buyExactVolume: string;
-  buyPlusVolume: string;
-  sellMinusVolume: string;
-  sellExactVolume: string;
-  sellPlusVolume: string;
+  buy_minus_volume: string;
+  buy_exact_volume: string;
+  buy_plus_volume: string;
+  sell_minus_volume: string;
+  sell_exact_volume: string;
+  sell_plus_volume: string;
 };
 
 export type VolumeProps = {
