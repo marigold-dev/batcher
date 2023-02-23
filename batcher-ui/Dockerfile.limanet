@@ -11,7 +11,6 @@ COPY ./src ./src
 COPY ./public ./public
 COPY ./img ./img
 COPY ./config ./config
-COPY ./.env.limanet ./.env.limanet
 
 RUN npm run build:limanet-ci
 
