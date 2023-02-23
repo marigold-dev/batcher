@@ -5,3 +5,4 @@ let concat (type a) (left: a list) (right: a list) : a list =
 (** [rev list] should return the same list reversed. *)
 let rev (type a) (list: a list) : a list =
   List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
+

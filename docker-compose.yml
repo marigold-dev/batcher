@@ -7,9 +7,9 @@ services:
       context: .
       dockerfile: Dockerfile.price.ghostnet
     restart: always
-  batcher-price-kathmandunet:
-    container_name: price-kathmandunet
+  batcher-price-limanet:
+    container_name: price-limanet
     build:
       context: .
-      dockerfile: Dockerfile.price.kathmandunet
+      dockerfile: Dockerfile.price.limanet
     restart: always

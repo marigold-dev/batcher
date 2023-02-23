@@ -1,29 +1,37 @@
+import { StringIterator } from 'lodash';
 import * as types from './types';
+import { Dispatch, SetStateAction } from 'react';
 
-export const getTokenAmount = (balances: Array<any>, standardBalance: types.token_balance) => {
+export const setTokenAmount = (balances: any[], standardBalance: number, tokenAddress: string, tokenDecimals: number, setBalance: Dispatch<SetStateAction<number>>) => {
   const item = balances.find(
-    (item) => item.token.contract.address === standardBalance.token.address,
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    (item) => item.token.contract.address === tokenAddress,
   );
-  return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
+  const tokAmount = item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
+  setBalance(tokAmount);
 };
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
-  let scale = 10 ** -decimals;
+  const scale = 10 ** -decimals;
   return amount * scale;
 };
 export const scaleAmountUp = (amount: number, decimals: number) => {
-  let scale = 10 ** decimals;
+  const scale = 10 ** decimals;
   return amount * scale;
 };
 
-export const getSocketTokenAmount = (
-  balances: Array<any>,
+export const setSocketTokenAmount = (
+  balances: any[],
   userAddress: string,
-  standardBalance: types.token_balance,
-  tokenAddress: string,
+  token: types.token,
+  setBalance: Dispatch<SetStateAction<number>>,
 ) => {
-  const item = balances.find((item) => item.account.address === userAddress && item.token.contract.address === tokenAddress);
-  return item ? parseInt(item.balance) / 10 ** standardBalance.token.decimals : 0;
+  const item = balances.find(
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    (item) => item.account.address === userAddress && item.token.contract.address === token.address,
+  );
+  const tokAmount = item ? parseInt(item.balance) / 10 ** token.decimals : 0;
+  setBalance(tokAmount);
 };
 
 export const getErrorMess = (error: unknown) => {
@@ -44,3 +52,34 @@ export const getEmptyOrderBook = () => {
     asks: [],
   };
 };
+
+export const getNetworkType = () => {
+  const network = REACT_APP_NETWORK_TARGET;
+  if (network?.includes('GHOSTNET')) {
+    return types.NetworkType.GHOSTNET;
+  } else {
+    return types.NetworkType.KATHMANDUNET;
+  }
+};
+
+export const getEmptyVolumes = () => {
+  return {
+    buy_minus_volume: '0',
+    buy_exact_volume: '0',
+    buy_plus_volume: '0',
+    sell_minus_volume: '0',
+    sell_exact_volume: '0',
+    sell_plus_volume: '0',
+  };
+};
+
+export const scaleStringAmountDown = (amount: string, decimals: number) => {
+  if(!amount){
+    console.error("scaleStringAmountDown - amount is undefined", amount)
+    return '0';
+  } else {
+    const scale = 10 ** -decimals;
+    return (Number.parseInt(amount) * scale).toString();
+  }
+};
+

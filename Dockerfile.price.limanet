@@ -1,0 +1,14 @@
+FROM oxheadalpha/flextesa:20221026
+
+RUN apk update &&\
+    apk add bash &&\
+    apk add curl &&\
+    apk add jq &&\
+    octez-client --endpoint https://limanet.tezos.marigold.dev config update &&\
+    octez-client import secret key oracle_account unencrypted:edskRheUgunCWW6m5JqoXBjRtxfWDdTjM557uC2TFeLDk4ThfJb5MUDbTagWq1aFjypoQbFjYBRZay1Ujpwg6c9rJcr7RBkBJS --force
+
+WORKDIR /etc/run
+
+COPY ./sandbox.sh /etc/run/
+
+CMD [ "/etc/run/sandbox.sh","-c","KT1VXDi3hHu5bygz5Bq7n9kkRf2gpH74MC83","-e","KT1V1MdS2wr8Skozq65rGXqpipdubyFrq3NK","-k","KT1GWTLLWjRYLyHoBoX1yXBiuHvoqfbgarQV", "-t", "KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP", "-u", "KT1XuPsWSD3unSzCwTtDWb7JhjPPja8GfQBr", "-b", "KT1H8myUy1mVahUZcDXLHuP4ggsG5dt2BWHZ" ]

@@ -1,72 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Button, Space, Typography, Col, message } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
-import { HoldingsProps, token_amount } from '@/extra_utils/types';
-import { scaleAmountDown } from '@/extra_utils/utils';
-import { JSONPath } from 'jsonpath-plus';
+import { HoldingsProps } from '@/extra_utils/types';
 
 const Holdings: React.FC<HoldingsProps> = ({
   tezos,
-  bigMapsByIdUri,
   userAddress,
   contractAddress,
-  previousTreasuries,
   buyToken,
   sellToken,
+  buyTokenHolding,
+  sellTokenHolding,
+  setBuySideAmount,
+  setSellSideAmount,
 }: HoldingsProps) => {
-  const [buyTokenHoldings, setBuyTokenHoldings] = useState<number>(0);
-  const [sellTokenHoldings, setSellTokenHoldings] = useState<number>(0);
-
-  const update_holdings = async () => {
-    console.log('Holdings-previousBatches', previousTreasuries);
-    let buy_holdings = 0;
-    let sell_holdings = 0;
-
-    setBuyTokenHoldings(buy_holdings);
-    setSellTokenHoldings(sell_holdings);
-
-    if (!userAddress) return;
-
-    for (var i = 0; i < previousTreasuries?.length; i++) {
-      try {
-        let bm_uri = bigMapsByIdUri + previousTreasuries.at(i) + '/keys/' + userAddress;
-        console.log('Holdings-bm-uri', bm_uri);
-        const data = await fetch(bm_uri, {
-          method: 'GET',
-        });
-        const jsonData = await data.json();
-
-        if (!jsonData.active) {
-          break;
-        }
-
-        const amounts = JSONPath({ path: '$.value.*.token_amount', json: jsonData });
-        const tokenAmounts = amounts as Array<token_amount>;
-        console.log('Holdings-token-amounts', tokenAmounts);
-        buy_holdings += tokenAmounts.reduce((prev, token_amount) => {
-          if (token_amount.token.name === buyToken.name) {
-            prev += scaleAmountDown(token_amount.amount, buyToken.decimals);
-          }
-          return prev;
-        }, 0);
-
-        sell_holdings += tokenAmounts.reduce((prev, token_amount) => {
-          if (token_amount.token.name === sellToken.name) {
-            prev += scaleAmountDown(token_amount.amount, sellToken.decimals);
-          }
-          return prev;
-        }, 0);
-      } catch (error: any) {
-        console.log(error);
-      }
-    }
-
-    setBuyTokenHoldings(buy_holdings);
-    setSellTokenHoldings(sell_holdings);
-  };
-
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
       return undefined;
@@ -74,56 +23,7 @@ const Holdings: React.FC<HoldingsProps> = ({
 
     try {
       const contractWallet = await tezos.wallet.at(contractAddress);
-      const buyTokenWalletContract = await tezos.wallet.at(buyToken.address);
-      const sellTokenWalletContract = await tezos.wallet.at(sellToken.address);
-
-      const operator_params = [
-        {
-          remove_operator: {
-            owner: userAddress,
-            operator: contractAddress,
-            token_id: 0,
-          },
-        },
-      ];
-
-      let redeem_op = null;
-
-      if (buyToken.standard === 'FA1.2 token') {
-        if (sellToken.standard === 'FA1.2 token') {
-          redeem_op = await tezos.wallet
-            .batch()
-            .withContractCall(contractWallet.methodsObject.redeem())
-            .send();
-        }
-
-        if (sellToken.standard === 'FA2 token') {
-          redeem_op = await tezos.wallet
-            .batch()
-            .withContractCall(contractWallet.methodsObject.redeem())
-            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
-            .send();
-        }
-      }
-
-      if (buyToken.standard === 'FA2 token') {
-        if (sellToken.standard === 'FA1.2 token') {
-          redeem_op = await tezos.wallet
-            .batch()
-            .withContractCall(contractWallet.methodsObject.redeem())
-            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
-            .send();
-        }
-
-        if (sellToken.standard === 'FA2 token') {
-          redeem_op = await tezos.wallet
-            .batch()
-            .withContractCall(contractWallet.methodsObject.redeem())
-            .withContractCall(buyTokenWalletContract.methods.update_operators(operator_params))
-            .withContractCall(sellTokenWalletContract.methods.update_operators(operator_params))
-            .send();
-        }
-      }
+      let redeem_op = await contractWallet.methods.redeem().send();
 
       if (redeem_op) {
         loading = message.loading('Attempting to redeem holdings...', 0);
@@ -132,8 +32,9 @@ const Holdings: React.FC<HoldingsProps> = ({
           message.error('Failed to redeem holdings');
           console.error('Failed to redeem holdings' + confirm);
         } else {
+          setSellSideAmount(0);
+          setBuySideAmount(0);
           loading();
-
           message.success('Successfully redeemed holdings');
         }
       } else {
@@ -146,12 +47,6 @@ const Holdings: React.FC<HoldingsProps> = ({
     }
   };
 
-  useEffect(() => {
-    console.log('Address', userAddress);
-    console.log('Previous Holdings', previousTreasuries);
-    (async () => update_holdings())();
-  }, [userAddress, previousTreasuries.length]);
-
   return (
     <Col className="base-content br-t br-b br-l br-r">
       <Space className="batcher-price" direction="vertical">
@@ -159,10 +54,10 @@ const Holdings: React.FC<HoldingsProps> = ({
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="vertical">
             <Typography>
-              {buyTokenHoldings} {buyToken.name}
+              {buyTokenHolding} {buyToken.name}
             </Typography>
             <Typography>
-              {sellTokenHoldings} {sellToken.name}
+              {sellTokenHolding} {sellToken.name}
             </Typography>
           </Space>
         </Col>

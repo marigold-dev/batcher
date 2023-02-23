@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
+import { StringNullableChain } from 'lodash';
 
 export enum NetworkType {
   MAINNET = 'mainnet',
@@ -22,6 +23,7 @@ export enum ContentType {
   ORDER_BOOK = 'order_book',
   REDEEM_HOLDING = 'redeem_holding',
   ABOUT = 'about',
+  VOLUME = 'volume',
 }
 
 export enum selected_tolerance {
@@ -63,6 +65,14 @@ export class exchange_rate {
   when!: string;
 }
 
+export interface Side {
+  bUY?: BUy;
+  sELL?: SEll;
+}
+
+export interface BUy {}
+export interface SEll {}
+
 export interface Tolerance {
   eXACT?: EXact;
   mINUS?: MInus;
@@ -79,17 +89,22 @@ export enum ToleranceType {
   PLUS = 2,
 }
 
+export enum SideType {
+  BUY = 0,
+  SELL = 1,
+}
+
 export class swap_order {
   trader!: string;
   swap!: swap;
   created_at!: string;
-  side!: string;
+  side!: Side;
   tolerance!: Tolerance;
 }
 
 export class order_book {
-  bids!: Array<swap_order>;
-  asks!: Array<swap_order>;
+  bids!: Array<any>;
+  asks!: Array<any>;
 }
 
 export class token_holding {
@@ -149,37 +164,33 @@ export class ApiTokenBalanceData {
   lastLevel!: number;
   lastTime!: string;
 }
-export type HoldingsProps = {
-  tezos: TezosToolkit;
-  bigMapsByIdUri: string;
-  userAddress: string;
-  contractAddress: string;
-  previousTreasuries: Array<number>;
-  buyToken: token;
-  sellToken: token;
-};
 
 export type OrderBookProps = {
   orderBook: order_book;
   buyToken: token;
   sellToken: token;
 };
-type TokenBalance = {
-  token: token;
-  balance: number;
-};
+
 
 export type ExchangeProps = {
-  buyBalance: TokenBalance;
-  sellBalance: TokenBalance;
+  userAddress: string;
+  buyBalance: number;
+  sellBalance: number;
   inversion: boolean;
   setInversion: Dispatch<SetStateAction<boolean>>;
   tezos: TezosToolkit;
+  fee_in_mutez: number;
+  buyToken: token;
+  sellToken: token;
 };
 
 export type BatcherInfoProps = {
-  buyBalance: TokenBalance;
-  sellBalance: TokenBalance;
+  userAddress: string;
+  tokenPair: string;
+  buyBalance: number;
+  sellBalance: number;
+  buyTokenName: string;
+  sellTokenName: string;
   inversion: boolean;
   rate: number;
   status: string;
@@ -188,6 +199,11 @@ export type BatcherInfoProps = {
 
 export type BatcherActionProps = {
   setContent: Dispatch<SetStateAction<ContentType>>;
+  tokenMap: Map<string,swap>;
+  setBuyToken: Dispatch<SetStateAction<token>>;
+  setSellToken: Dispatch<SetStateAction<token>>;
+  tokenPair: string;
+  setTokenPair: Dispatch<SetStateAction<string>>;
 };
 export class aggregate_orders {
   buyside!: number;
@@ -209,3 +225,40 @@ export enum BatcherStatus {
 export type BatcherStepperProps = {
   status: string;
 };
+
+
+export type HoldingsProps = {
+  tezos: TezosToolkit;
+  userAddress: string;
+  contractAddress: string;
+  buyToken: token;
+  sellToken: token;
+  buyTokenHolding: number;
+  sellTokenHolding: number;
+  setBuySideAmount: Dispatch<SetStateAction<number>>;
+  setSellSideAmount: Dispatch<SetStateAction<number>>;
+};
+
+
+export type Volumes = {
+  buy_minus_volume: string;
+  buy_exact_volume: string;
+  buy_plus_volume: string;
+  sell_minus_volume: string;
+  sell_exact_volume: string;
+  sell_plus_volume: string;
+};
+
+export type VolumeProps = {
+  volumes: Volumes;
+  buyToken: token;
+  sellToken: token;
+};
+
+export const BUY = 'bUY';
+export const SELL = 'sELL';
+export const CLEARED = 'cleared';
+
+export const MINUS = 'mINUS';
+export const EXACT = 'eXACT';
+export const PLUS = 'pLUS';
