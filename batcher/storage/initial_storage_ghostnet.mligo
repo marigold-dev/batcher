@@ -4,7 +4,7 @@ let f(_:unit) = {
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
-      address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
+      address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
       decimals = 8;
       standard = Some "FA1.2 token";
     });
@@ -16,7 +16,7 @@ let f(_:unit) = {
     });
     (("USDT"),{
       name = "USDT";
-      address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
+      address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
       decimals = 6;
       standard = Some "FA2 token";
     })
@@ -27,14 +27,14 @@ let f(_:unit) = {
           amount = 1n;
           token = {
             name = "tzBTC";
-            address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
+            address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
             decimals = 8;
             standard = Some "FA1.2 token";
           };
         };
         to = {
           name = "USDT";
-          address = Some(("KT1B8zVfMCL5QdgpV242tc837N57vJgPcsLT" : address));
+          address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
           decimals = 6;
           standard = Some "FA2 token";
         }
@@ -45,7 +45,7 @@ let f(_:unit) = {
           amount = 1n;
           token = {
             name = "tzBTC";
-            address = Some(("KT1ARtHiLEZUUkoS8XFVSYLkZrPxztjgPNtH" : address));
+            address = Some(("KT1CdkA9nqrqkhjzfP7TvVV9CyyG2hv6mdQm" : address));
             decimals = 8;
             standard = Some "FA1.2 token";
           };
