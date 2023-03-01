@@ -5,7 +5,6 @@
 let no_rate_available_for_swap : nat                      = 100n
 let invalid_token_address : nat                           = 101n
 let invalid_tezos_address : nat                           = 102n
-let clearing_level_not_found : nat                        = 103n
 let no_open_batch_for_deposits : nat                      = 104n
 let batch_should_be_cleared : nat                         = 105n
 let trying_to_close_batch_which_is_not_open : nat         = 106n
@@ -22,7 +21,6 @@ let token_already_exists_but_details_are_different: nat   = 116n
 let swap_already_exists: nat                              = 117n
 let swap_does_not_exist: nat                              = 118n
 let inverted_swap_already_exists: nat                     = 119n
-let batch_index_does_not_exist_for_specified_pair: nat    = 120n
 
 (* Constants *)
 
@@ -38,17 +36,6 @@ let batch_index_does_not_exist_for_specified_pair: nat    = 120n
 [@inline] let fa12_token : string = "FA1.2 token"
 
 [@inline] let fa2_token : string = "FA2 token"
-
-[@inline] let bids : string = "bids"
-
-[@inline] let asks : string = "asks"
-
-[@inline] let open : string = "open"
-
-[@inline] let redeemed : string = "redeemed"
-
-(* Number of seconds after order placement time should the order be removed if it has been redeemed - current default 1 day *)
-[@inline] let redeemed_order_removal_time : int = 86400
 
 [@inline] let limit_of_redeemable_items : nat = 10n
 
@@ -258,11 +245,6 @@ module TokenAmountMap = struct
   (tam : token_amount_map): token_amount_map =
   amend ta Increase tam
 
-  let decrease
-  (ta: token_amount)
-  (tam: token_amount_map) : token_amount_map   =
-  amend ta Decrease tam
-
 end
 
 module Storage = struct
@@ -370,10 +352,6 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     clearing_rate = exchange_rate
   }
 
-
-
-
-
   let nat_to_side
   (order_side : nat) : side =
     if order_side = 0n then Buy
@@ -424,32 +402,6 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let side = nat_to_side order.side in
     pair_of_swap side swap
 
-
-  let get_token_name_from_token_amount
-    (ta : token_amount) : string =
-    ta.token.name
-
-  let get_token_name_from_token_holding
-    (th : token_holding) : string =
-    th.token_amount.token.name
-
-  let assign_new_holder_to_token_holding
-    (new_holder : address)
-    (token_holding : token_holding) : token_holding =
-    { token_holding with holder = new_holder}
-
-
-  (* Converts a token_amount to a token holding by assigning a holder address *)
-  let token_amount_to_token_holding
-    (holder : address)
-    (token_amount : token_amount)
-    (redeemed : bool): token_holding =
-    {
-      holder =  holder;
-      token_amount = token_amount;
-      redeemed = redeemed;
-    }
-
    let get_rate_names
      (pair: pair): (string * string) =
      let rate_name = get_rate_name_from_pair pair in
@@ -475,26 +427,6 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
      | (None, None) -> 0n
 
 
-   let update_batch_index
-     (name:string)
-     (index: nat)
-     (batch_indices:  batch_indices) : batch_indices =
-     if Map.mem name batch_indices then
-       Map.update name (Some index) batch_indices
-     else
-       Map.add name index batch_indices
-
-
-   let set_current_batch_index
-     (index: nat)
-     (swap: swap)
-     (batch_indices: batch_indices): batch_indices =
-     let (rate_name, inverse_rate_name) : string * string = get_rate_names (swap.from.token, swap.to) in
-     let (index_found, inv_index_found) : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
-     match (index_found, inv_index_found) with
-     | (Some _,_) -> update_batch_index rate_name index batch_indices
-     | (None, Some _) -> update_batch_index inverse_rate_name index batch_indices
-     | (None, None) -> update_batch_index rate_name index batch_indices
 
   let get_highest_batch_index
     (batch_indices: batch_indices) : nat =
@@ -540,10 +472,6 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let adjusted_rate = Rational.mul rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
-  let scale_on_get (rate : exchange_rate) : exchange_rate =
-    let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-    let adjusted_rate = Rational.div rate.rate scaling_rate in
-    { rate with rate = adjusted_rate }
 
 end
 
@@ -558,13 +486,6 @@ module Rates = struct
     let scaled_rate = Utils.scale_on_post rate in
     let s = Utils.update_current_rate (rate_name) (scaled_rate) (storage) in
     s
-
-  let get_rate (swap: swap) (storage : storage) : exchange_rate =
-    let rate_name = Utils.get_rate_name_from_swap swap in
-    match Big_map.find_opt rate_name storage.rates_current with
-      | None -> (failwith no_rate_available_for_swap : exchange_rate)
-      | Some r -> let scaled_rate = Utils.scale_on_get r in
-                  scaled_rate
 
 end
 
@@ -1137,13 +1058,6 @@ let update_current_batch_in_set
   let updated_batch_indices = Map.update name (Some batch.batch_number) batch_set.current_batch_indices in
   ( batch, { batch_set with batches = updated_batches; current_batch_indices = updated_batch_indices; } )
 
-
-
-let get_status_when_its_cleared (batch : batch) =
-  match batch.status with
-    | Cleared infos -> infos
-    | _ -> failwith batch_should_be_cleared
-
 let should_be_cleared
   (batch : batch)
   (current_time : timestamp) : bool =
@@ -1319,15 +1233,11 @@ let compute_clearing_prices
   let sell_cp_minus = int (volumes.sell_minus_volume) in
   let sell_cp_exact = int (volumes.sell_exact_volume) in
   let sell_cp_plus = int (volumes.sell_plus_volume) in
-
   let buy_cp_minus = int (volumes.buy_minus_volume) in
   let buy_cp_exact = int (volumes.buy_exact_volume) in
   let buy_cp_plus = int (volumes.buy_plus_volume) in
-
-
   let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in
   let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in
-
   let clearing = Utils.get_clearing_price rate buy_side sell_side in
   let with_equiv = build_equivalence volumes clearing rate in
   with_equiv
