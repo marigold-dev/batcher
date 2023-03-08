@@ -79,6 +79,12 @@ type swap = {
  to : token;
 }
 
+type valid_swap = {
+  swap: swap;
+  oracle: address;
+}
+
+
 (*I change the type of the rate from tez to nat for sake of simplicity*)
 type exchange_rate = {
   swap : swap;
@@ -252,7 +258,7 @@ module Storage = struct
   type valid_tokens = (string, token) map
 
   (* The swaps of valid tokens that are accepted by the contract  *)
-  type valid_swaps =  (string, swap) map
+  type valid_swaps =  (string, valid_swap) map
 
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, exchange_rate) big_map
@@ -917,8 +923,9 @@ let add_token
 
 let is_token_used
   (token: token)
-  (valid_swaps) : bool =
-  let is_token_used_in_swap (acc, (_i, swap) : bool * (string * swap)) : bool =
+  (valid_swaps: valid_swaps) : bool =
+  let is_token_used_in_swap (acc, (_i, valid_swap) : bool * (string * valid_swap)) : bool =
+    let swap = valid_swap.swap in
     are_equivalent_tokens token swap.to ||
     are_equivalent_tokens token swap.from.token ||
     acc
@@ -926,15 +933,17 @@ let is_token_used
   Map.fold is_token_used_in_swap valid_swaps false
 
 let add_swap
-  (swap: swap)
+  (valid_swap: valid_swap)
   (valid_swaps: valid_swaps) : valid_swaps =
+  let swap = valid_swap.swap in
   let rate_name = Utils.get_rate_name_from_swap swap in
-  Map.add rate_name swap valid_swaps
+  Map.add rate_name valid_swap valid_swaps
 
 let remove_swap
-  (swap: swap)
+  (valid_swap: valid_swap)
   (valid_tokens: valid_tokens)
   (valid_swaps: valid_swaps) : (valid_swaps * valid_tokens) =
+  let swap = valid_swap.swap in
   let rate_name = Utils.get_rate_name_from_swap swap in
   let valid_swaps = Map.remove rate_name valid_swaps in
   let from = swap.from.token in
@@ -972,9 +981,10 @@ let validate
                               failwith unsupported_swap_type)
 
 let remove_pair
-  (swap: swap)
+  (valid_swap: valid_swap)
   (valid_swaps: Storage.valid_swaps)
   (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
+  let swap = valid_swap.swap in
   let from = swap.from.token in
   let to = swap.to in
   let rate_name = Utils.get_rate_name_from_swap swap in
@@ -982,14 +992,15 @@ let remove_pair
   let rate_found =  Map.find_opt rate_name valid_swaps in
   let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
   match (rate_found, inverted_rate_found) with
-  | (Some _, _) -> Token_Utils.remove_swap swap valid_tokens valid_swaps
+  | (Some _, _) -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
   | (None, Some _) -> failwith inverted_swap_already_exists
   | (None, None) ->  failwith swap_does_not_exist
 
 let add_pair
-  (swap: swap)
+  (valid_swap: valid_swap)
   (valid_swaps: Storage.valid_swaps)
   (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
+  let swap = valid_swap.swap in
   let from = swap.from.token in
   let to = swap.to in
   let rate_name = Utils.get_rate_name_from_swap swap in
@@ -1001,7 +1012,7 @@ let add_pair
   | (None, Some _) -> failwith inverted_swap_already_exists
   | (None, None) -> let valid_tokens = Token_Utils.add_token from valid_tokens in
                     let valid_tokens = Token_Utils.add_token to valid_tokens in
-                    let valid_swaps = Token_Utils.add_swap swap valid_swaps in
+                    let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
                     (valid_swaps, valid_tokens)
 
 end
@@ -1255,10 +1266,10 @@ type entrypoint =
   | Deposit of external_swap_order
   | Post of exchange_rate
   | Redeem
-  | ChangeFee of tez
-  | ChangeAdminAddress of address
-  | Add_token_swap_pair of swap
-  | Remove_token_swap_pair of swap
+  | Change_fee of tez
+  | Change_admin_address of address
+  | Add_token_swap_pair of valid_swap
+  | Remove_token_swap_pair of valid_swap
 
 let is_administrator
   (storage : storage) : unit =
@@ -1388,7 +1399,7 @@ let change_admin_address
 
 
 let add_token_swap_pair
-  (swap: swap)
+  (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
    let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
@@ -1396,7 +1407,7 @@ let add_token_swap_pair
    no_op (storage)
 
 let remove_token_swap_pair
-  (swap: swap)
+  (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
@@ -1409,10 +1420,10 @@ let main
    | Deposit order -> deposit order storage
    | Post new_rate -> post_rate new_rate storage
    | Redeem -> redeem storage
-   | ChangeFee new_fee -> change_fee new_fee storage
-   | ChangeAdminAddress new_admin_address -> change_admin_address new_admin_address storage
-   | Add_token_swap_pair swap -> add_token_swap_pair swap storage
-   | Remove_token_swap_pair token -> remove_token_swap_pair token storage
+   | Change_fee new_fee -> change_fee new_fee storage
+   | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
+   | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
 
 
 
