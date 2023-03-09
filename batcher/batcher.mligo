@@ -81,7 +81,8 @@ type swap = {
 
 type valid_swap = {
   swap: swap;
-  oracle: address;
+  oracle_address: address;
+  oracle_asset_name: string;
 }
 
 
@@ -451,11 +452,19 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
   let rev (type a) (list: a list) : a list =
     List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
 
+  let update_if_more_recent
+    (rate_name: string)
+    (rate: exchange_rate)
+    (rates_current: Storage.rates_current) : Storage.rates_current =
+    match Big_map.find_opt rate_name rates_current with
+    | None -> Big_map.add rate_name rate rates_current
+    | Some lr -> if rate.when > lr.when then
+                   Big_map.update rate_name (Some rate) rates_current
+                 else
+                   rates_current
 
   let update_current_rate (rate_name : string) (rate : exchange_rate) (storage : Storage.t) =
-    let updated_rates = (match Big_map.find_opt rate_name storage.rates_current with
-                          | None -> Big_map.add (rate_name) (rate) storage.rates_current
-                          | Some (_p) -> Big_map.update (rate_name) (Some(rate)) (storage.rates_current)) in
+    let updated_rates = update_if_more_recent rate_name rate storage.rates_current in
     { storage with rates_current = updated_rates }
 
 
@@ -478,20 +487,6 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let adjusted_rate = Rational.mul rate.rate scaling_rate in
     { rate with rate = adjusted_rate }
 
-
-end
-
-
-
-module Rates = struct
-
-  type storage = Storage.t
-
-  let post_rate (rate : exchange_rate) (storage : storage) : storage =
-    let rate_name = Utils.get_rate_name(rate) in
-    let scaled_rate = Utils.scale_on_post rate in
-    let s = Utils.update_current_rate (rate_name) (scaled_rate) (storage) in
-    s
 
 end
 
@@ -1264,7 +1259,7 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
   | Deposit of external_swap_order
-  | Post of exchange_rate
+  | Tick
   | Redeem
   | Change_fee of tez
   | Change_admin_address of address
@@ -1367,21 +1362,46 @@ let redeem
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
-(* Post the rate in the contract and check if the current batch of orders needs to be cleared. *)
-let post_rate (rate : exchange_rate) (storage : storage) : result =
-  let validated_swap = Tokens.validate Buy rate.swap storage.valid_tokens storage.valid_swaps in
-  let rate  = { rate with swap = validated_swap; } in
-  let storage = Rates.post_rate rate storage in
-  let pair = Utils.pair_of_rate rate in
-  let current_time = Tezos.get_now () in
-  let batch_set = storage.batch_set in
-  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
-  match batch_opt with
-  | Some b -> let batch_set = finalize b current_time rate batch_set in
-              let storage = { storage with batch_set = batch_set } in
-              no_op (storage)
-  | None ->   no_op (storage)
+let convert_oracle_price
+  (swap: swap)
+  (lastupdated: timestamp)
+  (price: nat) : exchange_rate =
+  let denom = Utils.pow 10 swap.from.token.decimals in
+  let rational_price = Rational.new (int (price)) in
+  let rational_denom = Rational.new denom in
+  let rate: Rational.t = Rational.div rational_price rational_denom in
+  {
+   swap = swap;
+   rate = rate;
+   when = lastupdated;
+  }
 
+let tick_price
+  (rate_name: string)
+  (valid_swap : valid_swap)
+  (storage : storage) : storage =
+    let res = (Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address) in
+    match res with
+    | Some (lastupdated, price) -> (let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
+                                    let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
+                                    let pair = Utils.pair_of_rate oracle_rate in
+                                    let current_time = Tezos.get_now () in
+                                    let batch_set = storage.batch_set in
+                                    let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
+                                    match batch_opt with
+                                    | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
+                                               let storage = { storage with batch_set = batch_set } in
+                                               storage
+                                    | None ->   storage)
+    | None -> storage
+
+
+let tick (storage : storage) : result =
+   let tick_prices
+     (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
+   in
+   let storage = Map.fold tick_prices storage.valid_swaps storage in
+   no_op (storage)
 
 let change_fee
     (new_fee: tez)
@@ -1418,7 +1438,7 @@ let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
-   | Post new_rate -> post_rate new_rate storage
+   | Tick -> tick storage
    | Redeem -> redeem storage
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
