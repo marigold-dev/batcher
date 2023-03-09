@@ -10,6 +10,6 @@ RUN apk update &&\
 
 WORKDIR /etc/run
 
-COPY ./sandbox.sh /etc/run/
+COPY ./tick.sh /etc/run/
 
-CMD [ "/etc/run/sandbox.sh","-c","KT1BJsa6Mnw1AyD8LMac6SmgzB1dcZBeMR63","-e","KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5","-k","KT1UFpfibVLaWBWaaCaFM8FbACcLQm7CwTLF", "-t", "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG", "-u", "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm", "-b", "KT1UJoBfe6Kpg1hAuGeCbHFneyb3N4sBQkeW" ]
+CMD [ "/etc/run/tick.sh", "-b", "KT1UJoBfe6Kpg1hAuGeCbHFneyb3N4sBQkeW", "-f", "180" ]
