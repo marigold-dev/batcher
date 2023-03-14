@@ -79,6 +79,7 @@ type swap = {
  to : token;
 }
 
+(* A valid swap is a swap pair that has a source of pricing from an oracle.  *)
 type valid_swap = {
   swap: swap;
   oracle_address: address;
