@@ -265,8 +265,7 @@ module Storage = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, exchange_rate) big_map
 
-  type t = {
-    [@layout:comb]
+  type t = [@layout:comb] {
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
