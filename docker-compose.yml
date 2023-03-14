@@ -1,15 +1,15 @@
 version: "3"
 
 services:
-  batcher-price-ghostnet:
-    container_name: price-ghostnet
+  batcher-tick-ghostnet:
+    container_name: tick-ghostnet
     build:
       context: .
-      dockerfile: Dockerfile.price.ghostnet
+      dockerfile: Dockerfile.tick.ghostnet
     restart: always
-  batcher-price-limanet:
-    container_name: price-limanet
+  batcher-tick-limanet:
+    container_name: tick-limanet
     build:
       context: .
-      dockerfile: Dockerfile.price.limanet
+      dockerfile: Dockerfile.tick.limanet
     restart: always

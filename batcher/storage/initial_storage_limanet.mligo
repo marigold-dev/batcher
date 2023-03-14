@@ -23,39 +23,47 @@ let f(_:unit) = {
   ];
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
-        from = {
-          amount = 1n;
-          token = {
-            name = "tzBTC";
-            address = Some(("KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP" : address));
-            decimals = 8;
-            standard = Some "FA1.2 token";
+        swap = {
+          from = {
+            amount = 1n;
+            token = {
+              name = "tzBTC";
+              address = Some(("KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP" : address));
+              decimals = 8;
+              standard = Some "FA1.2 token";
+            };
           };
+          to = {
+            name = "USDT";
+            address = Some(("KT1XuPsWSD3unSzCwTtDWb7JhjPPja8GfQBr" : address));
+            decimals = 6;
+            standard = Some "FA2 token";
+          }
         };
-        to = {
-          name = "USDT";
-          address = Some(("KT1XuPsWSD3unSzCwTtDWb7JhjPPja8GfQBr" : address));
-          decimals = 6;
-          standard = Some "FA2 token";
-        }
+        oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
+        oracle_asset_name = "tzBTC-USDT";
       }
     );
     ("tzBTC/EURL", {
-        from = {
-          amount = 1n;
-          token = {
-            name = "tzBTC";
-            address = Some(("KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP" : address));
-            decimals = 8;
-            standard = Some "FA1.2 token";
+        swap = {
+          from = {
+            amount = 1n;
+            token = {
+              name = "tzBTC";
+              address = Some(("KT1Um14DPamX2h5z2MvHD46SQ8zt5d5uM7xP" : address));
+              decimals = 8;
+              standard = Some "FA1.2 token";
+            };
           };
+          to = {
+            name = "EURL";
+            address = Some(("KT1V1MdS2wr8Skozq65rGXqpipdubyFrq3NK" : address));
+            decimals = 6;
+            standard = Some "FA2 token";
+          }
         };
-        to = {
-          name = "EURL";
-          address = Some(("KT1V1MdS2wr8Skozq65rGXqpipdubyFrq3NK" : address));
-          decimals = 6;
-          standard = Some "FA2 token";
-        }
+        oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
+        oracle_asset_name = "tzBTC-EURL";
       }
     )
   ];
