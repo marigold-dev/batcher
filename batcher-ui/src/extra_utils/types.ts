@@ -182,6 +182,7 @@ export type ExchangeProps = {
   fee_in_mutez: number;
   buyToken: token;
   sellToken: token;
+  showDrawer: Dispatch<SetStateAction<boolean>>;
 };
 
 export type BatcherInfoProps = {

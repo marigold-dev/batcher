@@ -17,7 +17,9 @@ import {
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
-import { Col, Row } from 'antd';
+import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio, } from 'antd';
+import { Icon, DoubleRightOutlined, DollarOutlined } from '@ant-design/icons';
+import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
   getEmptyVolumes,
@@ -32,6 +34,8 @@ import Holdings from '@/components/Holdings';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 
 const Welcome: React.FC = () => {
+
+
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [Tezos] = useState<TezosToolkit>(new TezosToolkit(REACT_APP_TEZOS_NODE_URI));
   const [tokenMap, setTokenMap] = useState<Map<string,swap>>(new Map());
@@ -367,6 +371,63 @@ const Welcome: React.FC = () => {
     }
   };
 
+  const [open, setOpen] = useState(false);
+  const [swaps, setSwaps] = useState<string[]>([]);
+  const showDrawer = () => {
+    setOpen(true);
+  };
+
+  const onClose = () => {
+    setOpen(false);
+  };
+
+
+
+  const getPairs = () => {
+    const swps = [];
+     console.log('swap_map', tokenMap);
+     for (const keyvalue of tokenMap)  {
+         console.log(keyvalue);
+         swps.push(keyvalue[0]);
+     }
+    setSwaps(swps);
+    console.log('swps', swps);
+    console.log('swaps', swaps);
+  };
+
+ const changeTokenPair =  (e: RadioChangeEvent) => {
+    const pair = e.target.value;
+    console.log('pair changed', pair);
+    setTokenPair(pair);
+    const swap = tokenMap.get(pair);
+    console.log('pair changed to ', swap);
+    // Set Buy Token Details
+    setBuyToken(swap.from.token);
+
+    // Set Sell Token Details
+    setSellToken(swap.to);
+
+ };
+
+  const generatePairs = () => {
+      return (
+            <>
+            {
+            swaps.map((swap) =>
+                <React.Fragment key={swap}>
+                       <Radio.Button className="batcher-nav-btn" value={swap} onChange={changeTokenPair} >{swap}</Radio.Button>
+                </React.Fragment>
+            )}
+        </>
+    );
+
+
+  };
+
+
+  useEffect(() => {
+    getPairs();
+  }, [tokenMap]);
   // eslint-disable-next-line @typescript-eslint/no-shadow
   const renderRightContent = (content: ContentType) => {
     console.log('rendering content');
@@ -383,6 +444,7 @@ const Welcome: React.FC = () => {
             fee_in_mutez={feeInMutez}
             buyToken={buyToken}
             sellToken={sellToken}
+            showDrawer={showDrawer}
           />
         );
       case ContentType.VOLUME:
@@ -415,6 +477,7 @@ const Welcome: React.FC = () => {
             fee_in_mutez={feeInMutez}
             buyToken={buyToken}
             sellToken={sellToken}
+            showDrawer={showDrawer}
           />
         );
     }
@@ -550,6 +613,25 @@ const Welcome: React.FC = () => {
           <Col lg={3} />
           <Col className="batcher-content-outer" xs={24} lg={18}>
             <Row>
+        <Drawer
+         title="Pairs"
+         placement="right"
+         closable={true}
+         onClose={onClose}
+         open={open}
+         getContainer={false}
+         style={{ position: 'absolute' }}
+         width={180}
+         closeIcon={<DoubleRightOutlined />}
+        >
+        <Radio.Group defaultValue={tokenPair} buttonStyle="solid" size="large">
+         <Space direction="vertical">
+          {
+            generatePairs()
+          }
+          </Space>
+        </Radio.Group>
+        </Drawer>
               <Col lg={3} />
               <Col xs={24} lg={18} className="pd-25">
                 {renderRightContent(content)}

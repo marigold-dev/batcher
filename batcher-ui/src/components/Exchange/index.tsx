@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { SwapOutlined } from '@ant-design/icons';
-import { Input, Button, Space, Typography, Col, Row, message, Form } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Icon, SwapOutlined, SettingOutlined, RetweetOutlined, DollarOutlined } from '@ant-design/icons';
+import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio, } from 'antd';
+import type {  RadioChangeEvent } from 'antd';
 import { BigMapAbstraction, compose, OpKind, TezosToolkit, WalletContract, WalletOperationBatch, WalletParamsWithKind } from "@taquito/taquito";
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
 import { ExchangeProps, ToleranceType, SideType } from '@/extra_utils/types';
+// import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { TokenMetadata, tzip12, Tzip12Module, Tzip12ContractAbstraction } from "@taquito/tzip12";
 import { tzip16 } from "@taquito/tzip16";
 import BigNumber from 'bignumber.js';
+import type { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 
 const Exchange: React.FC<ExchangeProps> = ({
   userAddress,
@@ -21,7 +24,15 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
   buyToken,
   sellToken,
+  showDrawer,
 }: ExchangeProps) => {
+
+// const DollarIcon = (props: Partial<CustomIconComponentProps>) => (
+//  <Icon component={ExchangeDollarSvg} {...props} />
+// );
+
+
+
   const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
@@ -263,11 +274,20 @@ const Exchange: React.FC<ExchangeProps> = ({
             </Row>
           </Space>
         </Col>
+        <Col className="batcher-action-items" lg={24} xs={24}>
+        <Space align="center" size={100}>
         <SwapOutlined
           className="exchange-button grid-padding"
           onClick={inverseTokenType}
           rotate={90}
         />
+        <div onClick={showDrawer}>
+        <SettingOutlined
+          className="exchange-button"
+        />
+        </div>
+        </Space>
+        </Col>
         <Col className="quote-content grid-padding br-t br-b br-l br-r">
           <Typography className="batcher-title p-16">
             To {inversion ? sellToken.name : buyToken.name}
