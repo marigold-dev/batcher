@@ -1,23 +1,11 @@
 {
   description = "batcher development environment";
 
-  #nixConfig = {
-  #extra-substituters = ["https://tezos.nix-cache.workers.dev"];
-  #extra-trusted-public-keys = ["tezos-nix-cache.marigold.dev-1:4nS7FPPQPKJIaNQcbwzN6m7kylv16UCWWgjeZZr2wXA="];
-  #bash-promt = "batcher-nix$ ";
-  #};
-
   inputs = {
 
-    nixpkgs.url = "github:anmonteiro/nix-overlays";
+    nixpkgs.url = "github:NixOS/nixpkgs/master";
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
-
-    #tezos.url = "github:marigold-dev/tezos-nix";
-    #tezos.inputs = {
-    #nixpkgs.follows = "nixpkgs";
-    #flake-utils.follows = "flake-utils";
-    #};
 
   };
 
@@ -25,7 +13,6 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        ligo = pkgs.callPackage ./nix/ligo.nix { };
       in {
         devShells.${system}.default = pkgs.mkShell {
           name = "batcher";
@@ -36,11 +23,9 @@
               cmake
               glibc
               nixfmt
-              ligo
               npm
               yarn
               node2nix
-              tezos.tezos-client
               nodejs-18_x
             ];
 
@@ -50,11 +35,10 @@
             alias lce="ligo compile expression"
             alias lcp="ligo compile parameter"
             alias lcs="ligo compile storage"
-            alias build="./do build contract"
-            alias dryrun="./do dryrun contract"
-            alias deploy="./do deploy contract"
-            alias uib="yarn --cwd=batcher-ui build "
-            alias uir="yarn --cwd=batcher-ui start "
+            alias build="make build"
+            alias test="make test"
+            alias run-ui="npm run start:ghostnet-ci"
+            alias build-ui="npm run build:ghostnet-ci"
           '';
 
         };
@@ -68,29 +52,24 @@
               with ocamlPackages; [
                 cmake
                 glibc
-                ligo
                 nixfmt
               ];
 
 
             buildPhase = ''
               mkdir -p $out
-              ligo compile contract $src/batcher/batcher.mligo -e  main -s cameligo -o $out/batcher.tz --protocol $protocol
-              ligo compile expression cameligo --michelson-format text --init-file $src/batcher/storage/initial_storage.mligo 'f()' > $out/batcher_storage.tz
+              make build
             '';
 
           };
 
-          ui = pkgs.callPackage ./batcher-ui/ui.nix { };
-
-        in { inherit contract ui; };
+        in { inherit contract; };
 
         defaultPackage = self.packages.${system}.contract;
 
         apps = {
           contract =
             flake-utils.lib.mkApp { drv = self.packages.${system}.contract; };
-          ui = flake-utils.lib.mkApp { drv = self.packages.${system}.ui; };
         };
 
       });
