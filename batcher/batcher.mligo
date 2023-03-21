@@ -1434,6 +1434,11 @@ let remove_token_swap_pair
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
 
+
+[@view]
+let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
