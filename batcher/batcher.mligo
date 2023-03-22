@@ -603,17 +603,26 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing: clearing)
     (tam: token_amount_map ): token_amount_map =
-    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_total_volume) in
+    (* Find the sell side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
+    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_volume) in
+    (* Represent the amount of user sell order as a rational *)
     let f_amount = Rational.new (int amount) in
+    (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
     let prorata_allocation = Rational.div f_amount f_sell_side_actual_volume in
+    (* Find the sell side clearing volume in terms of the buy side units.  This should always be <= 100% of buy side volume*)
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    (* Given the buy side volume that is available to settle the order, calculate the payout in buy tokens for the prorata amount  *)
     let payout = Rational.mul prorata_allocation f_buy_side_clearing_volume in
+    (* Given the buy side payout, calculate in sell side units so the remainder of a partial fill can be calculated *)
     let payout_equiv = Rational.mul payout clearing.clearing_rate.rate in
+    (* Calculate the remaining amount on the sell side of a partial fill *)
     let remaining = Rational.sub f_amount payout_equiv in
+    (* Build payout amount *)
     let fill_payout: token_amount = {
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 1) then
       let token_rem : token_amount = {
          token = from;
@@ -632,7 +641,7 @@ module Redemption_Utils = struct
     (tam: token_amount_map): token_amount_map =
     (* Find the buy side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
     let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_total_volume) in
-    (* Represent the amount of user order as a rational *)
+    (* Represent the amount of user buy order as a rational *)
     let f_amount = Rational.new (int amount) in
     (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
     let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
