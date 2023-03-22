@@ -632,18 +632,26 @@ module Redemption_Utils = struct
     (tam: token_amount_map): token_amount_map =
     (* Find the buy side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
     let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_total_volume) in
+    (* Represent the amount of user order as a rational *)
     let f_amount = Rational.new (int amount) in
-    (* The pro rata amount of the user's amount in the context of the cleared volume*)
+    (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
     let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
+    (* Find the buy side volume that can actually clear on both sides GIVEN the clearing level *)
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    (* Find the buy side clearing volume in terms of the sell side units.  This should always be <= 100% of sell side volume*)
     let f_sell_side_clearing_volume = Rational.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
+    (* Given the sell side volume that is available to settle the order, calculate the payout in sell tokens for the prorata amount  *)
     let payout = Rational.mul prorata_allocation f_sell_side_clearing_volume in
+    (* Given the sell side payout, calculate in buy side units so the remainder of a partial fill can be calculated *)
     let payout_equiv = Rational.div payout clearing.clearing_rate.rate in
+    (* Calculate the remaining amount on the buy side of a partial fill *)
     let remaining = Rational.sub f_amount payout_equiv in
+    (* Build payout amount *)
     let fill_payout = {
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
