@@ -116,10 +116,10 @@ type batch_status  =
   NOT_OPEN | OPEN | CLOSED | FINALIZED
 
 type prorata_equivalence = {
-  buy_side_actual_volume: nat;
-  buy_side_actual_volume_equivalence: nat;
-  sell_side_actual_volume: nat;
-  sell_side_actual_volume_equivalence: nat
+  buy_side_actual_total_volume: nat;
+  buy_side_actual_total_volume_in_sell_side_units: nat;
+  sell_side_actual_total_volume: nat;
+  sell_side_actual_total_volume_in_buy_side_units: nat
 }
 
 type clearing_volumes = {
@@ -282,10 +282,10 @@ end
 module Utils = struct
 
 let empty_prorata_equivalence : prorata_equivalence = {
-  buy_side_actual_volume = 0n;
-  buy_side_actual_volume_equivalence = 0n;
-  sell_side_actual_volume = 0n;
-  sell_side_actual_volume_equivalence = 0n;
+  buy_side_actual_total_volume = 0n;
+  buy_side_actual_total_volume_in_sell_side_units = 0n;
+  sell_side_actual_total_volume = 0n;
+  sell_side_actual_total_volume_in_buy_side_units = 0n;
 }
 
 [@inline]
@@ -603,7 +603,7 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing: clearing)
     (tam: token_amount_map ): token_amount_map =
-    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_volume) in
+    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_total_volume) in
     let f_amount = Rational.new (int amount) in
     let prorata_allocation = Rational.div f_amount f_sell_side_actual_volume in
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
@@ -630,8 +630,10 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing:clearing)
     (tam: token_amount_map): token_amount_map =
-    let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_volume) in
+    (* Find the buy side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
+    let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_total_volume) in
     let f_amount = Rational.new (int amount) in
+    (* The pro rata amount of the user's amount in the context of the cleared volume*)
     let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
     let f_sell_side_clearing_volume = Rational.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
@@ -1205,9 +1207,9 @@ let filter_volumes
             (volumes.buy_plus_volume, sell_vol)
 
 [@inline]
-let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (invert: bool) : nat =
+let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (is_sell_side: bool) : nat =
   let float_amount = Rational.new (int (amount)) in
-  if invert then
+  if is_sell_side then
     Utils.get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
   else
     Utils.get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
@@ -1219,15 +1221,20 @@ let build_equivalence
   (volumes: volumes)
   (clearing : clearing)
   (rate : exchange_rate) : clearing =
+  (* Find the rate associated with the clearing point *)
   let clearing_rate = get_clearing_rate clearing rate in
+  (* Collect the bid and ask amounts associated with the given clearing level.  Those volumes that are outside the clearing price are excluded *)
   let (bid_amounts, ask_amounts) = filter_volumes volumes clearing in
+  (* Compute the bid volumes that were cleared in terms of the ask token units*)
   let bid_equivalent_amounts = compute_equivalent_amount bid_amounts clearing_rate false in
+  (* Compute the ask volumes that were cleared in terms of the bid token units*)
   let ask_equivalent_amounts = compute_equivalent_amount ask_amounts clearing_rate true in
+  (* Build the equivalence objects which represents the TOTAL cleared volume on each side of the swap along with their representation in the units of the opposing side  *)
   let equivalence = {
-    buy_side_actual_volume = bid_amounts;
-    buy_side_actual_volume_equivalence = bid_equivalent_amounts;
-    sell_side_actual_volume = ask_amounts;
-    sell_side_actual_volume_equivalence = ask_equivalent_amounts;
+    buy_side_actual_total_volume = bid_amounts;
+    buy_side_actual_total_volume_in_sell_side_units = bid_equivalent_amounts;
+    sell_side_actual_total_volume = ask_amounts;
+    sell_side_actual_total_volume_in_buy_side_units = ask_equivalent_amounts;
   } in
   { clearing with prorata_equivalence = equivalence; clearing_rate = clearing_rate }
 
