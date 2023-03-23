@@ -22,6 +22,8 @@ let swap_already_exists: nat                              = 117n
 let swap_does_not_exist: nat                              = 118n
 let inverted_swap_already_exists: nat                     = 119n
 
+let number_is_not_a_nat: nat                              = 121n 
+
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
@@ -288,6 +290,11 @@ let empty_prorata_equivalence : prorata_equivalence = {
   sell_side_actual_volume_equivalence = 0n;
 }
 
+let to_nat (i:int): nat = 
+  match is_nat (i) with
+  | Some n -> n
+  | None -> failwith number_is_not_a_nat
+
 [@inline]
 let gt (a : Rational.t) (b : Rational.t) : bool = not (Rational.lte a b)
 
@@ -301,7 +308,7 @@ let pow (base : int) (pow : int) : int =
 (* Get the number with 0 decimal accuracy *)
 let get_rounded_number_lower_bound (number : Rational.t) : nat =
   let zero_decimal_number = Rational.resolve number 0n in
-    abs (zero_decimal_number)
+    to_nat (zero_decimal_number)
 
 let get_min_number (a : Rational.t) (b : Rational.t) =
   if Rational.lte a b then a
@@ -472,8 +479,8 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    let abs_diff = int (abs diff) in
-    let power10 = pow 10 abs_diff in
+    let nat_diff = int (to_nat diff) in
+    let power10 = pow 10 nat_diff in
     if diff = 0 then
       Rational.new 1
     else
