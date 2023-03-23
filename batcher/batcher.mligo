@@ -1103,7 +1103,7 @@ let progress_batch
   (current_time : timestamp) : (batch * batch_set) =
   match batch.status with
   | Open { start_time } ->
-    if  current_time > start_time + deposit_time_window then
+    if  current_time >= start_time + deposit_time_window then
       let closed_batch = close batch in
       update_current_batch_in_set closed_batch batch_set
     else
