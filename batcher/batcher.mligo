@@ -22,6 +22,10 @@ let swap_already_exists: nat                              = 117n
 let swap_does_not_exist: nat                              = 118n
 let inverted_swap_already_exists: nat                     = 119n
 
+
+let oracle_price_is_stale: nat                            = 122n
+let oracle_price_is_not_timely: nat                       = 123n
+
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
@@ -1376,13 +1380,30 @@ let convert_oracle_price
    when = lastupdated;
   }
 
+let oracle_price_is_not_stale
+  (oracle_price_timestamp: timestamp) : unit =
+  assert_with_error
+   (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
+   (failwith oracle_price_is_stale)
+
+let is_oracle_price_newer_than_current
+  (rate_name: string)
+  (oracle_price_timestamp: timestamp) 
+  (storage: storage): unit =
+  let rates = storage.rates_current in
+  match Big_map.find_opt rate_name rates with
+  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
+  | None   -> () 
+
 let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
     let res = (Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address) in
     match res with
-    | Some (lastupdated, price) -> (let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
+    | Some (lastupdated, price) -> (let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
+                                    let () = oracle_price_is_not_stale lastupdated in
+                                    let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
                                     let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
                                     let pair = Utils.pair_of_rate oracle_rate in
                                     let current_time = Tezos.get_now () in
@@ -1390,8 +1411,8 @@ let tick_price
                                     let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
                                     match batch_opt with
                                     | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
-                                               let storage = { storage with batch_set = batch_set } in
-                                               storage
+                                                let storage = { storage with batch_set = batch_set } in
+                                                storage
                                     | None ->   storage)
     | None -> storage
 
