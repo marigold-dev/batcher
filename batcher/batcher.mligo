@@ -1434,6 +1434,17 @@ let remove_token_swap_pair
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
 
+
+[@view]
+let get_current_batches ((),storage: unit * storage) : batch list=
+  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list = 
+     match Big_map.find_opt i storage.batch_set.batches with
+     | None   -> acc
+     | Some b -> b :: acc                                                   
+    in
+    Map.fold collect_batches storage.batch_set.current_batch_indices []
+
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
