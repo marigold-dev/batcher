@@ -43,7 +43,7 @@ let inverted_swap_already_exists: nat                     = 119n
 type token = {
   name : string;
   address : address option;
-  decimals : int;
+  decimals : nat;
   standard : string option;
 }
 
@@ -1366,7 +1366,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int (price)) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
