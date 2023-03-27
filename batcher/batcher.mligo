@@ -1434,6 +1434,7 @@ let convert_oracle_price
 let change_oracle_price_source
   (source_change: oracle_source_change)
   (storage: storage) : result = 
+  let _ = is_administrator storage in
   let valid_swap = get_valid_swap source_change.pair_name storage in 
   let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in 
   let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
