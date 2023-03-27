@@ -21,6 +21,7 @@ let token_already_exists_but_details_are_different: nat   = 116n
 let swap_already_exists: nat                              = 117n
 let swap_does_not_exist: nat                              = 118n
 let inverted_swap_already_exists: nat                     = 119n
+let endpoint_does_not_accept_tez: nat                     = 120n
 
 (* Constants *)
 
@@ -280,6 +281,9 @@ module Storage = struct
 end
 
 module Utils = struct
+
+
+   
 
 let empty_prorata_equivalence : prorata_equivalence = {
   buy_side_actual_volume = 0n;
@@ -1266,6 +1270,11 @@ type entrypoint =
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
 
+let reject_if_tez_supplied(): unit =
+  assert_with_error
+   (Tezos.get_amount () > 0tez)
+   (failwith endpoint_does_not_accept_tez)
+
 let is_administrator
   (storage : storage) : unit =
   assert_with_error
@@ -1359,6 +1368,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
 let redeem
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
+  let () = reject_if_tez_supplied () in 
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
@@ -1397,6 +1407,7 @@ let tick_price
 
 
 let tick (storage : storage) : result =
+   let () = reject_if_tez_supplied () in 
    let tick_prices
      (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
    in
@@ -1407,13 +1418,15 @@ let change_fee
     (new_fee: tez)
     (storage: storage) : result =
     let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op (storage)
 
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let _ = is_administrator storage in
+    let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with administrator = new_admin_address; } in
     no_op (storage)
 
@@ -1422,6 +1435,7 @@ let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
@@ -1430,6 +1444,7 @@ let remove_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
