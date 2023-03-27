@@ -1103,7 +1103,7 @@ let progress_batch
   (current_time : timestamp) : (batch * batch_set) =
   match batch.status with
   | Open { start_time } ->
-    if  current_time > start_time + price_wait_window then
+    if  current_time >= start_time + deposit_time_window then
       let closed_batch = close batch in
       update_current_batch_in_set closed_batch batch_set
     else
@@ -1433,6 +1433,11 @@ let remove_token_swap_pair
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
+
+
+[@view]
+let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
 
 let main
   (action, storage : entrypoint * storage) : result =
