@@ -628,7 +628,7 @@ module Redemption_Utils = struct
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
-    if Utils.gt remaining (Rational.new 1) then
+    if Utils.gt remaining (Rational.new 0) then
       let token_rem : token_amount = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
