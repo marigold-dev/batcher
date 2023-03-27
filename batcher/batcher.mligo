@@ -21,6 +21,7 @@ let token_already_exists_but_details_are_different: nat   = 116n
 let swap_already_exists: nat                              = 117n
 let swap_does_not_exist: nat                              = 118n
 let inverted_swap_already_exists: nat                     = 119n
+let endpoint_does_not_accept_tez: nat                     = 120n
 
 (* Constants *)
 
@@ -43,7 +44,7 @@ let inverted_swap_already_exists: nat                     = 119n
 type token = {
   name : string;
   address : address option;
-  decimals : int;
+  decimals : nat;
   standard : string option;
 }
 
@@ -278,6 +279,7 @@ module Storage = struct
 end
 
 module Utils = struct
+
 
 let empty_total_cleared_volumes : total_cleared_volumes = {
   buy_side_total_cleared_volume = 0n;
@@ -1118,7 +1120,7 @@ let progress_batch
   (current_time : timestamp) : (batch * batch_set) =
   match batch.status with
   | Open { start_time } ->
-    if  current_time > start_time + price_wait_window then
+    if  current_time >= start_time + deposit_time_window then
       let closed_batch = close batch in
       update_current_batch_in_set closed_batch batch_set
     else
@@ -1280,6 +1282,11 @@ type entrypoint =
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
 
+let reject_if_tez_supplied(): unit =
+  assert_with_error
+   (Tezos.get_amount () > 0tez)
+   (failwith endpoint_does_not_accept_tez)
+
 let is_administrator
   (storage : storage) : unit =
   assert_with_error
@@ -1373,6 +1380,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
 let redeem
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
+  let () = reject_if_tez_supplied () in 
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
@@ -1380,7 +1388,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int (price)) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
@@ -1411,6 +1419,7 @@ let tick_price
 
 
 let tick (storage : storage) : result =
+   let () = reject_if_tez_supplied () in 
    let tick_prices
      (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
    in
@@ -1421,13 +1430,15 @@ let change_fee
     (new_fee: tez)
     (storage: storage) : result =
     let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op (storage)
 
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let _ = is_administrator storage in
+    let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with administrator = new_admin_address; } in
     no_op (storage)
 
@@ -1436,6 +1447,7 @@ let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
@@ -1444,9 +1456,15 @@ let remove_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op (storage)
+
+
+[@view]
+let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
 
 let main
   (action, storage : entrypoint * storage) : result =
