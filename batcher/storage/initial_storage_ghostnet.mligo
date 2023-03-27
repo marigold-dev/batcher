@@ -40,7 +40,7 @@ let f(_:unit) = {
               standard = Some "FA2 token";
             }
         };
-        oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
+        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-USDT";
       }
     );
@@ -62,7 +62,7 @@ let f(_:unit) = {
             standard = Some "FA2 token";
           }
         };
-        oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
+        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-EURL";
       }
     )

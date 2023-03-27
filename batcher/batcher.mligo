@@ -26,6 +26,8 @@ let inverted_swap_already_exists: nat                     = 119n
 let oracle_price_is_stale: nat                            = 122n
 let oracle_price_is_not_timely: nat                       = 123n
 let unable_to_get_price_from_oracle: nat                  = 124n
+let unable_to_get_price_from_new_oracle_source: nat       = 125n
+let oracle_price_should_be_available_before_deposit: nat  = 126n
 
 (* Constants *)
 
@@ -1281,6 +1283,12 @@ type entrypoint =
   | Remove_token_swap_pair of valid_swap
   | Change_oracle_source_of_pair of oracle_source_change
 
+let get_oracle_price
+  (failure_code: nat)
+  (valid_swap: valid_swap) : orace_price_update =  
+  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
+  | Some opu -> opu
+  | None -> failwith failure_code
 
 let is_administrator
   (storage : storage) : unit =
@@ -1337,6 +1345,37 @@ let external_to_order
   let validated_swap = Tokens.validate side order.swap valid_tokens valid_swaps in
   { converted_order with swap = validated_swap; }
 
+let get_valid_swap
+ (pair_name: string)
+ (storage : storage) : valid_swap =
+ match Map.find_opt pair_name storage.valid_swaps with
+ | Some vswp -> vswp
+ | None -> failwith swap_does_not_exist
+
+
+let oracle_price_is_not_stale
+  (oracle_price_timestamp: timestamp) : unit =
+  assert_with_error
+   (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
+   (failwith oracle_price_is_stale)
+
+let is_oracle_price_newer_than_current
+  (rate_name: string)
+  (oracle_price_timestamp: timestamp) 
+  (storage: storage): unit =
+  let rates = storage.rates_current in
+  match Big_map.find_opt rate_name rates with
+  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
+  | None   -> () 
+
+let confirm_oracle_price_is_available_before_deposit
+  (pair:pair)
+  (storage:storage) : unit = 
+  let pair_name = Utils.get_rate_name_from_pair pair in
+  let valid_swap = get_valid_swap pair_name storage in
+  let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
+  oracle_price_is_not_stale lastupdated
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (external_order: external_swap_order) (storage : storage) : result =
@@ -1392,41 +1431,12 @@ let convert_oracle_price
    when = lastupdated;
   }
 
-let oracle_price_is_not_stale
-  (oracle_price_timestamp: timestamp) : unit =
-  assert_with_error
-   (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
-   (failwith oracle_price_is_stale)
-
-let is_oracle_price_newer_than_current
-  (rate_name: string)
-  (oracle_price_timestamp: timestamp) 
-  (storage: storage): unit =
-  let rates = storage.rates_current in
-  match Big_map.find_opt rate_name rates with
-  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
-  | None   -> () 
-
-let get_oracle_price
-  (valid_swap: valid_swap) : orace_price_update = 
-  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
-  | Some opu -> opu
-  | None -> failwith unable_to_get_price_from_oracle 
-
-
-let get_valid_swap
- (pair_name: string)
- (storage : storage) : valid_swap =
- match Map.find_opt pair_name storage.valid_swaps with
- | Some vswp -> vswp
- | None -> failwith swap_does_not_exist
-
 let change_oracle_price_source
   (source_change: oracle_source_change)
   (storage: storage) : result = 
   let valid_swap = get_valid_swap source_change.pair_name storage in 
   let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in 
-  let _ = get_oracle_price valid_swap in
+  let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
   let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
   let storage = { storage with valid_swaps = updated_swaps} in 
   no_op (storage)
@@ -1435,7 +1445,7 @@ let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
-  let (lastupdated, price) = get_oracle_price valid_swap in 
+  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in 
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
