@@ -25,6 +25,7 @@ let inverted_swap_already_exists: nat                     = 119n
 
 let oracle_price_is_stale: nat                            = 122n
 let oracle_price_is_not_timely: nat                       = 123n
+let unable_to_get_price_from_oracle: nat                  = 124n
 
 (* Constants *)
 
@@ -210,6 +211,15 @@ type batch_set = {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
+
+
+type orace_price_update = timestamp * nat
+
+type oracle_source_change = {
+  pair_name: string;
+  oracle_address: address;
+  oracle_asset_name: string;
+}
 
 module TokenAmount = struct
 
@@ -1263,12 +1273,14 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
   | Deposit of external_swap_order
-  | Tick
+  | Tick of string
   | Redeem
   | Change_fee of tez
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
+  | Change_oracle_source_of_pair of oracle_source_change
+
 
 let is_administrator
   (storage : storage) : unit =
@@ -1395,34 +1407,57 @@ let is_oracle_price_newer_than_current
   | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
   | None   -> () 
 
+let get_oracle_price
+  (valid_swap: valid_swap) : orace_price_update = 
+  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
+  | Some opu -> opu
+  | None -> failwith unable_to_get_price_from_oracle 
+
+
+let get_valid_swap
+ (pair_name: string)
+ (storage : storage) : valid_swap =
+ match Map.find_opt pair_name storage.valid_swaps with
+ | Some vswp -> vswp
+ | None -> failwith swap_does_not_exist
+
+let change_oracle_price_source
+  (source_change: oracle_source_change)
+  (storage: storage) : result = 
+  let valid_swap = get_valid_swap source_change.pair_name storage in 
+  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in 
+  let _ = get_oracle_price valid_swap in
+  let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
+  let storage = { storage with valid_swaps = updated_swaps} in 
+  no_op (storage)
+
 let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
-    let res = (Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address) in
-    match res with
-    | Some (lastupdated, price) -> (let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-                                    let () = oracle_price_is_not_stale lastupdated in
-                                    let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
-                                    let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
-                                    let pair = Utils.pair_of_rate oracle_rate in
-                                    let current_time = Tezos.get_now () in
-                                    let batch_set = storage.batch_set in
-                                    let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
-                                    match batch_opt with
-                                    | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
-                                                let storage = { storage with batch_set = batch_set } in
-                                                storage
-                                    | None ->   storage)
-    | None -> storage
+  let (lastupdated, price) = get_oracle_price valid_swap in 
+  let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
+  let () = oracle_price_is_not_stale lastupdated in
+  let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
+  let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
+  let pair = Utils.pair_of_rate oracle_rate in
+  let current_time = Tezos.get_now () in
+  let batch_set = storage.batch_set in
+  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
+  match batch_opt with
+  | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
+              let storage = { storage with batch_set = batch_set } in
+              storage
+  | None ->   storage
 
 
-let tick (storage : storage) : result =
-   let tick_prices
-     (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
-   in
-   let storage = Map.fold tick_prices storage.valid_swaps storage in
-   no_op (storage)
+let tick
+ (rate_name: string)
+ (storage : storage) : result =
+ match Map.find_opt rate_name storage.valid_swaps with
+ | Some vswp -> let storage = tick_price rate_name vswp storage in
+                no_op (storage)
+ | None -> failwith swap_does_not_exist
 
 let change_fee
     (new_fee: tez)
@@ -1459,12 +1494,11 @@ let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
-   | Tick -> tick storage
+   | Tick r ->  tick r storage
    | Redeem -> redeem storage
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
-
-
+   | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage
 
