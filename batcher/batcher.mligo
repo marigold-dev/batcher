@@ -102,7 +102,6 @@ type swap_order = {
   batch_number: nat;
   trader : address;
   swap  : swap;
-  created_at : timestamp;
   side : side;
   tolerance : tolerance;
   redeemed:bool;
@@ -1341,7 +1340,6 @@ let external_to_order
       batch_number = batch_number;
       trader = sender;
       swap  = order.swap;
-      created_at = order.created_at;
       side = side;
       tolerance = tolerance;
       redeemed = false;
@@ -1395,7 +1393,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int price) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
