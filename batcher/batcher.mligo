@@ -22,7 +22,19 @@
 [@inline] let swap_does_not_exist: nat                              = 118n
 [@inline] let inverted_swap_already_exists: nat                     = 119n
 [@inline] let endpoint_does_not_accept_tez: nat                     = 120n
-[@inline] let number_is_not_a_nat: nat                              = 121n 
+[@inline] let number_is_not_a_nat: nat                              = 121n
+
+
+
+
+
+
+
+
+[@inline] let upper_limit_on_tokens_has_been_reached: nat                              = 128n
+[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                          = 129n
+[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat           = 128n
+[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat       = 128n
 
 
 (* Constants *)
@@ -275,7 +287,8 @@ module Storage = struct
     user_batch_ordertypes: user_batch_ordertypes;
     fee_in_mutez: tez;
     fee_recipient : address;
-    administrator : address
+    administrator : address;
+    limit_on_tokens_or_pairs : nat
   }
 
 end
@@ -450,11 +463,11 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     Map.fold return_highest batch_indices 0n
 
   (** [concat a b] concat [a] and [b]. *)
-  let concat (type a) (left: a list) (right: a list) : a list =
+  let concat1 (type a) (left: a list) (right: a list) : a list =
     List.fold_right (fun (x, xs: a * a list) -> x :: xs) left right
 
   (** [rev list] should return the same list reversed. *)
-  let rev (type a) (list: a list) : a list =
+  let rev1 (type a) (list: a list) : a list =
     List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
 
   let update_if_more_recent
@@ -942,6 +955,15 @@ let add_token
 
 let is_token_used
   (token: token)
+  (valid_tokens: valid_tokens) : bool =
+  let is_token_in_tokens (acc, (_i, t) : bool * (string * token)) : bool =
+    are_equivalent_tokens token t ||
+    acc
+  in
+  Map.fold is_token_in_tokens valid_tokens false
+
+let is_token_used_in_swaps
+  (token: token)
   (valid_swaps: valid_swaps) : bool =
   let is_token_used_in_swap (acc, (_i, valid_swap) : bool * (string * valid_swap)) : bool =
     let swap = valid_swap.swap in
@@ -967,12 +989,12 @@ let remove_swap
   let valid_swaps = Map.remove rate_name valid_swaps in
   let from = swap.from.token in
   let to = swap.to in
-  let valid_tokens = if is_token_used from valid_swaps then
+  let valid_tokens = if is_token_used_in_swaps from valid_swaps then
                        valid_tokens
                     else
                        remove_token from valid_tokens
   in
-  let valid_tokens = if is_token_used to valid_swaps then
+  let valid_tokens = if is_token_used_in_swaps to valid_swaps then
                        valid_tokens
                     else
                        remove_token to valid_tokens
@@ -983,11 +1005,14 @@ end
 
 module Tokens = struct
 
+type valid_swaps = Storage.valid_swaps
+type valid_tokens = Storage.valid_tokens
 let validate
+
   (side: side)
   (swap: swap)
-  (valid_tokens: Storage.valid_tokens)
-  (valid_swaps: Storage.valid_swaps): swap =
+  (valid_tokens: valid_tokens)
+  (valid_swaps: valid_swaps): swap =
   let from = swap.from.token in
   let to = swap.to in
   match Map.find_opt from.name valid_tokens with
@@ -999,11 +1024,34 @@ let validate
                             else
                               failwith unsupported_swap_type)
 
+
+let check_tokens_size_or_fail
+  (tokens_size: nat)
+  (limit_on_tokens_or_pairs: nat)
+  (num_tokens: nat) : unit =  if tokens_size + num_tokens > limit_on_tokens_or_pairs then failwith upper_limit_on_tokens_has_been_reached else ()
+
+
+let can_add
+  (to: token)
+  (from: token)
+  (limit_on_tokens_or_pairs: nat)
+  (valid_tokens: valid_tokens)
+  (valid_swaps: valid_swaps): unit = 
+  let pairs_size = Map.size valid_swaps in
+  if pairs_size + 1n > limit_on_tokens_or_pairs then failwith upper_limit_on_swap_pairs_has_been_reached else
+  let tokens_size = Map.size valid_tokens in
+  let unused_tokens_being_added = 
+    if Token_Utils.is_token_used to valid_tokens && Token_Utils.is_token_used from valid_tokens then 0n else
+    if Token_Utils.is_token_used to valid_tokens || Token_Utils.is_token_used from valid_tokens then 1n else
+    2n
+  in 
+  check_tokens_size_or_fail tokens_size limit_on_tokens_or_pairs unused_tokens_being_added
+
 let remove_pair
   (valid_swap: valid_swap)
-  (valid_swaps: Storage.valid_swaps)
-  (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
-  let swap = valid_swap.swap in
+  (valid_swaps: valid_swaps)
+  (valid_tokens: valid_tokens) : valid_swaps * valid_tokens =
+  let swap = valid_swap.swap in 
   let from = swap.from.token in
   let to = swap.to in
   let rate_name = Utils.get_rate_name_from_swap swap in
@@ -1016,12 +1064,14 @@ let remove_pair
   | None, None ->  failwith swap_does_not_exist
 
 let add_pair
+  (limit_on_tokens_or_pairs: nat)
   (valid_swap: valid_swap)
-  (valid_swaps: Storage.valid_swaps)
-  (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
+  (valid_swaps: valid_swaps)
+  (valid_tokens: valid_tokens) : valid_swaps * valid_tokens =
   let swap = valid_swap.swap in
   let from = swap.from.token in
   let to = swap.to in
+  let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
   let rate_name = Utils.get_rate_name_from_swap swap in
   let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
@@ -1033,6 +1083,7 @@ let add_pair
                   let valid_tokens = Token_Utils.add_token to valid_tokens in
                   let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
                   valid_swaps, valid_tokens
+
 
 end
 
@@ -1288,6 +1339,7 @@ type entrypoint =
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
+  | Amend_token_and_pair_limit of nat
 
 let reject_if_tez_supplied(): unit =
   assert_with_error
@@ -1395,7 +1447,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int price) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
@@ -1449,12 +1501,14 @@ let change_admin_address
     no_op storage
 
 
+
+
 let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
    let () = reject_if_tez_supplied () in 
-   let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
+   let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
@@ -1466,6 +1520,21 @@ let remove_token_swap_pair
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
+
+
+let amend_token_and_pair_limit
+  (limit: nat)
+  (storage: storage) : result = 
+  let () = is_administrator storage in
+  let () = reject_if_tez_supplied () in
+  let token_count = Map.size storage.valid_tokens in 
+  let pair_count =  Map.size storage.valid_swaps in
+  if limit < token_count then failwith cannot_reduce_limit_on_tokens_to_less_than_already_exists else
+  if limit < pair_count then failwith cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists else
+  let storage = { storage with limit_on_tokens_or_pairs = limit} in
+  no_op (storage) 
+  
+
 
 
 [@view]
@@ -1482,6 +1551,7 @@ let main
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
+   | Amend_token_and_pair_limit l -> amend_token_and_pair_limit l storage
 
 
 
