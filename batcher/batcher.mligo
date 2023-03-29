@@ -372,27 +372,36 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     else if tolerance = 2n then Plus
     else failwith unable_to_parse_tolerance_from_external_order
 
+  let find_lexicographical_pair_name
+    (token_one_name: string)
+    (token_two_name: string) : string = 
+    if token_one_name > token_two_name then
+      token_one_name ^ "/" ^ token_two_name
+    else 
+      token_two_name ^ "/" ^ token_one_name
+      
+
   let get_rate_name_from_swap (s : swap) : string =
     let base_name = s.from.token.name in
     let quote_name = s.to.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_rate_name_from_pair (s : token * token) : string =
     let (base, quote) = s in
     let base_name = base.name in
     let quote_name = quote.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_inverse_rate_name_from_pair (s : token * token) : string =
     let (base, quote) = s in
     let quote_name = quote.name in
     let base_name = base.name in
-    quote_name ^ "/" ^ base_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_rate_name (r : exchange_rate) : string =
     let base_name = r.swap.from.token.name in
     let quote_name = r.swap.to.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let pair_of_swap
     (side: side)
