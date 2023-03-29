@@ -207,6 +207,13 @@ type batch_set = {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
+(* Type for contract metadata *)
+type metadata = (string, bytes) big_map
+
+type metadata_update = {
+  key: string;
+  value: bytes;
+}
 
 module TokenAmount = struct
 
@@ -266,7 +273,9 @@ module Storage = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, exchange_rate) big_map
 
+
   type t = [@layout:comb] {
+    metadata: metadata;
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
@@ -1278,6 +1287,7 @@ type result = (operation list) * storage
 type valid_swaps = Storage.valid_swaps
 type valid_tokens = Storage.valid_tokens
 
+
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
@@ -1288,6 +1298,8 @@ type entrypoint =
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
+  | Add_or_update_metadata of metadata_update
+  | Remove_metadata of string
 
 let reject_if_tez_supplied(): unit =
   assert_with_error
@@ -1395,7 +1407,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int price) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
@@ -1467,10 +1479,25 @@ let remove_token_swap_pair
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
+let add_or_update_metadata
+  (metadata_update: metadata_update)
+  (storage:storage) : result = 
+  let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
+                         | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
+                         | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
+  in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
+
+let remove_metadata
+  (key: string)
+  (storage:storage) : result = 
+  let updated_metadata = Big_map.remove key storage.metadata in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
 
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
-
 
 let main
   (action, storage : entrypoint * storage) : result =
@@ -1482,6 +1509,8 @@ let main
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
+   | Add_or_update_metadata mu -> add_or_update_metadata mu storage
+   | Remove_metadata k -> remove_metadata k storage
 
 
 

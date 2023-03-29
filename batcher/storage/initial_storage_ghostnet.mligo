@@ -1,6 +1,7 @@
 #import "../batcher.mligo" "Batcher"
 
 let f(_:unit) = {
+  metadata = (Big_map.empty : (string,bytes) big_map);
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
