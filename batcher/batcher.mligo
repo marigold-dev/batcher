@@ -1316,13 +1316,13 @@ let get_oracle_price
 let reject_if_tez_supplied(): unit =
   assert_with_error
    (Tezos.get_amount () > 0tez)
-   (failwith endpoint_does_not_accept_tez)
+   (endpoint_does_not_accept_tez)
 
 let is_administrator
   (storage : storage) : unit =
   assert_with_error
    (Tezos.get_sender () = storage.administrator)
-   (failwith sender_not_administrator)
+   (sender_not_administrator)
 
 let invert_rate_for_clearing
   (rate : exchange_rate) : exchange_rate  =
