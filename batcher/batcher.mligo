@@ -50,7 +50,7 @@ let oracle_price_should_be_available_before_deposit: nat  = 126n
 [@inline] let limit_of_redeemable_items : nat = 10n
 
 (* Associate alias to token address *)
-type token = {
+type token = [@layout:comb] {
   name : string;
   address : address option;
   decimals : nat;
@@ -67,7 +67,7 @@ type tolerance =
   Plus | Exact | Minus
 
 (* A token value ascribes an amount to token metadata *)
-type token_amount = {
+type token_amount = [@layout:comb] {
   token : token;
   amount : nat;
 }
@@ -78,19 +78,19 @@ type token_holding_map = (address, token_amount_map) map
 
 
 (* A token amount 'held' by a specific address *)
-type token_holding = {
+type token_holding = [@layout:comb] {
   holder: address;
   token_amount : token_amount;
   redeemed: bool;
 }
 
-type swap = {
+type swap =  [@layout:comb] {
  from : token_amount;
  to : token;
 }
 
 (* A valid swap is a swap pair that has a source of pricing from an oracle.  *)
-type valid_swap = {
+type valid_swap = [@layout:comb] {
   swap: swap;
   oracle_address: address;
   oracle_asset_name: string;
@@ -98,13 +98,13 @@ type valid_swap = {
 
 
 (*I change the type of the rate from tez to nat for sake of simplicity*)
-type exchange_rate = {
+type exchange_rate = [@layout:comb] {
   swap : swap;
   rate: Rational.t;
   when : timestamp;
 }
 
-type swap_order = {
+type swap_order =  [@layout:comb] {
   order_number: nat;
   batch_number: nat;
   trader : address;
@@ -115,7 +115,7 @@ type swap_order = {
   redeemed:bool;
 }
 
-type external_swap_order = {
+type external_swap_order = [@layout:comb] {
   swap  : swap;
   created_at : timestamp;
   side : nat;
@@ -125,19 +125,19 @@ type external_swap_order = {
 type batch_status  =
   NOT_OPEN | OPEN | CLOSED | FINALIZED
 
-type total_cleared_volumes = {
+type total_cleared_volumes = [@layout:comb] {
   buy_side_total_cleared_volume: nat;
   sell_side_total_cleared_volume: nat;
 }
 
-type clearing_volumes = {
+type clearing_volumes = [@layout:comb] {
   minus: nat;
   exact: nat;
   plus: nat;
 }
 
 
-type clearing = {
+type clearing =  [@layout:comb] {
   clearing_volumes : clearing_volumes;
   clearing_tolerance : tolerance;
   total_cleared_volumes: total_cleared_volumes;
@@ -169,8 +169,7 @@ type batch_status =
   | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
 
-type volumes = {
-  [@layout:comb]
+type volumes = [@layout:comb] {
   buy_minus_volume : nat;
   buy_exact_volume : nat;
   buy_plus_volume : nat;
@@ -182,7 +181,7 @@ type volumes = {
 type pair = token * token
 
 (* This represents the type of order.  I.e. buy/sell and which level*)
-type ordertype = {
+type ordertype = [@layout:comb] {
    side: side;
    tolerance: tolerance;
 }
@@ -198,7 +197,7 @@ type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
 
 (* Batch of orders for the same pair of tokens *)
-type batch = {
+type batch = [@layout:comb] {
   batch_number: nat;
   status : batch_status;
   volumes : volumes;
@@ -210,7 +209,7 @@ type batch_indices = (string,  nat) map
 (* Set of batches, containing the current batch and the previous (finalized) batches.
    The current batch can be open for deposits, closed for deposits (awaiting clearing) or
    finalized, as we wait for a new deposit to start a new batch *)
-type batch_set = {
+type batch_set = [@layout:comb] {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
@@ -218,11 +217,16 @@ type batch_set = {
 
 type orace_price_update = timestamp * nat
 
-type oracle_source_change = {
+type oracle_source_change = [@layout:comb] {
   pair_name: string;
   oracle_address: address;
   oracle_asset_name: string;
 }
+
+let assert_with_error_nat
+(predicate: bool)
+(error: nat) : unit = 
+if predicate then () else failwith error
 
 module TokenAmount = struct
 
@@ -1314,13 +1318,13 @@ let get_oracle_price
   | None -> failwith failure_code
 
 let reject_if_tez_supplied(): unit =
-  assert_with_error
+  assert_with_error_nat
    (Tezos.get_amount () > 0tez)
    (endpoint_does_not_accept_tez)
 
 let is_administrator
   (storage : storage) : unit =
-  assert_with_error
+  assert_with_error_nat
    (Tezos.get_sender () = storage.administrator)
    (sender_not_administrator)
 
@@ -1383,7 +1387,7 @@ let get_valid_swap
 
 let oracle_price_is_not_stale
   (oracle_price_timestamp: timestamp) : unit =
-  assert_with_error
+  assert_with_error_nat
    (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
    (oracle_price_is_stale)
 
@@ -1450,7 +1454,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 swap.from.token.decimals in
+  let denom = Utils.pow 10 (int swap.from.token.decimals) in
   let rational_price = Rational.new (int price) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
