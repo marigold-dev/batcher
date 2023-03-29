@@ -1385,7 +1385,7 @@ let oracle_price_is_not_stale
   (oracle_price_timestamp: timestamp) : unit =
   assert_with_error
    (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
-   (failwith oracle_price_is_stale)
+   (oracle_price_is_stale)
 
 let is_oracle_price_newer_than_current
   (rate_name: string)
