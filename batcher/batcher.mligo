@@ -418,31 +418,13 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let side = nat_to_side order.side in
     pair_of_swap side swap
 
-   let get_rate_names
-     (pair: pair): (string * string) =
-     let rate_name = get_rate_name_from_pair pair in
-     let inverse_rate_name = get_inverse_rate_name_from_pair pair in
-     (rate_name, inverse_rate_name)
-
-   let search_batches
-     (rate_name: string)
-     (inverse_rate_name: string)
-     (batch_indices: batch_indices): (nat option * nat option) =
-     let index_found =  Map.find_opt rate_name batch_indices in
-     let inv_index_found =  Map.find_opt inverse_rate_name batch_indices in
-     (index_found, inv_index_found)
-
    let get_current_batch_index
      (pair: pair)
      (batch_indices: batch_indices): nat =
-     let (rate_name, inverse_rate_name) : string * string = get_rate_names pair in
-     let (index_found, inv_index_found) : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
-     match (index_found, inv_index_found) with
-     | (Some cbi,_) -> cbi
-     | (None, Some cbi) -> cbi
-     | (None, None) -> 0n
-
-
+     let rate_name = get_rate_name_from_pair pair in
+     match Map.find_opt rate_name batch_indices with
+     | Some cbi -> cbi
+     | None -> 0n
 
   let get_highest_batch_index
     (batch_indices: batch_indices) : nat =
@@ -989,16 +971,11 @@ let remove_pair
   (valid_swaps: Storage.valid_swaps)
   (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
   let swap = valid_swap.swap in
-  let from = swap.from.token in
-  let to = swap.to in
   let rate_name = Utils.get_rate_name_from_swap swap in
-  let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
-  let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
-  match (rate_found, inverted_rate_found) with
-  | (Some _, _) -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
-  | (None, Some _) -> failwith inverted_swap_already_exists
-  | (None, None) ->  failwith swap_does_not_exist
+  match rate_found with
+  | Some _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
+  | None ->  failwith swap_does_not_exist
 
 let add_pair
   (valid_swap: valid_swap)

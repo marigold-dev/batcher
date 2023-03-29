@@ -44,7 +44,7 @@ let f(_:unit) = {
         oracle_asset_name = "tzBTC-USDT";
       }
     );
-    ("tzBTC/EURL", {
+    ("EURL/tzBTC", {
         swap = {
           from = {
             amount = 1n;
