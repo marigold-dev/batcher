@@ -37,6 +37,16 @@
 [@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat       = 128n
 
 
+
+
+
+
+
+
+
+[@inline] let swap_is_disabled_for_deposits: nat                    = 127n 
+
+
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
@@ -99,6 +109,7 @@ type valid_swap = {
   swap: swap;
   oracle_address: address;
   oracle_asset_name: string;
+  is_disabled_for_deposits: bool;
 }
 
 
@@ -114,7 +125,6 @@ type swap_order = {
   batch_number: nat;
   trader : address;
   swap  : swap;
-  created_at : timestamp;
   side : side;
   tolerance : tolerance;
   redeemed:bool;
@@ -219,6 +229,13 @@ type batch_set = {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
+(* Type for contract metadata *)
+type metadata = (string, bytes) big_map
+
+type metadata_update = {
+  key: string;
+  value: bytes;
+}
 
 module TokenAmount = struct
 
@@ -278,7 +295,9 @@ module Storage = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, exchange_rate) big_map
 
+
   type t = [@layout:comb] {
+    metadata: metadata;
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
@@ -615,6 +634,15 @@ module Redemption_Utils = struct
     | Exact -> clearing.clearing_volumes.exact
     | Plus -> clearing.clearing_volumes.plus
 
+  (* Filter 0 amount transfers out *)
+  let add_payout_if_not_zero
+    (payout: token_amount)
+    (tam: token_amount_map) : token_amount_map = 
+    if payout.amount > 0n then
+      TokenAmountMap.increase payout tam
+    else
+      tam 
+  
   let get_cleared_sell_side_payout
     (from: token)
     (to: token)
@@ -640,16 +668,19 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
-    if Utils.gt remaining (Rational.new 1) then
+    if Utils.gt remaining (Rational.new 0) then
       let token_rem : token_amount = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
 
   let get_cleared_buy_side_payout
     (from: token)
@@ -678,16 +709,20 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
+
 
   let get_cleared_payout
     (ot: ordertype)
@@ -1329,6 +1364,7 @@ type result = (operation list) * storage
 type valid_swaps = Storage.valid_swaps
 type valid_tokens = Storage.valid_tokens
 
+
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
@@ -1340,6 +1376,10 @@ type entrypoint =
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
   | Amend_token_and_pair_limit of nat
+  | Add_or_update_metadata of metadata_update
+  | Remove_metadata of string
+  | Enable_swap_pair_for_deposit of string
+  | Disable_swap_pair_for_deposit of string
 
 let reject_if_tez_supplied(): unit =
   assert_with_error
@@ -1393,7 +1433,6 @@ let external_to_order
       batch_number = batch_number;
       trader = sender;
       swap  = order.swap;
-      created_at = order.created_at;
       side = side;
       tolerance = tolerance;
       redeemed = false;
@@ -1401,16 +1440,45 @@ let external_to_order
   let validated_swap = Tokens.validate side order.swap valid_tokens valid_swaps in
   { converted_order with swap = validated_swap; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let get_valid_swap
+ (pair_name: string)
+ (storage : storage) : valid_swap =
+ match Map.find_opt pair_name storage.valid_swaps with
+ | Some vswp -> vswp
+ | None -> failwith swap_does_not_exist
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
-
+  let pair_name = Utils.get_rate_name_from_pair pair in
+  let valid_swap = get_valid_swap pair_name storage in
+  if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else 
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
-
   let (current_batch, current_batch_set) = Batch_Utils.get_current_batch pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
@@ -1521,6 +1589,36 @@ let remove_token_swap_pair
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
+let add_or_update_metadata
+  (metadata_update: metadata_update)
+  (storage:storage) : result = 
+  let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
+                         | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
+                         | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
+  in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
+
+let remove_metadata
+  (key: string)
+  (storage:storage) : result = 
+  let updated_metadata = Big_map.remove key storage.metadata in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
+
+let set_deposit_status
+  (pair_name: string)
+  (disabled: bool)
+  (storage: storage) : result = 
+   let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
+   let valid_swap = get_valid_swap pair_name storage in
+   let valid_swap = { valid_swap with is_disabled_for_deposits = disabled; } in
+   let valid_swaps = Map.update pair_name (Some valid_swap) storage.valid_swaps in
+   let storage = { storage with valid_swaps = valid_swaps; } in
+   no_op (storage)
+
+
 
 let amend_token_and_pair_limit
   (limit: nat)
@@ -1541,6 +1639,16 @@ let amend_token_and_pair_limit
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
 
+[@view]
+let get_current_batches ((),storage: unit * storage) : batch list=
+  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list = 
+     match Big_map.find_opt i storage.batch_set.batches with
+     | None   -> acc
+     | Some b -> b :: acc                                                   
+    in
+    Map.fold collect_batches storage.batch_set.current_batch_indices []
+
+
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
@@ -1552,6 +1660,11 @@ let main
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
    | Amend_token_and_pair_limit l -> amend_token_and_pair_limit l storage
+   | Add_or_update_metadata mu -> add_or_update_metadata mu storage
+   | Remove_metadata k -> remove_metadata k storage
+   | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
+   | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
+
 
 
 
