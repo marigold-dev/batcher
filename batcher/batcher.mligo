@@ -113,7 +113,6 @@ type swap_order = {
   batch_number: nat;
   trader : address;
   swap  : swap;
-  created_at : timestamp;
   side : side;
   tolerance : tolerance;
   redeemed:bool;
@@ -1370,7 +1369,6 @@ let external_to_order
       batch_number = batch_number;
       trader = sender;
       swap  = order.swap;
-      created_at = order.created_at;
       side = side;
       tolerance = tolerance;
       redeemed = false;
