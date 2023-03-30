@@ -46,7 +46,7 @@ let f(_:unit) = {
         is_disabled_for_deposits = false;
       }
     );
-    ("tzBTC/EURL", {
+    ("EURL/tzBTC", {
         swap = {
           from = {
             amount = 1n;
