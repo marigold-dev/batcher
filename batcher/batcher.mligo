@@ -2,25 +2,28 @@
 
 
 (* Errors  *)
-let no_rate_available_for_swap : nat                      = 100n
-let invalid_token_address : nat                           = 101n
-let invalid_tezos_address : nat                           = 102n
-let no_open_batch_for_deposits : nat                      = 104n
-let batch_should_be_cleared : nat                         = 105n
-let trying_to_close_batch_which_is_not_open : nat         = 106n
-let unable_to_parse_side_from_external_order : nat        = 107n
-let unable_to_parse_tolerance_from_external_order : nat   = 108n
-let token_standard_not_found : nat                        = 109n
-let xtz_not_currently_supported : nat                     = 110n
-let unsupported_swap_type : nat                           = 111n
-let unable_to_reduce_token_amount_to_less_than_zero : nat = 112n
-let too_many_unredeemed_orders : nat                      = 113n
-let insufficient_swap_fee : nat                           = 114n
-let sender_not_administrator : nat                        = 115n
-let token_already_exists_but_details_are_different: nat   = 116n
-let swap_already_exists: nat                              = 117n
-let swap_does_not_exist: nat                              = 118n
-let inverted_swap_already_exists: nat                     = 119n
+[@inline] let no_rate_available_for_swap : nat                      = 100n
+[@inline] let invalid_token_address : nat                           = 101n
+[@inline] let invalid_tezos_address : nat                           = 102n
+[@inline] let no_open_batch_for_deposits : nat                      = 104n
+[@inline] let batch_should_be_cleared : nat                         = 105n
+[@inline] let trying_to_close_batch_which_is_not_open : nat         = 106n
+[@inline] let unable_to_parse_side_from_external_order : nat        = 107n
+[@inline] let unable_to_parse_tolerance_from_external_order : nat   = 108n
+[@inline] let token_standard_not_found : nat                        = 109n
+[@inline] let xtz_not_currently_supported : nat                     = 110n
+[@inline] let unsupported_swap_type : nat                           = 111n
+[@inline] let unable_to_reduce_token_amount_to_less_than_zero : nat = 112n
+[@inline] let too_many_unredeemed_orders : nat                      = 113n
+[@inline] let insufficient_swap_fee : nat                           = 114n
+[@inline] let sender_not_administrator : nat                        = 115n
+[@inline] let token_already_exists_but_details_are_different: nat   = 116n
+[@inline] let swap_already_exists: nat                              = 117n
+[@inline] let swap_does_not_exist: nat                              = 118n
+[@inline] let inverted_swap_already_exists: nat                     = 119n
+[@inline] let endpoint_does_not_accept_tez: nat                     = 120n
+[@inline] let number_is_not_a_nat: nat                              = 121n 
+
 
 (* Constants *)
 
@@ -43,7 +46,7 @@ let inverted_swap_already_exists: nat                     = 119n
 type token = {
   name : string;
   address : address option;
-  decimals : int;
+  decimals : nat;
   standard : string option;
 }
 
@@ -115,11 +118,9 @@ type external_swap_order = {
 type batch_status  =
   NOT_OPEN | OPEN | CLOSED | FINALIZED
 
-type prorata_equivalence = {
-  buy_side_actual_volume: nat;
-  buy_side_actual_volume_equivalence: nat;
-  sell_side_actual_volume: nat;
-  sell_side_actual_volume_equivalence: nat
+type total_cleared_volumes = {
+  buy_side_total_cleared_volume: nat;
+  sell_side_total_cleared_volume: nat;
 }
 
 type clearing_volumes = {
@@ -132,7 +133,7 @@ type clearing_volumes = {
 type clearing = {
   clearing_volumes : clearing_volumes;
   clearing_tolerance : tolerance;
-  prorata_equivalence: prorata_equivalence;
+  total_cleared_volumes: total_cleared_volumes;
   clearing_rate: exchange_rate;
 }
 
@@ -281,12 +282,16 @@ end
 
 module Utils = struct
 
-let empty_prorata_equivalence : prorata_equivalence = {
-  buy_side_actual_volume = 0n;
-  buy_side_actual_volume_equivalence = 0n;
-  sell_side_actual_volume = 0n;
-  sell_side_actual_volume_equivalence = 0n;
+
+let empty_total_cleared_volumes : total_cleared_volumes = {
+  buy_side_total_cleared_volume = 0n;
+  sell_side_total_cleared_volume = 0n;
 }
+[@inline]
+let to_nat (i:int): nat = 
+  match is_nat i with
+  | Some n -> n
+  | None -> failwith number_is_not_a_nat
 
 [@inline]
 let gt (a : Rational.t) (b : Rational.t) : bool = not (Rational.lte a b)
@@ -295,42 +300,42 @@ let gt (a : Rational.t) (b : Rational.t) : bool = not (Rational.lte a b)
 let gte (a : Rational.t) (b : Rational.t) : bool = not (Rational.lt a b)
 
 let pow (base : int) (pow : int) : int =
-  let rec iter (acc : int) (rem_pow : int) : int = (if rem_pow = 0 then acc else iter (acc * base) (rem_pow - 1)) in
-  iter (1) (pow)
+  let rec iter (acc : int) (rem_pow : int) : int = if rem_pow = 0 then acc else iter (acc * base) (rem_pow - 1) in
+  iter 1 pow
 
 (* Get the number with 0 decimal accuracy *)
 let get_rounded_number_lower_bound (number : Rational.t) : nat =
   let zero_decimal_number = Rational.resolve number 0n in
-    abs (zero_decimal_number)
+    to_nat zero_decimal_number
 
 let get_min_number (a : Rational.t) (b : Rational.t) =
   if Rational.lte a b then a
   else b
 
 let get_clearing_tolerance (cp_minus : Rational.t) (cp_exact : Rational.t) (cp_plus : Rational.t) : tolerance =
-  if (gte cp_minus cp_exact) && (gte cp_minus cp_plus) then Minus
-  else if (gte cp_exact cp_minus) && (gte cp_exact cp_plus) then Exact
+  if gte cp_minus cp_exact && gte cp_minus cp_plus then Minus
+  else if gte cp_exact cp_minus && gte cp_exact cp_plus then Exact
   else Plus
 
 let get_cp_minus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let (buy_minus_token, buy_exact_token, buy_plus_token) = buy_side in
-  let (sell_minus_token, _, _) = sell_side in
+  let buy_minus_token, buy_exact_token, buy_plus_token = buy_side in
+  let sell_minus_token, _, _ = sell_side in
   let left_number = Rational.new (buy_minus_token + buy_exact_token + buy_plus_token)  in
   let right_number = Rational.div (Rational.mul (Rational.new sell_minus_token) ten_bips_constant) rate in
   let min_number = get_min_number left_number right_number in
   min_number
 
 let get_cp_exact (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let (_, buy_exact_token, buy_plus_token) = buy_side in
-  let (sell_minus_token, sell_exact_token, _) = sell_side in
+  let _, buy_exact_token, buy_plus_token = buy_side in
+  let sell_minus_token, sell_exact_token, _ = sell_side in
   let left_number = Rational.new (buy_exact_token + buy_plus_token) in
   let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token)) rate in
   let min_number = get_min_number left_number right_number in
   min_number
 
 let get_cp_plus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let (_, _, buy_plus_token) = buy_side in
-  let (sell_minus_token, sell_exact_token, sell_plus_token) = sell_side in
+  let _, _, buy_plus_token = buy_side in
+  let sell_minus_token, sell_exact_token, sell_plus_token = sell_side in
   let left_number = Rational.new buy_plus_token in
   let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token + sell_plus_token)) (Rational.mul ten_bips_constant rate) in
   let min_number = get_min_number left_number right_number in
@@ -355,7 +360,7 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
   {
     clearing_volumes = clearing_volumes;
     clearing_tolerance = clearing_tolerance;
-    prorata_equivalence = empty_prorata_equivalence;
+    total_cleared_volumes = empty_total_cleared_volumes;
     clearing_rate = exchange_rate
   }
 
@@ -378,13 +383,13 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     base_name ^ "/" ^ quote_name
 
   let get_rate_name_from_pair (s : token * token) : string =
-    let (base, quote) = s in
+    let base, quote = s in
     let base_name = base.name in
     let quote_name = quote.name in
     base_name ^ "/" ^ quote_name
 
   let get_inverse_rate_name_from_pair (s : token * token) : string =
-    let (base, quote) = s in
+    let base, quote = s in
     let quote_name = quote.name in
     let base_name = base.name in
     quote_name ^ "/" ^ base_name
@@ -398,8 +403,8 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     (side: side)
     (swap: swap): (token * token) =
     match side with
-    | Buy -> (swap.from.token, swap.to)
-    | Sell -> (swap.to, swap.from.token)
+    | Buy -> swap.from.token, swap.to
+    | Sell -> swap.to, swap.from.token
 
   let pair_of_rate (r : exchange_rate) : (token * token) = pair_of_swap Buy r.swap
 
@@ -413,7 +418,7 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
      (pair: pair): (string * string) =
      let rate_name = get_rate_name_from_pair pair in
      let inverse_rate_name = get_inverse_rate_name_from_pair pair in
-     (rate_name, inverse_rate_name)
+     rate_name, inverse_rate_name
 
    let search_batches
      (rate_name: string)
@@ -421,17 +426,17 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
      (batch_indices: batch_indices): (nat option * nat option) =
      let index_found =  Map.find_opt rate_name batch_indices in
      let inv_index_found =  Map.find_opt inverse_rate_name batch_indices in
-     (index_found, inv_index_found)
+     index_found, inv_index_found
 
    let get_current_batch_index
      (pair: pair)
      (batch_indices: batch_indices): nat =
-     let (rate_name, inverse_rate_name) : string * string = get_rate_names pair in
-     let (index_found, inv_index_found) : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
-     match (index_found, inv_index_found) with
-     | (Some cbi,_) -> cbi
-     | (None, Some cbi) -> cbi
-     | (None, None) -> 0n
+     let rate_name, inverse_rate_name : string * string = get_rate_names pair in
+     let index_found, inv_index_found : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
+     match index_found, inv_index_found with
+     | Some cbi,_ -> cbi
+     | None, Some cbi -> cbi
+     | None, None -> 0n
 
 
 
@@ -472,8 +477,8 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let from_decimals = rate.swap.from.token.decimals in
     let to_decimals = rate.swap.to.decimals in
     let diff = to_decimals - from_decimals in
-    let abs_diff = int (abs diff) in
-    let power10 = pow 10 abs_diff in
+    let nat_diff = int (to_nat diff) in
+    let power10 = pow 10 nat_diff in
     if diff = 0 then
       Rational.new 1
     else
@@ -558,26 +563,26 @@ module Redemption_Utils = struct
   let was_in_clearing_for_buy
    (clearing_tolerance: tolerance)
    (order_tolerance: tolerance) : bool =
-      match (order_tolerance, clearing_tolerance) with
-      | (Exact,Minus) -> true
-      | (Plus,Minus) -> true
-      | (Minus,Exact) -> false
-      | (Plus,Exact) -> true
-      | (Minus,Plus) -> false
-      | (Exact,Plus) -> false
-      | (_,_) -> true
+      match order_tolerance, clearing_tolerance with
+      | Exact,Minus -> true
+      | Plus,Minus -> true
+      | Minus,Exact -> false
+      | Plus,Exact -> true
+      | Minus,Plus -> false
+      | Exact,Plus -> false
+      | _,_ -> true
 
   let was_in_clearing_for_sell
    (clearing_tolerance: tolerance)
    (order_tolerance: tolerance) : bool =
-      match (order_tolerance, clearing_tolerance) with
-      | (Exact,Minus) -> false
-      | (Plus,Minus) -> false
-      | (Minus,Exact) -> true
-      | (Plus,Exact) -> false
-      | (Minus,Plus) -> true
-      | (Exact,Plus) -> true
-      | (_,_) -> true
+      match order_tolerance, clearing_tolerance with
+      | Exact,Minus -> false
+      | Plus,Minus -> false
+      | Minus,Exact -> true
+      | Plus,Exact -> false
+      | Minus,Plus -> true
+      | Exact,Plus -> true
+      | _,_ -> true
 
   let was_in_clearing
     (ot: ordertype)
@@ -603,17 +608,26 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing: clearing)
     (tam: token_amount_map ): token_amount_map =
-    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.prorata_equivalence.sell_side_actual_volume) in
+    (* Find the sell side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
+    let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.total_cleared_volumes.sell_side_total_cleared_volume) in
+    (* Represent the amount of user sell order as a rational *)
     let f_amount = Rational.new (int amount) in
+    (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
     let prorata_allocation = Rational.div f_amount f_sell_side_actual_volume in
+    (* Find the sell side clearing volume in terms of the buy side units.  This should always be <= 100% of buy side volume*)
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    (* Given the buy side volume that is available to settle the order, calculate the payout in buy tokens for the prorata amount  *)
     let payout = Rational.mul prorata_allocation f_buy_side_clearing_volume in
+    (* Given the buy side payout, calculate in sell side units so the remainder of a partial fill can be calculated *)
     let payout_equiv = Rational.mul payout clearing.clearing_rate.rate in
+    (* Calculate the remaining amount on the sell side of a partial fill *)
     let remaining = Rational.sub f_amount payout_equiv in
+    (* Build payout amount *)
     let fill_payout: token_amount = {
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 1) then
       let token_rem : token_amount = {
          token = from;
@@ -630,18 +644,28 @@ module Redemption_Utils = struct
     (amount: nat)
     (clearing:clearing)
     (tam: token_amount_map): token_amount_map =
-    let f_buy_side_actual_volume = Rational.new (int clearing.prorata_equivalence.buy_side_actual_volume) in
+    (* Find the buy side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
+    let f_buy_side_actual_volume = Rational.new (int clearing.total_cleared_volumes.buy_side_total_cleared_volume) in
+    (* Represent the amount of user buy order as a rational *)
     let f_amount = Rational.new (int amount) in
+    (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
     let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
+    (* Find the buy side volume that can actually clear on both sides GIVEN the clearing level *)
     let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+    (* Find the buy side clearing volume in terms of the sell side units.  This should always be <= 100% of sell side volume*)
     let f_sell_side_clearing_volume = Rational.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
+    (* Given the sell side volume that is available to settle the order, calculate the payout in sell tokens for the prorata amount  *)
     let payout = Rational.mul prorata_allocation f_sell_side_clearing_volume in
+    (* Given the sell side payout, calculate in buy side units so the remainder of a partial fill can be calculated *)
     let payout_equiv = Rational.div payout clearing.clearing_rate.rate in
+    (* Calculate the remaining amount on the buy side of a partial fill *)
     let remaining = Rational.sub f_amount payout_equiv in
+    (* Build payout amount *)
     let fill_payout = {
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
@@ -701,16 +725,16 @@ let collect_redemptions
     let batches = bts.batches in
     let batch_indices = bts.current_batch_indices in
     match Big_map.find_opt batch_number batches with
-    | None -> (bots, tam, bts)
+    | None -> bots, tam, bts
     | Some batch -> (let name = Utils.get_rate_name_from_pair batch.pair in
                      match Map.find_opt name batch_indices with
-                     | Some _ -> (bots, tam, bts)
+                     | Some _ -> bots, tam, bts
                      | None ->
                        (match get_clearing batch with
-                        | None ->  (bots, tam, bts)
-                        | Some c -> let (_c, u_tam) = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
+                        | None ->  bots, tam, bts
+                        | Some c -> let _c, u_tam = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
                                    let u_bots = Map.remove batch_number bots in
-                                   (u_bots,u_tam, bts)))
+                                   u_bots,u_tam, bts))
 
 let collect_redemption_payouts
     (holder: address)
@@ -718,10 +742,10 @@ let collect_redemption_payouts
     (ubots: user_batch_ordertypes) :  (user_batch_ordertypes * token_amount_map) =
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
-    | None -> (ubots, empty_tam)
-    | Some bots -> let (u_bots, u_tam, _bs) = Map.fold collect_redemptions bots (bots, empty_tam, batch_set) in
+    | None -> ubots, empty_tam
+    | Some bots -> let u_bots, u_tam, _bs = Map.fold collect_redemptions bots (bots, empty_tam, batch_set) in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
-                   (updated_ubots, u_tam)
+                   updated_ubots, u_tam
 
 
 let is_within_limit
@@ -867,7 +891,7 @@ let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let (updated_ubots, payout_token_map) = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes in
+      let updated_ubots, payout_token_map = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let updated_storage = { storage with user_batch_ordertypes = updated_ubots; } in
       (operations, updated_storage)
@@ -953,7 +977,7 @@ let remove_swap
                     else
                        remove_token to valid_tokens
   in
-  (valid_swaps, valid_tokens)
+  valid_swaps, valid_tokens
 
 end
 
@@ -986,10 +1010,10 @@ let remove_pair
   let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
   let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
-  match (rate_found, inverted_rate_found) with
-  | (Some _, _) -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
-  | (None, Some _) -> failwith inverted_swap_already_exists
-  | (None, None) ->  failwith swap_does_not_exist
+  match rate_found, inverted_rate_found with
+  | Some _, _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
+  | None, Some _ -> failwith inverted_swap_already_exists
+  | None, None ->  failwith swap_does_not_exist
 
 let add_pair
   (valid_swap: valid_swap)
@@ -1002,13 +1026,13 @@ let add_pair
   let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
   let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
-  match (rate_found, inverted_rate_found) with
-  | (Some _, _) -> failwith swap_already_exists
-  | (None, Some _) -> failwith inverted_swap_already_exists
-  | (None, None) -> let valid_tokens = Token_Utils.add_token from valid_tokens in
-                    let valid_tokens = Token_Utils.add_token to valid_tokens in
-                    let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
-                    (valid_swaps, valid_tokens)
+  match rate_found, inverted_rate_found with
+  | Some _, _ -> failwith swap_already_exists
+  | None, Some _ -> failwith inverted_swap_already_exists
+  | None, None -> let valid_tokens = Token_Utils.add_token from valid_tokens in
+                  let valid_tokens = Token_Utils.add_token to valid_tokens in
+                  let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
+                  valid_swaps, valid_tokens
 
 end
 
@@ -1062,7 +1086,7 @@ let update_current_batch_in_set
   let updated_batches = Big_map.update batch.batch_number (Some batch) batch_set.batches in
   let name = Utils.get_rate_name_from_pair batch.pair in
   let updated_batch_indices = Map.update name (Some batch.batch_number) batch_set.current_batch_indices in
-  ( batch, { batch_set with batches = updated_batches; current_batch_indices = updated_batch_indices; } )
+  batch, { batch_set with batches = updated_batches; current_batch_indices = updated_batch_indices; }
 
 let should_be_cleared
   (batch : batch)
@@ -1103,7 +1127,7 @@ let progress_batch
   (current_time : timestamp) : (batch * batch_set) =
   match batch.status with
   | Open { start_time } ->
-    if  current_time > start_time + price_wait_window then
+    if  current_time >= start_time + deposit_time_window then
       let closed_batch = close batch in
       update_current_batch_in_set closed_batch batch_set
     else
@@ -1149,7 +1173,7 @@ let finalize_batch
         rate = rate
       }
     } in
-  let (_, ucb) = update_current_batch_in_set finalized_batch batch_set in
+  let _, ucb = update_current_batch_in_set finalized_batch batch_set in
   ucb
 
 let get_current_batch_without_opening
@@ -1158,9 +1182,9 @@ let get_current_batch_without_opening
   (batch_set: batch_set) : (batch option * batch_set) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
-  | None ->  (None, batch_set)
-  | Some cb ->  let (batch, batch_set) = progress_batch pair cb batch_set current_time in
-                (Some batch, batch_set)
+  | None ->  None, batch_set
+  | Some cb ->  let batch, batch_set = progress_batch pair cb batch_set current_time in
+                Some batch, batch_set
 
 let get_current_batch
   (pair: pair)
@@ -1197,17 +1221,17 @@ let filter_volumes
   (clearing: clearing) : (nat * nat) =
   match clearing.clearing_tolerance with
   | Minus -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
-             (buy_vol, volumes.sell_minus_volume)
+             buy_vol, volumes.sell_minus_volume
   | Exact -> let buy_vol = volumes.buy_exact_volume + volumes.buy_plus_volume in
              let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume in
-             (buy_vol, sell_vol)
+             buy_vol, sell_vol
   | Plus -> let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume + volumes.sell_plus_volume in
-            (volumes.buy_plus_volume, sell_vol)
+            volumes.buy_plus_volume, sell_vol
 
 [@inline]
-let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (invert: bool) : nat =
+let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (is_sell_side: bool) : nat =
   let float_amount = Rational.new (int (amount)) in
-  if invert then
+  if is_sell_side then
     Utils.get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
   else
     Utils.get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
@@ -1215,21 +1239,20 @@ let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (invert: boo
 (*
   This function builds the order equivalence for the pro-rata redeemption.
 *)
-let build_equivalence
+let build_total_cleared_volumes
   (volumes: volumes)
   (clearing : clearing)
   (rate : exchange_rate) : clearing =
+  (* Find the rate associated with the clearing point *)
   let clearing_rate = get_clearing_rate clearing rate in
+  (* Collect the bid and ask amounts associated with the given clearing level.  Those volumes that are outside the clearing price are excluded *)
   let (bid_amounts, ask_amounts) = filter_volumes volumes clearing in
-  let bid_equivalent_amounts = compute_equivalent_amount bid_amounts clearing_rate false in
-  let ask_equivalent_amounts = compute_equivalent_amount ask_amounts clearing_rate true in
-  let equivalence = {
-    buy_side_actual_volume = bid_amounts;
-    buy_side_actual_volume_equivalence = bid_equivalent_amounts;
-    sell_side_actual_volume = ask_amounts;
-    sell_side_actual_volume_equivalence = ask_equivalent_amounts;
+  (* Build the total volumes objects which represents the TOTAL cleared volume on each side of the swap along which will be used in the payout calculations  *)
+  let total_volumes = {
+    buy_side_total_cleared_volume = bid_amounts;
+    sell_side_total_cleared_volume = ask_amounts;
   } in
-  { clearing with prorata_equivalence = equivalence; clearing_rate = clearing_rate }
+  { clearing with total_cleared_volumes = total_volumes; clearing_rate = clearing_rate }
 
 
 let compute_clearing_prices
@@ -1242,11 +1265,11 @@ let compute_clearing_prices
   let buy_cp_minus = int (volumes.buy_minus_volume) in
   let buy_cp_exact = int (volumes.buy_exact_volume) in
   let buy_cp_plus = int (volumes.buy_plus_volume) in
-  let buy_side : buy_side = (buy_cp_minus, buy_cp_exact, buy_cp_plus) in
-  let sell_side : sell_side = (sell_cp_minus, sell_cp_exact, sell_cp_plus) in
+  let buy_side : buy_side = buy_cp_minus, buy_cp_exact, buy_cp_plus in
+  let sell_side : sell_side = sell_cp_minus, sell_cp_exact, sell_cp_plus in
   let clearing = Utils.get_clearing_price rate buy_side sell_side in
-  let with_equiv = build_equivalence volumes clearing rate in
-  with_equiv
+  let with_total_cleared_vols = build_total_cleared_volumes volumes clearing rate in
+  with_total_cleared_vols
 
 end
 
@@ -1265,6 +1288,11 @@ type entrypoint =
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
+
+let reject_if_tez_supplied(): unit =
+  assert_with_error
+   (Tezos.get_amount () > 0tez)
+   (failwith endpoint_does_not_accept_tez)
 
 let is_administrator
   (storage : storage) : unit =
@@ -1304,8 +1332,8 @@ let external_to_order
   (batch_number: nat)
   (valid_tokens: valid_tokens)
   (valid_swaps: valid_swaps): swap_order =
-  let side = Utils.nat_to_side(order.side) in
-  let tolerance = Utils.nat_to_tolerance(order.tolerance) in
+  let side = Utils.nat_to_side order.side in
+  let tolerance = Utils.nat_to_tolerance order.tolerance in
   let sender = Tezos.get_sender () in
   let converted_order : swap_order =
     {
@@ -1359,6 +1387,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
 let redeem
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
+  let () = reject_if_tez_supplied () in 
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
@@ -1367,7 +1396,7 @@ let convert_oracle_price
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
   let denom = Utils.pow 10 swap.from.token.decimals in
-  let rational_price = Rational.new (int (price)) in
+  let rational_price = Rational.new (int price) in
   let rational_denom = Rational.new denom in
   let rate: Rational.t = Rational.div rational_price rational_denom in
   {
@@ -1383,56 +1412,65 @@ let tick_price
     let res = (Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address) in
     match res with
     | Some (lastupdated, price) -> (let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
-                                    let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
+                                    let storage = Utils.update_current_rate rate_name oracle_rate storage in
                                     let pair = Utils.pair_of_rate oracle_rate in
                                     let current_time = Tezos.get_now () in
                                     let batch_set = storage.batch_set in
-                                    let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
+                                    let batch_opt, batch_set = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
                                     match batch_opt with
                                     | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
-                                               let storage = { storage with batch_set = batch_set } in
-                                               storage
+                                                { storage with batch_set = batch_set }
                                     | None ->   storage)
     | None -> storage
 
 
 let tick (storage : storage) : result =
+   let () = reject_if_tez_supplied () in 
    let tick_prices
      (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
    in
    let storage = Map.fold tick_prices storage.valid_swaps storage in
-   no_op (storage)
+   no_op storage
 
 let change_fee
     (new_fee: tez)
     (storage: storage) : result =
     let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with fee_in_mutez = new_fee; } in
-    no_op (storage)
+    no_op storage
 
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let _ = is_administrator storage in
+    let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in 
     let storage = { storage with administrator = new_admin_address; } in
-    no_op (storage)
+    no_op storage
 
 
 let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
-   no_op (storage)
+   no_op storage
 
 let remove_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
-   no_op (storage)
+   no_op storage
+
+
+[@view]
+let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
 
 
 [@view]
