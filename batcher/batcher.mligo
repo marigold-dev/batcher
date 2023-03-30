@@ -2,37 +2,37 @@
 
 
 (* Errors  *)
-[@inline] let no_rate_available_for_swap : nat                      = 100n
-[@inline] let invalid_token_address : nat                           = 101n
-[@inline] let invalid_tezos_address : nat                           = 102n
-[@inline] let no_open_batch_for_deposits : nat                      = 104n
-[@inline] let batch_should_be_cleared : nat                         = 105n
-[@inline] let trying_to_close_batch_which_is_not_open : nat         = 106n
-[@inline] let unable_to_parse_side_from_external_order : nat        = 107n
-[@inline] let unable_to_parse_tolerance_from_external_order : nat   = 108n
-[@inline] let token_standard_not_found : nat                        = 109n
-[@inline] let xtz_not_currently_supported : nat                     = 110n
-[@inline] let unsupported_swap_type : nat                           = 111n
-[@inline] let unable_to_reduce_token_amount_to_less_than_zero : nat = 112n
-[@inline] let too_many_unredeemed_orders : nat                      = 113n
-[@inline] let insufficient_swap_fee : nat                           = 114n
-[@inline] let sender_not_administrator : nat                        = 115n
-[@inline] let token_already_exists_but_details_are_different: nat   = 116n
-[@inline] let swap_already_exists: nat                              = 117n
-[@inline] let swap_does_not_exist: nat                              = 118n
-[@inline] let inverted_swap_already_exists: nat                     = 119n
-[@inline] let endpoint_does_not_accept_tez: nat                     = 120n
-[@inline] let number_is_not_a_nat: nat                              = 121n
-[@inline] let oracle_price_is_stale: nat                            = 122n
-[@inline] let oracle_price_is_not_timely: nat                       = 123n
-[@inline] let unable_to_get_price_from_oracle: nat                  = 124n
-[@inline] let unable_to_get_price_from_new_oracle_source: nat       = 125n
-[@inline] let oracle_price_should_be_available_before_deposit: nat  = 126n
-[@inline] let swap_is_disabled_for_deposits: nat                    = 127n 
-[@inline] let upper_limit_on_tokens_has_been_reached: nat                              = 128n
-[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                          = 129n
-[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat           = 128n
-[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat       = 128n
+[@inline] let no_rate_available_for_swap : nat                                   = 100n
+[@inline] let invalid_token_address : nat                                        = 101n
+[@inline] let invalid_tezos_address : nat                                        = 102n
+[@inline] let no_open_batch_for_deposits : nat                                   = 103n
+[@inline] let batch_should_be_cleared : nat                                      = 104n
+[@inline] let trying_to_close_batch_which_is_not_open : nat                      = 105n
+[@inline] let unable_to_parse_side_from_external_order : nat                     = 106n
+[@inline] let unable_to_parse_tolerance_from_external_order : nat                = 107n
+[@inline] let token_standard_not_found : nat                                     = 108n
+[@inline] let xtz_not_currently_supported : nat                                  = 109n
+[@inline] let unsupported_swap_type : nat                                        = 110n
+[@inline] let unable_to_reduce_token_amount_to_less_than_zero : nat              = 111n
+[@inline] let too_many_unredeemed_orders : nat                                   = 112n
+[@inline] let insufficient_swap_fee : nat                                        = 113n
+[@inline] let sender_not_administrator : nat                                     = 114n
+[@inline] let token_already_exists_but_details_are_different: nat                = 115n
+[@inline] let swap_already_exists: nat                                           = 116n
+[@inline] let swap_does_not_exist: nat                                           = 117n
+[@inline] let inverted_swap_already_exists: nat                                  = 118n
+[@inline] let endpoint_does_not_accept_tez: nat                                  = 119n
+[@inline] let number_is_not_a_nat: nat                                           = 120n
+[@inline] let oracle_price_is_stale: nat                                         = 121n
+[@inline] let oracle_price_is_not_timely: nat                                    = 122n
+[@inline] let unable_to_get_price_from_oracle: nat                               = 123n
+[@inline] let unable_to_get_price_from_new_oracle_source: nat                    = 124n
+[@inline] let oracle_price_should_be_available_before_deposit: nat               = 125n
+[@inline] let swap_is_disabled_for_deposits: nat                                 = 126n
+[@inline] let upper_limit_on_tokens_has_been_reached: nat                        = 127n
+[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                    = 128n
+[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat     = 129n
+[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat = 130n
 
 (* Constants *)
 
@@ -234,7 +234,7 @@ type oracle_source_change = [@layout:comb] {
 
 let assert_with_error_nat
 (predicate: bool)
-(error: nat) : unit = 
+(error: nat) : unit =
 if predicate then () else failwith error
 
 module TokenAmount = struct
@@ -321,7 +321,7 @@ let empty_total_cleared_volumes : total_cleared_volumes = {
   sell_side_total_cleared_volume = 0n;
 }
 [@inline]
-let to_nat (i:int): nat = 
+let to_nat (i:int): nat =
   match is_nat i with
   | Some n -> n
   | None -> failwith number_is_not_a_nat
@@ -422,10 +422,10 @@ let nat_to_tolerance (tolerance : nat) : tolerance =
 [@inline]
 let find_lexicographical_pair_name
   (token_one_name: string)
-  (token_two_name: string) : string = 
+  (token_two_name: string) : string =
   if token_one_name > token_two_name then
     token_one_name ^ "/" ^ token_two_name
-  else 
+  else
     token_two_name ^ "/" ^ token_one_name
 
 [@inline]
@@ -662,11 +662,11 @@ let get_clearing_volume
 [@inline]
 let add_payout_if_not_zero
   (payout: token_amount)
-  (tam: token_amount_map) : token_amount_map = 
+  (tam: token_amount_map) : token_amount_map =
   if payout.amount > 0n then
     TokenAmountMap.increase payout tam
   else
-    tam 
+    tam
 
 [@inline]
 let get_cleared_sell_side_payout
@@ -1112,15 +1112,15 @@ let can_add
   (from: token)
   (limit_on_tokens_or_pairs: nat)
   (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): unit = 
+  (valid_swaps: valid_swaps): unit =
   let pairs_size = Map.size valid_swaps in
   if pairs_size + 1n > limit_on_tokens_or_pairs then failwith upper_limit_on_swap_pairs_has_been_reached else
   let tokens_size = Map.size valid_tokens in
-  let unused_tokens_being_added = 
+  let unused_tokens_being_added =
     if Token_Utils.is_token_used to valid_tokens && Token_Utils.is_token_used from valid_tokens then 0n else
     if Token_Utils.is_token_used to valid_tokens || Token_Utils.is_token_used from valid_tokens then 1n else
     2n
-  in 
+  in
   check_tokens_size_or_fail tokens_size limit_on_tokens_or_pairs unused_tokens_being_added
 
 [@inline]
@@ -1435,7 +1435,7 @@ type entrypoint =
 [@inline]
 let get_oracle_price
   (failure_code: nat)
-  (valid_swap: valid_swap) : orace_price_update =  
+  (valid_swap: valid_swap) : orace_price_update =
   match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
   | Some opu -> opu
   | None -> failwith failure_code
@@ -1523,17 +1523,17 @@ let oracle_price_is_not_stale
 [@inline]
 let is_oracle_price_newer_than_current
   (rate_name: string)
-  (oracle_price_timestamp: timestamp) 
+  (oracle_price_timestamp: timestamp)
   (storage: storage): unit =
   let rates = storage.rates_current in
   match Big_map.find_opt rate_name rates with
   | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
-  | None   -> () 
+  | None   -> ()
 
 [@inline]
 let confirm_oracle_price_is_available_before_deposit
   (pair:pair)
-  (storage:storage) : unit = 
+  (storage:storage) : unit =
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
@@ -1547,7 +1547,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
-  if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else 
+  if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
@@ -1580,7 +1580,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
 let redeem
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  let () = reject_if_tez_supplied () in 
+  let () = reject_if_tez_supplied () in
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
@@ -1602,13 +1602,13 @@ let convert_oracle_price
 [@inline]
 let change_oracle_price_source
   (source_change: oracle_source_change)
-  (storage: storage) : result = 
+  (storage: storage) : result =
   let _ = is_administrator storage in
-  let valid_swap = get_valid_swap source_change.pair_name storage in 
-  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in 
+  let valid_swap = get_valid_swap source_change.pair_name storage in
+  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in
   let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
   let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
-  let storage = { storage with valid_swaps = updated_swaps} in 
+  let storage = { storage with valid_swaps = updated_swaps} in
   no_op (storage)
 
 [@inline]
@@ -1616,7 +1616,7 @@ let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
-  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in 
+  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
@@ -1646,7 +1646,7 @@ let change_fee
     (new_fee: tez)
     (storage: storage) : result =
     let () = is_administrator storage in
-    let () = reject_if_tez_supplied () in 
+    let () = reject_if_tez_supplied () in
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op storage
 
@@ -1655,7 +1655,7 @@ let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
     let () = is_administrator storage in
-    let () = reject_if_tez_supplied () in 
+    let () = reject_if_tez_supplied () in
     let storage = { storage with administrator = new_admin_address; } in
     no_op storage
 
@@ -1664,7 +1664,7 @@ let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
-   let () = reject_if_tez_supplied () in 
+   let () = reject_if_tez_supplied () in
    let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
@@ -1674,7 +1674,7 @@ let remove_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
-   let () = reject_if_tez_supplied () in 
+   let () = reject_if_tez_supplied () in
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
@@ -1682,7 +1682,7 @@ let remove_token_swap_pair
 [@inline]
 let add_or_update_metadata
   (metadata_update: metadata_update)
-  (storage:storage) : result = 
+  (storage:storage) : result =
   let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
                          | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
                          | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
@@ -1693,7 +1693,7 @@ let add_or_update_metadata
 [@inline]
 let remove_metadata
   (key: string)
-  (storage:storage) : result = 
+  (storage:storage) : result =
   let updated_metadata = Big_map.remove key storage.metadata in
   let storage = {storage with metadata = updated_metadata } in
   no_op storage
@@ -1702,9 +1702,9 @@ let remove_metadata
 let set_deposit_status
   (pair_name: string)
   (disabled: bool)
-  (storage: storage) : result = 
+  (storage: storage) : result =
    let () = is_administrator storage in
-   let () = reject_if_tez_supplied () in 
+   let () = reject_if_tez_supplied () in
    let valid_swap = get_valid_swap pair_name storage in
    let valid_swap = { valid_swap with is_disabled_for_deposits = disabled; } in
    let valid_swaps = Map.update pair_name (Some valid_swap) storage.valid_swaps in
@@ -1714,15 +1714,15 @@ let set_deposit_status
 [@inline]
 let amend_token_and_pair_limit
   (limit: nat)
-  (storage: storage) : result = 
+  (storage: storage) : result =
   let () = is_administrator storage in
   let () = reject_if_tez_supplied () in
-  let token_count = Map.size storage.valid_tokens in 
+  let token_count = Map.size storage.valid_tokens in
   let pair_count =  Map.size storage.valid_swaps in
   if limit < token_count then failwith cannot_reduce_limit_on_tokens_to_less_than_already_exists else
   if limit < pair_count then failwith cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists else
   let storage = { storage with limit_on_tokens_or_pairs = limit} in
-  no_op (storage) 
+  no_op (storage)
 
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
@@ -1730,10 +1730,10 @@ let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
 [@view]
 let get_current_batches ((),storage: unit * storage) : batch list=
-  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list = 
+  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
      match Big_map.find_opt i storage.batch_set.batches with
      | None   -> acc
-     | Some b -> b :: acc                                                   
+     | Some b -> b :: acc
     in
     Map.fold collect_batches storage.batch_set.current_batch_indices []
 
