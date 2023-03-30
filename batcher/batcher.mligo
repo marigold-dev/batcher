@@ -22,7 +22,29 @@
 [@inline] let swap_does_not_exist: nat                              = 118n
 [@inline] let inverted_swap_already_exists: nat                     = 119n
 [@inline] let endpoint_does_not_accept_tez: nat                     = 120n
-[@inline] let number_is_not_a_nat: nat                              = 121n 
+[@inline] let number_is_not_a_nat: nat                              = 121n
+
+
+
+
+
+
+
+
+[@inline] let upper_limit_on_tokens_has_been_reached: nat                              = 128n
+[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                          = 129n
+[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat           = 128n
+[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat       = 128n
+
+
+
+
+
+
+
+
+
+[@inline] let swap_is_disabled_for_deposits: nat                    = 127n 
 
 
 
@@ -94,6 +116,7 @@ type valid_swap = [@layout:comb] {
   swap: swap;
   oracle_address: address;
   oracle_asset_name: string;
+  is_disabled_for_deposits: bool;
 }
 
 
@@ -109,7 +132,6 @@ type swap_order =  [@layout:comb] {
   batch_number: nat;
   trader : address;
   swap  : swap;
-  created_at : timestamp;
   side : side;
   tolerance : tolerance;
   redeemed:bool;
@@ -213,6 +235,13 @@ type batch_set = [@layout:comb] {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
+(* Type for contract metadata *)
+type metadata = (string, bytes) big_map
+
+type metadata_update = {
+  key: string;
+  value: bytes;
+}
 
 
 type orace_price_update = timestamp * nat
@@ -286,7 +315,9 @@ module Storage = struct
   (* The current, most up to date exchange rates between tokens  *)
   type rates_current = (string, exchange_rate) big_map
 
+
   type t = [@layout:comb] {
+    metadata: metadata;
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
     rates_current : rates_current;
@@ -295,7 +326,8 @@ module Storage = struct
     user_batch_ordertypes: user_batch_ordertypes;
     fee_in_mutez: tez;
     fee_recipient : address;
-    administrator : address
+    administrator : address;
+    limit_on_tokens_or_pairs : nat
   }
 
 end
@@ -397,27 +429,36 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     else if tolerance = 2n then Plus
     else failwith unable_to_parse_tolerance_from_external_order
 
+  let find_lexicographical_pair_name
+    (token_one_name: string)
+    (token_two_name: string) : string = 
+    if token_one_name > token_two_name then
+      token_one_name ^ "/" ^ token_two_name
+    else 
+      token_two_name ^ "/" ^ token_one_name
+      
+
   let get_rate_name_from_swap (s : swap) : string =
     let base_name = s.from.token.name in
     let quote_name = s.to.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_rate_name_from_pair (s : token * token) : string =
     let base, quote = s in
     let base_name = base.name in
     let quote_name = quote.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_inverse_rate_name_from_pair (s : token * token) : string =
     let base, quote = s in
     let quote_name = quote.name in
     let base_name = base.name in
-    quote_name ^ "/" ^ base_name
+    find_lexicographical_pair_name quote_name base_name
 
   let get_rate_name (r : exchange_rate) : string =
     let base_name = r.swap.from.token.name in
     let quote_name = r.swap.to.name in
-    base_name ^ "/" ^ quote_name
+    find_lexicographical_pair_name quote_name base_name
 
   let pair_of_swap
     (side: side)
@@ -434,30 +475,13 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     let side = nat_to_side order.side in
     pair_of_swap side swap
 
-   let get_rate_names
-     (pair: pair): (string * string) =
-     let rate_name = get_rate_name_from_pair pair in
-     let inverse_rate_name = get_inverse_rate_name_from_pair pair in
-     rate_name, inverse_rate_name
-
-   let search_batches
-     (rate_name: string)
-     (inverse_rate_name: string)
-     (batch_indices: batch_indices): (nat option * nat option) =
-     let index_found =  Map.find_opt rate_name batch_indices in
-     let inv_index_found =  Map.find_opt inverse_rate_name batch_indices in
-     index_found, inv_index_found
-
    let get_current_batch_index
      (pair: pair)
      (batch_indices: batch_indices): nat =
-     let rate_name, inverse_rate_name : string * string = get_rate_names pair in
-     let index_found, inv_index_found : (nat option * nat option) = search_batches rate_name inverse_rate_name batch_indices in
-     match index_found, inv_index_found with
-     | Some cbi,_ -> cbi
-     | None, Some cbi -> cbi
-     | None, None -> 0n
-
+     let rate_name = get_rate_name_from_pair pair in
+     match Map.find_opt rate_name batch_indices with
+     | Some cbi -> cbi
+     | None -> 0n
 
 
   let get_highest_batch_index
@@ -470,11 +494,11 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
     Map.fold return_highest batch_indices 0n
 
   (** [concat a b] concat [a] and [b]. *)
-  let concat (type a) (left: a list) (right: a list) : a list =
+  let concat1 (type a) (left: a list) (right: a list) : a list =
     List.fold_right (fun (x, xs: a * a list) -> x :: xs) left right
 
   (** [rev list] should return the same list reversed. *)
-  let rev (type a) (list: a list) : a list =
+  let rev1 (type a) (list: a list) : a list =
     List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
 
   let update_if_more_recent
@@ -622,6 +646,15 @@ module Redemption_Utils = struct
     | Exact -> clearing.clearing_volumes.exact
     | Plus -> clearing.clearing_volumes.plus
 
+  (* Filter 0 amount transfers out *)
+  let add_payout_if_not_zero
+    (payout: token_amount)
+    (tam: token_amount_map) : token_amount_map = 
+    if payout.amount > 0n then
+      TokenAmountMap.increase payout tam
+    else
+      tam 
+  
   let get_cleared_sell_side_payout
     (from: token)
     (to: token)
@@ -647,16 +680,19 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
-    if Utils.gt remaining (Rational.new 1) then
+    if Utils.gt remaining (Rational.new 0) then
       let token_rem : token_amount = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
 
   let get_cleared_buy_side_payout
     (from: token)
@@ -685,16 +721,20 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
+
 
   let get_cleared_payout
     (ot: ordertype)
@@ -962,6 +1002,15 @@ let add_token
 
 let is_token_used
   (token: token)
+  (valid_tokens: valid_tokens) : bool =
+  let is_token_in_tokens (acc, (_i, t) : bool * (string * token)) : bool =
+    are_equivalent_tokens token t ||
+    acc
+  in
+  Map.fold is_token_in_tokens valid_tokens false
+
+let is_token_used_in_swaps
+  (token: token)
   (valid_swaps: valid_swaps) : bool =
   let is_token_used_in_swap (acc, (_i, valid_swap) : bool * (string * valid_swap)) : bool =
     let swap = valid_swap.swap in
@@ -987,12 +1036,12 @@ let remove_swap
   let valid_swaps = Map.remove rate_name valid_swaps in
   let from = swap.from.token in
   let to = swap.to in
-  let valid_tokens = if is_token_used from valid_swaps then
+  let valid_tokens = if is_token_used_in_swaps from valid_swaps then
                        valid_tokens
                     else
                        remove_token from valid_tokens
   in
-  let valid_tokens = if is_token_used to valid_swaps then
+  let valid_tokens = if is_token_used_in_swaps to valid_swaps then
                        valid_tokens
                     else
                        remove_token to valid_tokens
@@ -1003,11 +1052,14 @@ end
 
 module Tokens = struct
 
+type valid_swaps = Storage.valid_swaps
+type valid_tokens = Storage.valid_tokens
 let validate
+
   (side: side)
   (swap: swap)
-  (valid_tokens: Storage.valid_tokens)
-  (valid_swaps: Storage.valid_swaps): swap =
+  (valid_tokens: valid_tokens)
+  (valid_swaps: valid_swaps): swap =
   let from = swap.from.token in
   let to = swap.to in
   match Map.find_opt from.name valid_tokens with
@@ -1019,29 +1071,49 @@ let validate
                             else
                               failwith unsupported_swap_type)
 
+
+let check_tokens_size_or_fail
+  (tokens_size: nat)
+  (limit_on_tokens_or_pairs: nat)
+  (num_tokens: nat) : unit =  if tokens_size + num_tokens > limit_on_tokens_or_pairs then failwith upper_limit_on_tokens_has_been_reached else ()
+
+
+let can_add
+  (to: token)
+  (from: token)
+  (limit_on_tokens_or_pairs: nat)
+  (valid_tokens: valid_tokens)
+  (valid_swaps: valid_swaps): unit = 
+  let pairs_size = Map.size valid_swaps in
+  if pairs_size + 1n > limit_on_tokens_or_pairs then failwith upper_limit_on_swap_pairs_has_been_reached else
+  let tokens_size = Map.size valid_tokens in
+  let unused_tokens_being_added = 
+    if Token_Utils.is_token_used to valid_tokens && Token_Utils.is_token_used from valid_tokens then 0n else
+    if Token_Utils.is_token_used to valid_tokens || Token_Utils.is_token_used from valid_tokens then 1n else
+    2n
+  in 
+  check_tokens_size_or_fail tokens_size limit_on_tokens_or_pairs unused_tokens_being_added
+
 let remove_pair
   (valid_swap: valid_swap)
   (valid_swaps: Storage.valid_swaps)
   (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
   let swap = valid_swap.swap in
-  let from = swap.from.token in
-  let to = swap.to in
   let rate_name = Utils.get_rate_name_from_swap swap in
-  let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
-  let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
-  match rate_found, inverted_rate_found with
-  | Some _, _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
-  | None, Some _ -> failwith inverted_swap_already_exists
-  | None, None ->  failwith swap_does_not_exist
+  match rate_found with
+  | Some _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
+  | None ->  failwith swap_does_not_exist
 
 let add_pair
+  (limit_on_tokens_or_pairs: nat)
   (valid_swap: valid_swap)
-  (valid_swaps: Storage.valid_swaps)
-  (valid_tokens: Storage.valid_tokens) : Storage.valid_swaps * Storage.valid_tokens =
+  (valid_swaps: valid_swaps)
+  (valid_tokens: valid_tokens) : valid_swaps * valid_tokens =
   let swap = valid_swap.swap in
   let from = swap.from.token in
   let to = swap.to in
+  let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
   let rate_name = Utils.get_rate_name_from_swap swap in
   let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
@@ -1053,6 +1125,7 @@ let add_pair
                   let valid_tokens = Token_Utils.add_token to valid_tokens in
                   let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
                   valid_swaps, valid_tokens
+
 
 end
 
@@ -1298,6 +1371,7 @@ type result = (operation list) * storage
 type valid_swaps = Storage.valid_swaps
 type valid_tokens = Storage.valid_tokens
 
+
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
@@ -1308,6 +1382,11 @@ type entrypoint =
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
+  | Amend_token_and_pair_limit of nat
+  | Add_or_update_metadata of metadata_update
+  | Remove_metadata of string
+  | Enable_swap_pair_for_deposit of string
+  | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
 
 let get_oracle_price
@@ -1369,7 +1448,6 @@ let external_to_order
       batch_number = batch_number;
       trader = sender;
       swap  = order.swap;
-      created_at = order.created_at;
       side = side;
       tolerance = tolerance;
       redeemed = false;
@@ -1413,11 +1491,12 @@ let confirm_oracle_price_is_available_before_deposit
 let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
-
+  let pair_name = Utils.get_rate_name_from_pair pair in
+  let valid_swap = get_valid_swap pair_name storage in
+  if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else 
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
-
   let (current_batch, current_batch_set) = Batch_Utils.get_current_batch pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
@@ -1520,12 +1599,14 @@ let change_admin_address
     no_op storage
 
 
+
+
 let add_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
    let () = reject_if_tez_supplied () in 
-   let (u_swaps,u_tokens) = Tokens.add_pair swap storage.valid_swaps storage.valid_tokens in
+   let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
@@ -1538,9 +1619,64 @@ let remove_token_swap_pair
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
+let add_or_update_metadata
+  (metadata_update: metadata_update)
+  (storage:storage) : result = 
+  let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
+                         | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
+                         | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
+  in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
+
+let remove_metadata
+  (key: string)
+  (storage:storage) : result = 
+  let updated_metadata = Big_map.remove key storage.metadata in
+  let storage = {storage with metadata = updated_metadata } in
+  no_op storage
+
+let set_deposit_status
+  (pair_name: string)
+  (disabled: bool)
+  (storage: storage) : result = 
+   let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in 
+   let valid_swap = get_valid_swap pair_name storage in
+   let valid_swap = { valid_swap with is_disabled_for_deposits = disabled; } in
+   let valid_swaps = Map.update pair_name (Some valid_swap) storage.valid_swaps in
+   let storage = { storage with valid_swaps = valid_swaps; } in
+   no_op (storage)
+
+
+
+let amend_token_and_pair_limit
+  (limit: nat)
+  (storage: storage) : result = 
+  let () = is_administrator storage in
+  let () = reject_if_tez_supplied () in
+  let token_count = Map.size storage.valid_tokens in 
+  let pair_count =  Map.size storage.valid_swaps in
+  if limit < token_count then failwith cannot_reduce_limit_on_tokens_to_less_than_already_exists else
+  if limit < pair_count then failwith cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists else
+  let storage = { storage with limit_on_tokens_or_pairs = limit} in
+  no_op (storage) 
+  
+
+
 
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
+
+[@view]
+let get_current_batches ((),storage: unit * storage) : batch list=
+  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list = 
+     match Big_map.find_opt i storage.batch_set.batches with
+     | None   -> acc
+     | Some b -> b :: acc                                                   
+    in
+    Map.fold collect_batches storage.batch_set.current_batch_indices []
 
 
 let main
@@ -1554,4 +1690,10 @@ let main
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
    | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage
+   | Amend_token_and_pair_limit l -> amend_token_and_pair_limit l storage
+   | Add_or_update_metadata mu -> add_or_update_metadata mu storage
+   | Remove_metadata k -> remove_metadata k storage
+   | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
+   | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
+
 

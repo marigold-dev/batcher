@@ -1,6 +1,7 @@
 #import "../batcher.mligo" "Batcher"
 
 let f(_:unit) = {
+  metadata = (Big_map.empty : (string,bytes) big_map);
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
@@ -42,9 +43,10 @@ let f(_:unit) = {
         };
         oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-USDT";
+        is_disabled_for_deposits = false;
       }
     );
-    ("tzBTC/EURL", {
+    ("EURL/tzBTC", {
         swap = {
           from = {
             amount = 1n;
@@ -64,6 +66,7 @@ let f(_:unit) = {
         };
         oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-EURL";
+        is_disabled_for_deposits = false;
       }
     )
   ];
@@ -76,7 +79,8 @@ let f(_:unit) = {
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address)
+  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
+  limit_on_tokens_or_pairs = 10n
 
 }
 
