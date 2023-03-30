@@ -47,6 +47,13 @@
 [@inline] let swap_is_disabled_for_deposits: nat                    = 127n 
 
 
+
+let oracle_price_is_stale: nat                            = 122n
+let oracle_price_is_not_timely: nat                       = 123n
+let unable_to_get_price_from_oracle: nat                  = 124n
+let unable_to_get_price_from_new_oracle_source: nat       = 125n
+let oracle_price_should_be_available_before_deposit: nat  = 126n
+
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
@@ -65,7 +72,7 @@
 [@inline] let limit_of_redeemable_items : nat = 10n
 
 (* Associate alias to token address *)
-type token = {
+type token = [@layout:comb] {
   name : string;
   address : address option;
   decimals : nat;
@@ -82,7 +89,7 @@ type tolerance =
   Plus | Exact | Minus
 
 (* A token value ascribes an amount to token metadata *)
-type token_amount = {
+type token_amount = [@layout:comb] {
   token : token;
   amount : nat;
 }
@@ -93,19 +100,19 @@ type token_holding_map = (address, token_amount_map) map
 
 
 (* A token amount 'held' by a specific address *)
-type token_holding = {
+type token_holding = [@layout:comb] {
   holder: address;
   token_amount : token_amount;
   redeemed: bool;
 }
 
-type swap = {
+type swap =  [@layout:comb] {
  from : token_amount;
  to : token;
 }
 
 (* A valid swap is a swap pair that has a source of pricing from an oracle.  *)
-type valid_swap = {
+type valid_swap = [@layout:comb] {
   swap: swap;
   oracle_address: address;
   oracle_asset_name: string;
@@ -114,13 +121,13 @@ type valid_swap = {
 
 
 (*I change the type of the rate from tez to nat for sake of simplicity*)
-type exchange_rate = {
+type exchange_rate = [@layout:comb] {
   swap : swap;
   rate: Rational.t;
   when : timestamp;
 }
 
-type swap_order = {
+type swap_order =  [@layout:comb] {
   order_number: nat;
   batch_number: nat;
   trader : address;
@@ -130,7 +137,7 @@ type swap_order = {
   redeemed:bool;
 }
 
-type external_swap_order = {
+type external_swap_order = [@layout:comb] {
   swap  : swap;
   created_at : timestamp;
   side : nat;
@@ -140,19 +147,19 @@ type external_swap_order = {
 type batch_status  =
   NOT_OPEN | OPEN | CLOSED | FINALIZED
 
-type total_cleared_volumes = {
+type total_cleared_volumes = [@layout:comb] {
   buy_side_total_cleared_volume: nat;
   sell_side_total_cleared_volume: nat;
 }
 
-type clearing_volumes = {
+type clearing_volumes = [@layout:comb] {
   minus: nat;
   exact: nat;
   plus: nat;
 }
 
 
-type clearing = {
+type clearing =  [@layout:comb] {
   clearing_volumes : clearing_volumes;
   clearing_tolerance : tolerance;
   total_cleared_volumes: total_cleared_volumes;
@@ -184,8 +191,7 @@ type batch_status =
   | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
 
-type volumes = {
-  [@layout:comb]
+type volumes = [@layout:comb] {
   buy_minus_volume : nat;
   buy_exact_volume : nat;
   buy_plus_volume : nat;
@@ -197,7 +203,7 @@ type volumes = {
 type pair = token * token
 
 (* This represents the type of order.  I.e. buy/sell and which level*)
-type ordertype = {
+type ordertype = [@layout:comb] {
    side: side;
    tolerance: tolerance;
 }
@@ -213,7 +219,7 @@ type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
 
 (* Batch of orders for the same pair of tokens *)
-type batch = {
+type batch = [@layout:comb] {
   batch_number: nat;
   status : batch_status;
   volumes : volumes;
@@ -225,7 +231,7 @@ type batch_indices = (string,  nat) map
 (* Set of batches, containing the current batch and the previous (finalized) batches.
    The current batch can be open for deposits, closed for deposits (awaiting clearing) or
    finalized, as we wait for a new deposit to start a new batch *)
-type batch_set = {
+type batch_set = [@layout:comb] {
   current_batch_indices: batch_indices;
   batches: (nat, batch) big_map;
   }
@@ -236,6 +242,20 @@ type metadata_update = {
   key: string;
   value: bytes;
 }
+
+
+type orace_price_update = timestamp * nat
+
+type oracle_source_change = [@layout:comb] {
+  pair_name: string;
+  oracle_address: address;
+  oracle_asset_name: string;
+}
+
+let assert_with_error_nat
+(predicate: bool)
+(error: nat) : unit = 
+if predicate then () else failwith error
 
 module TokenAmount = struct
 
@@ -1356,7 +1376,7 @@ let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
   | Deposit of external_swap_order
-  | Tick
+  | Tick of string
   | Redeem
   | Change_fee of tez
   | Change_admin_address of address
@@ -1367,17 +1387,25 @@ type entrypoint =
   | Remove_metadata of string
   | Enable_swap_pair_for_deposit of string
   | Disable_swap_pair_for_deposit of string
+  | Change_oracle_source_of_pair of oracle_source_change
+
+let get_oracle_price
+  (failure_code: nat)
+  (valid_swap: valid_swap) : orace_price_update =  
+  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
+  | Some opu -> opu
+  | None -> failwith failure_code
 
 let reject_if_tez_supplied(): unit =
-  assert_with_error
+  assert_with_error_nat
    (Tezos.get_amount () > 0tez)
-   (failwith endpoint_does_not_accept_tez)
+   (endpoint_does_not_accept_tez)
 
 let is_administrator
   (storage : storage) : unit =
-  assert_with_error
+  assert_with_error_nat
    (Tezos.get_sender () = storage.administrator)
-   (failwith sender_not_administrator)
+   (sender_not_administrator)
 
 let invert_rate_for_clearing
   (rate : exchange_rate) : exchange_rate  =
@@ -1427,33 +1455,36 @@ let external_to_order
   let validated_swap = Tokens.validate side order.swap valid_tokens valid_swaps in
   { converted_order with swap = validated_swap; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 let get_valid_swap
  (pair_name: string)
  (storage : storage) : valid_swap =
  match Map.find_opt pair_name storage.valid_swaps with
  | Some vswp -> vswp
  | None -> failwith swap_does_not_exist
+
+
+let oracle_price_is_not_stale
+  (oracle_price_timestamp: timestamp) : unit =
+  assert_with_error_nat
+   (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
+   (oracle_price_is_stale)
+
+let is_oracle_price_newer_than_current
+  (rate_name: string)
+  (oracle_price_timestamp: timestamp) 
+  (storage: storage): unit =
+  let rates = storage.rates_current in
+  match Big_map.find_opt rate_name rates with
+  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
+  | None   -> () 
+
+let confirm_oracle_price_is_available_before_deposit
+  (pair:pair)
+  (storage:storage) : unit = 
+  let pair_name = Utils.get_rate_name_from_pair pair in
+  let valid_swap = get_valid_swap pair_name storage in
+  let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
+  oracle_price_is_not_stale lastupdated
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -1512,32 +1543,44 @@ let convert_oracle_price
    when = lastupdated;
   }
 
+let change_oracle_price_source
+  (source_change: oracle_source_change)
+  (storage: storage) : result = 
+  let _ = is_administrator storage in
+  let valid_swap = get_valid_swap source_change.pair_name storage in 
+  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in 
+  let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
+  let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
+  let storage = { storage with valid_swaps = updated_swaps} in 
+  no_op (storage)
+
 let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
-    let res = (Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address) in
-    match res with
-    | Some (lastupdated, price) -> (let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
-                                    let storage = Utils.update_current_rate rate_name oracle_rate storage in
-                                    let pair = Utils.pair_of_rate oracle_rate in
-                                    let current_time = Tezos.get_now () in
-                                    let batch_set = storage.batch_set in
-                                    let batch_opt, batch_set = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
-                                    match batch_opt with
-                                    | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
-                                                { storage with batch_set = batch_set }
-                                    | None ->   storage)
-    | None -> storage
+  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in 
+  let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
+  let () = oracle_price_is_not_stale lastupdated in
+  let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
+  let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
+  let pair = Utils.pair_of_rate oracle_rate in
+  let current_time = Tezos.get_now () in
+  let batch_set = storage.batch_set in
+  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
+  match batch_opt with
+  | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
+              let storage = { storage with batch_set = batch_set } in
+              storage
+  | None ->   storage
 
 
-let tick (storage : storage) : result =
-   let () = reject_if_tez_supplied () in 
-   let tick_prices
-     (sto, (name, valid_swap: string * valid_swap)) : storage = tick_price name valid_swap sto
-   in
-   let storage = Map.fold tick_prices storage.valid_swaps storage in
-   no_op storage
+let tick
+ (rate_name: string)
+ (storage : storage) : result =
+ match Map.find_opt rate_name storage.valid_swaps with
+ | Some vswp -> let storage = tick_price rate_name vswp storage in
+                no_op (storage)
+ | None -> failwith swap_does_not_exist
 
 let change_fee
     (new_fee: tez)
@@ -1640,18 +1683,17 @@ let main
   (action, storage : entrypoint * storage) : result =
   match action with
    | Deposit order -> deposit order storage
-   | Tick -> tick storage
+   | Tick r ->  tick r storage
    | Redeem -> redeem storage
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
+   | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage
    | Amend_token_and_pair_limit l -> amend_token_and_pair_limit l storage
    | Add_or_update_metadata mu -> add_or_update_metadata mu storage
    | Remove_metadata k -> remove_metadata k storage
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
-
-
 
 
