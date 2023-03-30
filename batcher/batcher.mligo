@@ -613,6 +613,15 @@ module Redemption_Utils = struct
     | Exact -> clearing.clearing_volumes.exact
     | Plus -> clearing.clearing_volumes.plus
 
+  (* Filter 0 amount transfers out *)
+  let add_payout_if_not_zero
+    (payout: token_amount)
+    (tam: token_amount_map) : token_amount_map = 
+    if payout.amount > 0n then
+      TokenAmountMap.increase payout tam
+    else
+      tam 
+  
   let get_cleared_sell_side_payout
     (from: token)
     (to: token)
@@ -638,16 +647,19 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 1) then
       let token_rem : token_amount = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
 
   let get_cleared_buy_side_payout
     (from: token)
@@ -676,16 +688,20 @@ module Redemption_Utils = struct
       token = to;
       amount = Utils.get_rounded_number_lower_bound payout;
     } in
+    (* Add payout to transfers if not zero  *)
+    let u_tam = add_payout_if_not_zero fill_payout tam in
     (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
     if Utils.gt remaining (Rational.new 0) then
       let token_rem = {
          token = from;
          amount = Utils.get_rounded_number_lower_bound remaining;
       } in
-      let u_tam = TokenAmountMap.increase fill_payout tam in
       TokenAmountMap.increase token_rem u_tam
     else
-      TokenAmountMap.increase fill_payout tam
+      u_tam
+
+
+
 
   let get_cleared_payout
     (ot: ordertype)
@@ -1526,6 +1542,17 @@ let set_deposit_status
 
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
+
+
+
+[@view]
+let get_current_batches ((),storage: unit * storage) : batch list=
+  let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list = 
+     match Big_map.find_opt i storage.batch_set.batches with
+     | None   -> acc
+     | Some b -> b :: acc                                                   
+    in
+    Map.fold collect_batches storage.batch_set.current_batch_indices []
 
 
 let main
