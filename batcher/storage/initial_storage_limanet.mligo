@@ -42,6 +42,7 @@ let f(_:unit) = {
         };
         oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
         oracle_asset_name = "tzBTC-USDT";
+        is_disabled_for_deposits = false;
       }
     );
     ("tzBTC/EURL", {
@@ -64,6 +65,7 @@ let f(_:unit) = {
         };
         oracle_address = ("KT1WKdy5CMJxg9NM9kZhFvhZZ3S6YasBkeYw": address);
         oracle_asset_name = "tzBTC-EURL";
+        is_disabled_for_deposits = false;
       }
     )
   ];
