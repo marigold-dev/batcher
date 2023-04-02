@@ -1602,6 +1602,7 @@ let change_oracle_price_source
   (source_change: oracle_source_change)
   (storage: storage) : result =
   let _ = is_administrator storage in
+  let () = reject_if_tez_supplied () in
   let valid_swap = get_valid_swap source_change.pair_name storage in
   let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in
   let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
@@ -1634,6 +1635,7 @@ let tick_price
 let tick
  (rate_name: string)
  (storage : storage) : result =
+ let () = reject_if_tez_supplied () in
  match Map.find_opt rate_name storage.valid_swaps with
  | Some vswp -> let storage = tick_price rate_name vswp storage in
                 no_op (storage)
@@ -1681,6 +1683,8 @@ let remove_token_swap_pair
 let add_or_update_metadata
   (metadata_update: metadata_update)
   (storage:storage) : result =
+   let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in
   let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
                          | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
                          | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
@@ -1692,6 +1696,8 @@ let add_or_update_metadata
 let remove_metadata
   (key: string)
   (storage:storage) : result =
+   let () = is_administrator storage in
+   let () = reject_if_tez_supplied () in
   let updated_metadata = Big_map.remove key storage.metadata in
   let storage = {storage with metadata = updated_metadata } in
   no_op storage
