@@ -20,30 +20,35 @@
 [@inline] let token_already_exists_but_details_are_different: nat                = 115n
 [@inline] let swap_already_exists: nat                                           = 116n
 [@inline] let swap_does_not_exist: nat                                           = 117n
-[@inline] let endpoint_does_not_accept_tez: nat                                  = 119n
-[@inline] let number_is_not_a_nat: nat                                           = 120n
-[@inline] let oracle_price_is_stale: nat                                         = 121n
-[@inline] let oracle_price_is_not_timely: nat                                    = 122n
-[@inline] let unable_to_get_price_from_oracle: nat                               = 123n
-[@inline] let unable_to_get_price_from_new_oracle_source: nat                    = 124n
-[@inline] let oracle_price_should_be_available_before_deposit: nat               = 125n
-[@inline] let swap_is_disabled_for_deposits: nat                                 = 126n
-[@inline] let upper_limit_on_tokens_has_been_reached: nat                        = 127n
-[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                    = 128n
-[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat     = 129n
-[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat = 130n
-[@inline] let more_tez_sent_than_fee_cost : nat                                  = 131n
+[@inline] let endpoint_does_not_accept_tez: nat                                  = 118n
+[@inline] let number_is_not_a_nat: nat                                           = 119n
+[@inline] let oracle_price_is_stale: nat                                         = 120n
+[@inline] let oracle_price_is_not_timely: nat                                    = 121n
+[@inline] let unable_to_get_price_from_oracle: nat                               = 122n
+[@inline] let unable_to_get_price_from_new_oracle_source: nat                    = 123n
+[@inline] let oracle_price_should_be_available_before_deposit: nat               = 124n
+[@inline] let swap_is_disabled_for_deposits: nat                                 = 125n
+[@inline] let upper_limit_on_tokens_has_been_reached: nat                        = 126n
+[@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                    = 127n
+[@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat     = 128n
+[@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat = 129n
+[@inline] let more_tez_sent_than_fee_cost : nat                                  = 130n
+[@inline] let cannot_update_deposit_window_to_less_than_the_minimum : nat        = 131n
+[@inline] let cannot_update_deposit_window_to_more_than_the_maximum : nat        = 132n
 
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
 [@inline] let ten_bips_constant = Rational.div (Rational.new 10001) (Rational.new 10000)
 
-(* The constant which represents the period during which users can deposit, in seconds. *)
-[@inline] let deposit_time_window : int = 600
-
 (* The constant which represents the period during which a closed batch will wait before looking for a price, in seconds. *)
 [@inline] let price_wait_window : int = 120
+
+(* The minimum length of a deposit price window *)
+[@inline] let minimum_deposit_time : nat = 10n
+
+(* The maximum length of a deposit price window *)
+[@inline] let maximum_deposit_time : nat = 60n
 
 [@inline] let fa12_token : string = "FA1.2 token"
 
@@ -307,7 +312,9 @@ module Storage = struct
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address;
-    limit_on_tokens_or_pairs : nat
+    limit_on_tokens_or_pairs : nat;
+    deposit_time_window : nat
+
   }
 
 end
@@ -1231,10 +1238,12 @@ let start_period
   update_current_batch_in_set new_batch batch_set
 
 [@inline]
-let close (batch : batch) : batch =
+let close
+(deposit_time_window: nat)
+(batch : batch) : batch =
   match batch.status with
     | Open { start_time } ->
-      let batch_close_time = start_time + deposit_time_window in
+      let batch_close_time = start_time + (int deposit_time_window) in
       let new_status = Closed { start_time = start_time; closing_time = batch_close_time } in
       { batch with status = new_status }
     | _ -> failwith trying_to_close_batch_which_is_not_open
@@ -1248,14 +1257,15 @@ let new_batch_set : batch_set =
 
 [@inline]
 let progress_batch
+  (deposit_time_window: nat)
   (pair: pair)
   (batch: batch)
   (batch_set: batch_set)
   (current_time : timestamp) : (batch * batch_set) =
   match batch.status with
   | Open { start_time } ->
-    if  current_time >= start_time + deposit_time_window then
-      let closed_batch = close batch in
+    if  current_time >= start_time + (int deposit_time_window) then
+      let closed_batch = close deposit_time_window batch in
       update_current_batch_in_set closed_batch batch_set
     else
       (batch, batch_set)
@@ -1308,24 +1318,26 @@ let finalize_batch
 
 [@inline]
 let get_current_batch_without_opening
+  (deposit_time_window: nat)
   (pair: pair)
   (current_time: timestamp)
   (batch_set: batch_set) : (batch option * batch_set) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  None, batch_set
-  | Some cb ->  let batch, batch_set = progress_batch pair cb batch_set current_time in
+  | Some cb ->  let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
                 Some batch, batch_set
 
 [@inline]
 let get_current_batch
+  (deposit_time_window: nat)
   (pair: pair)
   (current_time: timestamp)
   (batch_set: batch_set) : (batch * batch_set) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  start_period pair batch_set current_time
-  | Some cb ->  progress_batch pair cb batch_set current_time
+  | Some cb ->  progress_batch deposit_time_window pair cb batch_set current_time
 
 end
 
@@ -1428,6 +1440,7 @@ type entrypoint =
   | Enable_swap_pair_for_deposit of string
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
+  | Change_deposit_time_window of nat
 
 [@inline]
 let get_oracle_price
@@ -1470,7 +1483,7 @@ let finalize
   (current_time : timestamp)
   (rate : exchange_rate)
   (batch_set : batch_set): batch_set =
-  if Batch_Utils.can_be_finalized batch current_time then
+  if Batch_Utils.can_be_finalized  batch current_time then
     let current_time = Tezos.get_now () in
     let inverse_rate : exchange_rate = invert_rate_for_clearing rate in
     let clearing : clearing = Clearing.compute_clearing_prices inverse_rate batch in
@@ -1512,9 +1525,10 @@ let get_valid_swap
 
 [@inline]
 let oracle_price_is_not_stale
+  (deposit_time_window: nat)
   (oracle_price_timestamp: timestamp) : unit =
   assert_with_error_nat
-   (Tezos.get_now () - deposit_time_window < oracle_price_timestamp)
+   (Tezos.get_now () - (int deposit_time_window) < oracle_price_timestamp)
    (oracle_price_is_stale)
 
 [@inline]
@@ -1534,7 +1548,7 @@ let confirm_oracle_price_is_available_before_deposit
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
-  oracle_price_is_not_stale lastupdated
+  oracle_price_is_not_stale storage.deposit_time_window lastupdated
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -1549,7 +1563,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
   if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
-  let (current_batch, current_batch_set) = Batch_Utils.get_current_batch pair current_time storage.batch_set in
+  let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
      let current_batch_number = current_batch.batch_number in
@@ -1617,13 +1631,13 @@ let tick_price
   (storage : storage) : storage =
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale lastupdated in
+  let () = oracle_price_is_not_stale storage.deposit_time_window lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
-  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening pair current_time batch_set in
+  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window pair current_time batch_set in
   match batch_opt with
   | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
               let storage = { storage with batch_set = batch_set } in
@@ -1728,9 +1742,19 @@ let amend_token_and_pair_limit
   let storage = { storage with limit_on_tokens_or_pairs = limit} in
   no_op (storage)
 
+[@inline]
+let change_deposit_time_window
+  (new_window: nat)
+  (storage: storage) : result =
+  let () = is_administrator storage in
+  let () = reject_if_tez_supplied () in
+  if new_window < minimum_deposit_time then failwith cannot_update_deposit_window_to_less_than_the_minimum else
+  if new_window > maximum_deposit_time then failwith cannot_update_deposit_window_to_more_than_the_maximum else
+  let storage = { storage with deposit_time_window = new_window; } in
+  no_op storage
+
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
-
 
 [@view]
 let get_current_batches ((),storage: unit * storage) : batch list=
@@ -1761,5 +1785,6 @@ let main
    | Remove_metadata k -> remove_metadata k storage
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
+   | Change_deposit_time_window t -> change_deposit_time_window t storage
 
 

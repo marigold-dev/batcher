@@ -80,7 +80,8 @@ let f(_:unit) = {
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
-  limit_on_tokens_or_pairs = 10n
+  limit_on_tokens_or_pairs = 10n;
+  deposit_time_window = 600n
 
 }
 
