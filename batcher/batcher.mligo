@@ -20,7 +20,6 @@
 [@inline] let token_already_exists_but_details_are_different: nat                = 115n
 [@inline] let swap_already_exists: nat                                           = 116n
 [@inline] let swap_does_not_exist: nat                                           = 117n
-[@inline] let inverted_swap_already_exists: nat                                  = 118n
 [@inline] let endpoint_does_not_accept_tez: nat                                  = 119n
 [@inline] let number_is_not_a_nat: nat                                           = 120n
 [@inline] let oracle_price_is_stale: nat                                         = 121n
