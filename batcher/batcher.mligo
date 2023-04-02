@@ -1555,6 +1555,7 @@ let confirm_oracle_price_is_available_before_deposit
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair = Utils.pair_of_external_swap external_order in
+  let () = confirm_oracle_price_is_available_before_deposit pair storage in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
