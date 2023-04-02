@@ -33,6 +33,7 @@
 [@inline] let upper_limit_on_swap_pairs_has_been_reached: nat                    = 128n
 [@inline] let cannot_reduce_limit_on_tokens_to_less_than_already_exists: nat     = 129n
 [@inline] let cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists: nat = 130n
+[@inline] let more_tez_sent_than_fee_cost : nat                                  = 131n
 
 (* Constants *)
 
@@ -1147,10 +1148,9 @@ let add_pair
   let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
   let rate_name = Utils.get_rate_name_from_swap swap in
   let rate_found =  Map.find_opt rate_name valid_swaps in
-  match rate_found, inverted_rate_found with
-  | Some _, _ -> failwith swap_already_exists
-  | None, Some _ -> failwith inverted_swap_already_exists
-  | None, None -> let valid_tokens = Token_Utils.add_token from valid_tokens in
+  match rate_found with
+  | Some _  -> failwith swap_already_exists
+  | None -> let valid_tokens = Token_Utils.add_token from valid_tokens in
                   let valid_tokens = Token_Utils.add_token to valid_tokens in
                   let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
                   valid_swaps, valid_tokens
@@ -1549,6 +1549,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
+  if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
   let (current_batch, current_batch_set) = Batch_Utils.get_current_batch pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
