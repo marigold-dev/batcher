@@ -18,14 +18,15 @@ endef
 
 define clean_files
    rm -rf *.tz
+   rm -rf batcher/*.tz
 endef
 
 clean:
 	$(call clean_files)
 build:
 	$(call clean_files)
-	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
+	$(call compile_contract,batcher/batcher.mligo, batcher/batcher.tz)
+	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher/batcher-storage.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_token.tz)

@@ -35,6 +35,8 @@
 [@inline] let more_tez_sent_than_fee_cost : nat                                  = 130n
 [@inline] let cannot_update_deposit_window_to_less_than_the_minimum : nat        = 131n
 [@inline] let cannot_update_deposit_window_to_more_than_the_maximum : nat        = 132n
+[@inline] let oracle_precision_is_less_than_minimum : nat                        = 133n
+[@inline] let swap_precision_is_less_than_minimum : nat                          = 134n
 
 (* Constants *)
 
@@ -55,6 +57,8 @@
 [@inline] let fa2_token : string = "FA2 token"
 
 [@inline] let limit_of_redeemable_items : nat = 10n
+
+[@inline] let minimum_precision : nat = 6n
 
 (* Associate alias to token address *)
 type token = [@layout:comb] {
@@ -101,6 +105,7 @@ type valid_swap = [@layout:comb] {
   swap: swap;
   oracle_address: address;
   oracle_asset_name: string;
+  oracle_precision: nat;
   is_disabled_for_deposits: bool;
 }
 
@@ -235,6 +240,7 @@ type oracle_source_change = [@layout:comb] {
   pair_name: string;
   oracle_address: address;
   oracle_asset_name: string;
+  oracle_precision: nat;
 }
 
 let assert_with_error_nat
@@ -523,28 +529,6 @@ let update_if_more_recent
 let update_current_rate (rate_name : string) (rate : exchange_rate) (storage : Storage.t) =
   let updated_rates = update_if_more_recent rate_name rate storage.rates_current in
   { storage with rates_current = updated_rates }
-
-[@inline]
-let get_rate_scaling_power_of_10 (rate : exchange_rate) : Rational.t =
-  let from_decimals = rate.swap.from.token.decimals in
-  let to_decimals = rate.swap.to.decimals in
-  let diff = to_decimals - from_decimals in
-  let nat_diff = int (to_nat diff) in
-  let power10 = pow 10 nat_diff in
-  if diff = 0 then
-    Rational.new 1
-  else
-    if diff < 0 then
-      Rational.div (Rational.new 1) (Rational.new power10)
-    else
-      (Rational.new power10)
-
-[@inline]
-let scale_on_post (rate : exchange_rate) : exchange_rate =
-  let scaling_rate = get_rate_scaling_power_of_10 (rate) in
-  let adjusted_rate = Rational.mul rate.rate scaling_rate in
-  { rate with rate = adjusted_rate }
-
 
 end
 
@@ -1599,12 +1583,22 @@ let redeem
 
 [@inline]
 let convert_oracle_price
+  (precision: nat)
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat) : exchange_rate =
-  let denom = Utils.pow 10 (int swap.from.token.decimals) in
-  let rational_price = Rational.new (int price) in
-  let rational_denom = Rational.new denom in
+  let prc,den : nat * int =  if swap.from.token.decimals > precision then
+                               let diff:int = swap.from.token.decimals - precision in
+                               let diff_pow = Utils.pow 10 diff in
+                               let adj_price = Utils.to_nat (price * diff_pow) in
+                               let denom  = Utils.pow 10 (int swap.from.token.decimals) in
+                               (adj_price, denom)
+                             else
+                               let denom = Utils.pow 10 (int precision) in
+                               (price, denom)
+  in
+  let rational_price = Rational.new (int prc) in
+  let rational_denom = Rational.new den in
   let rate: Rational.t = Rational.div rational_price rational_denom in
   {
    swap = swap;
@@ -1619,7 +1613,7 @@ let change_oracle_price_source
   let _ = is_administrator storage in
   let () = reject_if_tez_supplied () in
   let valid_swap = get_valid_swap source_change.pair_name storage in
-  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name  } in
+  let valid_swap = { valid_swap with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name; oracle_precision = source_change.oracle_precision;  } in
   let _ = get_oracle_price unable_to_get_price_from_new_oracle_source valid_swap in
   let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
   let storage = { storage with valid_swaps = updated_swaps} in
@@ -1633,7 +1627,7 @@ let tick_price
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale storage.deposit_time_window lastupdated in
-  let oracle_rate = convert_oracle_price valid_swap.swap lastupdated price in
+  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
@@ -1676,11 +1670,14 @@ let change_admin_address
 
 [@inline]
 let add_token_swap_pair
-  (swap: valid_swap)
+  (valid_swap: valid_swap)
   (storage: storage) : result =
    let () = is_administrator storage in
    let () = reject_if_tez_supplied () in
-   let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs swap storage.valid_swaps storage.valid_tokens in
+   if valid_swap.swap.from.token.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
+   if valid_swap.swap.to.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
+   if valid_swap.oracle_precision < minimum_precision then failwith oracle_precision_is_less_than_minimum else
+   let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs valid_swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
 
