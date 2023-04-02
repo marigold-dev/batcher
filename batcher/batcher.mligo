@@ -1146,9 +1146,7 @@ let add_pair
   let to = swap.to in
   let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
   let rate_name = Utils.get_rate_name_from_swap swap in
-  let inverse_rate_name = Utils.get_inverse_rate_name_from_pair (to,from) in
   let rate_found =  Map.find_opt rate_name valid_swaps in
-  let inverted_rate_found = Map.find_opt inverse_rate_name valid_swaps in
   match rate_found, inverted_rate_found with
   | Some _, _ -> failwith swap_already_exists
   | None, Some _ -> failwith inverted_swap_already_exists
