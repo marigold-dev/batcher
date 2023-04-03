@@ -182,7 +182,7 @@
           (address %fee_recipient)
           (address %administrator)
           (nat %limit_on_tokens_or_pairs)
-          (nat %deposit_time_window)) ;
+          (nat %deposit_time_window_in_seconds)) ;
   code { PUSH bool True ;
          PUSH bool False ;
          PUSH int 1 ;
@@ -346,7 +346,7 @@
                                    DUP 2 ;
                                    GET 7 ;
                                    COMPARE ;
-                                   LT ;
+                                   NEQ ;
                                    IF { DROP 3 ; PUSH nat 133 ; FAILWITH }
                                       { DUP 2 ;
                                         GET 3 ;
@@ -711,12 +711,12 @@
                          SWAP ;
                          EXEC ;
                          DROP ;
-                         PUSH nat 10 ;
+                         PUSH nat 600 ;
                          DUP 2 ;
                          COMPARE ;
                          LT ;
                          IF { DROP 2 ; PUSH nat 131 ; FAILWITH }
-                            { PUSH nat 60 ;
+                            { PUSH nat 3600 ;
                               DUP 2 ;
                               COMPARE ;
                               GT ;

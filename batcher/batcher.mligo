@@ -35,7 +35,7 @@
 [@inline] let more_tez_sent_than_fee_cost : nat                                  = 130n
 [@inline] let cannot_update_deposit_window_to_less_than_the_minimum : nat        = 131n
 [@inline] let cannot_update_deposit_window_to_more_than_the_maximum : nat        = 132n
-[@inline] let oracle_precision_is_less_than_minimum : nat                        = 133n
+[@inline] let oracle_must_be_equal_to_minimum_precision : nat                    = 133n
 [@inline] let swap_precision_is_less_than_minimum : nat                          = 134n
 
 (* Constants *)
@@ -44,13 +44,13 @@
 [@inline] let ten_bips_constant = Rational.div (Rational.new 10001) (Rational.new 10000)
 
 (* The constant which represents the period during which a closed batch will wait before looking for a price, in seconds. *)
-[@inline] let price_wait_window : int = 120
+[@inline] let price_wait_window_in_seconds : int = 120
 
 (* The minimum length of a deposit price window *)
-[@inline] let minimum_deposit_time : nat = 10n
+[@inline] let minimum_deposit_time_in_seconds : nat = 600n
 
 (* The maximum length of a deposit price window *)
-[@inline] let maximum_deposit_time : nat = 60n
+[@inline] let maximum_deposit_time_in_seconds : nat = 3600n
 
 [@inline] let fa12_token : string = "FA1.2 token"
 
@@ -58,6 +58,7 @@
 
 [@inline] let limit_of_redeemable_items : nat = 10n
 
+(* The contract assumes that the minimum precision is six and that the oracle precision must EXACTLY be 6 *)
 [@inline] let minimum_precision : nat = 6n
 
 (* Associate alias to token address *)
@@ -319,7 +320,7 @@ module Storage = struct
     fee_recipient : address;
     administrator : address;
     limit_on_tokens_or_pairs : nat;
-    deposit_time_window : nat
+    deposit_time_window_in_seconds : nat
 
   }
 
@@ -1208,7 +1209,7 @@ let should_be_cleared
   (current_time : timestamp) : bool =
   match batch.status with
     | Closed { start_time = _; closing_time } ->
-      current_time > closing_time + price_wait_window
+      current_time > closing_time + price_wait_window_in_seconds
     | _ -> false
 
 [@inline]
@@ -1532,7 +1533,7 @@ let confirm_oracle_price_is_available_before_deposit
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
-  oracle_price_is_not_stale storage.deposit_time_window lastupdated
+  oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -1548,7 +1549,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
   if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
-  let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window pair current_time storage.batch_set in
+  let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
      let current_batch_number = current_batch.batch_number in
@@ -1626,13 +1627,13 @@ let tick_price
   (storage : storage) : storage =
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale storage.deposit_time_window lastupdated in
+  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
-  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window pair current_time batch_set in
+  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time batch_set in
   match batch_opt with
   | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
               let storage = { storage with batch_set = batch_set } in
@@ -1676,7 +1677,7 @@ let add_token_swap_pair
    let () = reject_if_tez_supplied () in
    if valid_swap.swap.from.token.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
    if valid_swap.swap.to.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
-   if valid_swap.oracle_precision < minimum_precision then failwith oracle_precision_is_less_than_minimum else
+   if valid_swap.oracle_precision <> minimum_precision then failwith oracle_must_be_equal_to_minimum_precision else
    let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs valid_swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
@@ -1746,9 +1747,9 @@ let change_deposit_time_window
   (storage: storage) : result =
   let () = is_administrator storage in
   let () = reject_if_tez_supplied () in
-  if new_window < minimum_deposit_time then failwith cannot_update_deposit_window_to_less_than_the_minimum else
-  if new_window > maximum_deposit_time then failwith cannot_update_deposit_window_to_more_than_the_maximum else
-  let storage = { storage with deposit_time_window = new_window; } in
+  if new_window < minimum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_less_than_the_minimum else
+  if new_window > maximum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_more_than_the_maximum else
+  let storage = { storage with deposit_time_window_in_seconds = new_window; } in
   no_op storage
 
 [@view]
