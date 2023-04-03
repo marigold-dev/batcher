@@ -5,7 +5,7 @@ TEZOS_PROTOCOL:=lima
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
 define test_ligo
-  $(LIGO_DOCKER) run test $(1) --protocol $(TEZOS_PROTOCOL)
+  $(LIGO_DOCKER) run test $(1) 
 endef
 
 define compile_contract
@@ -47,14 +47,8 @@ build-EURL:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa2/main.mligo, EURL_token.tz)
 	$(call compile_storage,tokens/fa2/storage/EURL_storage.mligo, EURL_token_storage.tz)
-test-batcher:
-	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
-test-orders:
-	$(call test_ligo,batcher/test/test_orders.mligo)
-test-math:
-	$(call test_ligo,batcher/test/test_math.mligo)
-test-tokens:
-	$(call test_ligo,batcher/test/test_tokens.mligo)
 build-fa12-tzBTC:
 	$(call compile_contract,fa12-token/main.mligo, tzBTC_fa12_token.tz)
 	$(call compile_storage,fa12-token/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
+test:
+	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
