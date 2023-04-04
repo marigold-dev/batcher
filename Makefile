@@ -13,7 +13,15 @@ define compile_contract
 endef
 
 define compile_storage
-    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --werror --init-file $(1) 'f()' > $(2)
+    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --michelson-format text --werror --init-file $(1) 'f()' > $(2)
+endef
+
+define measure_contract
+    $(LIGO_DOCKER) info measure-contract -p $(TEZOS_PROTOCOL)  $(1)
+endef
+
+define install_deps
+    $(LIGO_DOCKER) install $(1)
 endef
 
 define clean_files
@@ -52,3 +60,8 @@ build-fa12-tzBTC:
 	$(call compile_storage,fa12-token/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
 test:
 	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
+measure:
+	$(call measure_contract,batcher/batcher.mligo)
+install:
+	$(call install_deps,@ligo/math-lib)
+	$(call install_deps,ligo-breathalyzer)

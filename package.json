@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "author": "batcher <marigold@dev.com>",
   "description": "Batcher for exchanging tokens",
-  "dependencies": { "ligo-breathalyzer": "^1.0.0" }
+  "dependencies": {
+    "@ligo/math-lib": "^1.0.0",
+    "ligo-breathalyzer": "^1.3.0"
+  }
 }

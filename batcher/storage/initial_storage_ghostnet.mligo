@@ -1,25 +1,25 @@
 #import "../batcher.mligo" "Batcher"
 
 let f(_:unit) = {
-  metadata = (Big_map.empty : (string,bytes) big_map);
+  metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
       address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-      decimals = 8;
-      standard = Some "FA1.2 token";
+      decimals = 8n;
+      standard = Some "FA1.2 token"
     });
     (("EURL"),{
       name = "EURL";
       address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
-      decimals = 6;
-      standard = Some "FA2 token";
+      decimals = 6n;
+      standard = Some "FA2 token"
     });
     (("USDT"),{
       name = "USDT";
       address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
-      decimals = 6;
-      standard = Some "FA2 token";
+      decimals = 6n;
+      standard = Some "FA2 token"
     })
   ];
   valid_swaps = Map.literal [
@@ -30,21 +30,21 @@ let f(_:unit) = {
               token = {
                 name = "tzBTC";
                 address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-                decimals = 8;
-                standard = Some "FA1.2 token";
-              };
+                decimals = 8n;
+                standard = Some "FA1.2 token"
+              }
             };
             to = {
               name = "USDT";
               address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
-              decimals = 6;
+              decimals = 6n;
               standard = Some "FA2 token";
             }
         };
         oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-USDT";
         oracle_precision = 6n;
-        is_disabled_for_deposits = false;
+        is_disabled_for_deposits = false
       }
     );
     ("EURL/tzBTC", {
@@ -54,21 +54,21 @@ let f(_:unit) = {
             token = {
               name = "tzBTC";
               address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-              decimals = 8;
+              decimals = 8n;
               standard = Some "FA1.2 token";
-            };
+            }
           };
           to = {
             name = "EURL";
             address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
-            decimals = 6;
+            decimals = 6n;
             standard = Some "FA2 token";
           }
         };
         oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
         oracle_asset_name = "tzBTC-EURL";
         oracle_precision = 6n;
-        is_disabled_for_deposits = false;
+        is_disabled_for_deposits = false
       }
     )
   ];

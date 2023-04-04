@@ -308,7 +308,7 @@ module Storage = struct
   type rates_current = (string, exchange_rate) big_map
 
 
-  type t = [@layout:comb] {
+  type t = {
     metadata: metadata;
     valid_tokens : valid_tokens;
     valid_swaps : valid_swaps;
