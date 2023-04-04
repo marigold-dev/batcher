@@ -1,3 +1,9 @@
 [submodule "math_lib"]
 	path = math_lib
 	url = https://github.com/ligolang/math-lib-cameligo.git
+[submodule "batcher/math-lib-cameligo"]
+	path = batcher/math-lib-cameligo
+	url = https://github.com/ligolang/math-lib-cameligo.git
+[submodule "batcher/breathalyzer"]
+	path = batcher/breathalyzer
+	url = https://github.com/marigold-dev/breathalyzer.git
