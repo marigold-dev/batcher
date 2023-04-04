@@ -530,6 +530,29 @@ let update_if_more_recent
 let update_current_rate (rate_name : string) (rate : exchange_rate) (storage : Storage.t) =
   let updated_rates = update_if_more_recent rate_name rate storage.rates_current in
   { storage with rates_current = updated_rates }
+  
+[@inline]
+let get_rate_scaling_power_of_10 (rate : exchange_rate) : Rational.t =
+  let from_decimals = rate.swap.from.token.decimals in
+  let to_decimals = rate.swap.to.decimals in
+  let diff = to_decimals - from_decimals in
+  let abs_diff = int (abs diff) in
+  let power10 = pow 10 abs_diff in
+  if diff = 0 then
+    Rational.new 1
+  else
+    if diff < 0 then
+      Rational.div (Rational.new 1) (Rational.new power10)
+    else
+      (Rational.new power10)
+
+[@inline]
+let scale_on_receive_for_token_precision_difference (rate : exchange_rate) : exchange_rate =
+  let scaling_rate = get_rate_scaling_power_of_10 (rate) in
+  let adjusted_rate = Rational.mul rate.rate scaling_rate in
+  { rate with rate = adjusted_rate }
+
+
 
 end
 
@@ -1587,7 +1610,7 @@ let convert_oracle_price
   (precision: nat)
   (swap: swap)
   (lastupdated: timestamp)
-  (price: nat) : exchange_rate =
+  (price: nat) : exchange_rate = 
   let prc,den : nat * int =  if swap.from.token.decimals > precision then
                                let diff:int = swap.from.token.decimals - precision in
                                let diff_pow = Utils.pow 10 diff in
@@ -1600,12 +1623,13 @@ let convert_oracle_price
   in
   let rational_price = Rational.new (int prc) in
   let rational_denom = Rational.new den in
-  let rate: Rational.t = Rational.div rational_price rational_denom in
-  {
+  let rational_rate: Rational.t = Rational.div rational_price rational_denom in
+  let rate = {
    swap = swap;
-   rate = rate;
+   rate = rational_rate;
    when = lastupdated;
-  }
+  } in
+  Utils.scale_on_receive_for_token_precision_difference rate
 
 [@inline]
 let change_oracle_price_source
