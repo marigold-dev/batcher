@@ -1,4 +1,4 @@
-#import "../math_lib/lib/rational.mligo" "Rational"
+#import "@ligo/math_lib/lib.mligo" "MathLib"
 
 
 (* Errors  *)
@@ -60,6 +60,9 @@
 
 (* The contract assumes that the minimum precision is six and that the oracle precision must EXACTLY be 6 *)
 [@inline] let minimum_precision : nat = 6n
+
+type Rational = MathLib.Rational
+
 
 (* Associate alias to token address *)
 type token = [@layout:comb] {

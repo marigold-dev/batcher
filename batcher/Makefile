@@ -33,8 +33,8 @@ clean:
 	$(call clean_files)
 build:
 	$(call clean_files)
-	$(call compile_contract,batcher/batcher.mligo, batcher/batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher/batcher-storage.tz)
+	$(call compile_contract,batcher.mligo, batcher.tz)
+	$(call compile_storage,storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_token.tz)
@@ -59,9 +59,9 @@ build-fa12-tzBTC:
 	$(call compile_contract,fa12-token/main.mligo, tzBTC_fa12_token.tz)
 	$(call compile_storage,fa12-token/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
 test:
-	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
+	$(call test_ligo,test/test_batcher_sc.mligo)
 measure:
-	$(call measure_contract,batcher/batcher.mligo)
+	$(call measure_contract,batcher.mligo)
 install:
 	$(call install_deps,@ligo/math-lib)
 	$(call install_deps,ligo-breathalyzer)
