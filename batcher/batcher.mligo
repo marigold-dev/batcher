@@ -36,14 +36,24 @@
 [@inline] let cannot_update_deposit_window_to_more_than_the_maximum : nat        = 132n
 [@inline] let oracle_must_be_equal_to_minimum_precision : nat                    = 133n
 [@inline] let swap_precision_is_less_than_minimum : nat                          = 134n
+[@inline] let cannot_update_scale_factor_to_less_than_the_minimum : nat          = 135n
+[@inline] let cannot_update_scale_factor_to_more_than_the_maximum : nat          = 136n
 
 (* Constants *)
 
 (* The constant which represents a 10 basis point difference *)
 [@inline] let ten_bips_constant = Rational.div (Rational.new 10001) (Rational.new 10000)
 
-(* The constant which represents the period during which a closed batch will wait before looking for a price, in seconds. *)
+(* The constant which represents they4j period during which a closed batch will wait before looking for a price, in seconds. *)
 [@inline] let price_wait_window_in_seconds : int = 120
+
+(* The minimum length of a the scale factor for oracle staleness *)
+(* Oracle prices would be considered stale if they are older than scale_factor_for_oracle_staleness * deposit_time_window *)
+[@inline] let minimum_scale_factor_for_oracle_staleness : nat = 1n
+
+(* The maximum length of a the scale factor for oracle staleness *)
+(* Oracle prices would be considered stale if they are older than scale_factor_for_oracle_staleness * deposit_time_window *)
+[@inline] let maximum_scale_factor_for_oracle_staleness : nat = 10n
 
 (* The minimum length of a deposit price window *)
 [@inline] let minimum_deposit_time_in_seconds : nat = 600n
@@ -316,7 +326,8 @@ module Storage = struct
     fee_recipient : address;
     administrator : address;
     limit_on_tokens_or_pairs : nat;
-    deposit_time_window_in_seconds : nat
+    deposit_time_window_in_seconds : nat;
+    scale_factor_for_oracle_staleness: nat
 
   }
 
@@ -1445,6 +1456,7 @@ type entrypoint =
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
+  | Change_scale_factor of nat
 
 [@inline]
 let get_oracle_price
@@ -1526,8 +1538,11 @@ let get_valid_swap
 [@inline]
 let oracle_price_is_not_stale
   (deposit_time_window: nat)
+  (scale_factor_for_oracle_staleness: nat)
   (oracle_price_timestamp: timestamp) : unit =
-  if (Tezos.get_now () - (int deposit_time_window)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
+  let dtw_i = int deposit_time_window in
+  let sffos_i = int scale_factor_for_oracle_staleness in 
+  if (Tezos.get_now () - (sffos_i * dtw_i)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
 let is_oracle_price_newer_than_current
@@ -1766,6 +1781,17 @@ let change_deposit_time_window
   let storage = { storage with deposit_time_window_in_seconds = new_window; } in
   no_op storage
 
+[@inline]
+let change_scale_factor_for_oracle_staleness
+  (new_factor: nat)
+  (storage: storage) : result =
+  let () = is_administrator storage in
+  let () = reject_if_tez_supplied () in
+  if new_factor < minimum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_less_than_the_minimum else
+  if new_factor > maximum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_more_than_the_maximum else
+  let storage = { storage with scale_factor_for_oracle_staleness = new_factor; } in
+  no_op storage
+
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
@@ -1799,5 +1825,6 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
+   | Change_scale_factor f -> change_scale_factor_for_oracle_staleness f storage
 
 

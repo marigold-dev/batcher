@@ -2,27 +2,28 @@
             (Pair "tz1burnburnburnburnburnburnburjAYjjX" 0)
             10
             {})
-      (Pair {} {})
-      { Elt "EURL/tzBTC"
-            (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
-                        "EURL"
-                        (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5")
+      (Pair (Pair {} 1)
+            {}
+            { Elt "EURL/tzBTC"
+                  (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
+                              "EURL"
+                              (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5")
+                              6
+                              (Some "FA2 token"))
+                        "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
+                        "tzBTC-EURL"
                         6
-                        (Some "FA2 token"))
-                  "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
-                  "tzBTC-EURL"
-                  6
-                  False) ;
-        Elt "tzBTC/USDT"
-            (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
-                        "USDT"
-                        (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm")
+                        False) ;
+              Elt "tzBTC/USDT"
+                  (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
+                              "USDT"
+                              (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm")
+                              6
+                              (Some "FA2 token"))
+                        "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
+                        "tzBTC-USDT"
                         6
-                        (Some "FA2 token"))
-                  "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
-                  "tzBTC-USDT"
-                  6
-                  False) }
+                        False) })
       { Elt "EURL" (Pair "EURL" (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6 (Some "FA2 token")) ;
         Elt "USDT" (Pair "USDT" (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm") 6 (Some "FA2 token")) ;
         Elt "tzBTC"
