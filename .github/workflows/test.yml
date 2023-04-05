@@ -8,9 +8,7 @@ jobs:
     strategy:
       matrix:
         test:
-          - test-batcher
-          - test-orders
-          - test-math
+          - test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2.4.0

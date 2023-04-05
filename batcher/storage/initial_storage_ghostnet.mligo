@@ -1,74 +1,89 @@
-#import "../storage.mligo" "Storage"
+#import "../batcher.mligo" "Batcher"
 
-let f(_:unit) = {
+let f(_:unit) : Batcher.Storage.t = {
+  metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
       address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-      decimals = 8;
-      standard = Some "FA1.2 token";
+      decimals = 8n;
+      standard = Some "FA1.2 token"
     });
     (("EURL"),{
       name = "EURL";
       address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
-      decimals = 6;
-      standard = Some "FA2 token";
+      decimals = 6n;
+      standard = Some "FA2 token"
     });
     (("USDT"),{
       name = "USDT";
       address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
-      decimals = 6;
-      standard = Some "FA2 token";
+      decimals = 6n;
+      standard = Some "FA2 token"
     })
   ];
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
-        from = {
-          amount = 1n;
-          token = {
-            name = "tzBTC";
-            address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-            decimals = 8;
-            standard = Some "FA1.2 token";
-          };
+        swap = {
+            from = {
+              amount = 1n;
+              token = {
+                name = "tzBTC";
+                address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
+                decimals = 8n;
+                standard = Some "FA1.2 token"
+              }
+            };
+            to = {
+              name = "USDT";
+              address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
+              decimals = 6n;
+              standard = Some "FA2 token";
+            }
         };
-        to = {
-          name = "USDT";
-          address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
-          decimals = 6;
-          standard = Some "FA2 token";
-        }
+        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
+        oracle_asset_name = "tzBTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
       }
     );
-    ("tzBTC/EURL", {
-        from = {
-          amount = 1n;
-          token = {
-            name = "tzBTC";
-            address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
-            decimals = 8;
-            standard = Some "FA1.2 token";
+    ("EURL/tzBTC", {
+        swap = {
+          from = {
+            amount = 1n;
+            token = {
+              name = "tzBTC";
+              address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
+              decimals = 8n;
+              standard = Some "FA1.2 token";
+            }
           };
+          to = {
+            name = "EURL";
+            address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
+            decimals = 6n;
+            standard = Some "FA2 token";
+          }
         };
-        to = {
-          name = "EURL";
-          address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
-          decimals = 6;
-          standard = Some "FA2 token";
-        }
+        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
+        oracle_asset_name = "tzBTC-EURL";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
       }
     )
   ];
-  rates_current = (Big_map.empty : Storage.Types.rates_current);
+  rates_current = (Big_map.empty : Batcher.Storage.rates_current);
   batch_set = {
     current_batch_indices = (Map.empty : (string,nat) map);
-   	batches = (Big_map.empty : (nat,Storage.Types.batch) big_map);
+   	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
   };
   last_order_number = 0n;
-  user_batch_ordertypes = (Big_map.empty: Storage.Types.user_batch_ordertypes);
+  user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address)
+  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
+  limit_on_tokens_or_pairs = 10n;
+  deposit_time_window_in_seconds = 600n
 
 }
 

@@ -1,11 +1,11 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.59.0
+LIGO_COMPILER_VERSION:=0.63.2
 TEZOS_PROTOCOL:=lima
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
 define test_ligo
-  $(LIGO_DOCKER) run test $(1) --protocol $(TEZOS_PROTOCOL)
+  $(LIGO_DOCKER) run test $(1) 
 endef
 
 define compile_contract
@@ -13,23 +13,28 @@ define compile_contract
 endef
 
 define compile_storage
-    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --werror --init-file $(1) 'f()' > $(2)
+    $(LIGO_DOCKER) compile expression cameligo -p $(TEZOS_PROTOCOL) --michelson-format text --werror --init-file $(1) 'f()' > $(2)
+endef
+
+define measure_contract
+    $(LIGO_DOCKER) info measure-contract -p $(TEZOS_PROTOCOL)  $(1)
+endef
+
+define install_deps
+    $(LIGO_DOCKER) install
 endef
 
 define clean_files
    rm -rf *.tz
+   rm -rf batcher/*.tz
 endef
 
 clean:
 	$(call clean_files)
 build:
 	$(call clean_files)
-	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
-build-lima:
-	$(call clean_files)
-	$(call compile_contract,batcher/batcher.mligo, batcher.tz)
-	$(call compile_storage,batcher/storage/initial_storage_limanet.mligo, batcher-storage.tz)
+	$(call compile_contract,batcher.mligo, batcher.tz)
+	$(call compile_storage,storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_token.tz)
@@ -50,14 +55,13 @@ build-EURL:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa2/main.mligo, EURL_token.tz)
 	$(call compile_storage,tokens/fa2/storage/EURL_storage.mligo, EURL_token_storage.tz)
-test-batcher:
-	$(call test_ligo,batcher/test/test_batcher_sc.mligo)
-test-orders:
-	$(call test_ligo,batcher/test/test_orders.mligo)
-test-math:
-	$(call test_ligo,batcher/test/test_math.mligo)
-test-tokens:
-	$(call test_ligo,batcher/test/test_tokens.mligo)
 build-fa12-tzBTC:
-	$(call compile_contract,fa12-token/main.mligo, tzBTC_fa12_token.tz)
-	$(call compile_storage,fa12-token/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
+	$(call clean_files)
+	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_fa12_token.tz)
+	$(call compile_storage,tokens/fa12/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
+test:
+	$(call test_ligo,test/test_batcher_sc.mligo)
+measure:
+	$(call measure_contract,batcher.mligo)
+install:
+	$(call install_deps)

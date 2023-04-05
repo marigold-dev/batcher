@@ -12,7 +12,7 @@ jobs:
   ui:
     strategy:
       matrix:
-        network: [ghostnet, limanet ]
+        network: [ghostnet ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.0
@@ -49,16 +49,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push rate oracle
+      - name: Build and push ticker
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v3
         with:
-          file: ./Dockerfile.price.${{ matrix.network }}
+          file: ./Dockerfile.tick.${{ matrix.network }}
           # Only push when on main
           push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
           tags: |
-            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:latest
-            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
+            ghcr.io/marigold-dev/batcher-tick-${{ matrix.network }}:latest
+            ghcr.io/marigold-dev/batcher-tick-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -75,14 +75,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push rate oracle release version
+      - name: Build and push ticker release version
         if: ${{ github.ref == 'refs/heads/release' }}
         uses: docker/build-push-action@v3
         with:
-          file: ./Dockerfile.price.${{ matrix.network }}
+          file: ./Dockerfile.tick.${{ matrix.network }}
           push: true
           tags: |
-            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:stable
-            ghcr.io/marigold-dev/batcher-price-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+            ghcr.io/marigold-dev/batcher-tick-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-tick-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
           cache-from: type=gha
           cache-to: type=gha,mode=max
