@@ -12,19 +12,32 @@ done
 
 FREQ=$(($frequency))
 
-post_op (){
+# declare -a TICKERS=("tzBTC-USDT" "EURL-tzBTC")
+declare -a TICKERS=("tzBTC/USDT" "EURL-tzBTC")
 
-  sleep 5
+tick_ticker(){
 
-  echo "Tick batcher contract"
+  echo "Tick batcher contract ticker ${1} - $batcher_address"
 
   octez-client transfer 0 from oracle_account to $batcher_address \
     --entrypoint tick \
-    --arg "{}" \
+    --arg "\"${1}\"" \
     --burn-cap 2
 
+}
+
+post_op (){
+
+for i in "${TICKERS[@]}"
+do
+   : 
+   tick_ticker "$i"
+  sleep 5
+done
 
 }
+
+
 
 while true
 do

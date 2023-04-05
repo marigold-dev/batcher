@@ -245,11 +245,6 @@ type oracle_source_change = [@layout:comb] {
   oracle_precision: nat;
 }
 
-let assert_with_error_nat
-(predicate: bool)
-(error: nat) : unit =
-if predicate then () else failwith error
-
 module TokenAmount = struct
 
 
@@ -1461,16 +1456,12 @@ let get_oracle_price
 
 [@inline]
 let reject_if_tez_supplied(): unit =
-  assert_with_error_nat
-   (Tezos.get_amount () > 0tez)
-   (endpoint_does_not_accept_tez)
+  if Tezos.get_amount () < 1mutez then () else failwith endpoint_does_not_accept_tez
 
 [@inline]
 let is_administrator
   (storage : storage) : unit =
-  assert_with_error_nat
-   (Tezos.get_sender () = storage.administrator)
-   (sender_not_administrator)
+  if Tezos.get_sender () = storage.administrator then () else failwith sender_not_administrator
 
 [@inline]
 let invert_rate_for_clearing
@@ -1536,9 +1527,7 @@ let get_valid_swap
 let oracle_price_is_not_stale
   (deposit_time_window: nat)
   (oracle_price_timestamp: timestamp) : unit =
-  assert_with_error_nat
-   (Tezos.get_now () - (int deposit_time_window) < oracle_price_timestamp)
-   (oracle_price_is_stale)
+  if (Tezos.get_now () - (int deposit_time_window)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
 let is_oracle_price_newer_than_current
