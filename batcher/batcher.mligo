@@ -1561,7 +1561,7 @@ let confirm_oracle_price_is_available_before_deposit
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
-  oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
+  oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -1656,7 +1656,7 @@ let tick_price
   (storage : storage) : storage =
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
+  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
