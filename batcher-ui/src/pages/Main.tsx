@@ -147,6 +147,7 @@ const Welcome: React.FC = () => {
    const updateSwapMap = async (storage: any) => {
    try{
     const valid_swaps = storage.valid_swaps;
+    console.info('Valid Swaps', valid_swaps);
     const swap_map = new Map(Object.keys(valid_swaps).map(k => [k, valid_swaps[k]]));
     setTokenMap(swap_map);
     } catch (error) {
@@ -340,6 +341,8 @@ const Welcome: React.FC = () => {
   const setOraclePrice = async (rates: any) => {
     if (rates.length != 0) {
       // eslint-disable-next-line @typescript-eslint/no-shadow
+      console.info("rates",rates);
+      console.info("tokenPair",tokenPair);
       const rate = rates.filter((r) => r.key == tokenPair)[0].value;
       const numerator = rate.rate.p;
       const denominator = rate.rate.q;
@@ -402,10 +405,10 @@ const Welcome: React.FC = () => {
     const swap = tokenMap.get(pair);
     console.log('pair changed to ', swap);
     // Set Buy Token Details
-    setBuyToken(swap.from.token);
+    setBuyToken(swap.swap.from.token);
 
     // Set Sell Token Details
-    setSellToken(swap.to);
+    setSellToken(swap.swap.to);
 
  };
 
