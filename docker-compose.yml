@@ -7,9 +7,3 @@ services:
       context: .
       dockerfile: Dockerfile.tick.ghostnet
     restart: always
-  batcher-tick-limanet:
-    container_name: tick-limanet
-    build:
-      context: .
-      dockerfile: Dockerfile.tick.limanet
-    restart: always

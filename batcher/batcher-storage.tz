@@ -4,21 +4,27 @@
             {})
       (Pair {} {})
       { Elt "EURL/tzBTC"
-            (Pair (Pair (Pair False "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2") "tzBTC-EURL" 6)
-                  (Pair 1 (Pair (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8) "tzBTC" (Some "FA1.2 token"))
-                  (Pair (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6)
-                  "EURL"
-                  (Some "FA2 token")) ;
+            (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
+                        "EURL"
+                        (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5")
+                        6
+                        (Some "FA2 token"))
+                  "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
+                  "tzBTC-EURL"
+                  6
+                  False) ;
         Elt "tzBTC/USDT"
-            (Pair (Pair (Pair False "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2") "tzBTC-USDT" 6)
-                  (Pair 1 (Pair (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8) "tzBTC" (Some "FA1.2 token"))
-                  (Pair (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm") 6)
-                  "USDT"
-                  (Some "FA2 token")) }
-      { Elt "EURL"
-            (Pair (Pair (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6) "EURL" (Some "FA2 token")) ;
-        Elt "USDT"
-            (Pair (Pair (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm") 6) "USDT" (Some "FA2 token")) ;
+            (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
+                        "USDT"
+                        (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm")
+                        6
+                        (Some "FA2 token"))
+                  "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
+                  "tzBTC-USDT"
+                  6
+                  False) }
+      { Elt "EURL" (Pair "EURL" (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6 (Some "FA2 token")) ;
+        Elt "USDT" (Pair "USDT" (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm") 6 (Some "FA2 token")) ;
         Elt "tzBTC"
-            (Pair (Pair (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8) "tzBTC" (Some "FA1.2 token")) })
+            (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) })
 
