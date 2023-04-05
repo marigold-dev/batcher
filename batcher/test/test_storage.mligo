@@ -1,6 +1,6 @@
 #import "../batcher.mligo" "Batcher"
-#import "../breathalyzer/lib/lib.mligo" "Breath"
-#import "../math-lib-cameligo/rational/rational.mligo" "Rational"
+#import "ligo-breathalyzer/lib/lib.mligo" "Breath"
+#import "@ligo/math-lib/rational/rational.mligo" "Rational"
 #import "test_mock_oracle.mligo" "Oracle"
 
 type level = Breath.Logger.level

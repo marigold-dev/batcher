@@ -1,5 +1,4 @@
-#import "./math-lib-cameligo/rational/rational.mligo" "Rational"
-
+#import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 (* Errors  *)
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
