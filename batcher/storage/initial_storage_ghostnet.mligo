@@ -47,7 +47,7 @@ let f(_:unit) : Batcher.Storage.t = {
         is_disabled_for_deposits = false
       }
     );
-    ("EURL/tzBTC", {
+    ("tzBTC/EURL", {
         swap = {
           from = {
             amount = 1n;
