@@ -1,6 +1,4 @@
-#import "@ligo/math-lib" "MathLib"
-
-module Rational = MathLib.Rational
+#import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 (* Errors  *)
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
