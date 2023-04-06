@@ -133,7 +133,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           .batch([
           {
             kind: OpKind.TRANSACTION,
-            ...tokenContract.methods.approve(fa12_operation_params).toTransferParams(),
+            ...tokenContract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
           }
           // {
           //   kind: OpKind.TRANSACTION,
