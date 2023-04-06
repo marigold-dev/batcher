@@ -133,11 +133,13 @@ const Exchange: React.FC<ExchangeProps> = ({
        console.log("test");
 
       if (selectedToken.standard === 'FA1.2 token') {
+
+       console.log("fa12_operation_params", fa12_operation_params);
         order_batcher_op = await tezos.wallet
           .batch([
           {
             kind: OpKind.TRANSACTION,
-            ...tokenContract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH,scaled_amount).toTransferParams()
+            ...tokenContract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
           },
           {
             kind: OpKind.TRANSACTION,
