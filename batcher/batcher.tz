@@ -537,20 +537,20 @@
                                              COMPARE ;
                                              GT ;
                                              IF { PUSH nat 126 ; FAILWITH } {} } ;
-                                        DUP 3 ;
+                                        DUP 4 ;
+                                        DUP 4 ;
                                         CAR ;
                                         CAR ;
                                         CAR ;
-                                        DIG 3 ;
+                                        DIG 4 ;
                                         CDR ;
                                         CAR ;
-                                        DUP 5 ;
-                                        DUP 3 ;
-                                        DUP 3 ;
+                                        DUP 2 ;
+                                        DUP 2 ;
                                         COMPARE ;
                                         GT ;
-                                        IF { DIG 2 ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT }
-                                           { SWAP ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT } ;
+                                        IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
+                                           { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
                                         GET ;
                                         IF_NONE
                                           { DUP 4 ;
@@ -2444,6 +2444,9 @@
                          COMPARE ;
                          LT ;
                          IF {} { PUSH nat 118 ; FAILWITH } ;
+                         DUP ;
+                         GET 8 ;
+                         IF {} { PUSH nat 137 ; FAILWITH } ;
                          DUP 2 ;
                          CDR ;
                          CAR ;
@@ -2451,20 +2454,20 @@
                          CDR ;
                          DUP 2 ;
                          CAR ;
-                         DUP 2 ;
-                         DUP 2 ;
+                         DUP ;
                          CAR ;
                          CAR ;
                          CAR ;
-                         DIG 2 ;
+                         SWAP ;
                          CDR ;
                          CAR ;
-                         DUP 2 ;
-                         DUP 2 ;
+                         DUP 3 ;
+                         DUP 3 ;
+                         DUP 3 ;
                          COMPARE ;
                          GT ;
-                         IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                            { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                         IF { DIG 2 ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT }
+                            { SWAP ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT } ;
                          GET ;
                          IF_NONE
                            { SWAP ; DIG 3 ; DROP 3 ; PUSH nat 117 ; FAILWITH }
@@ -2474,20 +2477,20 @@
                              CDR ;
                              DIG 2 ;
                              CAR ;
-                             DUP ;
-                             CAR ;
-                             CAR ;
-                             CAR ;
+                             DIG 2 ;
                              DUP 2 ;
+                             CAR ;
+                             CAR ;
+                             CAR ;
+                             DUP 3 ;
                              CDR ;
                              CAR ;
-                             DIG 4 ;
-                             DUP 3 ;
-                             DUP 3 ;
+                             DUP 2 ;
+                             DUP 2 ;
                              COMPARE ;
                              GT ;
-                             IF { DIG 2 ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT }
-                                { SWAP ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT } ;
+                             IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
+                                { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
                              NONE (pair (pair (pair (pair string (option address) nat (option string)) nat)
                                               (pair string (option address) nat (option string)))
                                         address

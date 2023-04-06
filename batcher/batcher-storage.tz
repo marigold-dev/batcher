@@ -10,8 +10,8 @@
                               (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5")
                               6
                               (Some "FA2 token"))
-                        "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
-                        "tzBTC-EURL"
+                        "KT1NyTjT9mdtiK1fTF9Wwgkb1A6nDWFRRezy"
+                        "BTC-EUR"
                         6
                         False) ;
               Elt "tzBTC/USDT"
@@ -20,8 +20,8 @@
                               (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm")
                               6
                               (Some "FA2 token"))
-                        "KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2"
-                        "tzBTC-USDT"
+                        "KT1NyTjT9mdtiK1fTF9Wwgkb1A6nDWFRRezy"
+                        "BTC-USDT"
                         6
                         False) })
       { Elt "EURL" (Pair "EURL" (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6 (Some "FA2 token")) ;

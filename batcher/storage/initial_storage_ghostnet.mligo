@@ -41,8 +41,8 @@ let f(_:unit) : Batcher.Storage.t = {
               standard = Some "FA2 token";
             }
         };
-        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
-        oracle_asset_name = "tzBTC-USDT";
+        oracle_address = ("KT1NyTjT9mdtiK1fTF9Wwgkb1A6nDWFRRezy": address);
+        oracle_asset_name = "BTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
@@ -65,8 +65,8 @@ let f(_:unit) : Batcher.Storage.t = {
             standard = Some "FA2 token";
           }
         };
-        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
-        oracle_asset_name = "tzBTC-EURL";
+        oracle_address = ("KT1NyTjT9mdtiK1fTF9Wwgkb1A6nDWFRRezy": address);
+        oracle_asset_name = "BTC-EUR";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }

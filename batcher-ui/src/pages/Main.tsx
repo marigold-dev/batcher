@@ -148,7 +148,7 @@ const Welcome: React.FC = () => {
    try{
     const valid_swaps = storage.valid_swaps;
     console.info('Valid Swaps', valid_swaps);
-    const swap_map = new Map(Object.keys(valid_swaps).map(k => [k, valid_swaps[k]]));
+    const swap_map = new Map(Object.keys(valid_swaps).filter(k => !valid_swaps[k].is_disabled_for_desposits).map(k => [k, valid_swaps[k]]));
     setTokenMap(swap_map);
     } catch (error) {
       console.error('Unable to update swap map', error);
@@ -307,7 +307,6 @@ const Welcome: React.FC = () => {
 
       const valid_tokens = storage.valid_tokens;
       const token_map = new Map(Object.keys(valid_tokens).map(k => [k, valid_tokens[k]]));
-
       const buyTokenData = token_map.get(buyToken.name);
        console.log("buyTokenAddress",buyToken.address);
       const sellTokenData = token_map.get(sellToken.name);
