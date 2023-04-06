@@ -5,7 +5,7 @@ let f(_:unit) : Batcher.Storage.t = {
   valid_tokens = Map.literal [
     (("tzBTC"), {
       name = "tzBTC";
-      address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
+      address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
@@ -29,7 +29,7 @@ let f(_:unit) : Batcher.Storage.t = {
               amount = 1n;
               token = {
                 name = "tzBTC";
-                address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
+                address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
                 decimals = 8n;
                 standard = Some "FA1.2 token"
               }
@@ -53,7 +53,7 @@ let f(_:unit) : Batcher.Storage.t = {
             amount = 1n;
             token = {
               name = "tzBTC";
-              address = Some(("KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG" : address));
+              address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
               decimals = 8n;
               standard = Some "FA1.2 token";
             }
