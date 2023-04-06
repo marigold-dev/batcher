@@ -4,7 +4,7 @@
             {})
       (Pair (Pair {} 1)
             {}
-            { Elt "EURL/tzBTC"
+            { Elt "tzBTC/EURL"
                   (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1XLyXAe5FWMHnoWa98xZqgDUyyRms2B3tG") 8 (Some "FA1.2 token")) 1)
                               "EURL"
                               (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5")
