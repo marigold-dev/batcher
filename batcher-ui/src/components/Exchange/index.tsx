@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Icon, SwapOutlined, SettingOutlined, RetweetOutlined, DollarOutlined } from '@ant-design/icons';
+import {  SwapOutlined, SettingOutlined, RetweetOutlined, DollarOutlined } from '@ant-design/icons';
 import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio, } from 'antd';
-import type {  RadioChangeEvent } from 'antd';
-import { BigMapAbstraction, compose, OpKind, TezosToolkit, WalletContract, WalletOperationBatch, WalletParamsWithKind } from "@taquito/taquito";
+import {  compose, OpKind,  WalletContract, } from "@taquito/taquito";
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps, ToleranceType, SideType } from '@/extra_utils/types';
+import { ExchangeProps, ToleranceType, } from '@/extra_utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
-import { TokenMetadata, tzip12, Tzip12Module, Tzip12ContractAbstraction } from "@taquito/tzip12";
+import { tzip12, Tzip12Module } from "@taquito/tzip12";
 import { tzip16 } from "@taquito/tzip16";
-import BigNumber from 'bignumber.js';
-import type { CustomIconComponentProps } from '@ant-design/icons/lib/components/Icon';
 
 const Exchange: React.FC<ExchangeProps> = ({
   userAddress,
@@ -104,8 +101,6 @@ const Exchange: React.FC<ExchangeProps> = ({
       console.log('operations-side', side);
       console.log('operations-tolerance', tolerance);
       console.log('operations-fee-in-mutez', fee_in_mutez);
-      let decimals = Math.pow(10, 6);
-      let amt = BigNumber(0).multipliedBy(decimals);
 
       const swap_params = {
         swap: {
@@ -134,20 +129,19 @@ const Exchange: React.FC<ExchangeProps> = ({
 
       if (selectedToken.standard === 'FA1.2 token') {
 
-       console.log("fa12_operation_params", fa12_operation_params);
         order_batcher_op = await tezos.wallet
           .batch([
           {
             kind: OpKind.TRANSACTION,
-            ...tokenContract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
-          },
-          {
-            kind: OpKind.TRANSACTION,
-            ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-            to: REACT_APP_BATCHER_CONTRACT_HASH,
-            amount: fee_in_mutez,
-            mutez: true,
+            ...tokenContract.methods.approve(fa12_operation_params).toTransferParams(),
           }
+          // {
+          //   kind: OpKind.TRANSACTION,
+          //   ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+          //   to: REACT_APP_BATCHER_CONTRACT_HASH,
+          //   amount: fee_in_mutez,
+          //   mutez: true,
+          // }
           ])
           .send();
       }

@@ -1803,6 +1803,12 @@ let change_scale_factor_for_oracle_staleness
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
 [@view]
+let get_valid_swaps ((), storage : unit * storage) : valid_swaps = storage.valid_swaps
+
+[@view]
+let get_valid_tokens ((), storage : unit * storage) : valid_tokens = storage.valid_tokens
+
+[@view]
 let get_current_batches ((),storage: unit * storage) : batch list=
   let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
      match Big_map.find_opt i storage.batch_set.batches with

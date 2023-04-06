@@ -3702,6 +3702,35 @@
                          NIL operation ;
                          PAIR } } } } } ;
   view "get_fee_in_mutez" unit mutez { CDR ; CAR ; CAR ; CDR ; CDR } ;
+  view "get_valid_swaps"
+       unit
+       (map string
+            (pair (pair %swap
+                     (pair %from
+                        (pair %token
+                           (string %name)
+                           (option %address address)
+                           (nat %decimals)
+                           (option %standard string))
+                        (nat %amount))
+                     (pair %to
+                        (string %name)
+                        (option %address address)
+                        (nat %decimals)
+                        (option %standard string)))
+                  (address %oracle_address)
+                  (string %oracle_asset_name)
+                  (nat %oracle_precision)
+                  (bool %is_disabled_for_deposits)))
+       { CDR ; CDR ; CAR ; CDR ; CDR } ;
+  view "get_valid_tokens"
+       unit
+       (map string
+            (pair (string %name)
+                  (option %address address)
+                  (nat %decimals)
+                  (option %standard string)))
+       { CDR ; CDR ; CDR } ;
   view "get_current_batches"
        unit
        (list (pair (nat %batch_number)

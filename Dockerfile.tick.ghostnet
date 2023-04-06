@@ -12,4 +12,4 @@ WORKDIR /etc/run
 
 COPY ./tick.sh /etc/run/
 
-CMD [ "/etc/run/tick.sh", "-b", "KT1DjaXYMjHFxEwSsoRr3FuhkpHgDfMNaZnX", "-f", "180" ]
+CMD [ "/etc/run/tick.sh", "-b", "KT1VyZGHqjJ5YrNPDbqnmbCrstUpdTuSj451", "-f", "180" ]
