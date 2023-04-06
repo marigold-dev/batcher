@@ -38,6 +38,7 @@
 [@inline] let swap_precision_is_less_than_minimum : nat                          = 134n
 [@inline] let cannot_update_scale_factor_to_less_than_the_minimum : nat          = 135n
 [@inline] let cannot_update_scale_factor_to_more_than_the_maximum : nat          = 136n
+[@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
 
 (* Constants *)
 
@@ -1563,6 +1564,11 @@ let confirm_oracle_price_is_available_before_deposit
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
   oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated
 
+[@inline]
+let confirm_swap_pair_is_disabled_prior_to_removal
+  (valid_swap:valid_swap) : unit =
+  if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled 
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
@@ -1717,6 +1723,7 @@ let remove_token_swap_pair
   (storage: storage) : result =
    let () = is_administrator storage in
    let () = reject_if_tez_supplied () in
+   let () = confirm_swap_pair_is_disabled_prior_to_removal swap in
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
    let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
    no_op storage
