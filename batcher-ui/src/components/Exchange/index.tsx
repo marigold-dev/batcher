@@ -132,21 +132,20 @@ const Exchange: React.FC<ExchangeProps> = ({
         console.log("buy", buyToken);
         console.log("sell", sellToken);
         const tokenfa12Contract : WalletContract = await tezos.wallet.at(buyToken.address, compose(tzip12,tzip16));
-    
         console.log("methods", tokenfa12Contract.methods);
         order_batcher_op = await tezos.wallet
           .batch([
           {
             kind: OpKind.TRANSACTION,
             ...tokenfa12Contract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
+          },
+          {
+            kind: OpKind.TRANSACTION,
+            ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+            to: REACT_APP_BATCHER_CONTRACT_HASH,
+            amount: fee_in_mutez,
+            mutez: true,
           }
-          // {
-          //   kind: OpKind.TRANSACTION,
-          //   ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-          //   to: REACT_APP_BATCHER_CONTRACT_HASH,
-          //   amount: fee_in_mutez,
-          //   mutez: true,
-          // }
           ])
           .send();
       }
