@@ -17,6 +17,7 @@ declare -a TICKERS=("tzBTC/USDT" "EURL-tzBTC")
 
 tick_ticker(){
 
+  set +e
   echo "Tick batcher contract ticker ${1} - $batcher_address"
 
   octez-client transfer 0 from oracle_account to $batcher_address \
@@ -24,6 +25,7 @@ tick_ticker(){
     --arg "\"${1}\"" \
     --burn-cap 2
 
+  set -e
 }
 
 post_op (){
