@@ -538,7 +538,7 @@ let update_if_more_recent
 let update_current_rate (rate_name : string) (rate : exchange_rate) (storage : Storage.t) =
   let updated_rates = update_if_more_recent rate_name rate storage.rates_current in
   { storage with rates_current = updated_rates }
-  
+
 [@inline]
 let get_rate_scaling_power_of_10 (rate : exchange_rate) : Rational.t =
   let from_decimals = rate.swap.from.token.decimals in
@@ -816,23 +816,17 @@ let get_clearing
    | Cleared ci -> Some ci.clearing
    | _ -> None
 
-
 [@inline]
 let collect_redemptions
     ((bots, tam, bts),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set) =
     let batches = bts.batches in
-    let batch_indices = bts.current_batch_indices in
     match Big_map.find_opt batch_number batches with
     | None -> bots, tam, bts
-    | Some batch -> (let name = Utils.get_rate_name_from_pair batch.pair in
-                     match Map.find_opt name batch_indices with
-                     | Some _ -> bots, tam, bts
-                     | None ->
-                       (match get_clearing batch with
-                        | None ->  bots, tam, bts
-                        | Some c -> let _c, u_tam = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
-                                   let u_bots = Map.remove batch_number bots in
-                                   u_bots,u_tam, bts))
+    | Some batch -> (match get_clearing batch with
+                      | None ->  bots, tam, bts
+                      | Some c -> let _c, u_tam = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
+                                  let u_bots = Map.remove batch_number bots in
+                                  u_bots,u_tam, bts)
 
 [@inline]
 let collect_redemption_payouts
@@ -1542,7 +1536,7 @@ let oracle_price_is_not_stale
   (scale_factor_for_oracle_staleness: nat)
   (oracle_price_timestamp: timestamp) : unit =
   let dtw_i = int deposit_time_window in
-  let sffos_i = int scale_factor_for_oracle_staleness in 
+  let sffos_i = int scale_factor_for_oracle_staleness in
   if (Tezos.get_now () - (sffos_i * dtw_i)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
@@ -1567,7 +1561,7 @@ let confirm_oracle_price_is_available_before_deposit
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
   (valid_swap:valid_swap) : unit =
-  if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled 
+  if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -1621,7 +1615,7 @@ let convert_oracle_price
   (precision: nat)
   (swap: swap)
   (lastupdated: timestamp)
-  (price: nat) : exchange_rate = 
+  (price: nat) : exchange_rate =
   let prc,den : nat * int =  if swap.from.token.decimals > precision then
                                let diff:int = swap.from.token.decimals - precision in
                                let diff_pow = Utils.pow 10 diff in
