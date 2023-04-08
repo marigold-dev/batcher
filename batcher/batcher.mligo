@@ -376,31 +376,32 @@ let get_clearing_tolerance (cp_minus : Rational.t) (cp_exact : Rational.t) (cp_p
   else Plus
 
 [@inline]
-let get_cp_minus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
+let get_cp_minus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t * Rational.t * Rational.t=
   let buy_minus_token, buy_exact_token, buy_plus_token = buy_side in
   let sell_minus_token, _, _ = sell_side in
   let left_number = Rational.new (buy_minus_token + buy_exact_token + buy_plus_token)  in
-  let right_number = Rational.div (Rational.mul (Rational.new sell_minus_token) ten_bips_constant) rate in
+  let adj_rate =  Rational.mul ten_bips_constant rate in
+  let right_number = Rational.mul (Rational.new sell_minus_token) adj_rate in
   let min_number = get_min_number left_number right_number in
-  min_number
+  left_number, right_number, min_number
 
 [@inline]
-let get_cp_exact (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
+let get_cp_exact (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t * Rational.t * Rational.t =
   let _, buy_exact_token, buy_plus_token = buy_side in
   let sell_minus_token, sell_exact_token, _ = sell_side in
   let left_number = Rational.new (buy_exact_token + buy_plus_token) in
-  let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token)) rate in
+  let right_number = Rational.mul (Rational.new (sell_minus_token + sell_exact_token)) rate in
   let min_number = get_min_number left_number right_number in
-  min_number
+  left_number, right_number, min_number
 
 [@inline]
-let get_cp_plus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
+let get_cp_plus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t * Rational.t * Rational.t =
   let _, _, buy_plus_token = buy_side in
   let sell_minus_token, sell_exact_token, sell_plus_token = sell_side in
   let left_number = Rational.new buy_plus_token in
-  let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token + sell_plus_token)) (Rational.mul ten_bips_constant rate) in
+  let right_number = Rational.mul (Rational.new (sell_minus_token + sell_exact_token + sell_plus_token)) (Rational.mul ten_bips_constant rate) in
   let min_number = get_min_number left_number right_number in
-  min_number
+  left_number, right_number, min_number
 
 [@inline]
 let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (sell_side : sell_side) : clearing =
