@@ -198,9 +198,11 @@ type volumes = [@layout:comb] {
   buy_minus_volume : nat;
   buy_exact_volume : nat;
   buy_plus_volume : nat;
+  buy_total_volume : nat;
   sell_minus_volume : nat;
   sell_exact_volume : nat;
   sell_plus_volume : nat;
+  sell_total_volume : nat;
 }
 
 type pair = token * token
@@ -663,8 +665,11 @@ let was_in_clearing_for_sell
 
 [@inline]
 let was_in_clearing
+  (volumes:volumes)
   (ot: ordertype)
   (clearing: clearing) : bool =
+  if volumes.buy_total_volume = 0n then false else
+  if volumes.sell_total_volume = 0n then false else
   let order_tolerance = ot.tolerance in
   let order_side = ot.side in
   let clearing_tolerance = clearing.clearing_tolerance in
@@ -784,14 +789,14 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam), (ot, amt): (clearing * token_amount_map) * (ordertype * nat)) :  (clearing *token_amount_map) =
-  let u_tam: token_amount_map  = if was_in_clearing ot c then
+  ((c, tam, vols), (ot, amt): (clearing * token_amount_map * volumes) * (ordertype * nat)) :  (clearing * token_amount_map * volumes) =
+  let u_tam: token_amount_map  = if was_in_clearing vols ot c then
                                           get_cleared_payout ot amt c tam
                                         else
                                           let ta: token_amount = TokenAmount.recover ot amt c in
                                           TokenAmountMap.increase ta tam
   in
-  (c, u_tam)
+  (c, u_tam, vols)
 
 end
 
@@ -824,7 +829,7 @@ let collect_redemptions
     | None -> bots, tam, bts
     | Some batch -> (match get_clearing batch with
                       | None ->  bots, tam, bts
-                      | Some c -> let _c, u_tam = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam)  in
+                      | Some c -> let _c, u_tam, _vols = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes )  in
                                   let u_bots = Map.remove batch_number bots in
                                   u_bots,u_tam, bts)
 
@@ -1185,19 +1190,21 @@ type batch_status =
 let set_buy_side_volume
   (order: swap_order)
   (volumes : volumes) : volumes =
+  let total_buy_side_volume = volumes.buy_total_volume + order.swap.from.amount in
   match order.tolerance with
-  | Minus -> { volumes with buy_minus_volume = volumes.buy_minus_volume + order.swap.from.amount; }
-  | Exact -> { volumes with buy_exact_volume = volumes.buy_exact_volume + order.swap.from.amount; }
-  | Plus -> { volumes with buy_plus_volume = volumes.buy_plus_volume + order.swap.from.amount; }
+  | Minus -> { volumes with buy_minus_volume = volumes.buy_minus_volume + order.swap.from.amount; buy_total_volume = total_buy_side_volume; }
+  | Exact -> { volumes with buy_exact_volume = volumes.buy_exact_volume + order.swap.from.amount;  buy_total_volume = total_buy_side_volume; }
+  | Plus -> { volumes with buy_plus_volume = volumes.buy_plus_volume + order.swap.from.amount;  buy_total_volume = total_buy_side_volume; }
 
 [@inline]
 let set_sell_side_volume
   (order: swap_order)
   (volumes : volumes) : volumes =
+ let total_sell_side_volume = volumes.sell_total_volume + order.swap.from.amount in
   match order.tolerance with
-  | Minus -> { volumes with sell_minus_volume = volumes.sell_minus_volume + order.swap.from.amount; }
-  | Exact -> { volumes with sell_exact_volume = volumes.sell_exact_volume + order.swap.from.amount; }
-  | Plus -> { volumes with sell_plus_volume = volumes.sell_plus_volume + order.swap.from.amount; }
+  | Minus -> { volumes with sell_minus_volume = volumes.sell_minus_volume + order.swap.from.amount; sell_total_volume = total_sell_side_volume; }
+  | Exact -> { volumes with sell_exact_volume = volumes.sell_exact_volume + order.swap.from.amount;  sell_total_volume = total_sell_side_volume; }
+  | Plus -> { volumes with sell_plus_volume = volumes.sell_plus_volume + order.swap.from.amount;  sell_total_volume = total_sell_side_volume; }
 
 [@inline]
 let make
@@ -1208,9 +1215,11 @@ let make
       buy_minus_volume = 0n;
       buy_exact_volume = 0n;
       buy_plus_volume = 0n;
+      buy_total_volume = 0n;
       sell_minus_volume = 0n;
       sell_exact_volume = 0n;
       sell_plus_volume = 0n;
+      sell_total_volume = 0n;
     } in
   {
     batch_number= batch_number;
