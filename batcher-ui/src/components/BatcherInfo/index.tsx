@@ -29,7 +29,12 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
       const open = parseISO(openTime);
       const batcherClose = add(open, { minutes: 10 });
       const diff = differenceInMinutes(batcherClose, now);
-      return diff;
+      if (diff < 0)
+      {
+        return 0;
+      } else {
+        return diff;
+      }
     }
     return 0;
   };

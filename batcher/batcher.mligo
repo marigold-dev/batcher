@@ -152,7 +152,10 @@ type batch_status  =
 
 type total_cleared_volumes = [@layout:comb] {
   buy_side_total_cleared_volume: nat;
+  buy_side_volume_subject_to_clearing: nat;
   sell_side_total_cleared_volume: nat;
+  sell_side_volume_subject_to_clearing: nat;
+
 }
 
 type clearing_volumes = [@layout:comb] {
@@ -180,13 +183,6 @@ type sell_minus_token = int
 type sell_exact_token = int
 type sell_plus_token = int
 type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
-
-(*
-  A bid : the price a buyer is willing to pay for an asset
-  A ask : the price a seller is willing to auxept for an asset
-  Here, the orderbook is a map of bids orders list  and asks order list
-*)
-type orderbook = (nat, swap_order) big_map
 
 type batch_status =
   | Open of { start_time : timestamp }
@@ -233,12 +229,14 @@ type batch = [@layout:comb] {
 
 type batch_indices = (string,  nat) map
 
+type batches = (nat, batch) big_map
+
 (* Set of batches, containing the current batch and the previous (finalized) batches.
    The current batch can be open for deposits, closed for deposits (awaiting clearing) or
    finalized, as we wait for a new deposit to start a new batch *)
 type batch_set = [@layout:comb] {
   current_batch_indices: batch_indices;
-  batches: (nat, batch) big_map;
+  batches: batches;
   }
 (* Type for contract metadata *)
 type metadata = (string, bytes) big_map
@@ -342,7 +340,9 @@ module Utils = struct
 [@inline]
 let empty_total_cleared_volumes : total_cleared_volumes = {
   buy_side_total_cleared_volume = 0n;
+  buy_side_volume_subject_to_clearing = 0n;
   sell_side_total_cleared_volume = 0n;
+  sell_side_volume_subject_to_clearing = 0n;
 }
 [@inline]
 let to_nat (i:int): nat =
@@ -372,35 +372,47 @@ let get_min_number (a : Rational.t) (b : Rational.t) =
   else b
 
 [@inline]
-let get_clearing_tolerance (cp_minus : Rational.t) (cp_exact : Rational.t) (cp_plus : Rational.t) : tolerance =
+let get_clearing_tolerance 
+  (cp_minus : Rational.t) 
+  (cp_exact : Rational.t) 
+  (cp_plus : Rational.t) : tolerance =
   if gte cp_minus cp_exact && gte cp_minus cp_plus then Minus
   else if gte cp_exact cp_minus && gte cp_exact cp_plus then Exact
   else Plus
 
 [@inline]
-let get_cp_minus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let buy_minus_token, buy_exact_token, buy_plus_token = buy_side in
-  let sell_minus_token, _, _ = sell_side in
-  let left_number = Rational.new (buy_minus_token + buy_exact_token + buy_plus_token)  in
-  let right_number = Rational.div (Rational.mul (Rational.new sell_minus_token) ten_bips_constant) rate in
-  let min_number = get_min_number left_number right_number in
-  min_number
-
-[@inline]
-let get_cp_exact (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let _, buy_exact_token, buy_plus_token = buy_side in
-  let sell_minus_token, sell_exact_token, _ = sell_side in
-  let left_number = Rational.new (buy_exact_token + buy_plus_token) in
-  let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token)) rate in
-  let min_number = get_min_number left_number right_number in
-  min_number
-
-[@inline]
-let get_cp_plus (rate : Rational.t) (buy_side : buy_side) (sell_side : sell_side) : Rational.t =
-  let _, _, buy_plus_token = buy_side in
+let get_cp_minus 
+  (rate : Rational.t) 
+  (buy_side : buy_side) 
+  (sell_side : sell_side) : Rational.t =
+  let buy_minus_token, _, _ = buy_side in
   let sell_minus_token, sell_exact_token, sell_plus_token = sell_side in
-  let left_number = Rational.new buy_plus_token in
-  let right_number = Rational.div (Rational.new (sell_minus_token + sell_exact_token + sell_plus_token)) (Rational.mul ten_bips_constant rate) in
+  let left_number = Rational.new (buy_minus_token)  in
+  let right_number = Rational.div (Rational.mul (Rational.new (sell_minus_token + sell_exact_token + sell_plus_token)) ten_bips_constant) rate in
+  let min_number = get_min_number left_number right_number in
+  min_number
+
+[@inline]
+let get_cp_exact 
+  (rate : Rational.t) 
+  (buy_side : buy_side) 
+  (sell_side : sell_side) : Rational.t =
+  let buy_minus_token, buy_exact_token, _ = buy_side in
+  let _, sell_exact_token, sell_plus_token = sell_side in
+  let left_number = Rational.new (buy_minus_token + buy_exact_token) in
+  let right_number = Rational.div (Rational.new (sell_exact_token + sell_plus_token)) rate in
+  let min_number = get_min_number left_number right_number in
+  min_number
+
+[@inline]
+let get_cp_plus 
+  (rate : Rational.t) 
+  (buy_side : buy_side) 
+  (sell_side : sell_side) : Rational.t =
+  let buy_minus_token, buy_exact_token, buy_plus_token = buy_side in
+  let _, _, sell_plus_token = sell_side in
+  let left_number = Rational.new (buy_minus_token + buy_exact_token + buy_plus_token) in
+  let right_number = Rational.div (Rational.new (sell_plus_token)) (Rational.mul ten_bips_constant rate) in
   let min_number = get_min_number left_number right_number in
   min_number
 
@@ -642,12 +654,12 @@ let was_in_clearing_for_buy
   (clearing_tolerance: tolerance)
   (order_tolerance: tolerance) : bool =
     match order_tolerance, clearing_tolerance with
-    | Exact,Minus -> true
-    | Plus,Minus -> true
-    | Minus,Exact -> false
-    | Plus,Exact -> true
-    | Minus,Plus -> false
-    | Exact,Plus -> false
+    | Exact,Minus -> false
+    | Plus,Minus -> false
+    | Minus,Exact -> true
+    | Plus,Exact -> false
+    | Minus,Plus -> true
+    | Exact,Plus -> true
     | _,_ -> true
 
 [@inline]
@@ -655,12 +667,12 @@ let was_in_clearing_for_sell
   (clearing_tolerance: tolerance)
   (order_tolerance: tolerance) : bool =
     match order_tolerance, clearing_tolerance with
-    | Exact,Minus -> false
-    | Plus,Minus -> false
-    | Minus,Exact -> true
-    | Plus,Exact -> false
-    | Minus,Plus -> true
-    | Exact,Plus -> true
+    | Exact,Minus -> true
+    | Plus,Minus -> true
+    | Minus,Exact -> false
+    | Plus,Exact -> true
+    | Minus,Plus -> false
+    | Exact,Plus -> false
     | _,_ -> true
 
 [@inline]
@@ -703,16 +715,18 @@ let get_cleared_sell_side_payout
   (amount: nat)
   (clearing: clearing)
   (tam: token_amount_map ): token_amount_map =
-  (* Find the sell side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
-  let f_sell_side_actual_volume: Rational.t = Rational.new (int clearing.total_cleared_volumes.sell_side_total_cleared_volume) in
+  let tc = clearing.total_cleared_volumes in 
+  (* Find the buy side volume in buy token units that was cleared.  This doesn't include all the volume that was subject to clearing, but just that which can be cleared on both sides of the trade  *)
+  let f_buy_side_cleared_volume = Rational.new (int tc.buy_side_total_cleared_volume) in
+  (* Find the sell side volume in sell token units that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
+  (* This will be used to calculate the prorata allocation of the order amount against the volume that was included in clearing *)
+  let f_sell_side_volume_subject_to_clearing = Rational.new (int tc.sell_side_volume_subject_to_clearing) in
   (* Represent the amount of user sell order as a rational *)
   let f_amount = Rational.new (int amount) in
-  (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
-  let prorata_allocation = Rational.div f_amount f_sell_side_actual_volume in
-  (* Find the sell side clearing volume in terms of the buy side units.  This should always be <= 100% of buy side volume*)
-  let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
+  (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the total volume that was subject to clearing *)
+  let prorata_allocation = Rational.div f_amount f_sell_side_volume_subject_to_clearing in
   (* Given the buy side volume that is available to settle the order, calculate the payout in buy tokens for the prorata amount  *)
-  let payout = Rational.mul prorata_allocation f_buy_side_clearing_volume in
+  let payout = Rational.mul prorata_allocation f_buy_side_cleared_volume in
   (* Given the buy side payout, calculate in sell side units so the remainder of a partial fill can be calculated *)
   let payout_equiv = Rational.mul payout clearing.clearing_rate.rate in
   (* Calculate the remaining amount on the sell side of a partial fill *)
@@ -741,18 +755,17 @@ let get_cleared_buy_side_payout
   (amount: nat)
   (clearing:clearing)
   (tam: token_amount_map): token_amount_map =
+  let tc = clearing.total_cleared_volumes in 
+  (* Find the sell side volume in sell token units that was cleared.  This doesn't include all the volume that was subject to clearing, but just that which can be cleared on both sides of the trade  *)
+  let f_sell_side_cleared_volume = Rational.new (int tc.sell_side_total_cleared_volume) in
   (* Find the buy side volume that was included in the clearing.  This doesn't not include the volume of any orders that were outside the price *)
-  let f_buy_side_actual_volume = Rational.new (int clearing.total_cleared_volumes.buy_side_total_cleared_volume) in
+  let f_buy_side_actual_volume_subject_to_clearing = Rational.new (int tc.buy_side_volume_subject_to_clearing) in
   (* Represent the amount of user buy order as a rational *)
   let f_amount = Rational.new (int amount) in
   (* The pro rata allocation of the user's order amount in the context of the cleared volume.  This is represented as a percentage of the cleared total volume *)
-  let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume in
-  (* Find the buy side volume that can actually clear on both sides GIVEN the clearing level *)
-  let f_buy_side_clearing_volume = Rational.new (int (get_clearing_volume clearing)) in
-  (* Find the buy side clearing volume in terms of the sell side units.  This should always be <= 100% of sell side volume*)
-  let f_sell_side_clearing_volume = Rational.mul clearing.clearing_rate.rate f_buy_side_clearing_volume in
+  let prorata_allocation = Rational.div f_amount f_buy_side_actual_volume_subject_to_clearing in
   (* Given the sell side volume that is available to settle the order, calculate the payout in sell tokens for the prorata amount  *)
-  let payout = Rational.mul prorata_allocation f_sell_side_clearing_volume in
+  let payout = Rational.mul prorata_allocation f_sell_side_cleared_volume in
   (* Given the sell side payout, calculate in buy side units so the remainder of a partial fill can be calculated *)
   let payout_equiv = Rational.div payout clearing.clearing_rate.rate in
   (* Calculate the remaining amount on the buy side of a partial fill *)
@@ -1383,13 +1396,13 @@ let filter_volumes
   (volumes: volumes)
   (clearing: clearing) : (nat * nat) =
   match clearing.clearing_tolerance with
-  | Minus -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
-             buy_vol, volumes.sell_minus_volume
-  | Exact -> let buy_vol = volumes.buy_exact_volume + volumes.buy_plus_volume in
-             let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume in
+  | Minus -> let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume + volumes.sell_plus_volume in
+             volumes.buy_minus_volume , sell_vol 
+  | Exact -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume in
+             let sell_vol = volumes.sell_exact_volume + volumes.sell_plus_volume in
              buy_vol, sell_vol
-  | Plus -> let sell_vol = volumes.sell_minus_volume + volumes.sell_exact_volume + volumes.sell_plus_volume in
-            volumes.buy_plus_volume, sell_vol
+  | Plus -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
+            buy_vol, volumes.sell_plus_volume
 
 [@inline]
 let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (is_sell_side: bool) : nat =
@@ -1407,14 +1420,25 @@ let build_total_cleared_volumes
   (volumes: volumes)
   (clearing : clearing)
   (rate : exchange_rate) : clearing =
+  (* Collect the bid and ask amounts associated with the given clearing level.  Those volumes that are outside the clearing price are excluded *)
+  let (buy_amounts_subject_to_clearing, ask_amounts_subject_to_clearing) = filter_volumes volumes clearing in
   (* Find the rate associated with the clearing point *)
   let clearing_rate = get_clearing_rate clearing rate in
-  (* Collect the bid and ask amounts associated with the given clearing level.  Those volumes that are outside the clearing price are excluded *)
-  let (bid_amounts, ask_amounts) = filter_volumes volumes clearing in
-  (* Build the total volumes objects which represents the TOTAL cleared volume on each side of the swap along which will be used in the payout calculations  *)
+  (* Find the volume in buy side units that can be cleared on both sides of the trade *)
+  let buy_side_total_cleared_volume = match clearing.clearing_tolerance with
+                                      | Minus -> clearing.clearing_volumes.minus
+                                      | Exact -> clearing.clearing_volumes.exact
+                                      | Plus -> clearing.clearing_volumes.plus
+  in
+  (* Convert cleared volume to sell side units to assist in payout claculations later *)
+  let sell_side_total_cleared_volume_as_rational = Rational.mul (Rational.new (int buy_side_total_cleared_volume)) clearing_rate.rate in
+  let sell_side_total_cleared_volume = Utils.get_rounded_number_lower_bound sell_side_total_cleared_volume_as_rational in
+  (* Build total volumes objects which represents the TOTAL cleared volume on each side of the swap along which will be used in the payout calculations  *)
   let total_volumes = {
-    buy_side_total_cleared_volume = bid_amounts;
-    sell_side_total_cleared_volume = ask_amounts;
+    buy_side_total_cleared_volume = buy_side_total_cleared_volume;
+    buy_side_volume_subject_to_clearing = buy_amounts_subject_to_clearing;
+    sell_side_total_cleared_volume = sell_side_total_cleared_volume;
+    sell_side_volume_subject_to_clearing = ask_amounts_subject_to_clearing;
   } in
   { clearing with total_cleared_volumes = total_volumes; clearing_rate = clearing_rate }
 
@@ -1544,9 +1568,18 @@ let is_oracle_price_newer_than_current
   | None   -> ()
 
 [@inline]
+let is_batch_open
+  (batch:batch): bool = 
+  match batch.status with
+  | Open _ -> true
+  | _ -> false
+
+[@inline]
 let confirm_oracle_price_is_available_before_deposit
   (pair:pair)
+  (batch:batch)
   (storage:storage) : unit =
+  if is_batch_open batch then () else
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap in
@@ -1562,7 +1595,6 @@ let confirm_swap_pair_is_disabled_prior_to_removal
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair = Utils.pair_of_external_swap external_order in
-  let () = confirm_oracle_price_is_available_before_deposit pair storage in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
@@ -1572,6 +1604,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
   if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
   let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
+  let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in 
   let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
      let current_batch_number = current_batch.batch_number in

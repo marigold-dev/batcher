@@ -26,10 +26,10 @@ export enum ContentType {
   VOLUME = 'volume',
 }
 
-export enum selected_tolerance {
-  minus = 0,
+export enum selected_price {
+  worse = 0,
   exact,
-  plus,
+  better,
 }
 
 export class token {
@@ -83,10 +83,10 @@ export interface EXact {}
 export interface MInus {}
 export interface PLus {}
 
-export enum ToleranceType {
-  MINUS = 0,
+export enum PriceType {
+  WORSE = 0,
   EXACT = 1,
-  PLUS = 2,
+  BETTER = 2,
 }
 
 export enum SideType {

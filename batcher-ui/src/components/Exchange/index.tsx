@@ -5,7 +5,7 @@ import {  compose, OpKind,  WalletContract, } from "@taquito/taquito";
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps, ToleranceType, } from '@/extra_utils/types';
+import { ExchangeProps, PriceType, } from '@/extra_utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { tzip12, Tzip12Module } from "@taquito/tzip12";
@@ -30,7 +30,7 @@ const Exchange: React.FC<ExchangeProps> = ({
 
 
 
-  const [tolerance, setTolerance] = useState(ToleranceType.EXACT);
+  const [price, setPrice] = useState(PriceType.EXACT);
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
@@ -60,6 +60,28 @@ const Exchange: React.FC<ExchangeProps> = ({
       ? scaleAmountUp(amount, buyToken.decimals)
       : scaleAmountUp(amount, sellToken.decimals);
 
+    const selected_side = inversion ? 0 : 1;
+    let tolerance = 0;
+
+    if(selected_side == 0) {
+      if (price === PriceType.WORSE) {
+        tolerance = 0;
+      } else if (price === PriceType.EXACT) {
+        tolerance = 1;
+      } else {
+        tolerance = 2;
+      }
+    } else {
+      if (price === PriceType.WORSE) {
+        tolerance = 2;
+      } else if (price === PriceType.EXACT) {
+        tolerance = 1;
+      } else {
+        tolerance = 0;
+    }
+     
+
+
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
       {
@@ -81,14 +103,6 @@ const Exchange: React.FC<ExchangeProps> = ({
       },
     ];
 
-    // This is for fa1.2 token standard. I.e, tzBTC token
-    const fa12_operation_params = {
-      spender: REACT_APP_BATCHER_CONTRACT_HASH,
-      value: scaled_amount,
-    };
-
-
-
 
     let loading = function () {
       return undefined;
@@ -99,7 +113,6 @@ const Exchange: React.FC<ExchangeProps> = ({
 
       console.log('operations-token', selectedToken);
       console.log('operations-side', side);
-      console.log('operations-tolerance', tolerance);
       console.log('operations-fee-in-mutez', fee_in_mutez);
 
       const swap_params = {
@@ -121,7 +134,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           },
         },
         created_at: new Date(),
-        side: inversion ? 0 : 1,
+        side: selected_side,
         tolerance: tolerance,
        };
 
@@ -240,34 +253,34 @@ const Exchange: React.FC<ExchangeProps> = ({
             <Row className="text-center">
               <Col
                 className={
-                  tolerance === ToleranceType.MINUS
+                  price === PriceType.WORSE
                     ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-l br-r'
                     : 'batcher-title pd-5 br-t br-b br-l br-r'
                 }
                 span={8}
-                onClick={() => setTolerance(ToleranceType.MINUS)}
+                onClick={() => setPrice(PriceType.WORSE)}
               >
                 <Typography className="p-12">Worse price / Better fill</Typography>
               </Col>
               <Col
                 className={
-                  tolerance === ToleranceType.EXACT
+                  price === PriceType.EXACT
                     ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-r'
                     : 'batcher-title pd-5 br-t br-b br-r'
                 }
                 span={8}
-                onClick={() => setTolerance(ToleranceType.EXACT)}
+                onClick={() => setPrice(PriceType.EXACT)}
               >
                 <Typography className="p-12">Oracle Price</Typography>
               </Col>
               <Col
                 className={
-                  tolerance === ToleranceType.PLUS
+                  price === PriceType.BETTER
                     ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-r'
                     : 'batcher-title pd-5 br-t br-b br-r'
                 }
                 span={8}
-                onClick={() => setTolerance(ToleranceType.PLUS)}
+                onClick={() => setPrice(PriceType.BETTER)}
               >
                 <Typography className="p-12">Better Price / Worse Fill</Typography>
               </Col>
