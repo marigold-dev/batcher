@@ -13,7 +13,7 @@ done
 FREQ=$(($frequency))
 
 # declare -a TICKERS=("tzBTC-USDT" "EURL-tzBTC")
-declare -a TICKERS=("tzBTC/USDT" "EURL-tzBTC")
+declare -a TICKERS=("tzBTC/USDT" "tzBTC/EURL")
 
 tick_ticker(){
 
