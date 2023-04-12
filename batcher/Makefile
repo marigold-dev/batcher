@@ -31,10 +31,14 @@ endef
 
 clean:
 	$(call clean_files)
-build:
+build-ghostnet:
 	$(call clean_files)
-	$(call compile_contract,batcher.mligo, batcher.tz)
-	$(call compile_storage,storage/initial_storage_ghostnet.mligo, batcher-storage.tz)
+	$(call compile_contract,batcher.mligo, batcher-mainnet.tz)
+	$(call compile_storage,storage/initial_storage_mainnet.mligo, batcher-storage-mainnet.tz)
+build-ghostnet:
+	$(call clean_files)
+	$(call compile_contract,batcher.mligo, batcher-ghostnet.tz)
+	$(call compile_storage,storage/initial_storage_ghostnet.mligo, batcher-storage-ghostnet.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_token.tz)
