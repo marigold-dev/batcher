@@ -9,8 +9,10 @@ import {
   token,
   BatcherStatus,
   BUY,
+  SELL,
   MINUS,
   EXACT,
+  PLUS,
   CLEARED,
   Volumes,
   swap,
@@ -155,27 +157,226 @@ const Welcome: React.FC = () => {
     }
    };
 
+  const getOriginalDepositAmounts = (side:any, initialBuySideAmount:number, initialSellSideAmount:number, depositValue:number) => {
+    if (side === BUY){
+        initialBuySideAmount += Math.floor(depositValue) / 10 ** buyToken.decimals;
+    } else if (side === SELL) {
+        initialSellSideAmount += Math.floor(depositValue) / 10 ** sellToken.decimals;
+    } else {
+    console.error("Couldn't understand which side the deposit was on");
+    }
+    return [initialBuySideAmount, initialSellSideAmount];
+
+  }; 
+
+  const wasInClearingForBatch = (side_obj:any, order_tolerance_obj:any, clearing_tolerance_obj:any) => {
+      const side = Object.keys(side_obj).at(0);
+      const order_tolerance = Object.keys(order_tolerance_obj).at(0);
+      const clearing_tolerance = Object.keys(clearing_tolerance_obj).at(0);
+      console.info("wasInClearingForBatch - side", side);
+      console.info("wasInClearingForBatch - order_tolerance", order_tolerance);
+      console.info("wasInClearingForBatch - clearing_tolerance", clearing_tolerance);
+      if (side === "buy") {
+        if (clearing_tolerance === "minus") {
+            if (order_tolerance === "minus"){
+              return true;
+            } else if (order_tolerance === "exact") {
+              return false;
+            } else if (order_tolerance === "plus") {
+              return false;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else if (clearing_tolerance === "exact") {
+            if (order_tolerance === "minus"){
+              return true;
+            } else if (order_tolerance === "exact") {
+              return true;
+            } else if (order_tolerance === "plus") {
+              return false;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else if (clearing_tolerance === "plus") {
+            if (order_tolerance === "minus"){
+              return true;
+            } else if (order_tolerance === "exact") {
+              return true;
+            } else if (order_tolerance === "plus") {
+              return true;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else {
+         console.error("Unable to determine clearing tolerance for buy deposit"); 
+        }
+      } else if (side === "sell") {
+
+        if (clearing_tolerance === "minus") {
+            if (order_tolerance === "minus"){
+              return true;
+            } else if (order_tolerance === "exact") {
+              return true;
+            } else if (order_tolerance === "plus") {
+              return true;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else if (clearing_tolerance === "exact") {
+            if (order_tolerance === "minus"){
+              return false;
+            } else if (order_tolerance === "exact") {
+              return true;
+            } else if (order_tolerance === "plus") {
+              return true;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else if (clearing_tolerance === "plus") {
+            if (order_tolerance === "minus"){
+              return false;
+            } else if (order_tolerance === "exact") {
+              return false;
+            } else if (order_tolerance === "plus") {
+              return true;
+            } else {
+              console.error("Could not determine order tolerance for buy deposit");
+            }
+        } else {
+         console.error("Unable to determine clearing tolerance for buy deposit"); 
+        }
+      } else {
+        console.error("Unable to determine side for holdings");
+      }
+  };
+
+  const convertHoldingToPayout = (fromAmount:any, fromVolumeSubjectToClearing:any, fromClearedVolume:any, toClearedVolume:any, fromDecimals:number, toDecimals:number) => {
+
+     const prorata = fromAmount / fromVolumeSubjectToClearing;
+     const payout = toClearedVolume * prorata;       
+     const payoutInFromTokens = fromClearedVolume * prorata;
+     const remainder = fromAmount - payoutInFromTokens;
+     const scaled_payout = Math.floor(payout) / 10 ** toDecimals;
+     const scaled_remainder = Math.floor(remainder) / 10 ** fromDecimals;
+
+     console.log("convertHoldingToPayout - fromAmount", fromAmount); 
+     console.log("convertHoldingToPayout - fromVolumeSubjectToClearing", fromVolumeSubjectToClearing); 
+     console.log("convertHoldingToPayout - prorata", prorata); 
+     console.log("convertHoldingToPayout - prorata", prorata); 
+     console.log("convertHoldingToPayout - payout", payout); 
+     console.log("convertHoldingToPayout - payoutInFromTokens", payoutInFromTokens); 
+     console.log("convertHoldingToPayout - remainder", remainder); 
+     console.log("convertHoldingToPayout - scaled_payout", scaled_payout); 
+     console.log("convertHoldingToPayout - scaled_remainder", scaled_remainder); 
+     return [scaled_payout, scaled_remainder];
+  };
+
+
+  const calculateHolidingFromBatch = (batch: any, ubots: any, userAddress: any) => {
+    let initialBuySideAmount = 0;
+    let initialSellSideAmount = 0;
+      
+    console.log("batch", batch); 
+
+      const cleared = batch.status.cleared;
+      console.log("cleared", cleared); 
+      const clearing = cleared.clearing;
+      console.log("clearing", clearing); 
+      const volumes = batch.volumes;
+      const buy_side_cleared_volume = clearing.total_cleared_volumes.buy_side_total_cleared_volume;
+      const sell_side_cleared_volume = clearing.total_cleared_volumes.sell_side_total_cleared_volume;
+      const buy_side_volume_subject_to_clearing = clearing.total_cleared_volumes.buy_side_volume_subject_to_clearing;
+      const sell_side_volume_subject_to_clearing = clearing.total_cleared_volumes.sell_side_volume_subject_to_clearing;
+
+      let clearingRate = 0;
+      let rate_data = clearing.clearing_rate.rate;
+      console.log("rate_data", rate_data); 
+      const originalClearingRate =
+        parseInt(rate_data.p) /
+        parseInt(rate_data.q);
+      //const total_buy_side_volume = Object.keys(batch.status)[0];
+
+      console.log("ubots", ubots); 
+      console.log("batch_number", batch.batch_number); 
+      const depositsInBatches = ubots.value;
+      console.log("depositsInBatches", depositsInBatches); 
+
+      const userBatchLength = depositsInBatches[batch.batch_number].length; 
+
+      for (let j = 0; j < userBatchLength; j++) {
+        try{
+        const depObject = ubots.value[batch.batch_number].at(j);
+        const side = depObject.key.side;
+        const tol = depObject.key.tolerance;
+        const value = depObject.value;
+        console.log("Deposit Side- " + j, side); 
+        console.log("Deposit Tolerance- " + j, tol); 
+        console.log("Deposit Value- " + j, value); 
+         
+        if (buy_side_cleared_volume === 0 || sell_side_cleared_volume === 0 ){
+           const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
+           initialBuySideAmount += updatedValues.at(0);
+           initialSellSideAmount += updatedValues.at(1);
+        } else
+        {
+          const wasInClearing = wasInClearingForBatch(side, tol,clearing.clearing_tolerance);
+          if (wasInClearing) {
+            if (Object.keys(side).at(0) === "buy") {
+               const payout = convertHoldingToPayout(value,buy_side_volume_subject_to_clearing,buy_side_cleared_volume, sell_side_cleared_volume,buyToken.decimals, sellToken.decimals);   
+               initialSellSideAmount += payout.at(0);
+               initialBuySideAmount += payout.at(1);
+               console.info("Deposit payout",payout);
+            } else if (Object.keys(side).at(0) === "sell"){
+               const payout = convertHoldingToPayout(value,sell_side_volume_subject_to_clearing, sell_side_cleared_volume, buy_side_cleared_volume, sellToken.decimals, buyToken.decimals);   
+               initialBuySideAmount += payout.at(0);
+               initialSellSideAmount += payout.at(1);
+               console.info("Deposit payout",payout);
+            } else {
+              console.error("Unable to determine side for deposit");
+            }
+            console.info("order was in clearing");
+          } else {
+           const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
+           initialBuySideAmount += updatedValues.at(0);
+           initialSellSideAmount += updatedValues.at(1);
+          } 
+        }
+
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    return [initialBuySideAmount, initialSellSideAmount];
+
+  };
+
   const updateHoldings = async (storage: any) => {
+    console.log("Updating holdings")
     try{
     if (!userAddress) {
+
+      console.log("No user address - won't update holdings")
       setSellSideAmount(0);
       setBuySideAmount(0);
       return;
     }
 
-    console.log('storage', storage);
     const userBatcherURI = bigMapsByIdUri + userBatchOrderTypesBigMapId + '/keys/' + userAddress;
+    console.log("userBatcherURI", userBatcherURI);
     const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
     let userBatches = null;
 
     try {
       userBatches = await userOrderBookData.json();
+      console.log("userBatches", userBatches);
     } catch (error) {
       console.error(error);
       return;
     }
 
-    if (Object.keys(userBatches.value).length == 0) {
+      console.info("User batches found", userBatches.value);
+      console.info("User batches length", Object.keys(userBatches.value).length);
+    if (Object.keys(userBatches.value).length === 0) {
       return;
     }
 
@@ -196,54 +397,16 @@ const Welcome: React.FC = () => {
       }
 
       if (Object.keys(batch.value.status)[0] !== CLEARED) continue;
+      
+      try{
+        
+      let batch_holdings = calculateHolidingFromBatch(batch.value,userBatches, userAddress); 
 
-      const clearingKey = Object.keys(batch.value.status.cleared.clearing.clearing_tolerance)[0];
-      let clearingRate = 0;
-      let clearing = 0;
-
-      const originalClearingRate =
-        parseInt(batch.value.status.cleared.rate.rate.p) /
-        parseInt(batch.value.status.cleared.rate.rate.q);
-      if (clearingKey === MINUS) {
-        clearingRate = originalClearingRate / 1.0001;
-        clearing = batch.value.status.cleared.clearing.clearing_volumes.minus;
-      } else if (clearingKey === EXACT) {
-        clearingRate = originalClearingRate;
-        clearing = batch.value.status.cleared.clearing.clearing_volumes.exact;
-      } else {
-        clearingRate = originalClearingRate * 1.0001;
-        clearing = batch.value.status.cleared.clearing.clearing_volumes.plus;
-      }
-
-      const buySideActualVolume = parseInt(
-        batch.value.status.cleared.clearing.prorata_equivalence.buy_side_actual_volume,
-      );
-      const sellSideActualVolume = parseInt(
-        batch.value.status.cleared.clearing.prorata_equivalence.sell_side_actual_volume,
-      );
-      const userBatchLength = userBatches.value[batchId].length;
-
-      for (let j = 0; j < userBatchLength; j++) {
-        if (Object.keys(userBatches.value[batchId].at(j).key.side)[0] === BUY) {
-          const depositedBuySideAmount = parseInt(userBatches.value[batchId].at(j).value);
-          const unconvertedBuySideAmount =
-            depositedBuySideAmount - (depositedBuySideAmount / buySideActualVolume) * clearing;
-          const unconvertedSellSideAmount =
-            (depositedBuySideAmount / buySideActualVolume) * clearing * clearingRate;
-
-          initialBuySideAmount += Math.floor(unconvertedBuySideAmount) / 10 ** buyToken.decimals;
-          initialSellSideAmount += Math.floor(unconvertedSellSideAmount) / 10 ** sellToken.decimals;
-        } else {
-          const depositedSellSideAmount = parseInt(userBatches.value[batchId].at(j).value);
-          const unconvertedBuySideAmount =
-            (depositedSellSideAmount / sellSideActualVolume) * clearing;
-          const unconvertedSellSideAmount =
-            depositedSellSideAmount -
-            (depositedSellSideAmount / sellSideActualVolume) * clearing * clearingRate;
-
-          initialBuySideAmount += Math.floor(unconvertedBuySideAmount) / 10 ** buyToken.decimals;
-          initialSellSideAmount += Math.floor(unconvertedSellSideAmount) / 10 ** sellToken.decimals;
-        }
+      initialBuySideAmount += batch_holdings[0];
+      initialSellSideAmount += batch_holdings[1];
+      
+      } catch (error) {
+        console.error(error);
       }
     }
 
@@ -252,7 +415,15 @@ const Welcome: React.FC = () => {
     } catch (error) {
       console.error('Unable to update holdings', error);
     }
+
+
   };
+
+
+
+
+
+
 
 
   const getBatches = async (storage: any) => {

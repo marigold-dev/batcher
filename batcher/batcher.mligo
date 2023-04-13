@@ -1604,9 +1604,9 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
   if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
   let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
-  let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in 
-  let storage = { storage with batch_set = current_batch_set } in
   if Batch_Utils.can_deposit current_batch then
+     let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in 
+     let storage = { storage with batch_set = current_batch_set } in
      let current_batch_number = current_batch.batch_number in
      let next_order_number = storage.last_order_number + 1n in
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in

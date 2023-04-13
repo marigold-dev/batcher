@@ -21,7 +21,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
   buyToken,
   sellToken,
-  showDrawer,
+  showDrawer
 }: ExchangeProps) => {
 
 // const DollarIcon = (props: Partial<CustomIconComponentProps>) => (
@@ -44,6 +44,8 @@ const Exchange: React.FC<ExchangeProps> = ({
     const s = inversion ? 0 : 1;
     setSide(s);
   };
+
+
   const depositToken = async () => {
     if (!userAddress) {
       return;
@@ -78,6 +80,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         tolerance = 1;
       } else {
         tolerance = 0;
+     }
     }
      
 
@@ -188,6 +191,7 @@ const Exchange: React.FC<ExchangeProps> = ({
       loading = message.loading('Attempting to place swap order for ' + tokenName, 0);
       const confirm = await order_batcher_op.confirmation();
       if (!confirm.completed) {
+        console.error(confirm);
         message.error('Failed to deposit ' + tokenName);
         throw new Error(
           'Failed to deposit ' +
@@ -201,9 +205,10 @@ const Exchange: React.FC<ExchangeProps> = ({
       }
     } catch (error) {
       console.log('deposit error', error);
+      const converted_error_message = getErrorMess(error);
+      message.error(converted_error_message);
       loading();
       form.resetFields();
-      message.error(getErrorMess(error));
     }
   };
 
