@@ -199,12 +199,8 @@ export type BatcherInfoProps = {
 };
 
 export type BatcherActionProps = {
+  content: ContentType,
   setContent: Dispatch<SetStateAction<ContentType>>;
-  tokenMap: Map<string,swap>;
-  setBuyToken: Dispatch<SetStateAction<token>>;
-  setSellToken: Dispatch<SetStateAction<token>>;
-  tokenPair: string;
-  setTokenPair: Dispatch<SetStateAction<string>>;
 };
 export class aggregate_orders {
   buyside!: number;

@@ -8,6 +8,7 @@ import { BatcherActionProps, ContentType } from '@/extra_utils/types';
 const { Text } = Typography;
 
 const BatcherAction: React.FC<BatcherActionProps> = ({
+  content,
   setContent,
   }: BatcherActionProps) => {
 
@@ -20,7 +21,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
             <Col lg={3} />
             <Col className="batcher-action-items" lg={18} xs={24}>
               <Space align="center">
-                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)}>
+                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)} >
                   <Text underline>Swap</Text>
                 </Button>
                 <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.VOLUME)}>

@@ -774,12 +774,8 @@ const Welcome: React.FC = () => {
         openTime={openTime}
       />
       <BatcherAction
+        content={content}
         setContent={setContent}
-        tokenMap={tokenMap}
-        setBuyToken={setBuyToken}
-        setSellToken={setSellToken}
-        tokenPair={tokenPair}
-        setTokenPair={setTokenPair}
         />
       <div>
         <Row className="batcher-content">
