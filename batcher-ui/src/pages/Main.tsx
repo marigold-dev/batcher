@@ -158,9 +158,9 @@ const Welcome: React.FC = () => {
    };
 
   const getOriginalDepositAmounts = (side:any, initialBuySideAmount:number, initialSellSideAmount:number, depositValue:number) => {
-    if (side === BUY){
+    if (Object.keys(side).at(0) === "buy"){
         initialBuySideAmount += Math.floor(depositValue) / 10 ** buyToken.decimals;
-    } else if (side === SELL) {
+    } else if (Object.keys(side).at(0) === "sell") {
         initialSellSideAmount += Math.floor(depositValue) / 10 ** sellToken.decimals;
     } else {
     console.error("Couldn't understand which side the deposit was on");
@@ -170,13 +170,16 @@ const Welcome: React.FC = () => {
   }; 
 
   const wasInClearingForBatch = (side_obj:any, order_tolerance_obj:any, clearing_tolerance_obj:any) => {
+      console.info("wasInClearingForBatch - side_obj", side_obj);
+      console.info("wasInClearingForBatch - order_tolerance_obj", order_tolerance_obj);
+      console.info("wasInClearingForBatch - clearing_tolerance_obj", clearing_tolerance_obj);
       const side = Object.keys(side_obj).at(0);
       const order_tolerance = Object.keys(order_tolerance_obj).at(0);
       const clearing_tolerance = Object.keys(clearing_tolerance_obj).at(0);
       console.info("wasInClearingForBatch - side", side);
       console.info("wasInClearingForBatch - order_tolerance", order_tolerance);
       console.info("wasInClearingForBatch - clearing_tolerance", clearing_tolerance);
-      if (side === "buy") {
+      if (side == "buy") {
         if (clearing_tolerance === "minus") {
             if (order_tolerance === "minus"){
               return true;
@@ -210,7 +213,7 @@ const Welcome: React.FC = () => {
         } else {
          console.error("Unable to determine clearing tolerance for buy deposit"); 
         }
-      } else if (side === "sell") {
+      } else if (side == "sell") {
 
         if (clearing_tolerance === "minus") {
             if (order_tolerance === "minus"){
@@ -282,19 +285,13 @@ const Welcome: React.FC = () => {
       console.log("cleared", cleared); 
       const clearing = cleared.clearing;
       console.log("clearing", clearing); 
-      const volumes = batch.volumes;
       const buy_side_cleared_volume = clearing.total_cleared_volumes.buy_side_total_cleared_volume;
       const sell_side_cleared_volume = clearing.total_cleared_volumes.sell_side_total_cleared_volume;
       const buy_side_volume_subject_to_clearing = clearing.total_cleared_volumes.buy_side_volume_subject_to_clearing;
       const sell_side_volume_subject_to_clearing = clearing.total_cleared_volumes.sell_side_volume_subject_to_clearing;
 
-      let clearingRate = 0;
       let rate_data = clearing.clearing_rate.rate;
       console.log("rate_data", rate_data); 
-      const originalClearingRate =
-        parseInt(rate_data.p) /
-        parseInt(rate_data.q);
-      //const total_buy_side_volume = Object.keys(batch.status)[0];
 
       console.log("ubots", ubots); 
       console.log("batch_number", batch.batch_number); 
@@ -332,7 +329,7 @@ const Welcome: React.FC = () => {
                initialSellSideAmount += payout.at(1);
                console.info("Deposit payout",payout);
             } else {
-              console.error("Unable to determine side for deposit");
+              console.error("Unable to determine side for a deposit that was in clearing");
             }
             console.info("order was in clearing");
           } else {
