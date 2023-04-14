@@ -280,7 +280,7 @@ const Welcome: React.FC = () => {
     console.log("depositsInBatches", depositsInBatches); 
     const userBatchLength = depositsInBatches[batch.batch_number].length; 
     
-    if (Object.keys(batch.status)[0] === BatcherStatus.OPEN){
+    if (Object.keys(batch.status)[0] !== BatcherStatus.CLEARED){
 
       for (let j = 0; j < userBatchLength; j++) {
         try{
@@ -404,8 +404,6 @@ const Welcome: React.FC = () => {
         console.error(error);
         return;
       }
-
-      if (Object.keys(batch.value.status)[0] !== CLEARED) continue;
       
       try{
         

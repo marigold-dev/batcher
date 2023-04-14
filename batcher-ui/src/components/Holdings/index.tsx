@@ -7,7 +7,6 @@ import { HoldingsProps } from '@/extra_utils/types';
 
 const Holdings: React.FC<HoldingsProps> = ({
   tezos,
-  userAddress,
   contractAddress,
   buyToken,
   sellToken,
@@ -17,16 +16,16 @@ const Holdings: React.FC<HoldingsProps> = ({
   setSellSideAmount,
   buyTokenOpenHolding,
   sellTokenOpenHolding,
-  setBuySideOpenAmount,
-  setSellSideOpenAmount,
   updateAll,
   setUpdateAll,
 }: HoldingsProps) => {
 
 
   const triggerUpdate = () => {
-    const u = !updateAll;
-    setUpdateAll(u);
+    setTimeout(function () {
+      const u = !updateAll;
+      setUpdateAll(u);
+    }, 5000);
   };
 
 
@@ -65,20 +64,7 @@ const Holdings: React.FC<HoldingsProps> = ({
   return (
     <Col className="base-content br-t br-b br-l br-r">
       <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Cleared Holdings</Typography>
-        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="vertical">
-            <Typography>
-              {buyTokenHolding} {buyToken.name}
-            </Typography>
-            <Typography>
-              {sellTokenHolding} {sellToken.name}
-            </Typography>
-          </Space>
-        </Col>
-      </Space>
-      <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Open Holdings</Typography>
+        <Typography className="batcher-title p-16">Holdings in Open/Closed Batches</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="vertical">
             <Typography>
@@ -86,6 +72,19 @@ const Holdings: React.FC<HoldingsProps> = ({
             </Typography>
             <Typography>
               {sellTokenOpenHolding} {sellToken.name}
+            </Typography>
+          </Space>
+        </Col>
+      </Space>
+      <Space className="batcher-price" direction="vertical">
+        <Typography className="batcher-title p-16">Holdings in Cleared Batches (Redeemable)</Typography>
+        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
+          <Space direction="vertical">
+            <Typography>
+              {buyTokenHolding} {buyToken.name}
+            </Typography>
+            <Typography>
+              {sellTokenHolding} {sellToken.name}
             </Typography>
           </Space>
         </Col>

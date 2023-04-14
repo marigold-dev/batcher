@@ -42,9 +42,10 @@ const Exchange: React.FC<ExchangeProps> = ({
   tezos.addExtension(new Tzip12Module());
 
   const triggerUpdate = () => {
-    const u = !updateAll;
-    setUpdateAll(u);
-
+    setTimeout(function () {
+      const u = !updateAll;
+      setUpdateAll(u);
+    }, 5000);
   };
 
 
