@@ -21,7 +21,9 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
   buyToken,
   sellToken,
-  showDrawer
+  showDrawer,
+  updateAll,
+  setUpdateAll
 }: ExchangeProps) => {
 
 // const DollarIcon = (props: Partial<CustomIconComponentProps>) => (
@@ -38,6 +40,13 @@ const Exchange: React.FC<ExchangeProps> = ({
   const [form] = Form.useForm();
 
   tezos.addExtension(new Tzip12Module());
+
+  const triggerUpdate = () => {
+    const u = !updateAll;
+    setUpdateAll(u);
+
+  };
+
 
   const inverseTokenType = () => {
     setInversion(!inversion);
@@ -202,6 +211,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         loading();
         form.resetFields();
         message.success('Successfully deposited ' + tokenName);
+        triggerUpdate();
       }
     } catch (error) {
       console.log('deposit error', error);

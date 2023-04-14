@@ -8,19 +8,15 @@ import {
   ContentType,
   token,
   BatcherStatus,
-  BUY,
-  SELL,
-  MINUS,
-  EXACT,
-  PLUS,
   CLEARED,
+  OPEN,
   Volumes,
   swap,
 } from '@/extra_utils/types';
 import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
-import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio, } from 'antd';
-import { Icon, DoubleRightOutlined, DollarOutlined } from '@ant-design/icons';
+import { Space, Col, Row, Drawer, Radio, } from 'antd';
+import { DoubleRightOutlined } from '@ant-design/icons';
 import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
@@ -78,8 +74,11 @@ const Welcome: React.FC = () => {
   const [openTime, setOpenTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
+  const [buySideOpenAmount, setBuySideOpenAmount] = useState<number>(0);
+  const [sellSideOpenAmount, setSellSideOpenAmount] = useState<number>(0);
   const [feeInMutez, setFeeInMutez] = useState<number>(0);
   const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
+  const [updateAll, setUpdateAll] = useState<boolean>(false);
 
   const pullStorage = async () => {
     const storage = await contractsService.getStorage({
@@ -108,6 +107,7 @@ const Welcome: React.FC = () => {
      const currentBatchIndices = storage.batch_set.current_batch_indices;
      const index_map = new Map(Object.keys(currentBatchIndices).map(k => [k, currentBatchIndices[k] as number]));
      const currentBatchNumber = index_map.get(tokenPair);
+     console.log('######Volumes', currentBatchNumber);
      console.log('current_batch_number', currentBatchNumber);
 
       if (currentBatchNumber === 0) {
@@ -262,24 +262,40 @@ const Welcome: React.FC = () => {
      const scaled_payout = Math.floor(payout) / 10 ** toDecimals;
      const scaled_remainder = Math.floor(remainder) / 10 ** fromDecimals;
 
-     console.log("convertHoldingToPayout - fromAmount", fromAmount); 
-     console.log("convertHoldingToPayout - fromVolumeSubjectToClearing", fromVolumeSubjectToClearing); 
-     console.log("convertHoldingToPayout - prorata", prorata); 
-     console.log("convertHoldingToPayout - prorata", prorata); 
-     console.log("convertHoldingToPayout - payout", payout); 
-     console.log("convertHoldingToPayout - payoutInFromTokens", payoutInFromTokens); 
-     console.log("convertHoldingToPayout - remainder", remainder); 
-     console.log("convertHoldingToPayout - scaled_payout", scaled_payout); 
-     console.log("convertHoldingToPayout - scaled_remainder", scaled_remainder); 
      return [scaled_payout, scaled_remainder];
   };
 
 
-  const calculateHolidingFromBatch = (batch: any, ubots: any, userAddress: any) => {
+  const calculateHolidingFromBatch = (batch: any, ubots: any ) => {
     let initialBuySideAmount = 0;
     let initialSellSideAmount = 0;
-      
+    let initialBuySideOpenAmount = 0;
+    let initialSellSideOpenAmount = 0;
+   
     console.log("batch", batch); 
+
+    console.log("ubots", ubots); 
+    console.log("batch_number", batch.batch_number); 
+    const depositsInBatches = ubots.value;
+    console.log("depositsInBatches", depositsInBatches); 
+    const userBatchLength = depositsInBatches[batch.batch_number].length; 
+    
+    if (Object.keys(batch.status)[0] === BatcherStatus.OPEN){
+
+      for (let j = 0; j < userBatchLength; j++) {
+        try{
+        const depObject = ubots.value[batch.batch_number].at(j);
+        const side = depObject.key.side;
+        const value = depObject.value;
+        const updatedValues = getOriginalDepositAmounts(side,initialBuySideOpenAmount, initialSellSideOpenAmount,value);
+        initialBuySideOpenAmount += updatedValues.at(0);
+        initialSellSideOpenAmount += updatedValues.at(1);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    } else {
+      console.log("batch", batch); 
 
       const cleared = batch.status.cleared;
       console.log("cleared", cleared); 
@@ -292,13 +308,6 @@ const Welcome: React.FC = () => {
 
       let rate_data = clearing.clearing_rate.rate;
       console.log("rate_data", rate_data); 
-
-      console.log("ubots", ubots); 
-      console.log("batch_number", batch.batch_number); 
-      const depositsInBatches = ubots.value;
-      console.log("depositsInBatches", depositsInBatches); 
-
-      const userBatchLength = depositsInBatches[batch.batch_number].length; 
 
       for (let j = 0; j < userBatchLength; j++) {
         try{
@@ -343,7 +352,8 @@ const Welcome: React.FC = () => {
           console.error(error);
         }
       }
-    return [initialBuySideAmount, initialSellSideAmount];
+    }
+    return [initialBuySideAmount, initialSellSideAmount, initialBuySideOpenAmount, initialSellSideOpenAmount];
 
   };
 
@@ -379,6 +389,8 @@ const Welcome: React.FC = () => {
 
     let initialBuySideAmount = 0;
     let initialSellSideAmount = 0;
+    let initialBuySideOpenAmount = 0;
+    let initialSellSideOpenAmount = 0;
 
     for (let i = 0; i < Object.keys(userBatches.value).length; i++) {
       const batchId = Object.keys(userBatches.value).at(i);
@@ -397,10 +409,12 @@ const Welcome: React.FC = () => {
       
       try{
         
-      let batch_holdings = calculateHolidingFromBatch(batch.value,userBatches, userAddress); 
+      let batch_holdings = calculateHolidingFromBatch(batch.value,userBatches ); 
 
       initialBuySideAmount += batch_holdings[0];
       initialSellSideAmount += batch_holdings[1];
+      initialBuySideOpenAmount += batch_holdings[2];
+      initialSellSideOpenAmount += batch_holdings[3];
       
       } catch (error) {
         console.error(error);
@@ -409,19 +423,14 @@ const Welcome: React.FC = () => {
 
     setSellSideAmount(initialSellSideAmount);
     setBuySideAmount(initialBuySideAmount);
+    setSellSideOpenAmount(initialSellSideOpenAmount);
+    setBuySideOpenAmount(initialBuySideOpenAmount);
     } catch (error) {
       console.error('Unable to update holdings', error);
     }
 
 
   };
-
-
-
-
-
-
-
 
   const getBatches = async (storage: any) => {
     await getCurrentVolume(storage);
@@ -615,10 +624,12 @@ const Welcome: React.FC = () => {
             buyToken={buyToken}
             sellToken={sellToken}
             showDrawer={showDrawer}
+            updateAll={updateAll}
+            setUpdateAll={setUpdateAll}
           />
         );
       case ContentType.VOLUME:
-        return <Volume volumes={volumes} buyToken={buyToken} sellToken={sellToken} />;
+        return <Volume volumes={volumes} />;
       case ContentType.REDEEM_HOLDING:
         return (
           <Holdings
@@ -631,6 +642,12 @@ const Welcome: React.FC = () => {
             sellTokenHolding={sellSideAmount}
             setBuySideAmount={setBuySideAmount}
             setSellSideAmount={setSellSideAmount}
+            buyTokenOpenHolding={buySideOpenAmount}
+            sellTokenOpenHolding={sellSideOpenAmount}
+            setBuySideOpenAmount={setBuySideOpenAmount}
+            setSellSideOpenAmount={setSellSideOpenAmount}
+            updateAll={updateAll}
+            setUpdateAll={setUpdateAll}
           />
         );
       case ContentType.ABOUT:
@@ -648,6 +665,8 @@ const Welcome: React.FC = () => {
             buyToken={buyToken}
             sellToken={sellToken}
             showDrawer={showDrawer}
+            updateAll={updateAll}
+            setUpdateAll={setUpdateAll}
           />
         );
     }
@@ -713,6 +732,7 @@ const Welcome: React.FC = () => {
     connection.on('operations', (msg: any) => {
       if (!msg.data) return;
       if (!msg.data[0].storage) return;
+      console.info("#######WS###### - operations", msg.data[0].storage)
       updateFromStorage(msg.data[0].storage).then(r => console.log(r));
     });
 
@@ -720,6 +740,7 @@ const Welcome: React.FC = () => {
       if (!msg.data) return;
 
       const bigmapsdata = msg.data[0];
+      console.info("#######WS###### - bigmap", msg.data[0])
 
       if(bigmapsdata.bigmap == ratesBigMapId){
         updateRate(msg.data[0]);
@@ -743,7 +764,7 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     refreshStorage().then(r => console.log(r));
-  }, [buyToken.address, sellToken.address]);
+  }, [buyToken.address, sellToken.address, updateAll]);
 
   useEffect(() => {
     console.log("User address changed - refreshing from storage")

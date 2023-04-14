@@ -5,7 +5,7 @@ import '@/components/Volume/index.less';
 import '@/global.less';
 import { VolumeProps } from '@/extra_utils/types';
 
-const Volume: React.FC<VolumeProps> = ({ volumes, buyToken, sellToken }: VolumeProps) => {
+const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
   console.log(555, volumes);
 
   const sellVolumes = [

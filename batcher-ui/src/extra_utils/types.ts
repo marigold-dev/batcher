@@ -183,6 +183,8 @@ export type ExchangeProps = {
   buyToken: token;
   sellToken: token;
   showDrawer: Dispatch<SetStateAction<boolean>>;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
 };
 
 export type BatcherInfoProps = {
@@ -234,6 +236,13 @@ export type HoldingsProps = {
   sellTokenHolding: number;
   setBuySideAmount: Dispatch<SetStateAction<number>>;
   setSellSideAmount: Dispatch<SetStateAction<number>>;
+  buyTokenOpenHolding: number;
+  sellTokenOpenHolding: number;
+  setBuySideOpenAmount: Dispatch<SetStateAction<number>>;
+  setSellSideOpenAmount: Dispatch<SetStateAction<number>>;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
+
 };
 
 
@@ -248,8 +257,6 @@ export type Volumes = {
 
 export type VolumeProps = {
   volumes: Volumes;
-  buyToken: token;
-  sellToken: token;
 };
 
 export const BUY = 'bUY';

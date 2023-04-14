@@ -15,7 +15,21 @@ const Holdings: React.FC<HoldingsProps> = ({
   sellTokenHolding,
   setBuySideAmount,
   setSellSideAmount,
+  buyTokenOpenHolding,
+  sellTokenOpenHolding,
+  setBuySideOpenAmount,
+  setSellSideOpenAmount,
+  updateAll,
+  setUpdateAll,
 }: HoldingsProps) => {
+
+
+  const triggerUpdate = () => {
+    const u = !updateAll;
+    setUpdateAll(u);
+  };
+
+
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
       return undefined;
@@ -36,6 +50,7 @@ const Holdings: React.FC<HoldingsProps> = ({
           setBuySideAmount(0);
           loading();
           message.success('Successfully redeemed holdings');
+          triggerUpdate();
         }
       } else {
         throw new Error('Failed to redeem tokens');
@@ -50,7 +65,7 @@ const Holdings: React.FC<HoldingsProps> = ({
   return (
     <Col className="base-content br-t br-b br-l br-r">
       <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Holdings</Typography>
+        <Typography className="batcher-title p-16">Cleared Holdings</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="vertical">
             <Typography>
@@ -61,6 +76,21 @@ const Holdings: React.FC<HoldingsProps> = ({
             </Typography>
           </Space>
         </Col>
+      </Space>
+      <Space className="batcher-price" direction="vertical">
+        <Typography className="batcher-title p-16">Open Holdings</Typography>
+        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
+          <Space direction="vertical">
+            <Typography>
+              {buyTokenOpenHolding} {buyToken.name}
+            </Typography>
+            <Typography>
+              {sellTokenOpenHolding} {sellToken.name}
+            </Typography>
+          </Space>
+        </Col>
+      </Space>
+      <Space className="batcher-price" direction="vertical">
         <Col className="batcher-redeem-btn">
           <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
             Redeem
