@@ -46,7 +46,7 @@ let f(_:unit) : Batcher.Storage.t = {
               standard = Some "FA2 token";
             }
         };
-        oracle_address = ("": address);
+        oracle_address = ("KT1LVD4Wc58TTehb39xMWyvbkPov3ApPY18t": address);
         oracle_asset_name = "tzBTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
@@ -72,7 +72,7 @@ let f(_:unit) : Batcher.Storage.t = {
             standard = Some "FA2 token";
           }
         };
-        oracle_address = ("KT1KcFDLDt1bFWnZVeWL6tB4tMwi2WMQwgU2": address);
+        oracle_address = ("KT1LVD4Wc58TTehb39xMWyvbkPov3ApPY18t": address);
         oracle_asset_name = "tzBTC-EURL";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
@@ -88,7 +88,7 @@ let f(_:unit) : Batcher.Storage.t = {
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
+  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
   scale_factor_for_oracle_staleness = 1n
