@@ -198,6 +198,8 @@ export type BatcherInfoProps = {
   rate: number;
   status: string;
   openTime: string;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
 };
 
 export type BatcherActionProps = {

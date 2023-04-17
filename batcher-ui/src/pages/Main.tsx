@@ -72,6 +72,7 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
   const [openTime, setOpenTime] = useState<string>(null);
+  const [closeTime, setCloseTime] = useState<string>(null);
   const [buySideAmount, setBuySideAmount] = useState<number>(0);
   const [sellSideAmount, setSellSideAmount] = useState<number>(0);
   const [buySideOpenAmount, setBuySideOpenAmount] = useState<number>(0);
@@ -107,7 +108,6 @@ const Welcome: React.FC = () => {
      const currentBatchIndices = storage.batch_set.current_batch_indices;
      const index_map = new Map(Object.keys(currentBatchIndices).map(k => [k, currentBatchIndices[k] as number]));
      const currentBatchNumber = index_map.get(tokenPair);
-     console.log('######Volumes', currentBatchNumber);
      console.log('current_batch_number', currentBatchNumber);
 
       if (currentBatchNumber === 0) {
@@ -127,6 +127,10 @@ const Welcome: React.FC = () => {
         if (status === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
         }
+        if (status === BatcherStatus.CLOSED) {
+          setStatus(BatcherStatus.CLOSED);
+        }
+        console.log('######Volumes', jsonData.value.volumes);
         const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
         setVolumes(scaledVolumes);
       }
@@ -788,6 +792,8 @@ const Welcome: React.FC = () => {
         rate={rate}
         status={status}
         openTime={openTime}
+        updateAll={updateAll}
+        setUpdateAll={setUpdateAll}
       />
       <BatcherAction
         content={content}

@@ -20,8 +20,24 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   rate,
   status,
   openTime,
+  updateAll,
+  setUpdateAll,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
+
+  const triggerUpdate = () => {
+    if (status === BatcherStatus.OPEN && openTime) {
+    setTimeout(function () {
+      const u = !updateAll;
+      setUpdateAll(u);
+    },600000);
+   }
+  };
+
+
+  useEffect(() => {
+    triggerUpdate();
+  }, [status]);
 
   const get_time_difference = () => {
     if (status === BatcherStatus.OPEN && openTime) {

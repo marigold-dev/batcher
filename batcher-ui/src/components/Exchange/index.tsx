@@ -127,6 +127,7 @@ const Exchange: React.FC<ExchangeProps> = ({
       console.log('operations-token', selectedToken);
       console.log('operations-side', side);
       console.log('operations-fee-in-mutez', fee_in_mutez);
+      console.log('operations-scaled-amount', fee_in_mutez);
 
       const swap_params = {
         swap: {
