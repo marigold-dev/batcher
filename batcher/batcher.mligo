@@ -75,6 +75,7 @@
 
 (* Associate alias to token address *)
 type token = [@layout:comb] {
+  token_id: nat;
   name : string;
   address : address option;
   decimals : nat;
@@ -924,6 +925,7 @@ let transfer_fa2_token
   (sender : address)
   (receiver : address)
   (token_address : address)
+  (token_id: nat)
   (token_amount : nat) : operation =
     let transfer_entrypoint : fa2_transfer contract =
       match (Tezos.get_entrypoint_opt "%transfer" token_address : fa2_transfer contract option) with
@@ -936,7 +938,7 @@ let transfer_fa2_token
         tx = [
           {
             to_ = receiver;
-            token_id = 0n;
+            token_id = token_id;
             amount = token_amount
           }
         ]
@@ -946,13 +948,17 @@ let transfer_fa2_token
 
 (* Transfer the tokens to the appropriate address. This is based on the FA12 and FA2 token standard *)
 [@inline]
-let transfer_token (sender : address) (receiver : address) (token_address : address) (token_amount : token_amount) : operation =
+let transfer_token 
+  (sender : address) 
+  (receiver : address) 
+  (token_address : address) 
+  (token_amount : token_amount) : operation =
   match token_amount.token.standard with
   | Some standard ->
     if standard = fa12_token then
       transfer_fa12_token sender receiver token_address token_amount.amount
     else if standard = fa2_token then
-      transfer_fa2_token sender receiver token_address token_amount.amount
+      transfer_fa2_token sender receiver token_address token_amount.token.token_id token_amount.amount
     else
       failwith token_standard_not_found
   | None ->
@@ -1023,6 +1029,7 @@ type valid_tokens = Storage.valid_tokens
 let are_equivalent_tokens
   (given: token)
   (test: token) : bool =
+    given.token_id = test.token_id &&
     given.name = test.name &&
     given.address = test.address &&
     given.decimals = test.decimals &&

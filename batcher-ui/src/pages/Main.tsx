@@ -54,12 +54,14 @@ const Welcome: React.FC = () => {
   const [userAddress, setUsrAddress] = useState<string>(undefined);
 
   const [buyToken, setBuyToken] = useState<token>({
+        token_id: 0,
         name: 'tzBTC',
         address: undefined,
         decimals: 8,
         standard: 'FA1.2 token',
       });
   const [sellToken, setSellToken] = useState<token>({
+        token_id: 0,
         name: 'USDT',
         address: undefined,
         decimals: 6,
@@ -492,12 +494,14 @@ const Welcome: React.FC = () => {
        console.log("sellTokenAddress",sellToken.address);
 
       const bToken : token = {
+        token_id: buyTokenData.token_id,
         name: buyTokenData.name,
         address: buyTokenData.address,
         decimals: buyTokenData.decimals,
         standard: buyTokenData.standard,
       };
       const sToken : token = {
+        token_id: sellTokenData.token_id,
         name: sellTokenData.name,
         address: sellTokenData.address,
         decimals: sellTokenData.decimals,

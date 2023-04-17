@@ -4,12 +4,14 @@
                        (pair %swap
                           (pair %from
                              (pair %token
+                                (nat %token_id)
                                 (string %name)
                                 (option %address address)
                                 (nat %decimals)
                                 (option %standard string))
                              (nat %amount))
                           (pair %to
+                             (nat %token_id)
                              (string %name)
                              (option %address address)
                              (nat %decimals)
@@ -30,12 +32,14 @@
                        (pair %swap
                           (pair %from
                              (pair %token
+                                (nat %token_id)
                                 (string %name)
                                 (option %address address)
                                 (nat %decimals)
                                 (option %standard string))
                              (nat %amount))
                           (pair %to
+                             (nat %token_id)
                              (string %name)
                              (option %address address)
                              (nat %decimals)
@@ -50,12 +54,14 @@
                        (pair %swap
                           (pair %from
                              (pair %token
+                                (nat %token_id)
                                 (string %name)
                                 (option %address address)
                                 (nat %decimals)
                                 (option %standard string))
                              (nat %amount))
                           (pair %to
+                             (nat %token_id)
                              (string %name)
                              (option %address address)
                              (nat %decimals)
@@ -87,12 +93,14 @@
                                                               (pair %swap
                                                                  (pair %from
                                                                     (pair %token
+                                                                       (nat %token_id)
                                                                        (string %name)
                                                                        (option %address address)
                                                                        (nat %decimals)
                                                                        (option %standard string))
                                                                     (nat %amount))
                                                                  (pair %to
+                                                                    (nat %token_id)
                                                                     (string %name)
                                                                     (option %address address)
                                                                     (nat %decimals)
@@ -103,12 +111,14 @@
                                                      (pair %swap
                                                         (pair %from
                                                            (pair %token
+                                                              (nat %token_id)
                                                               (string %name)
                                                               (option %address address)
                                                               (nat %decimals)
                                                               (option %standard string))
                                                            (nat %amount))
                                                         (pair %to
+                                                           (nat %token_id)
                                                            (string %name)
                                                            (option %address address)
                                                            (nat %decimals)
@@ -127,10 +137,12 @@
                                            (nat %sell_plus_volume)
                                            (nat %sell_total_volume))
                                         (pair %pair
-                                           (pair (string %name)
+                                           (pair (nat %token_id)
+                                                 (string %name)
                                                  (option %address address)
                                                  (nat %decimals)
                                                  (option %standard string))
+                                           (nat %token_id)
                                            (string %name)
                                            (option %address address)
                                            (nat %decimals)
@@ -145,12 +157,14 @@
                          (pair (pair %swap
                                   (pair %from
                                      (pair %token
+                                        (nat %token_id)
                                         (string %name)
                                         (option %address address)
                                         (nat %decimals)
                                         (option %standard string))
                                      (nat %amount))
                                   (pair %to
+                                     (nat %token_id)
                                      (string %name)
                                      (option %address address)
                                      (nat %decimals)
@@ -169,12 +183,14 @@
                    (pair (pair %swap
                             (pair %from
                                (pair %token
+                                  (nat %token_id)
                                   (string %name)
                                   (option %address address)
                                   (nat %decimals)
                                   (option %standard string))
                                (nat %amount))
                             (pair %to
+                               (nat %token_id)
                                (string %name)
                                (option %address address)
                                (nat %decimals)
@@ -185,7 +201,8 @@
                          (bool %is_disabled_for_deposits))))
           (map %valid_tokens
              string
-             (pair (string %name)
+             (pair (nat %token_id)
+                   (string %name)
                    (option %address address)
                    (nat %decimals)
                    (option %standard string)))) ;
@@ -240,9 +257,9 @@
          MUL ;
          PAIR ;
          LAMBDA
-           (pair (pair (pair string (option address) nat (option string)) nat)
-                 (map string (pair (pair string (option address) nat (option string)) nat)))
-           (map string (pair (pair string (option address) nat (option string)) nat))
+           (pair (pair (pair nat string (option address) nat (option string)) nat)
+                 (map string (pair (pair nat string (option address) nat (option string)) nat)))
+           (map string (pair (pair nat string (option address) nat (option string)) nat))
            { UNPAIR ;
              SWAP ;
              UNIT ;
@@ -250,7 +267,7 @@
              DIG 2 ;
              DUP ;
              CAR ;
-             CAR ;
+             GET 3 ;
              DUP 4 ;
              DUP 2 ;
              GET ;
@@ -384,7 +401,7 @@
                          CAR ;
                          CAR ;
                          CAR ;
-                         GET 5 ;
+                         GET 7 ;
                          COMPARE ;
                          LT ;
                          IF { DROP 2 ; PUSH nat 134 ; FAILWITH }
@@ -392,7 +409,7 @@
                               DUP 2 ;
                               CAR ;
                               CDR ;
-                              GET 5 ;
+                              GET 7 ;
                               COMPARE ;
                               LT ;
                               IF { DROP 2 ; PUSH nat 134 ; FAILWITH }
@@ -434,29 +451,36 @@
                                              ITER { CDR ;
                                                     SWAP ;
                                                     DUP 2 ;
-                                                    GET 6 ;
+                                                    GET 8 ;
                                                     DUP 5 ;
-                                                    GET 6 ;
+                                                    GET 8 ;
                                                     COMPARE ;
                                                     EQ ;
                                                     DUP 3 ;
-                                                    GET 5 ;
+                                                    GET 7 ;
                                                     DUP 6 ;
-                                                    GET 5 ;
+                                                    GET 7 ;
                                                     COMPARE ;
                                                     EQ ;
                                                     DUP 4 ;
-                                                    GET 3 ;
+                                                    GET 5 ;
                                                     DUP 7 ;
+                                                    GET 5 ;
+                                                    COMPARE ;
+                                                    EQ ;
+                                                    DUP 5 ;
+                                                    GET 3 ;
+                                                    DUP 8 ;
                                                     GET 3 ;
                                                     COMPARE ;
                                                     EQ ;
-                                                    DIG 4 ;
+                                                    DIG 5 ;
                                                     CAR ;
-                                                    DUP 7 ;
+                                                    DUP 8 ;
                                                     CAR ;
                                                     COMPARE ;
                                                     EQ ;
+                                                    AND ;
                                                     AND ;
                                                     AND ;
                                                     AND ;
@@ -468,29 +492,36 @@
                                              ITER { CDR ;
                                                     SWAP ;
                                                     DUP 2 ;
-                                                    GET 6 ;
+                                                    GET 8 ;
                                                     DUP 5 ;
-                                                    GET 6 ;
+                                                    GET 8 ;
                                                     COMPARE ;
                                                     EQ ;
                                                     DUP 3 ;
-                                                    GET 5 ;
+                                                    GET 7 ;
                                                     DUP 6 ;
-                                                    GET 5 ;
+                                                    GET 7 ;
                                                     COMPARE ;
                                                     EQ ;
                                                     DUP 4 ;
-                                                    GET 3 ;
+                                                    GET 5 ;
                                                     DUP 7 ;
+                                                    GET 5 ;
+                                                    COMPARE ;
+                                                    EQ ;
+                                                    DUP 5 ;
+                                                    GET 3 ;
+                                                    DUP 8 ;
                                                     GET 3 ;
                                                     COMPARE ;
                                                     EQ ;
-                                                    DIG 4 ;
+                                                    DIG 5 ;
                                                     CAR ;
-                                                    DUP 7 ;
+                                                    DUP 8 ;
                                                     CAR ;
                                                     COMPARE ;
                                                     EQ ;
+                                                    AND ;
                                                     AND ;
                                                     AND ;
                                                     AND ;
@@ -504,29 +535,36 @@
                                                   ITER { CDR ;
                                                          SWAP ;
                                                          DUP 2 ;
-                                                         GET 6 ;
+                                                         GET 8 ;
                                                          DUP 5 ;
-                                                         GET 6 ;
+                                                         GET 8 ;
                                                          COMPARE ;
                                                          EQ ;
                                                          DUP 3 ;
-                                                         GET 5 ;
+                                                         GET 7 ;
                                                          DUP 6 ;
-                                                         GET 5 ;
+                                                         GET 7 ;
                                                          COMPARE ;
                                                          EQ ;
                                                          DUP 4 ;
-                                                         GET 3 ;
+                                                         GET 5 ;
                                                          DUP 7 ;
+                                                         GET 5 ;
+                                                         COMPARE ;
+                                                         EQ ;
+                                                         DUP 5 ;
+                                                         GET 3 ;
+                                                         DUP 8 ;
                                                          GET 3 ;
                                                          COMPARE ;
                                                          EQ ;
-                                                         DIG 4 ;
+                                                         DIG 5 ;
                                                          CAR ;
-                                                         DUP 7 ;
+                                                         DUP 8 ;
                                                          CAR ;
                                                          COMPARE ;
                                                          EQ ;
+                                                         AND ;
                                                          AND ;
                                                          AND ;
                                                          AND ;
@@ -538,29 +576,36 @@
                                                   ITER { CDR ;
                                                          SWAP ;
                                                          DUP 2 ;
-                                                         GET 6 ;
+                                                         GET 8 ;
                                                          DUP 5 ;
-                                                         GET 6 ;
+                                                         GET 8 ;
                                                          COMPARE ;
                                                          EQ ;
                                                          DUP 3 ;
-                                                         GET 5 ;
+                                                         GET 7 ;
                                                          DUP 6 ;
-                                                         GET 5 ;
+                                                         GET 7 ;
                                                          COMPARE ;
                                                          EQ ;
                                                          DUP 4 ;
-                                                         GET 3 ;
+                                                         GET 5 ;
                                                          DUP 7 ;
+                                                         GET 5 ;
+                                                         COMPARE ;
+                                                         EQ ;
+                                                         DUP 5 ;
+                                                         GET 3 ;
+                                                         DUP 8 ;
                                                          GET 3 ;
                                                          COMPARE ;
                                                          EQ ;
-                                                         DIG 4 ;
+                                                         DIG 5 ;
                                                          CAR ;
-                                                         DUP 7 ;
+                                                         DUP 8 ;
                                                          CAR ;
                                                          COMPARE ;
                                                          EQ ;
+                                                         AND ;
                                                          AND ;
                                                          AND ;
                                                          AND ;
@@ -580,10 +625,10 @@
                                         DUP 3 ;
                                         CAR ;
                                         CAR ;
-                                        CAR ;
+                                        GET 3 ;
                                         DIG 3 ;
                                         CDR ;
-                                        CAR ;
+                                        GET 3 ;
                                         DUP 5 ;
                                         DUP 3 ;
                                         DUP 3 ;
@@ -598,68 +643,82 @@
                                             CDR ;
                                             DUP ;
                                             DUP 4 ;
-                                            CAR ;
+                                            GET 3 ;
                                             GET ;
                                             IF_NONE
-                                              { DUP 3 ; DIG 3 ; CAR ; SWAP ; SOME ; SWAP ; UPDATE }
+                                              { DUP 3 ; DIG 3 ; GET 3 ; SWAP ; SOME ; SWAP ; UPDATE }
                                               { DUP 4 ;
-                                                GET 6 ;
+                                                GET 8 ;
                                                 DUP 2 ;
-                                                GET 6 ;
+                                                GET 8 ;
+                                                COMPARE ;
+                                                EQ ;
+                                                DUP 5 ;
+                                                GET 7 ;
+                                                DUP 3 ;
+                                                GET 7 ;
+                                                COMPARE ;
+                                                EQ ;
+                                                DUP 6 ;
+                                                GET 5 ;
+                                                DUP 4 ;
+                                                GET 5 ;
+                                                COMPARE ;
+                                                EQ ;
+                                                DUP 7 ;
+                                                GET 3 ;
+                                                DUP 5 ;
+                                                GET 3 ;
+                                                COMPARE ;
+                                                EQ ;
+                                                DIG 7 ;
+                                                CAR ;
+                                                DIG 5 ;
+                                                CAR ;
+                                                COMPARE ;
+                                                EQ ;
+                                                AND ;
+                                                AND ;
+                                                AND ;
+                                                AND ;
+                                                IF {} { DROP ; PUSH nat 115 ; FAILWITH } } ;
+                                            DUP ;
+                                            DUP 3 ;
+                                            GET 3 ;
+                                            GET ;
+                                            IF_NONE
+                                              { DUP 2 ; DIG 2 ; GET 3 ; SWAP ; SOME ; SWAP ; UPDATE }
+                                              { DUP 3 ;
+                                                GET 8 ;
+                                                DUP 2 ;
+                                                GET 8 ;
+                                                COMPARE ;
+                                                EQ ;
+                                                DUP 4 ;
+                                                GET 7 ;
+                                                DUP 3 ;
+                                                GET 7 ;
                                                 COMPARE ;
                                                 EQ ;
                                                 DUP 5 ;
                                                 GET 5 ;
-                                                DUP 3 ;
+                                                DUP 4 ;
                                                 GET 5 ;
                                                 COMPARE ;
                                                 EQ ;
                                                 DUP 6 ;
                                                 GET 3 ;
-                                                DUP 4 ;
+                                                DUP 5 ;
                                                 GET 3 ;
                                                 COMPARE ;
                                                 EQ ;
                                                 DIG 6 ;
                                                 CAR ;
-                                                DIG 4 ;
-                                                CAR ;
-                                                COMPARE ;
-                                                EQ ;
-                                                AND ;
-                                                AND ;
-                                                AND ;
-                                                IF {} { DROP ; PUSH nat 115 ; FAILWITH } } ;
-                                            DUP ;
-                                            DUP 3 ;
-                                            CAR ;
-                                            GET ;
-                                            IF_NONE
-                                              { DUP 2 ; DIG 2 ; CAR ; SWAP ; SOME ; SWAP ; UPDATE }
-                                              { DUP 3 ;
-                                                GET 6 ;
-                                                DUP 2 ;
-                                                GET 6 ;
-                                                COMPARE ;
-                                                EQ ;
-                                                DUP 4 ;
-                                                GET 5 ;
-                                                DUP 3 ;
-                                                GET 5 ;
-                                                COMPARE ;
-                                                EQ ;
-                                                DUP 5 ;
-                                                GET 3 ;
-                                                DUP 4 ;
-                                                GET 3 ;
-                                                COMPARE ;
-                                                EQ ;
                                                 DIG 5 ;
                                                 CAR ;
-                                                DIG 4 ;
-                                                CAR ;
                                                 COMPARE ;
                                                 EQ ;
+                                                AND ;
                                                 AND ;
                                                 AND ;
                                                 AND ;
@@ -669,10 +728,10 @@
                                             DUP ;
                                             CAR ;
                                             CAR ;
-                                            CAR ;
+                                            GET 3 ;
                                             SWAP ;
                                             CDR ;
-                                            CAR ;
+                                            GET 3 ;
                                             DIG 3 ;
                                             DIG 4 ;
                                             DUP 4 ;
@@ -984,9 +1043,9 @@
                          CDR ;
                          DUP 3 ;
                          UNPAIR ;
-                         CAR ;
+                         GET 3 ;
                          SWAP ;
-                         CAR ;
+                         GET 3 ;
                          DUP 2 ;
                          DUP 2 ;
                          COMPARE ;
@@ -1032,9 +1091,9 @@
                                         CAR ;
                                         DUP 6 ;
                                         UNPAIR ;
-                                        CAR ;
+                                        GET 3 ;
                                         SWAP ;
-                                        CAR ;
+                                        GET 3 ;
                                         DUP 2 ;
                                         DUP 2 ;
                                         COMPARE ;
@@ -1073,12 +1132,12 @@
                                                               (pair (pair nat nat nat)
                                                                     (or (or unit unit) unit)
                                                                     (pair nat nat nat nat)
-                                                                    (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                                (pair string (option address) nat (option string)))
+                                                                    (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                                (pair nat string (option address) nat (option string)))
                                                                           (pair int int)
                                                                           timestamp)))
-                                                        (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                    (pair string (option address) nat (option string)))
+                                                        (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                    (pair nat string (option address) nat (option string)))
                                                               (pair int int)
                                                               timestamp))
                                                   (pair timestamp timestamp)) ;
@@ -1101,9 +1160,9 @@
                                             DUP 4 ;
                                             GET 6 ;
                                             UNPAIR ;
-                                            CAR ;
+                                            GET 3 ;
                                             SWAP ;
-                                            CAR ;
+                                            GET 3 ;
                                             DUP 2 ;
                                             DUP 2 ;
                                             COMPARE ;
@@ -1146,12 +1205,12 @@
                                                                       (pair (pair nat nat nat)
                                                                             (or (or unit unit) unit)
                                                                             (pair nat nat nat nat)
-                                                                            (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                                        (pair string (option address) nat (option string)))
+                                                                            (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                                        (pair nat string (option address) nat (option string)))
                                                                                   (pair int int)
                                                                                   timestamp)))
-                                                                (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                            (pair string (option address) nat (option string)))
+                                                                (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                            (pair nat string (option address) nat (option string)))
                                                                       (pair int int)
                                                                       timestamp))
                                                           (pair timestamp timestamp)) ;
@@ -1174,9 +1233,9 @@
                                                     DUP 4 ;
                                                     GET 6 ;
                                                     UNPAIR ;
-                                                    CAR ;
+                                                    GET 3 ;
                                                     SWAP ;
-                                                    CAR ;
+                                                    GET 3 ;
                                                     DUP 2 ;
                                                     DUP 2 ;
                                                     COMPARE ;
@@ -1211,12 +1270,12 @@
                                                                        (pair (pair nat nat nat)
                                                                              (or (or unit unit) unit)
                                                                              (pair nat nat nat nat)
-                                                                             (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                                         (pair string (option address) nat (option string)))
+                                                                             (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                                         (pair nat string (option address) nat (option string)))
                                                                                    (pair int int)
                                                                                    timestamp)))
-                                                                 (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                             (pair string (option address) nat (option string)))
+                                                                 (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                             (pair nat string (option address) nat (option string)))
                                                                        (pair int int)
                                                                        timestamp)) ;
                                                          LEFT timestamp ;
@@ -1250,9 +1309,9 @@
                                                      DUP 4 ;
                                                      GET 6 ;
                                                      UNPAIR ;
-                                                     CAR ;
+                                                     GET 3 ;
                                                      SWAP ;
-                                                     CAR ;
+                                                     GET 3 ;
                                                      DUP 2 ;
                                                      DUP 2 ;
                                                      COMPARE ;
@@ -1281,9 +1340,9 @@
                                                   CDR ;
                                                   DIG 4 ;
                                                   UNPAIR ;
-                                                  CAR ;
+                                                  GET 3 ;
                                                   SWAP ;
-                                                  CAR ;
+                                                  GET 3 ;
                                                   DUP 2 ;
                                                   DUP 2 ;
                                                   COMPARE ;
@@ -1380,67 +1439,81 @@
                                              CDR ;
                                              DUP 4 ;
                                              DUP 3 ;
-                                             CAR ;
+                                             GET 3 ;
                                              GET ;
                                              IF_NONE
                                                { DROP 4 ; PUSH nat 110 ; FAILWITH }
                                                { DIG 4 ;
                                                  DUP 3 ;
-                                                 CAR ;
+                                                 GET 3 ;
                                                  GET ;
                                                  IF_NONE
                                                    { DROP 4 ; PUSH nat 110 ; FAILWITH }
                                                    { DUP ;
-                                                     GET 6 ;
+                                                     GET 8 ;
                                                      DUP 4 ;
-                                                     GET 6 ;
+                                                     GET 8 ;
                                                      COMPARE ;
                                                      EQ ;
                                                      DUP 2 ;
-                                                     GET 5 ;
+                                                     GET 7 ;
                                                      DUP 5 ;
-                                                     GET 5 ;
-                                                     COMPARE ;
-                                                     EQ ;
-                                                     DUP 3 ;
-                                                     GET 3 ;
-                                                     DUP 6 ;
-                                                     GET 3 ;
-                                                     COMPARE ;
-                                                     EQ ;
-                                                     DIG 3 ;
-                                                     CAR ;
-                                                     DIG 5 ;
-                                                     CAR ;
-                                                     COMPARE ;
-                                                     EQ ;
-                                                     AND ;
-                                                     AND ;
-                                                     AND ;
-                                                     DUP 2 ;
-                                                     GET 6 ;
-                                                     DUP 4 ;
-                                                     GET 6 ;
+                                                     GET 7 ;
                                                      COMPARE ;
                                                      EQ ;
                                                      DUP 3 ;
                                                      GET 5 ;
-                                                     DUP 5 ;
+                                                     DUP 6 ;
                                                      GET 5 ;
                                                      COMPARE ;
                                                      EQ ;
                                                      DUP 4 ;
                                                      GET 3 ;
-                                                     DUP 6 ;
+                                                     DUP 7 ;
                                                      GET 3 ;
                                                      COMPARE ;
                                                      EQ ;
                                                      DIG 4 ;
                                                      CAR ;
-                                                     DIG 5 ;
+                                                     DIG 6 ;
                                                      CAR ;
                                                      COMPARE ;
                                                      EQ ;
+                                                     AND ;
+                                                     AND ;
+                                                     AND ;
+                                                     AND ;
+                                                     DUP 2 ;
+                                                     GET 8 ;
+                                                     DUP 4 ;
+                                                     GET 8 ;
+                                                     COMPARE ;
+                                                     EQ ;
+                                                     DUP 3 ;
+                                                     GET 7 ;
+                                                     DUP 5 ;
+                                                     GET 7 ;
+                                                     COMPARE ;
+                                                     EQ ;
+                                                     DUP 4 ;
+                                                     GET 5 ;
+                                                     DUP 6 ;
+                                                     GET 5 ;
+                                                     COMPARE ;
+                                                     EQ ;
+                                                     DUP 5 ;
+                                                     GET 3 ;
+                                                     DUP 7 ;
+                                                     GET 3 ;
+                                                     COMPARE ;
+                                                     EQ ;
+                                                     DIG 5 ;
+                                                     CAR ;
+                                                     DIG 6 ;
+                                                     CAR ;
+                                                     COMPARE ;
+                                                     EQ ;
+                                                     AND ;
                                                      AND ;
                                                      AND ;
                                                      AND ;
@@ -1454,9 +1527,9 @@
                                                           IF_LEFT
                                                             { DROP ; DUP 2 ; CDR ; DUP 3 ; CAR ; CAR }
                                                             { DROP ; DUP 2 ; CAR ; CAR ; DUP 3 ; CDR } ;
-                                                          CAR ;
+                                                          GET 3 ;
                                                           SWAP ;
-                                                          CAR ;
+                                                          GET 3 ;
                                                           DUP 2 ;
                                                           DUP 2 ;
                                                           COMPARE ;
@@ -1728,14 +1801,14 @@
                                                   CAR ;
                                                   DUP ;
                                                   CAR ;
-                                                  GET 3 ;
+                                                  GET 5 ;
                                                   IF_NONE
                                                     { DIG 2 ; DIG 5 ; DROP 3 ; PUSH nat 109 ; FAILWITH }
                                                     { DIG 6 ;
                                                       GET 5 ;
                                                       DUP 3 ;
                                                       CAR ;
-                                                      GET 6 ;
+                                                      GET 8 ;
                                                       IF_NONE
                                                         { SWAP ; DIG 2 ; DIG 4 ; DROP 4 ; PUSH nat 108 ; FAILWITH }
                                                         { PUSH string "FA1.2 token" ;
@@ -1764,9 +1837,11 @@
                                                                     PUSH mutez 0 ;
                                                                     NIL (pair address (list (pair address nat nat))) ;
                                                                     NIL (pair address nat nat) ;
-                                                                    DIG 5 ;
+                                                                    DUP 6 ;
                                                                     CDR ;
-                                                                    PUSH nat 0 ;
+                                                                    DIG 6 ;
+                                                                    CAR ;
+                                                                    CAR ;
                                                                     DIG 8 ;
                                                                     PAIR 3 ;
                                                                     CONS ;
@@ -1903,7 +1978,7 @@
                          CAR ;
                          CDR ;
                          CAR ;
-                         EMPTY_MAP string (pair (pair string (option address) nat (option string)) nat) ;
+                         EMPTY_MAP string (pair (pair nat string (option address) nat (option string)) nat) ;
                          DUP 2 ;
                          DUP 5 ;
                          GET ;
@@ -1939,16 +2014,16 @@
                                                 NONE (pair (pair nat nat nat)
                                                            (or (or unit unit) unit)
                                                            (pair nat nat nat nat)
-                                                           (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                       (pair string (option address) nat (option string)))
+                                                           (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                       (pair nat string (option address) nat (option string)))
                                                                  (pair int int)
                                                                  timestamp)) } }
                                           { DROP ;
                                             NONE (pair (pair nat nat nat)
                                                        (or (or unit unit) unit)
                                                        (pair nat nat nat nat)
-                                                       (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                   (pair string (option address) nat (option string)))
+                                                       (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                   (pair nat string (option address) nat (option string)))
                                                              (pair int int)
                                                              timestamp)) } ;
                                         IF_NONE
@@ -2372,12 +2447,12 @@
                          ITER { CDR ;
                                 DUP ;
                                 CAR ;
-                                GET 3 ;
+                                GET 5 ;
                                 IF_NONE
                                   { DROP ; PUSH nat 109 ; FAILWITH }
                                   { DUP 2 ;
                                     CAR ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     IF_NONE
                                       { DROP 2 ; PUSH nat 108 ; FAILWITH }
                                       { PUSH string "FA1.2 token" ;
@@ -2404,9 +2479,11 @@
                                                   PUSH mutez 0 ;
                                                   NIL (pair address (list (pair address nat nat))) ;
                                                   NIL (pair address nat nat) ;
-                                                  DIG 4 ;
+                                                  DUP 5 ;
                                                   CDR ;
-                                                  PUSH nat 0 ;
+                                                  DIG 5 ;
+                                                  CAR ;
+                                                  CAR ;
                                                   DUP 10 ;
                                                   PAIR 3 ;
                                                   CONS ;
@@ -2503,10 +2580,10 @@
                          DUP 2 ;
                          CAR ;
                          CAR ;
-                         CAR ;
+                         GET 3 ;
                          DIG 2 ;
                          CDR ;
-                         CAR ;
+                         GET 3 ;
                          DUP 2 ;
                          DUP 2 ;
                          COMPARE ;
@@ -2526,18 +2603,18 @@
                              DUP 2 ;
                              CAR ;
                              CAR ;
-                             CAR ;
+                             GET 3 ;
                              DUP 3 ;
                              CDR ;
-                             CAR ;
+                             GET 3 ;
                              DUP 2 ;
                              DUP 2 ;
                              COMPARE ;
                              GT ;
                              IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
                                 { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
-                             NONE (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                              (pair string (option address) nat (option string)))
+                             NONE (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                              (pair nat string (option address) nat (option string)))
                                         address
                                         string
                                         nat
@@ -2558,58 +2635,72 @@
                                     CAR ;
                                     CAR ;
                                     DUP ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     DUP 6 ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 2 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     DUP 7 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 3 ;
-                                    GET 3 ;
+                                    GET 5 ;
                                     DUP 8 ;
+                                    GET 5 ;
+                                    COMPARE ;
+                                    EQ ;
+                                    DUP 4 ;
+                                    GET 3 ;
+                                    DUP 9 ;
                                     GET 3 ;
                                     COMPARE ;
                                     EQ ;
-                                    DIG 3 ;
+                                    DIG 4 ;
                                     CAR ;
-                                    DUP 8 ;
+                                    DUP 9 ;
                                     CAR ;
                                     COMPARE ;
                                     EQ ;
+                                    AND ;
                                     AND ;
                                     AND ;
                                     AND ;
                                     DIG 2 ;
                                     CDR ;
                                     DUP ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     DUP 6 ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 2 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     DUP 7 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 3 ;
-                                    GET 3 ;
+                                    GET 5 ;
                                     DUP 8 ;
+                                    GET 5 ;
+                                    COMPARE ;
+                                    EQ ;
+                                    DUP 4 ;
+                                    GET 3 ;
+                                    DUP 9 ;
                                     GET 3 ;
                                     COMPARE ;
                                     EQ ;
-                                    DIG 3 ;
+                                    DIG 4 ;
                                     CAR ;
-                                    DUP 8 ;
+                                    DUP 9 ;
                                     CAR ;
                                     COMPARE ;
                                     EQ ;
+                                    AND ;
                                     AND ;
                                     AND ;
                                     AND ;
@@ -2618,41 +2709,48 @@
                              IF { SWAP ; DROP ; DIG 2 }
                                 { DUP 4 ;
                                   DUP 3 ;
-                                  CAR ;
+                                  GET 3 ;
                                   GET ;
                                   IF_NONE
                                     { SWAP ; DROP ; DIG 2 }
                                     { DUP 3 ;
-                                      GET 6 ;
+                                      GET 8 ;
                                       DUP 2 ;
-                                      GET 6 ;
+                                      GET 8 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 4 ;
-                                      GET 5 ;
+                                      GET 7 ;
                                       DUP 3 ;
-                                      GET 5 ;
+                                      GET 7 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 5 ;
-                                      GET 3 ;
+                                      GET 5 ;
                                       DUP 4 ;
-                                      GET 3 ;
+                                      GET 5 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 6 ;
+                                      GET 3 ;
+                                      DUP 5 ;
+                                      GET 3 ;
+                                      COMPARE ;
+                                      EQ ;
+                                      DUP 7 ;
                                       CAR ;
-                                      DIG 4 ;
+                                      DIG 5 ;
                                       CAR ;
                                       COMPARE ;
                                       EQ ;
+                                      AND ;
                                       AND ;
                                       AND ;
                                       AND ;
                                       IF { DIG 3 ;
                                            DIG 2 ;
-                                           CAR ;
-                                           NONE (pair string (option address) nat (option string)) ;
+                                           GET 3 ;
+                                           NONE (pair nat string (option address) nat (option string)) ;
                                            SWAP ;
                                            UPDATE }
                                          { SWAP ; DIG 3 ; DROP 2 ; PUSH nat 115 ; FAILWITH } } } ;
@@ -2665,58 +2763,72 @@
                                     CAR ;
                                     CAR ;
                                     DUP ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     DUP 6 ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 2 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     DUP 7 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 3 ;
-                                    GET 3 ;
+                                    GET 5 ;
                                     DUP 8 ;
+                                    GET 5 ;
+                                    COMPARE ;
+                                    EQ ;
+                                    DUP 4 ;
+                                    GET 3 ;
+                                    DUP 9 ;
                                     GET 3 ;
                                     COMPARE ;
                                     EQ ;
-                                    DIG 3 ;
+                                    DIG 4 ;
                                     CAR ;
-                                    DUP 8 ;
+                                    DUP 9 ;
                                     CAR ;
                                     COMPARE ;
                                     EQ ;
+                                    AND ;
                                     AND ;
                                     AND ;
                                     AND ;
                                     DIG 2 ;
                                     CDR ;
                                     DUP ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     DUP 6 ;
-                                    GET 6 ;
+                                    GET 8 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 2 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     DUP 7 ;
-                                    GET 5 ;
+                                    GET 7 ;
                                     COMPARE ;
                                     EQ ;
                                     DUP 3 ;
-                                    GET 3 ;
+                                    GET 5 ;
                                     DUP 8 ;
+                                    GET 5 ;
+                                    COMPARE ;
+                                    EQ ;
+                                    DUP 4 ;
+                                    GET 3 ;
+                                    DUP 9 ;
                                     GET 3 ;
                                     COMPARE ;
                                     EQ ;
-                                    DIG 3 ;
+                                    DIG 4 ;
                                     CAR ;
-                                    DUP 8 ;
+                                    DUP 9 ;
                                     CAR ;
                                     COMPARE ;
                                     EQ ;
+                                    AND ;
                                     AND ;
                                     AND ;
                                     AND ;
@@ -2725,40 +2837,47 @@
                              IF { SWAP ; DROP }
                                 { DUP ;
                                   DUP 3 ;
-                                  CAR ;
+                                  GET 3 ;
                                   GET ;
                                   IF_NONE
                                     { SWAP ; DROP }
                                     { DUP 3 ;
-                                      GET 6 ;
+                                      GET 8 ;
                                       DUP 2 ;
-                                      GET 6 ;
+                                      GET 8 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 4 ;
-                                      GET 5 ;
+                                      GET 7 ;
                                       DUP 3 ;
-                                      GET 5 ;
+                                      GET 7 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 5 ;
-                                      GET 3 ;
+                                      GET 5 ;
                                       DUP 4 ;
-                                      GET 3 ;
+                                      GET 5 ;
                                       COMPARE ;
                                       EQ ;
                                       DUP 6 ;
+                                      GET 3 ;
+                                      DUP 5 ;
+                                      GET 3 ;
+                                      COMPARE ;
+                                      EQ ;
+                                      DUP 7 ;
                                       CAR ;
-                                      DIG 4 ;
+                                      DIG 5 ;
                                       CAR ;
                                       COMPARE ;
                                       EQ ;
+                                      AND ;
                                       AND ;
                                       AND ;
                                       AND ;
                                       IF { SWAP ;
-                                           CAR ;
-                                           NONE (pair string (option address) nat (option string)) ;
+                                           GET 3 ;
+                                           NONE (pair nat string (option address) nat (option string)) ;
                                            SWAP ;
                                            UPDATE }
                                          { DROP 2 ; PUSH nat 115 ; FAILWITH } } } ;
@@ -2848,13 +2967,13 @@
                          DUP 3 ;
                          CAR ;
                          CAR ;
-                         GET 5 ;
+                         GET 7 ;
                          COMPARE ;
                          GT ;
                          IF { DUP 2 ;
                               CAR ;
                               CAR ;
-                              GET 5 ;
+                              GET 7 ;
                               SUB ;
                               PUSH int 10 ;
                               PAIR ;
@@ -2868,7 +2987,7 @@
                               DUP 2 ;
                               CAR ;
                               CAR ;
-                              GET 5 ;
+                              GET 7 ;
                               INT ;
                               PUSH int 10 ;
                               PAIR ;
@@ -2903,11 +3022,11 @@
                          CAR ;
                          CAR ;
                          CAR ;
-                         GET 5 ;
+                         GET 7 ;
                          DUP 2 ;
                          CAR ;
                          CDR ;
-                         GET 5 ;
+                         GET 7 ;
                          SUB ;
                          DUP ;
                          ABS ;
@@ -3011,9 +3130,9 @@
                          CAR ;
                          DUP 4 ;
                          UNPAIR ;
-                         CAR ;
+                         GET 3 ;
                          SWAP ;
-                         CAR ;
+                         GET 3 ;
                          DUP 2 ;
                          DUP 2 ;
                          COMPARE ;
@@ -3030,18 +3149,19 @@
                                                             (pair (pair nat nat nat)
                                                                   (or (or unit unit) unit)
                                                                   (pair nat nat nat nat)
-                                                                  (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                              (pair string (option address) nat (option string)))
+                                                                  (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                              (pair nat string (option address) nat (option string)))
                                                                         (pair int int)
                                                                         timestamp)))
-                                                      (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                  (pair string (option address) nat (option string)))
+                                                      (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                  (pair nat string (option address) nat (option string)))
                                                             (pair int int)
                                                             timestamp))
                                                 (pair timestamp timestamp))
                                             timestamp)
                                         (pair nat nat nat nat nat nat nat nat)
-                                        (pair (pair string (option address) nat (option string))
+                                        (pair (pair nat string (option address) nat (option string))
+                                              nat
                                               string
                                               (option address)
                                               nat
@@ -3075,12 +3195,12 @@
                                                        (pair (pair nat nat nat)
                                                              (or (or unit unit) unit)
                                                              (pair nat nat nat nat)
-                                                             (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                         (pair string (option address) nat (option string)))
+                                                             (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                         (pair nat string (option address) nat (option string)))
                                                                    (pair int int)
                                                                    timestamp)))
-                                                 (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                             (pair string (option address) nat (option string)))
+                                                 (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                             (pair nat string (option address) nat (option string)))
                                                        (pair int int)
                                                        timestamp))
                                            (pair timestamp timestamp)) ;
@@ -3103,9 +3223,9 @@
                                      DUP 4 ;
                                      GET 6 ;
                                      UNPAIR ;
-                                     CAR ;
+                                     GET 3 ;
                                      SWAP ;
-                                     CAR ;
+                                     GET 3 ;
                                      DUP 2 ;
                                      DUP 2 ;
                                      COMPARE ;
@@ -3142,12 +3262,12 @@
                                                         (pair (pair nat nat nat)
                                                               (or (or unit unit) unit)
                                                               (pair nat nat nat nat)
-                                                              (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                                          (pair string (option address) nat (option string)))
+                                                              (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                                          (pair nat string (option address) nat (option string)))
                                                                     (pair int int)
                                                                     timestamp)))
-                                                  (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                              (pair string (option address) nat (option string)))
+                                                  (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                              (pair nat string (option address) nat (option string)))
                                                         (pair int int)
                                                         timestamp)) ;
                                           LEFT timestamp ;
@@ -3169,9 +3289,9 @@
                                       DUP 4 ;
                                       GET 6 ;
                                       UNPAIR ;
-                                      CAR ;
+                                      GET 3 ;
                                       SWAP ;
-                                      CAR ;
+                                      GET 3 ;
                                       DUP 2 ;
                                       DUP 2 ;
                                       COMPARE ;
@@ -3667,9 +3787,9 @@
                                   DIG 3 ;
                                   GET 6 ;
                                   UNPAIR ;
-                                  CAR ;
+                                  GET 3 ;
                                   SWAP ;
-                                  CAR ;
+                                  GET 3 ;
                                   DUP 2 ;
                                   DUP 2 ;
                                   COMPARE ;
@@ -3700,12 +3820,14 @@
             (pair (pair %swap
                      (pair %from
                         (pair %token
+                           (nat %token_id)
                            (string %name)
                            (option %address address)
                            (nat %decimals)
                            (option %standard string))
                         (nat %amount))
                      (pair %to
+                        (nat %token_id)
                         (string %name)
                         (option %address address)
                         (nat %decimals)
@@ -3718,7 +3840,8 @@
   view "get_valid_tokens"
        unit
        (map string
-            (pair (string %name)
+            (pair (nat %token_id)
+                  (string %name)
                   (option %address address)
                   (nat %decimals)
                   (option %standard string)))
@@ -3741,12 +3864,14 @@
                                          (pair %swap
                                             (pair %from
                                                (pair %token
+                                                  (nat %token_id)
                                                   (string %name)
                                                   (option %address address)
                                                   (nat %decimals)
                                                   (option %standard string))
                                                (nat %amount))
                                             (pair %to
+                                               (nat %token_id)
                                                (string %name)
                                                (option %address address)
                                                (nat %decimals)
@@ -3757,12 +3882,14 @@
                                 (pair %swap
                                    (pair %from
                                       (pair %token
+                                         (nat %token_id)
                                          (string %name)
                                          (option %address address)
                                          (nat %decimals)
                                          (option %standard string))
                                       (nat %amount))
                                    (pair %to
+                                      (nat %token_id)
                                       (string %name)
                                       (option %address address)
                                       (nat %decimals)
@@ -3781,10 +3908,12 @@
                       (nat %sell_plus_volume)
                       (nat %sell_total_volume))
                    (pair %pair
-                      (pair (string %name)
+                      (pair (nat %token_id)
+                            (string %name)
                             (option %address address)
                             (nat %decimals)
                             (option %standard string))
+                      (nat %token_id)
                       (string %name)
                       (option %address address)
                       (nat %decimals)
@@ -3795,18 +3924,19 @@
                                        (pair (pair nat nat nat)
                                              (or (or unit unit) unit)
                                              (pair nat nat nat nat)
-                                             (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                                         (pair string (option address) nat (option string)))
+                                             (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                                         (pair nat string (option address) nat (option string)))
                                                    (pair int int)
                                                    timestamp)))
-                                 (pair (pair (pair (pair string (option address) nat (option string)) nat)
-                                             (pair string (option address) nat (option string)))
+                                 (pair (pair (pair (pair nat string (option address) nat (option string)) nat)
+                                             (pair nat string (option address) nat (option string)))
                                        (pair int int)
                                        timestamp))
                            (pair timestamp timestamp))
                        timestamp)
                    (pair nat nat nat nat nat nat nat nat)
-                   (pair (pair string (option address) nat (option string))
+                   (pair (pair nat string (option address) nat (option string))
+                         nat
                          string
                          (option address)
                          nat
