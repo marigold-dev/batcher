@@ -33,6 +33,7 @@ export enum selected_price {
 }
 
 export class token {
+  token_id!: number;
   name!: string;
   address!: string;
   decimals!: number;

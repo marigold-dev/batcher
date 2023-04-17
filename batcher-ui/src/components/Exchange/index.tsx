@@ -66,6 +66,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
     const tokenContract : WalletContract = await tezos.wallet.at(
       inversion ? buyToken.address : sellToken.address, compose(tzip12,tzip16));
+    const tokenId = inversion ? buyToken.token_id: sellToken.token_id;
 
 
     const scaled_amount = inversion
@@ -101,7 +102,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         add_operator: {
           owner: userAddress,
           operator: REACT_APP_BATCHER_CONTRACT_HASH,
-          token_id: 0,
+          token_id: tokenId,
         },
       },
     ];
@@ -111,7 +112,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         remove_operator: {
           owner: userAddress,
           operator: REACT_APP_BATCHER_CONTRACT_HASH,
-          token_id: 0,
+          token_id: tokenId,
         },
       },
     ];
@@ -133,6 +134,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         swap: {
           from: {
             token: {
+              token_id: inversion ? buyToken.token_id : sellToken.token_id,
               name: inversion ? buyToken.name : sellToken.name,
               address: inversion ? buyToken.address : sellToken.address,
               decimals: inversion ? buyToken.decimals : sellToken.decimals,
@@ -141,6 +143,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             amount: scaled_amount,
           },
           to: {
+            token_id: inversion ? sellToken.token_id : buyToken.token_id,
             name: inversion ? sellToken.name : buyToken.name,
             address: inversion ? sellToken.address : buyToken.address,
             decimals: inversion ? sellToken.decimals : buyToken.decimals,
