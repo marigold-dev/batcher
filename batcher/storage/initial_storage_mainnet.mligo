@@ -4,18 +4,21 @@ let f(_:unit) : Batcher.Storage.t = {
   metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
+      token_id = 0n;
       name = "tzBTC";
       address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
     (("EURL"),{
+      token_id = 0n;
       name = "EURL";
       address = Some(("KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     });
     (("USDT"),{
+      token_id = 0n;
       name = "USDT";
       address = Some(("tz1N47UGiVScUUvHemXd2kGwJi44h7qZMUzp" : address));
       decimals = 6n;
@@ -28,6 +31,7 @@ let f(_:unit) : Batcher.Storage.t = {
             from = {
               amount = 1n;
               token = {
+                token_id = 0n;
                 name = "tzBTC";
                 address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
                 decimals = 8n;
@@ -35,6 +39,7 @@ let f(_:unit) : Batcher.Storage.t = {
               }
             };
             to = {
+              token_id = 0n;
               name = "USDT";
               address = Some(("tz1N47UGiVScUUvHemXd2kGwJi44h7qZMUzp" : address));
               decimals = 6n;
@@ -52,6 +57,7 @@ let f(_:unit) : Batcher.Storage.t = {
           from = {
             amount = 1n;
             token = {
+              token_id = 0n;
               name = "tzBTC";
               address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
               decimals = 8n;
@@ -59,6 +65,7 @@ let f(_:unit) : Batcher.Storage.t = {
             }
           };
           to = {
+            token_id = 0n;
             name = "EURL";
             address = Some(("KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8" : address));
             decimals = 6n;
