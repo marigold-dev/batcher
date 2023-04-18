@@ -36,51 +36,52 @@ export const setSocketTokenAmount = (
 
 // Contract error codes
 var error_codes = new Map([
-  [ 100, "no_rate_available_for_swap " ],
-  [ 101, "invalid token address " ],
-  [ 102, "invalid_tezos_address" ],
-  [ 103, "no_open_batch_for_deposits" ],
-  [ 104, "batch_should_be_cleared" ],
-  [ 105, "trying_to_close_batch_which_is_not_open" ],
-  [ 106, "unable_to_parse_side_from_external_order" ],
-  [ 107, "unable_to_parse_tolerance_from_external_order" ],
-  [ 108, "token_standard_not_found" ],
-  [ 109, "xtz_not_currently_supported" ],
-  [ 110, "unsupported_swap_type" ],
-  [ 111, "unable_to_reduce_token_amount_to_less_than_zero" ],
-  [ 112, "too_many_unredeemed_orders" ],
-  [ 113, "insufficient_swap_fee" ],
-  [ 114, "sender_not_administrator" ],
-  [ 115, "token_already_exists_but_details_are_different" ],
-  [ 116, "swap_already_exists" ],
-  [ 117, "swap_does_not_exist" ],
-  [ 118, "endpoint_does_not_accept_tez" ],
-  [ 119, "number_is_not_a_nat" ],
-  [ 120, "oracle_price_is_stale" ],
-  [ 121, "oracle_price_is_not_timely" ],
-  [ 122, "unable_to_get_price_from_oracle" ],
-  [ 123, "unable_to_get_price_from_new_oracle_source" ],
-  [ 124, "oracle_price_should_be_available_before_deposit" ],
-  [ 125, "swap_is_disabled_for_deposits" ],
-  [ 126, "upper_limit_on_tokens_has_been_reached" ],
-  [ 127, "upper_limit_on_swap_pairs_has_been_reached" ],
-  [ 128, "cannot_reduce_limit_on_tokens_to_less_than_already_exists" ],
-  [ 129, "cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists" ],
-  [ 130, "more_tez_sent_than_fee_cost" ],
-  [ 131, "cannot_update_deposit_window_to_less_than_the_minimum" ],
-  [ 132, "cannot_update_deposit_window_to_more_than_the_maximum" ],
-  [ 133, "oracle_must_be_equal_to_minimum_precision" ],
-  [ 134, "swap_precision_is_less_than_minimum" ],
-  [ 135, "cannot_update_scale_factor_to_less_than_the_minimum" ],
-  [ 136, "cannot_update_scale_factor_to_more_than_the_maximum" ],
-  [ 137, "cannot_remove_swap_pair_that_is_not_disabled" ]
+  [ 100, "No rate available for swap " ],
+  [ 101, "Invalid token address " ],
+  [ 102, "Invalid tezos address" ],
+  [ 103, "No open batch for deposits" ],
+  [ 104, "Batch should be cleared" ],
+  [ 105, "Trying to close batch which is not open" ],
+  [ 106, "Unable to parse side from external order" ],
+  [ 107, "Unable to parse tolerance from external order" ],
+  [ 108, "Token standard not found" ],
+  [ 109, "Xtz not currently supported" ],
+  [ 110, "Unsupported swap type" ],
+  [ 111, "Unable to reduce token amount to less than zero" ],
+  [ 112, "Too many unredeemed orders" ],
+  [ 113, "Insufficient swap fee" ],
+  [ 114, "Sender not administrator" ],
+  [ 115, "Token already exists but details are different" ],
+  [ 116, "Swap already exists" ],
+  [ 117, "Swap does not exist" ],
+  [ 118, "Endpoint does not accept tez" ],
+  [ 119, "Number is not a nat" ],
+  [ 120, "Oracle price is stale" ],
+  [ 121, "Oracle price is not timely" ],
+  [ 122, "Unable to get price from oracle" ],
+  [ 123, "Unable to get price from new oracle source" ],
+  [ 124, "Oracle price should be available before deposit" ],
+  [ 125, "Swap is disabled for deposits" ],
+  [ 126, "Upper limit on tokens has been reached" ],
+  [ 127, "Upper limit on swap pairs has been reached" ],
+  [ 128, "Cannot reduce limit on tokens to less than already exists" ],
+  [ 129, "Cannot reduce limit on swap pairs to less than already exists" ],
+  [ 130, "More tez sent than fee cost" ],
+  [ 131, "Cannot update deposit window to less than the minimum" ],
+  [ 132, "Cannot update deposit window to more than the maximum" ],
+  [ 133, "Oracle must be equal to minimum precision" ],
+  [ 134, "Swap precision is less than minimum" ],
+  [ 135, "Cannot update scale factor to less than the minimum" ],
+  [ 136, "Cannot update scale factor to more than the maximum" ],
+  [ 137, "Cannot remove swap pair that is not disabled" ]
 ]);
 export const getErrorMess = (error: any) => {
    try{
-
+    console.info("Error Message", error);
     const error_data_size = error.data.length;
-    const error_code = error.data[error_data_size].with;
-    const error_message  =  error_codes.get(error_code);
+    console.info("Error Data Length", error_data_size);
+    const error_code = error.data[error_data_size-1].with.int;
+    const error_message  =  error_codes.get(parseInt(error_code));
     return error_message;
    
 
