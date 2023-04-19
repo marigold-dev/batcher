@@ -35,7 +35,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push release version
-        if: ${{ github.ref == 'refs/heads/release-mainnet' }}
         uses: docker/build-push-action@v3
         with:
           file: ./batcher-ui/Dockerfile.${{ matrix.network }}
