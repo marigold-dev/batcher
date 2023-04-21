@@ -31,7 +31,7 @@ endef
 
 clean:
 	$(call clean_files)
-build-ghostnet:
+build-mainnet:
 	$(call clean_files)
 	$(call compile_contract,batcher.mligo, batcher-mainnet.tz)
 	$(call compile_storage,storage/initial_storage_mainnet.mligo, batcher-storage-mainnet.tz)

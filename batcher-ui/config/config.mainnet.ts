@@ -54,7 +54,7 @@ export default defineConfig({
     REACT_APP_PATH_TO_BATCHER_LOGO: BATCHER_LOGO,
     REACT_APP_TEZOS_NODE_URI: 'https://mainnet.tezos.marigold.dev',
     REACT_APP_TZKT_URI_API: 'https://api.tzkt.io',
-    REACT_APP_BATCHER_CONTRACT_HASH: 'KT1S7EhW8ZQUzigNTqDrj25kezqEmdNLcxdU',
+    REACT_APP_BATCHER_CONTRACT_HASH: 'KT1CoTu4CXcWoVk69Ukbgwx2iDK7ZA4FMSpJ',
   },
   metas: [
     {
