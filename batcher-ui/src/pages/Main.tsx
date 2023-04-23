@@ -423,8 +423,8 @@ const Welcome: React.FC = () => {
       zeroHoldings(storage); 
       let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, openHoldings, clearedHoldings); 
 
-      setClearedHoldings(batch_holdings[0]);
-      setOpenHoldings(batch_holdings[1]);
+      setOpenHoldings(batch_holdings[0]);
+      setClearedHoldings(batch_holdings[1]);
       
       } catch (error) {
         console.error(error);
