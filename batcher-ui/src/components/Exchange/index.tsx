@@ -50,6 +50,8 @@ const Exchange: React.FC<ExchangeProps> = ({
     if (!userAddress) {
       return;
     }
+    
+    tezos.setWalletProvider(initialState.wallet);
 
     tezos.setWalletProvider(initialState.wallet);
 

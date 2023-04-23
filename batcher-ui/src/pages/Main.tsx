@@ -418,6 +418,17 @@ const Welcome: React.FC = () => {
     return [open_holdings, cleared_holdings];
   };
 
+  const zeroHoldings = (storage:any) => {
+     const valid_pairs = storage.valid_tokens;
+    const tokens = new Map<string,number>();
+    Object.keys(valid_pairs).map((k,i) => {
+        tokens.set(k,0);
+    });
+    setClearedHoldings(tokens);
+    setOpenHoldings(tokens);
+    
+  };
+
   const updateHoldings = async (storage: any) => {
     let oh = openHoldings;
     let ch = clearedHoldings;
@@ -477,6 +488,11 @@ const Welcome: React.FC = () => {
     }
     setHasClearedHoldings(sum_of_holdings > 0);
   };
+
+
+
+
+
 
   const getBatches = async (storage: any) => {
     await getCurrentVolume(storage);

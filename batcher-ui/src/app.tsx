@@ -30,7 +30,8 @@ export async function getInitialState(): Promise<any> {
 
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    rightContentRender: () => <RightContent />,
+    rightContentRender: () => <RightContent
+    />,
     disableContentMargin: false,
     waterMarkProps: {
       content: initialState?.currentUser?.name,
@@ -39,7 +40,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     menuHeaderRender: undefined,
     ...initialState?.settings,
     childrenRender: () => {
-      return <Main />;
+      return <Main
+      />;
     },
   };
 };
