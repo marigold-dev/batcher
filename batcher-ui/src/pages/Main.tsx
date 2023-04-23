@@ -50,8 +50,7 @@ const Welcome: React.FC = () => {
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [inversion, setInversion] = useState(true);
   const { initialState, setInitialState } = useModel('@@initialState');
-  const { wallet, storedUserAddress } = initialState;
-  const [userAddress, setUsrAddress] = useState<string>(undefined);
+  const { wallet, userAddress } = initialState;
 
   const [buyToken, setBuyToken] = useState<token>({
         token_id: 0,
@@ -542,19 +541,6 @@ const Welcome: React.FC = () => {
     }).then(r => setOraclePrice(r));
   };
 
-  const persistWallet = () => {
-    if (!userAddress) {
-      // eslint-disable-next-line @typescript-eslint/no-shadow
-      const wallet = new BeaconWallet({
-        name: 'batcher',
-        preferredNetwork: getNetworkType(),
-      });
-      Tezos.setWalletProvider(wallet);
-      setInitialState({...initialState, wallet: wallet, storedUserAddress: userAddress}).then(r => console.log(r));
-    } else {
-      Tezos.setWalletProvider(wallet);
-    }
-  };
 
   const [open, setOpen] = useState(false);
   const [swaps, setSwaps] = useState<string[]>([]);
@@ -723,7 +709,6 @@ const Welcome: React.FC = () => {
     await getTokenBalance();
     await updateHoldings(storage);
     await getCurrentVolume(storage);
-    persistWallet();
 
   };
 
@@ -776,11 +761,6 @@ const Welcome: React.FC = () => {
     console.log("User address changed - refreshing from storage")
     refreshStorage().then(r => console.log(r));
   }, [userAddress]);
-
-  useEffect(() => {
-     if(userAddress != storedUserAddress)
-        setUsrAddress(storedUserAddress);
-  }, [storedUserAddress]);
 
 
   return (

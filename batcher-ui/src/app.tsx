@@ -1,6 +1,8 @@
 import Footer from '@/components/Footer';
 import React, { useState, useEffect } from 'react';
 import RightContent from '@/components/RightContent';
+import { AccountInfo } from "@airgap/beacon-sdk";
+import { BeaconWallet } from "@taquito/beacon-wallet";
 import { PageLoading } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from 'umi';
 import defaultSettings from '../config/defaultSettings';
@@ -17,7 +19,8 @@ export const initialStateConfig = {
 export async function getInitialState(): Promise<any> {
   return {
     wallet: null,
-    storedUserAddress: null,
+    userAddress: null,
+    userAccount: null,
     settings: defaultSettings,
   };
 }
