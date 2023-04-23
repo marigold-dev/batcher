@@ -1,13 +1,15 @@
 import Footer from '@/components/Footer';
 import React, { useState, useEffect } from 'react';
 import RightContent from '@/components/RightContent';
+import { AccountInfo } from "@airgap/beacon-sdk";
+import { BeaconWallet } from "@taquito/beacon-wallet";
 import { PageLoading } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from 'umi';
 import defaultSettings from '../config/defaultSettings';
 import Main from './pages/Main';
 import { Spin, Image } from 'antd';
 import MarigoldLogo from '../img/marigold-logo.png';
-
+import { TezosToolkit } from '@taquito/taquito';
 Spin.setDefaultIndicator(<Image src={MarigoldLogo} />);
 
 export const initialStateConfig = {
@@ -17,14 +19,16 @@ export const initialStateConfig = {
 export async function getInitialState(): Promise<any> {
   return {
     wallet: null,
-    storedUserAddress: null,
+    userAddress: null,
+    userAccount: null,
     settings: defaultSettings,
   };
 }
 
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    rightContentRender: () => <RightContent />,
+    rightContentRender: () => <RightContent
+    />,
     disableContentMargin: false,
     waterMarkProps: {
       content: initialState?.currentUser?.name,
@@ -33,7 +37,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     menuHeaderRender: undefined,
     ...initialState?.settings,
     childrenRender: () => {
-      return <Main />;
+      return <Main
+      />;
     },
   };
 };
