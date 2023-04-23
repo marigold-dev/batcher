@@ -10,7 +10,6 @@ import { ExchangeProps, PriceType, } from '@/extra_utils/types';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { tzip12, Tzip12Module } from "@taquito/tzip12";
 import { tzip16 } from "@taquito/tzip16";
-
 const Exchange: React.FC<ExchangeProps> = ({
   userAddress,
   buyBalance,
@@ -26,10 +25,6 @@ const Exchange: React.FC<ExchangeProps> = ({
   setUpdateAll
 }: ExchangeProps) => {
 
-// const DollarIcon = (props: Partial<CustomIconComponentProps>) => (
-//  <Icon component={ExchangeDollarSvg} {...props} />
-// );
-
 
 
   const [price, setPrice] = useState(PriceType.EXACT);
@@ -39,7 +34,6 @@ const Exchange: React.FC<ExchangeProps> = ({
 
   const [form] = Form.useForm();
 
-  tezos.addExtension(new Tzip12Module());
 
   const triggerUpdate = () => {
     setTimeout(function () {
@@ -60,7 +54,10 @@ const Exchange: React.FC<ExchangeProps> = ({
     if (!userAddress) {
       return;
     }
+    
+    tezos.setWalletProvider(initialState.wallet);
 
+    console.info("tezos", initialState.tezos);
     const tokenName = inversion ? buyToken.name : sellToken.name;
     const selectedToken = inversion ? buyToken : sellToken;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);

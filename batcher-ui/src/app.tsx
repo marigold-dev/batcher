@@ -9,7 +9,7 @@ import defaultSettings from '../config/defaultSettings';
 import Main from './pages/Main';
 import { Spin, Image } from 'antd';
 import MarigoldLogo from '../img/marigold-logo.png';
-
+import { TezosToolkit } from '@taquito/taquito';
 Spin.setDefaultIndicator(<Image src={MarigoldLogo} />);
 
 export const initialStateConfig = {
@@ -27,7 +27,8 @@ export async function getInitialState(): Promise<any> {
 
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    rightContentRender: () => <RightContent />,
+    rightContentRender: () => <RightContent
+    />,
     disableContentMargin: false,
     waterMarkProps: {
       content: initialState?.currentUser?.name,
@@ -36,7 +37,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     menuHeaderRender: undefined,
     ...initialState?.settings,
     childrenRender: () => {
-      return <Main />;
+      return <Main
+      />;
     },
   };
 };

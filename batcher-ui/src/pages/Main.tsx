@@ -8,12 +8,10 @@ import {
   ContentType,
   token,
   BatcherStatus,
-  CLEARED,
-  OPEN,
   Volumes,
   swap,
+  tokens,
 } from '@/extra_utils/types';
-import { TezosToolkit } from '@taquito/taquito';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Space, Col, Row, Drawer, Radio, } from 'antd';
 import { DoubleRightOutlined } from '@ant-design/icons';
@@ -21,7 +19,6 @@ import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
   getEmptyVolumes,
-  getNetworkType,
   setTokenAmount,
   setSocketTokenAmount,
   scaleStringAmountDown,
@@ -29,13 +26,12 @@ import {
 import { connection, init } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp } from '@/extra_utils/utils';
 import Holdings from '@/components/Holdings';
-import { BeaconWallet } from '@taquito/beacon-wallet';
+import { TezosToolkit } from '@taquito/taquito';
 
 const Welcome: React.FC = () => {
 
-
-  const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [Tezos] = useState<TezosToolkit>(new TezosToolkit(REACT_APP_TEZOS_NODE_URI));
+  const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [tokenMap, setTokenMap] = useState<Map<string,swap>>(new Map());
   const [ratesBigMapId, setRatesBigMapId] = useState<number>(0);
   const [userBatchOrderTypesBigMapId, setUserBatchOrderTypesBigMapId] = useState<number>(0);
@@ -49,8 +45,8 @@ const Welcome: React.FC = () => {
   });
   const [bigMapsByIdUri] = useState<string>('' + chain_api_url + '/v1/bigmaps/');
   const [inversion, setInversion] = useState(true);
-  const { initialState, setInitialState } = useModel('@@initialState');
-  const { wallet, userAddress } = initialState;
+  const { initialState } = useModel('@@initialState');
+  const { userAddress } = initialState;
 
   const [buyToken, setBuyToken] = useState<token>({
         token_id: 0,
@@ -73,11 +69,8 @@ const Welcome: React.FC = () => {
   const [rate, setRate] = useState(0);
   const [status, setStatus] = useState<string>(BatcherStatus.NONE);
   const [openTime, setOpenTime] = useState<string>(null);
-  const [closeTime, setCloseTime] = useState<string>(null);
-  const [buySideAmount, setBuySideAmount] = useState<number>(0);
-  const [sellSideAmount, setSellSideAmount] = useState<number>(0);
-  const [buySideOpenAmount, setBuySideOpenAmount] = useState<number>(0);
-  const [sellSideOpenAmount, setSellSideOpenAmount] = useState<number>(0);
+  const [clearedHoldings, setClearedHoldings] = useState<Map<string, number>>(new Map<string, number>());
+  const [openHoldings, setOpenHoldings] = useState<Map<string, number>>(new Map<string, number>());
   const [feeInMutez, setFeeInMutez] = useState<number>(0);
   const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
   const [updateAll, setUpdateAll] = useState<boolean>(false);
@@ -271,18 +264,25 @@ const Welcome: React.FC = () => {
   };
 
 
-  const calculateHolidingFromBatch = (batch: any, ubots: any ) => {
-    let initialBuySideAmount = 0;
-    let initialSellSideAmount = 0;
-    let initialBuySideOpenAmount = 0;
-    let initialSellSideOpenAmount = 0;
-   
-    console.log("batch", batch); 
 
-    console.log("ubots", ubots); 
-    console.log("batch_number", batch.batch_number); 
+
+  const findTokensForBatch = (batch: any) => {
+
+    const pair =  batch.pair
+    const tokens:tokens = {
+      buy_token_name : pair.name_0,
+      sell_token_name : pair.name_1,
+
+    }
+    return tokens;
+  }; 
+
+
+  
+  const calculateHoldingFromBatch = (batch: any, ubots: any, open_holdings: Map<string, number> , cleared_holdings: Map<string, number> ) => {
+
+   const tokens = findTokensForBatch(batch);
     const depositsInBatches = ubots.value;
-    console.log("depositsInBatches", depositsInBatches); 
     const userBatchLength = depositsInBatches[batch.batch_number].length; 
     
     if (Object.keys(batch.status)[0] !== BatcherStatus.CLEARED){
@@ -292,27 +292,27 @@ const Welcome: React.FC = () => {
         const depObject = ubots.value[batch.batch_number].at(j);
         const side = depObject.key.side;
         const value = depObject.value;
+        let initialBuySideOpenAmount = open_holdings.get(tokens.buy_token_name);
+        let initialSellSideOpenAmount = open_holdings.get(tokens.sell_token_name); 
         const updatedValues = getOriginalDepositAmounts(side,initialBuySideOpenAmount, initialSellSideOpenAmount,value);
         initialBuySideOpenAmount += updatedValues.at(0);
         initialSellSideOpenAmount += updatedValues.at(1);
+        open_holdings.set(tokens.buy_token_name,initialBuySideOpenAmount);
+        open_holdings.set(tokens.sell_token_name, initialSellSideOpenAmount);
         } catch (error) {
           console.error(error);
         }
       }
     } else {
-      console.log("batch", batch); 
 
       const cleared = batch.status.cleared;
-      console.log("cleared", cleared); 
       const clearing = cleared.clearing;
-      console.log("clearing", clearing); 
       const buy_side_cleared_volume = clearing.total_cleared_volumes.buy_side_total_cleared_volume;
       const sell_side_cleared_volume = clearing.total_cleared_volumes.sell_side_total_cleared_volume;
       const buy_side_volume_subject_to_clearing = clearing.total_cleared_volumes.buy_side_volume_subject_to_clearing;
       const sell_side_volume_subject_to_clearing = clearing.total_cleared_volumes.sell_side_volume_subject_to_clearing;
 
       let rate_data = clearing.clearing_rate.rate;
-      console.log("rate_data", rate_data); 
 
       for (let j = 0; j < userBatchLength; j++) {
         try{
@@ -320,36 +320,46 @@ const Welcome: React.FC = () => {
         const side = depObject.key.side;
         const tol = depObject.key.tolerance;
         const value = depObject.value;
-        console.log("Deposit Side- " + j, side); 
-        console.log("Deposit Tolerance- " + j, tol); 
-        console.log("Deposit Value- " + j, value); 
          
         if (buy_side_cleared_volume === 0 || sell_side_cleared_volume === 0 ){
-           const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
-           initialBuySideAmount += updatedValues.at(0);
-           initialSellSideAmount += updatedValues.at(1);
+        let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
+        let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
+        const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
+        initialBuySideAmount += updatedValues.at(0);
+        initialSellSideAmount += updatedValues.at(1);
+        cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
+        cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
         } else
         {
           const wasInClearing = wasInClearingForBatch(side, tol,clearing.clearing_tolerance);
           if (wasInClearing) {
             if (Object.keys(side).at(0) === "buy") {
+               let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
+               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
                const payout = convertHoldingToPayout(value,buy_side_volume_subject_to_clearing,buy_side_cleared_volume, sell_side_cleared_volume,buyToken.decimals, sellToken.decimals);   
                initialSellSideAmount += payout.at(0);
                initialBuySideAmount += payout.at(1);
-               console.info("Deposit payout",payout);
+               cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
+               cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
             } else if (Object.keys(side).at(0) === "sell"){
+               let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
+               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
                const payout = convertHoldingToPayout(value,sell_side_volume_subject_to_clearing, sell_side_cleared_volume, buy_side_cleared_volume, sellToken.decimals, buyToken.decimals);   
                initialBuySideAmount += payout.at(0);
                initialSellSideAmount += payout.at(1);
-               console.info("Deposit payout",payout);
+               cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
+               cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
             } else {
               console.error("Unable to determine side for a deposit that was in clearing");
             }
-            console.info("order was in clearing");
           } else {
+           let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
+           let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
            const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
            initialBuySideAmount += updatedValues.at(0);
            initialSellSideAmount += updatedValues.at(1);
+           cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
+           cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
           } 
         }
 
@@ -358,45 +368,44 @@ const Welcome: React.FC = () => {
         }
       }
     }
-    return [initialBuySideAmount, initialSellSideAmount, initialBuySideOpenAmount, initialSellSideOpenAmount];
+    return [open_holdings, cleared_holdings];
 
   };
 
+  const zeroHoldings = (storage:any) => {
+     const valid_pairs = storage.valid_tokens;
+    const tokens = new Map<string,number>();
+    Object.keys(valid_pairs).map((k,i) => {
+        tokens.set(k,0);
+    });
+    setClearedHoldings(tokens);
+    setOpenHoldings(tokens);
+    
+  };
+
   const updateHoldings = async (storage: any) => {
-    console.log("Updating holdings")
     try{
     if (!userAddress) {
 
-      console.log("No user address - won't update holdings")
-      setSellSideAmount(0);
-      setBuySideAmount(0);
+      zeroHoldings(storage);
       return;
     }
 
     const userBatcherURI = bigMapsByIdUri + userBatchOrderTypesBigMapId + '/keys/' + userAddress;
-    console.log("userBatcherURI", userBatcherURI);
     const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
     let userBatches = null;
 
     try {
       userBatches = await userOrderBookData.json();
-      console.log("userBatches", userBatches);
     } catch (error) {
       console.error(error);
       return;
     }
 
-      console.info("User batches found", userBatches.value);
-      console.info("User batches length", Object.keys(userBatches.value).length);
     if (Object.keys(userBatches.value).length === 0) {
       return;
     }
-
-    let initialBuySideAmount = 0;
-    let initialSellSideAmount = 0;
-    let initialBuySideOpenAmount = 0;
-    let initialSellSideOpenAmount = 0;
-
+    
     for (let i = 0; i < Object.keys(userBatches.value).length; i++) {
       const batchId = Object.keys(userBatches.value).at(i);
 
@@ -411,29 +420,25 @@ const Welcome: React.FC = () => {
       }
       
       try{
-        
-      let batch_holdings = calculateHolidingFromBatch(batch.value,userBatches ); 
+      zeroHoldings(storage); 
+      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, openHoldings, clearedHoldings); 
 
-      initialBuySideAmount += batch_holdings[0];
-      initialSellSideAmount += batch_holdings[1];
-      initialBuySideOpenAmount += batch_holdings[2];
-      initialSellSideOpenAmount += batch_holdings[3];
+      setClearedHoldings(batch_holdings[0]);
+      setOpenHoldings(batch_holdings[1]);
       
       } catch (error) {
         console.error(error);
       }
     }
-
-    setSellSideAmount(initialSellSideAmount);
-    setBuySideAmount(initialBuySideAmount);
-    setSellSideOpenAmount(initialSellSideOpenAmount);
-    setBuySideOpenAmount(initialBuySideOpenAmount);
     } catch (error) {
       console.error('Unable to update holdings', error);
     }
-
-
   };
+
+
+
+
+
 
   const getBatches = async (storage: any) => {
     await getCurrentVolume(storage);
@@ -628,16 +633,10 @@ const Welcome: React.FC = () => {
             tezos={Tezos}
             userAddress={userAddress}
             contractAddress={contractAddress}
-            buyToken={buyToken}
-            sellToken={sellToken}
-            buyTokenHolding={buySideAmount}
-            sellTokenHolding={sellSideAmount}
-            setBuySideAmount={setBuySideAmount}
-            setSellSideAmount={setSellSideAmount}
-            buyTokenOpenHolding={buySideOpenAmount}
-            sellTokenOpenHolding={sellSideOpenAmount}
-            setBuySideOpenAmount={setBuySideOpenAmount}
-            setSellSideOpenAmount={setSellSideOpenAmount}
+            openHoldings={openHoldings}
+            clearedHoldings={clearedHoldings}
+            setOpenHoldings={setOpenHoldings}
+            setClearedHoldings={setClearedHoldings}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
           />
@@ -753,6 +752,11 @@ const Welcome: React.FC = () => {
     handleWebsocket();
   }, []);
 
+  useEffect(() => {
+    if(initialState?.wallet !== null){
+      Tezos.setWalletProvider(initialState.wallet);
+    }
+  }, []);
   useEffect(() => {
     refreshStorage().then(r => console.log(r));
   }, [buyToken.address, sellToken.address, updateAll]);

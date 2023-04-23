@@ -1,25 +1,23 @@
-import React, { useEffect } from 'react';
-import { Button, Space, Typography, Col, message } from 'antd';
+import React, { useEffect, useContext } from 'react';
+import { Button, Space, Typography, Col, message, Table } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
 import { HoldingsProps } from '@/extra_utils/types';
+import { useModel } from 'umi';
 
 const Holdings: React.FC<HoldingsProps> = ({
   tezos,
   contractAddress,
-  buyToken,
-  sellToken,
-  buyTokenHolding,
-  sellTokenHolding,
-  setBuySideAmount,
-  setSellSideAmount,
-  buyTokenOpenHolding,
-  sellTokenOpenHolding,
+  openHoldings,
+  clearedHoldings,
+  setOpenHoldings,
+  setClearedHoldings,
   updateAll,
   setUpdateAll,
 }: HoldingsProps) => {
 
+  const { initialState  } = useModel('@@initialState');
 
   const triggerUpdate = () => {
     setTimeout(function () {
@@ -29,12 +27,35 @@ const Holdings: React.FC<HoldingsProps> = ({
   };
 
 
+  const generateHoldings = (dict:Map<string,number>) => {
+     var data = [];
+     for (const key of dict) {
+
+                    data.push({
+                      token: key[0],
+                      holding: key[1],
+                     });
+     };
+      return (
+            <>
+            {
+            data.map((h) =>
+                <React.Fragment>
+                  <Typography> {h.holding}  {h.token} | </Typography>
+                </React.Fragment>
+            )}
+        </>
+    );
+
+
+  };
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
       return undefined;
     };
 
     try {
+      tezos.setWalletProvider(initialState.wallet);
       const contractWallet = await tezos.wallet.at(contractAddress);
       let redeem_op = await contractWallet.methods.redeem().send();
 
@@ -45,8 +66,8 @@ const Holdings: React.FC<HoldingsProps> = ({
           message.error('Failed to redeem holdings');
           console.error('Failed to redeem holdings' + confirm);
         } else {
-          setSellSideAmount(0);
-          setBuySideAmount(0);
+          setOpenHoldings(new Map<string,number>());
+          setClearedHoldings(new Map<string,number>());
           loading();
           message.success('Successfully redeemed holdings');
           triggerUpdate();
@@ -64,28 +85,24 @@ const Holdings: React.FC<HoldingsProps> = ({
   return (
     <Col className="base-content br-t br-b br-l br-r">
       <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Holdings in Open/Closed Batches</Typography>
+        <Typography className="batcher-title p-16">Open/Closed Batches</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="vertical">
-            <Typography>
-              {buyTokenOpenHolding} {buyToken.name}
-            </Typography>
-            <Typography>
-              {sellTokenOpenHolding} {sellToken.name}
-            </Typography>
+          <Space direction="horizontal">
+                  <Typography>Holdings => </Typography>
+          | {
+             generateHoldings(openHoldings)
+          }
           </Space>
         </Col>
       </Space>
       <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Holdings in Cleared Batches (Redeemable)</Typography>
+        <Typography className="batcher-title p-16">Cleared Batches (Redeemable)</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="vertical">
-            <Typography>
-              {buyTokenHolding} {buyToken.name}
-            </Typography>
-            <Typography>
-              {sellTokenHolding} {sellToken.name}
-            </Typography>
+          <Space direction="horizontal">
+                  <Typography>Holdings => </Typography>
+          {
+            generateHoldings(clearedHoldings)
+          }
           </Space>
         </Col>
       </Space>
