@@ -14,7 +14,7 @@ import {
 } from '@/extra_utils/types';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Space, Col, Row, Drawer, Radio, } from 'antd';
-import { DoubleRightOutlined } from '@ant-design/icons';
+import { CiTwoTone, DoubleRightOutlined } from '@ant-design/icons';
 import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
@@ -24,7 +24,7 @@ import {
   scaleStringAmountDown,
 } from '@/extra_utils/utils';
 import { connection, init } from '@/extra_utils/webSocketUtils';
-import { scaleAmountUp } from '@/extra_utils/utils';
+import { scaleAmountUp, zeroHoldings } from '@/extra_utils/utils';
 import Holdings from '@/components/Holdings';
 import { TezosToolkit } from '@taquito/taquito';
 
@@ -372,29 +372,20 @@ const Welcome: React.FC = () => {
 
   };
 
-  const zeroHoldings = (storage:any) => {
-     const valid_pairs = storage.valid_tokens;
-    const tokens = new Map<string,number>();
-    Object.keys(valid_pairs).map((k,i) => {
-        tokens.set(k,0);
-    });
-    setClearedHoldings(tokens);
-    setOpenHoldings(tokens);
-    
-  };
 
   const updateHoldings = async (storage: any) => {
+    let oh = openHoldings;
+    let ch = clearedHoldings;
     try{
     if (!userAddress) {
-
-      zeroHoldings(storage);
       return;
     }
 
+    console.info("##open holdings", openHoldings);
+    console.info("##cleared holdings", clearedHoldings);
     const userBatcherURI = bigMapsByIdUri + userBatchOrderTypesBigMapId + '/keys/' + userAddress;
     const userOrderBookData = await fetch(userBatcherURI, { method: 'GET' });
     let userBatches = null;
-
     try {
       userBatches = await userOrderBookData.json();
     } catch (error) {
@@ -420,11 +411,12 @@ const Welcome: React.FC = () => {
       }
       
       try{
-      zeroHoldings(storage); 
-      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, openHoldings, clearedHoldings); 
+      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, oh, ch); 
 
-      setOpenHoldings(batch_holdings[0]);
-      setClearedHoldings(batch_holdings[1]);
+    console.info("== batcher holdings " + batchId, batch_holdings);
+      oh = batch_holdings[0];
+      ch = batch_holdings[1];
+
       
       } catch (error) {
         console.error(error);
@@ -433,6 +425,8 @@ const Welcome: React.FC = () => {
     } catch (error) {
       console.error('Unable to update holdings', error);
     }
+    setOpenHoldings(oh);
+    setClearedHoldings(ch);
   };
 
 
@@ -700,6 +694,7 @@ const Welcome: React.FC = () => {
 
   const updateFromStorage = async (storage: any) => {
     updateBigMapIds(storage);
+    zeroHoldings(storage, setOpenHoldings,setClearedHoldings);
     await updateTokenDetails(storage);
     await getBatches(storage);
     await updateSwapMap(storage);

@@ -5,7 +5,7 @@ import '@/components/Holdings/index.less';
 import '@/global.less';
 import { HoldingsProps } from '@/extra_utils/types';
 import { useModel } from 'umi';
-
+import { zeroHoldings } from '@/extra_utils/utils';
 const Holdings: React.FC<HoldingsProps> = ({
   tezos,
   contractAddress,
@@ -40,7 +40,7 @@ const Holdings: React.FC<HoldingsProps> = ({
             <>
             {
             data.map((h) =>
-                <React.Fragment>
+                <React.Fragment key={h.token}>
                   <Typography> {h.holding}  {h.token} | </Typography>
                 </React.Fragment>
             )}
