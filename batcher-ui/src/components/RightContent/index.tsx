@@ -112,6 +112,7 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
     (async () => {
 
 
+
       try {
         setCaption(connectCaption);
         let localstate = JSON.parse(localStorage.getItem("state"));
@@ -128,7 +129,6 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           localStorage.setItem("state", JSON.stringify(updatedState));
           setInitialState(updatedState);
           setCaption(disconnectCaption);
-
 
         } else {
 
