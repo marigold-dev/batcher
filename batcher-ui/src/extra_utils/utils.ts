@@ -138,6 +138,18 @@ export const scaleStringAmountDown = (amount: string, decimals: number) => {
     return (Number.parseInt(amount) * scale).toString();
   }
 };
+  
+export const zeroHoldings = (storage:any, setOpenHoldings: Dispatch<SetStateAction<Map<string,number>>>, setClearedHoldings: Dispatch<SetStateAction<Map<string,number>>>) => {
+     const valid_pairs = storage.valid_tokens;
+    const ot = new Map<string,number>();
+    const ct = new Map<string,number>();
+    Object.keys(valid_pairs).map((k,i) => {
+        ot.set(k,0);
+        ct.set(k,0);
+    });
+    setClearedHoldings(ct);
+    setOpenHoldings(ot);
+  };
 
 export const zeroHoldings = (
   storage: any,
