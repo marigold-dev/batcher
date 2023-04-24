@@ -12,6 +12,8 @@ import { LocalStorage } from '@airgap/beacon-sdk';
 
 export type SiderTheme = 'light' | 'dark';
 
+
+
 const GlobalHeaderRight: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
