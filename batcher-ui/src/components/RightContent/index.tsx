@@ -88,7 +88,6 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
     } catch (error) {
       console.error(error);
     }
-    
     let updatedState = { ...initialState, wallet: null, userAddress: null, userAccount:null };
     localStorage.setItem("state", JSON.stringify(updatedState));
     setInitialState(updatedState);
