@@ -71,7 +71,13 @@ const GlobalHeaderRight: React.FC = () => {
   };
 
   const disconnectWallet = async () => {
+    console.info("Disconnecting wallet");
     await connection.stop();
+    try{
+    await initialState.wallet.clearActiveAccount();
+    } catch (error) {
+      console.error(error);
+    }
     let updatedState = { ...initialState, wallet: null, userAddress: null, userAccount:null };
     localStorage.setItem("state", JSON.stringify(updatedState));
     setInitialState(updatedState);
