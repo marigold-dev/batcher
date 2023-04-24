@@ -12,6 +12,8 @@ import { LocalStorage } from "@airgap/beacon-sdk";
 
 export type SiderTheme = 'light' | 'dark';
 
+
+
 const GlobalHeaderRight: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const tezos = new TezosToolkit(REACT_APP_TEZOS_NODE_URI);
@@ -26,13 +28,18 @@ const GlobalHeaderRight: React.FC = () => {
     className = `${styles.right}  ${styles.dark}`;
   }
 
+const connectCaption = "Connect Wallet";
+const connectingCaption = "Connecting...";
+const disconnectCaption = "Disconnect Wallet";
+const disconnectingCaption = "Disconnecting...";
+const [ caption, setCaption ] = useState<string>(connectCaption);
 
   const items: MenuProps['items'] = [
     {
       key: '1',
       label: (
         <Typography className="p-12">
-          {!initialState.userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
+          { caption }
         </Typography>
       ),
     },
@@ -47,6 +54,7 @@ const GlobalHeaderRight: React.FC = () => {
   const connectWallet = async () => {
       console.info("=== STATE ===  state change check ", initialState);
     if (!initialState.userAddress) {
+      setCaption(connectingCaption);
       const wallet = new BeaconWallet({
         name: 'batcher',
         preferredNetwork: getNetworkType(),
@@ -63,6 +71,7 @@ const GlobalHeaderRight: React.FC = () => {
       const userAddress = activeAccount ? await wallet.getPKH() : null;
       let updatedState = { ...initialState, wallet: wallet, userAddress: userAddress, userAccount: activeAccount};
       
+      setCaption(disconnectCaption);
       localStorage.setItem("state", JSON.stringify(updatedState));
       console.log("localstroage - after connect", localStorage);
       setInitialState(updatedState);
@@ -72,6 +81,7 @@ const GlobalHeaderRight: React.FC = () => {
 
   const disconnectWallet = async () => {
     console.info("Disconnecting wallet");
+    setCaption(disconnectingCaption);
     await connection.stop();
     try{
     await initialState.wallet.clearActiveAccount();
@@ -81,6 +91,7 @@ const GlobalHeaderRight: React.FC = () => {
     let updatedState = { ...initialState, wallet: null, userAddress: null, userAccount:null };
     localStorage.setItem("state", JSON.stringify(updatedState));
     setInitialState(updatedState);
+    setCaption(connectCaption);
   };
 
   const scrollToTop = () => {
@@ -100,12 +111,14 @@ const GlobalHeaderRight: React.FC = () => {
   useEffect(() => {
     (async () => {
 
+      setCaption(connectCaption);
       let localstate = JSON.parse(localStorage.getItem("state"));
       let state = localstate !== null ? localstate : initialState
       let wallet = newWallet();
 
       try {
 
+        setCaption(connectingCaption);
         tezos.setWalletProvider(wallet);
         const activeAccount = await wallet.client.getActiveAccount();
         if (activeAccount) {
@@ -114,6 +127,7 @@ const GlobalHeaderRight: React.FC = () => {
           let updatedState = { ...state, wallet: wallet, userAddress: userAddress,  userAccount: activeAccount, };
           localStorage.setItem("state", JSON.stringify(updatedState));
           setInitialState(updatedState);
+          setCaption(disconnectCaption);
 
         }
       } catch (error) {
@@ -131,7 +145,7 @@ const GlobalHeaderRight: React.FC = () => {
           onClick={!initialState.userAddress ? connectWallet : disconnectWallet}
           danger
         >
-          {!initialState.userAddress ? 'Connect Wallet' : 'Disconnect Wallet'}
+          { caption }
         </Button>
         <div onClick={scrollToTop}>
           <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
