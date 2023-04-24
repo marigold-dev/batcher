@@ -1,0 +1,325 @@
+{
+  "name": "Batcher",
+  "authors": [
+    "Marigold.dev"
+  ],
+  "homepage": "https://marigold.dev/batcher",
+  "description": "Batcher - Batch Clearing DEX",
+  "version": "1.0.0",
+  "license": {
+    "name": "MIT",
+    "details": "https://github.com/marigold-dev/batcher/blob/main/LICENSE"
+  },
+  "source": {
+    "tools": [
+      "cameligo"
+    ],
+    "location": "https://github.com/marigold-dev/batcher/"
+  },
+  "errors": [
+    {
+      "error": {
+        "nat": "100"
+      },
+      "expansion": {
+        "string": "no rate available for swap"
+      }
+    },
+    {
+      "error": {
+        "nat": "101"
+      },
+      "expansion": {
+        "string": "invalid token address"
+      }
+    },
+    {
+      "error": {
+        "nat": "102"
+      },
+      "expansion": {
+        "string": "invalid tezos address"
+      }
+    },
+    {
+      "error": {
+        "nat": "103"
+      },
+      "expansion": {
+        "string": "no open batch for deposits"
+      }
+    },
+    {
+      "error": {
+        "nat": "104"
+      },
+      "expansion": {
+        "string": "batch should be cleared"
+      }
+    },
+    {
+      "error": {
+        "nat": "105"
+      },
+      "expansion": {
+        "string": "trying to close batch which is not open"
+      }
+    },
+    {
+      "error": {
+        "nat": "106"
+      },
+      "expansion": {
+        "string": "unable to parse side from external order"
+      }
+    },
+    {
+      "error": {
+        "nat": "107"
+      },
+      "expansion": {
+        "string": "unable to parse tolerance from external order"
+      }
+    },
+    {
+      "error": {
+        "nat": "108"
+      },
+      "expansion": {
+        "string": "token standard not foundg"
+      }
+    },
+    {
+      "error": {
+        "nat": "109"
+      },
+      "expansion": {
+        "string": "xtz not currently supported"
+      }
+    },
+    {
+      "error": {
+        "nat": "110"
+      },
+      "expansion": {
+        "string": "unsupported swap type"
+      }
+    },
+    {
+      "error": {
+        "nat": "111"
+      },
+      "expansion": {
+        "string": "unable to reduce token amount to less than zero"
+      }
+    },
+    {
+      "error": {
+        "nat": "112"
+      },
+      "expansion": {
+        "string": "too many unredeemed orders"
+      }
+    },
+    {
+      "error": {
+        "nat": "113"
+      },
+      "expansion": {
+        "string": "insufficient swap fee"
+      }
+    },
+    {
+      "error": {
+        "nat": "114"
+      },
+      "expansion": {
+        "string": "sender not administrator"
+      }
+    },
+    {
+      "error": {
+        "nat": "115"
+      },
+      "expansion": {
+        "string": "token already exists but details are different"
+      }
+    },
+    {
+      "error": {
+        "nat": "116"
+      },
+      "expansion": {
+        "string": "swap already exists"
+      }
+    },
+    {
+      "error": {
+        "nat": "117"
+      },
+      "expansion": {
+        "string": "swap does not exist"
+      }
+    },
+    {
+      "error": {
+        "nat": "118"
+      },
+      "expansion": {
+        "string": "endpoint does not accept tez"
+      }
+    },
+    {
+      "error": {
+        "nat": "119"
+      },
+      "expansion": {
+        "string": "number is not a natg"
+      }
+    },
+    {
+      "error": {
+        "nat": "120"
+      },
+      "expansion": {
+        "string": "oracle price is stale"
+      }
+    },
+    {
+      "error": {
+        "nat": "121"
+      },
+      "expansion": {
+        "string": "oracle price is not timely"
+      }
+    },
+    {
+      "error": {
+        "nat": "122"
+      },
+      "expansion": {
+        "string": "unable to get price from oracle"
+      }
+    },
+    {
+      "error": {
+        "nat": "123"
+      },
+      "expansion": {
+        "string": "unable to get price from new oracle source"
+      }
+    },
+    {
+      "error": {
+        "nat": "124"
+      },
+      "expansion": {
+        "string": "oracle price should be available before deposit"
+      }
+    },
+    {
+      "error": {
+        "nat": "125"
+      },
+      "expansion": {
+        "string": "swap is disabled for deposits"
+      }
+    },
+    {
+      "error": {
+        "nat": "126"
+      },
+      "expansion": {
+        "string": "upper limit on tokens has been reached"
+      }
+    },
+    {
+      "error": {
+        "nat": "127"
+      },
+      "expansion": {
+        "string": "upper limit on swap pairs has been reached"
+      }
+    },
+    {
+      "error": {
+        "nat": "128"
+      },
+      "expansion": {
+        "string": "cannot reduce limit on tokens to less than already exists"
+      }
+    },
+    {
+      "error": {
+        "nat": "129"
+      },
+      "expansion": {
+        "string": "cannot reduce limit on swap pairs to less than already exists"
+      }
+    },
+    {
+      "error": {
+        "nat": "130"
+      },
+      "expansion": {
+        "string": "more tez sent than fee cost"
+      }
+    },
+    {
+      "error": {
+        "nat": "131"
+      },
+      "expansion": {
+        "string": "cannot update deposit window to less than the minimum"
+      }
+    },
+    {
+      "error": {
+        "nat": "132"
+      },
+      "expansion": {
+        "string": "cannot update deposit window to more than the maximum"
+      }
+    },
+    {
+      "error": {
+        "nat": "133"
+      },
+      "expansion": {
+        "string": "oracle must be equal to minimum precision"
+      }
+    },
+    {
+      "error": {
+        "nat": "134"
+      },
+      "expansion": {
+        "string": "swap precision is less than minimum"
+      }
+    },
+    {
+      "error": {
+        "nat": "135"
+      },
+      "expansion": {
+        "string": "cannot update scale factor to less than the minimum"
+      }
+    },
+    {
+      "error": {
+        "nat": "136"
+      },
+      "expansion": {
+        "string": "cannot update scale factor to more than the maximum"
+      }
+    },
+    {
+      "error": {
+        "nat": "137"
+      },
+      "expansion": {
+        "string": "cannot remove swap pair that is not disabled"
+      }
+    }
+  ]
+}

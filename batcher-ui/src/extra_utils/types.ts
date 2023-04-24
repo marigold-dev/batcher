@@ -233,16 +233,10 @@ export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
-  buyToken: token;
-  sellToken: token;
-  buyTokenHolding: number;
-  sellTokenHolding: number;
-  setBuySideAmount: Dispatch<SetStateAction<number>>;
-  setSellSideAmount: Dispatch<SetStateAction<number>>;
-  buyTokenOpenHolding: number;
-  sellTokenOpenHolding: number;
-  setBuySideOpenAmount: Dispatch<SetStateAction<number>>;
-  setSellSideOpenAmount: Dispatch<SetStateAction<number>>;
+  openHoldings: Map<string,number>;
+  clearedHoldings: Map<string,number>;
+  setOpenHoldings: Dispatch<SetStateAction<Map<string,number>>>;
+  setClearedHoldings: Dispatch<SetStateAction<Map<string,number>>>;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
 
@@ -262,6 +256,7 @@ export type VolumeProps = {
   volumes: Volumes;
 };
 
+
 export const BUY = 'bUY';
 export const SELL = 'sELL';
 export const CLEARED = 'cleared';
@@ -269,3 +264,8 @@ export const CLEARED = 'cleared';
 export const MINUS = 'mINUS';
 export const EXACT = 'eXACT';
 export const PLUS = 'pLUS';
+
+export type tokens = {
+  buy_token_name: string;
+  sell_token_name: string;
+}
