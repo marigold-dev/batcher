@@ -20,7 +20,7 @@ let f(_:unit) : Batcher.Storage.t = {
     (("USDT"),{
       token_id = 0n;
       name = "USDT";
-      address = Some(("tz1N47UGiVScUUvHemXd2kGwJi44h7qZMUzp" : address));
+      address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     })
