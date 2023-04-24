@@ -111,12 +111,13 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
   useEffect(() => {
     (async () => {
 
+
       try {
         setCaption(connectCaption);
         let localstate = JSON.parse(localStorage.getItem("state"));
         let state = localstate !== null ? localstate : initialState
         let wallet = newWallet();
-  
+
         setCaption(connectingCaption);
         tezos.setWalletProvider(wallet);
         const activeAccount = await wallet.client.getActiveAccount();
@@ -128,7 +129,9 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           setInitialState(updatedState);
           setCaption(disconnectCaption);
 
+
         } else {
+
 
         setCaption(connectCaption);
         }
