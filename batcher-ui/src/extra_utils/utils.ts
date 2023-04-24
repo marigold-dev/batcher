@@ -112,7 +112,7 @@ export const getNetworkType = () => {
   if (network?.includes('GHOSTNET')) {
     return types.NetworkType.GHOSTNET;
   } else {
-    return types.NetworkType.KATHMANDUNET;
+    return types.NetworkType.MAINNET;
   }
 };
 
