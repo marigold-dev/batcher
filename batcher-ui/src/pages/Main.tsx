@@ -677,6 +677,12 @@ const Welcome: React.FC = () => {
           setUserAddress(usrAddr);
         }
       }
+
+      if(usrAddr === null){
+        setBuyBalance(0);
+        setSellBalance(0);
+      } else {
+
       console.log('getTokenBalance-userAddress',usrAddr);
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
       console.log('getTokenBalance-balanceURI',balanceURI);
@@ -687,6 +693,7 @@ const Welcome: React.FC = () => {
         setTokenAmount(balance, sellBalance, sellToken.address, sellToken.decimals, setSellBalance);
       }
       });
+      }
     } catch (error) {
       console.error('getTokenBalance-error',error);
       if(!userAddress) {
