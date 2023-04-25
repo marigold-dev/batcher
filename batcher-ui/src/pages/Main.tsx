@@ -416,6 +416,7 @@ const Welcome: React.FC = () => {
     console.info("== batcher holdings " + batchId, batch_holdings);
       oh = batch_holdings[0];
       ch = batch_holdings[1];
+
       } catch (error) {
         console.error(error);
       }
