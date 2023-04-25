@@ -70,9 +70,9 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
       const activeAccount = await wallet.client.getActiveAccount();
       const userAddress = activeAccount ? await wallet.getPKH() : null;
       let updatedState = { ...initialState, wallet: wallet, userAddress: userAddress, userAccount: activeAccount};
-      
+
       setCaption(disconnectCaption);
-      localStorage.setItem("state", JSON.stringify(updatedState));
+//      localStorage.setItem("state", JSON.stringify(updatedState));
       console.log("localstroage - after connect", localStorage);
       setInitialState(updatedState);
       console.log("Setting initialState", updatedState);
@@ -115,8 +115,8 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
 
       try {
         setCaption(connectCaption);
-        let localstate = JSON.parse(localStorage.getItem("state"));
-        let state = localstate !== null ? localstate : initialState
+//        let localstate = JSON.parse(localStorage.getItem("state"));
+        let state =  initialState;
         let wallet = newWallet();
 
         setCaption(connectingCaption);
@@ -126,7 +126,7 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           console.info("=== STATE ===  no dep check - active account ", activeAccount);
           const userAddress = await wallet.getPKH();
           let updatedState = { ...state, wallet: wallet, userAddress: userAddress,  userAccount: activeAccount, };
-          localStorage.setItem("state", JSON.stringify(updatedState));
+          // localStorage.setItem("state", JSON.stringify(updatedState));
           setInitialState(updatedState);
           setCaption(disconnectCaption);
 
@@ -139,7 +139,7 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           setCaption(connectCaption);
           console.error(error);
       }
-      
+
     })();
   }, []);
   return (
