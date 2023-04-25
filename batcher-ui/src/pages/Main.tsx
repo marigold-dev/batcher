@@ -96,7 +96,21 @@ const Welcome: React.FC = () => {
     };
   };
 
+  const setStatusFromBatch = (jsonData:any) => {
+    try {
+        const status = Object.keys(jsonData.value.status)[0];
+        setStatus(status);
+        if (status === BatcherStatus.OPEN) {
+          setOpenTime(jsonData.value.status.open);
+        }
+        if (status === BatcherStatus.CLOSED) {
+          setStatus(BatcherStatus.CLOSED);
+        }
+    } catch (error) {
 
+      console.error('Unable to set status', error);
+    }
+  }
   const getCurrentVolume = async (storage: any) => {
     try {
      const currentBatchIndices = storage.batch_set.current_batch_indices;
@@ -111,22 +125,19 @@ const Welcome: React.FC = () => {
       } else {
         const currentBatchURI =
           bigMapsByIdUri + batchesBigMapId + '/keys/' + currentBatchNumber;
+        console.log('######Volumes - URI', currentBatchURI);
         const data = await fetch(currentBatchURI, {
           method: 'GET',
         });
+        if(data.ok && data.status !== 204) {
         const jsonData = await data.json();
+        setStatusFromBatch(jsonData);
         // eslint-disable-next-line @typescript-eslint/no-shadow
-        const status = Object.keys(jsonData.value.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
-          setOpenTime(jsonData.value.status.open);
-        }
-        if (status === BatcherStatus.CLOSED) {
-          setStatus(BatcherStatus.CLOSED);
-        }
-        console.log('######Volumes', jsonData.value.volumes);
         const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
         setVolumes(scaledVolumes);
+        } else {
+         console.info("Response from current batch api was no ok", data);
+        }
       }
     } catch (error) {
       console.error('Unable to get current volume', error);
