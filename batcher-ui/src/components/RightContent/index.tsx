@@ -110,13 +110,11 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
 
   useEffect(() => {
     (async () => {
-
-
-
       try {
         setCaption(connectCaption);
 //        let localstate = JSON.parse(localStorage.getItem("state"));
         let state =  initialState;
+
         let wallet = newWallet();
 
         setCaption(connectingCaption);
@@ -129,7 +127,6 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           // localStorage.setItem("state", JSON.stringify(updatedState));
           setInitialState(updatedState);
           setCaption(disconnectCaption);
-
         } else {
 
 
