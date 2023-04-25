@@ -20,7 +20,7 @@ Note: Batcher can deal with token value imbalance which means that holders of <T
         Batcher has been designed to be composable with other high liquidity paths in the Tezos ecosystem, specifically the Sirius DEX; thus, the two pairs that are supported in V1 are tzBTC/USDT and tzBTC/EURL.
         </Paragraph>
      <Paragraph strong>
-      For more information including blog posts and faqs, please visit the Batche rproject page at Marigold.dev.
+      For more information including blog posts and faqs, please visit the Batcher project page at Marigold.dev.
       <Link href="https://www.marigold.dev/batcher" title="Batcher Project Page" />
      </Paragraph>
         <Paragraph>
