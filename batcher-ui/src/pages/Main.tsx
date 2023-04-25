@@ -165,7 +165,7 @@ const Welcome: React.FC = () => {
     }
     return [initialBuySideAmount, initialSellSideAmount];
 
-  }; 
+  };
 
   const wasInClearingForBatch = (side_obj:any, order_tolerance_obj:any, clearing_tolerance_obj:any) => {
       console.info("wasInClearingForBatch - side_obj", side_obj);
@@ -209,7 +209,7 @@ const Welcome: React.FC = () => {
               console.error("Could not determine order tolerance for buy deposit");
             }
         } else {
-         console.error("Unable to determine clearing tolerance for buy deposit"); 
+         console.error("Unable to determine clearing tolerance for buy deposit");
         }
       } else if (side == "sell") {
 
@@ -244,7 +244,7 @@ const Welcome: React.FC = () => {
               console.error("Could not determine order tolerance for buy deposit");
             }
         } else {
-         console.error("Unable to determine clearing tolerance for buy deposit"); 
+         console.error("Unable to determine clearing tolerance for buy deposit");
         }
       } else {
         console.error("Unable to determine side for holdings");
@@ -254,7 +254,7 @@ const Welcome: React.FC = () => {
   const convertHoldingToPayout = (fromAmount:any, fromVolumeSubjectToClearing:any, fromClearedVolume:any, toClearedVolume:any, fromDecimals:number, toDecimals:number) => {
 
      const prorata = fromAmount / fromVolumeSubjectToClearing;
-     const payout = toClearedVolume * prorata;       
+     const payout = toClearedVolume * prorata;
      const payoutInFromTokens = fromClearedVolume * prorata;
      const remainder = fromAmount - payoutInFromTokens;
      const scaled_payout = Math.floor(payout) / 10 ** toDecimals;
@@ -275,16 +275,16 @@ const Welcome: React.FC = () => {
 
     }
     return tokens;
-  }; 
+  };
 
 
-  
+
   const calculateHoldingFromBatch = (batch: any, ubots: any, open_holdings: Map<string, number> , cleared_holdings: Map<string, number> ) => {
 
    const tokens = findTokensForBatch(batch);
     const depositsInBatches = ubots.value;
-    const userBatchLength = depositsInBatches[batch.batch_number].length; 
-    
+    const userBatchLength = depositsInBatches[batch.batch_number].length;
+
     if (Object.keys(batch.status)[0] !== BatcherStatus.CLEARED){
 
       for (let j = 0; j < userBatchLength; j++) {
@@ -293,7 +293,7 @@ const Welcome: React.FC = () => {
         const side = depObject.key.side;
         const value = depObject.value;
         let initialBuySideOpenAmount = open_holdings.get(tokens.buy_token_name);
-        let initialSellSideOpenAmount = open_holdings.get(tokens.sell_token_name); 
+        let initialSellSideOpenAmount = open_holdings.get(tokens.sell_token_name);
         const updatedValues = getOriginalDepositAmounts(side,initialBuySideOpenAmount, initialSellSideOpenAmount,value);
         initialBuySideOpenAmount += updatedValues.at(0);
         initialSellSideOpenAmount += updatedValues.at(1);
@@ -320,10 +320,10 @@ const Welcome: React.FC = () => {
         const side = depObject.key.side;
         const tol = depObject.key.tolerance;
         const value = depObject.value;
-         
+
         if (buy_side_cleared_volume === 0 || sell_side_cleared_volume === 0 ){
         let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-        let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
+        let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
         const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
         initialBuySideAmount += updatedValues.at(0);
         initialSellSideAmount += updatedValues.at(1);
@@ -335,16 +335,16 @@ const Welcome: React.FC = () => {
           if (wasInClearing) {
             if (Object.keys(side).at(0) === "buy") {
                let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
-               const payout = convertHoldingToPayout(value,buy_side_volume_subject_to_clearing,buy_side_cleared_volume, sell_side_cleared_volume,buyToken.decimals, sellToken.decimals);   
+               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+               const payout = convertHoldingToPayout(value,buy_side_volume_subject_to_clearing,buy_side_cleared_volume, sell_side_cleared_volume,buyToken.decimals, sellToken.decimals);
                initialSellSideAmount += payout.at(0);
                initialBuySideAmount += payout.at(1);
                cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
                cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
             } else if (Object.keys(side).at(0) === "sell"){
                let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
-               const payout = convertHoldingToPayout(value,sell_side_volume_subject_to_clearing, sell_side_cleared_volume, buy_side_cleared_volume, sellToken.decimals, buyToken.decimals);   
+               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+               const payout = convertHoldingToPayout(value,sell_side_volume_subject_to_clearing, sell_side_cleared_volume, buy_side_cleared_volume, sellToken.decimals, buyToken.decimals);
                initialBuySideAmount += payout.at(0);
                initialSellSideAmount += payout.at(1);
                cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
@@ -354,13 +354,13 @@ const Welcome: React.FC = () => {
             }
           } else {
            let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-           let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name); 
+           let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
            const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
            initialBuySideAmount += updatedValues.at(0);
            initialSellSideAmount += updatedValues.at(1);
            cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
            cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
-          } 
+          }
         }
 
         } catch (error) {
@@ -396,7 +396,7 @@ const Welcome: React.FC = () => {
     if (Object.keys(userBatches.value).length === 0) {
       return;
     }
-    
+
     for (let i = 0; i < Object.keys(userBatches.value).length; i++) {
       const batchId = Object.keys(userBatches.value).at(i);
 
@@ -409,15 +409,14 @@ const Welcome: React.FC = () => {
         console.error(error);
         return;
       }
-      
+
       try{
-      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, oh, ch); 
+      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, oh, ch);
 
     console.info("== batcher holdings " + batchId, batch_holdings);
       oh = batch_holdings[0];
       ch = batch_holdings[1];
 
-      
       } catch (error) {
         console.error(error);
       }
@@ -670,8 +669,15 @@ const Welcome: React.FC = () => {
 
   const getTokenBalance = async () => {
     try{
-      console.log('getTokenBalance-userAddress',userAddress);
-      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + userAddress;
+      let usrAddr = userAddress
+      if(userAddress === null){
+        if(initialState.userAddress !== null){
+          usrAddr = initialState.userAddress;
+          setUserAddress(usrAddr);
+        }
+      }
+      console.log('getTokenBalance-userAddress',usrAddr);
+      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
       console.log('getTokenBalance-balanceURI',balanceURI);
       const data = await fetch(balanceURI, { method: 'GET' });
       await data.json().then(balance => {
