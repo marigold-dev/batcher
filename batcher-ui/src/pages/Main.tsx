@@ -14,7 +14,7 @@ import {
 } from '@/extra_utils/types';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Space, Col, Row, Drawer, Radio, } from 'antd';
-import { CiTwoTone, DoubleRightOutlined } from '@ant-design/icons';
+import { CiTwoTone, ConsoleSqlOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
@@ -684,7 +684,6 @@ const Welcome: React.FC = () => {
       if(userAddress === null){
         if(initialState.userAddress !== null){
           usrAddr = initialState.userAddress;
-          setUserAddress(usrAddr);
         }
       }
 
@@ -696,10 +695,21 @@ const Welcome: React.FC = () => {
       console.log('getTokenBalance-userAddress',usrAddr);
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
       console.log('getTokenBalance-balanceURI',balanceURI);
-      const data = await fetch(balanceURI, { method: 'GET' });
-      await data.json().then(balance => {
+
+      const buyTokenData = await fetch(balanceURI + '&token.contract=' + buyToken.address, { method: 'GET' });
+      const sellTokenData = await fetch(balanceURI + '&token.contract=' + sellToken.address, { method: 'GET' });
+      
+      try{
+      await buyTokenData.json().then(balance => {
       if (Array.isArray(balance)) {
         setTokenAmount(balance, buyBalance, buyToken.address, buyToken.decimals, setBuyBalance);
+      }
+      });
+      } catch (error){
+        console.error(error);
+      }
+      await sellTokenData.json().then(balance => {
+      if (Array.isArray(balance)) {
         setTokenAmount(balance, sellBalance, sellToken.address, sellToken.decimals, setSellBalance);
       }
       });
