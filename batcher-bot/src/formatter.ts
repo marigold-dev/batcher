@@ -24,8 +24,9 @@ const formatRatesCurrent = (rateMessage: any) => {
 
     return "<u>Oracle Update - <i>" + name + "</i></u>  <b>" + scaledRate + "</b>";
   } catch (error) {
+   console.info("Error formatting rates", error.message);
    console.error(error);
-   return "<b>" + JSON.stringify(rateMessage) + "<b>";
+   return "<b>error</b>" + error.message;
 
   }
 }
@@ -33,8 +34,8 @@ const formatRatesCurrent = (rateMessage: any) => {
 
 const formatBigMap = (message:any) => {
    console.info("Formatting bigmap", message);
-   if(message.path = "rate_current"){
-     formatRatesCurrent(message)
+   if(message.path == "rates_current"){
+     return formatRatesCurrent(message)
    }
 
 return message;
@@ -47,9 +48,10 @@ export const format = (msgType: MessageType, message:any) => {
   console.info(message);
   try{
   let html = '';
-  if(msgType === MessageType.BIGMAP){
+  if(msgType == MessageType.BIGMAP){
     html =  formatBigMap(message);
   }
+   console.info("Formatting html", html);
 
    let htmlOptions = {
     parse_mode: 'HTML',

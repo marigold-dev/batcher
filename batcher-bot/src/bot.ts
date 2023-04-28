@@ -13,10 +13,7 @@ const tzktUri = process.env["TZKT_URI_API"];
 
 
 const sendToTelegram = async (bot:Telegraf,  message:string, options: any) => {
-    await bot.telegram.sendMessage(channelId, message, {
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      });
+    await bot.telegram.sendMessage(channelId, message, options);
 };
 
 const init = async (bot:Telegraf, socketConnection:HubConnection) => {
@@ -38,6 +35,7 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
  export const start = (bot:Telegraf, socketConnection: HubConnection) => {
    // Start the web socket
    init(bot, socketConnection).then(r => console.info("started socket"))
+   socketConnection.onclose(() => init(bot,socketConnection));
 // Start the Telegram bot.
    bot.launch();
 };
