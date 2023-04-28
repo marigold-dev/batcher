@@ -7,16 +7,21 @@
     "ts-node-nix": "dist/index.js"
   },
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "tsc",
-    "dev": "ts-node-dev --no-notify --respawn src/index.ts",
+    "start": "env-cmd -f .env.ghostnet node dist/index.js",
+    "build": "env-cmd -f .env.ghostnet tsc",
+    "dev": "env-cmd -e ghostnet  ts-node-dev --no-notify --respawn src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
   "dependencies": {
+    "@dipdup/tzkt-api": "^0.0.1",
+    "@microsoft/signalr": "^7.0.5",
     "@taquito/taquito": "^8.0.1",
+    "@tsconfig/node16-strictest": "^1.0.4",
+    "dotenv": "^16.0.3",
+    "env-cmd": "^10.1.0",
     "rxjs": "^7.4.0",
-    "telegraf": "^4.6.0"
+    "telegraf": "^4.12.3-canary.1"
   },
   "devDependencies": {
     "@types/node": "^18.7.14",
