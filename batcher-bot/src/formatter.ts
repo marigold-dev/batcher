@@ -19,8 +19,11 @@ const formatRatesCurrent = (rateMessage: any) => {
     const numerator = pl.rate.p;
     const denominator = pl.rate.q;
     const name = rateMessage.content.key;
-     // const scaledPow = buyToken.decimals - sellToken.decimals;
-    const scaledRate = numerator / denominator;
+    const valid_swaps = rateMessage.storage.valid_swaps;
+    const valid_swap = valid_swaps[name];
+    const scale = valid_swap.from.decimals - valid_swap.to.decimals;
+    const rate = numerator / denominator;
+    const scaledRate  = rate * (10 ** scale);
 
     return "<u>Oracle Update - <i>" + name + "</i></u>  <b>" + scaledRate + "</b>";
   } catch (error) {
@@ -80,13 +83,20 @@ const scaleAmount = (amount: number, tokenDecimals: number) => {
     return amount / (10 ** tokenDecimals);
 };
 
+const getPairName = (fromName:string, toName:string) => {
+  if (fromName > toName){
+    return fromName + "/" + toName;
+  }
+
+  return toName + "/" + fromName;
+};
 
 const formatDeposit = (message:any) => {
     const val = message.parameter.value
     const storage = message.storage;
     const side = getSide(val.side);
     const tolerance = getTolerance(val.side, val.tolerance);
-    const pair = message.parameter.value.swap.from.token.name + "/" + message.parameter.value.swap.to.name;
+    const pair =getPairName(message.parameter.value.swap.from.token.name, message.parameter.value.swap.to.name);
     const from = message.parameter.value.swap.from;
     const to = message.parameter.value.swap.to;
     const amount = scaleAmount(from.amount, from.token.decimals);

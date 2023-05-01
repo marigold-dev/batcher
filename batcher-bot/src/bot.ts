@@ -32,10 +32,6 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
       if (!msg.data) return;
         const formattedMessage = format(MessageType.BIGMAP, msg.data[0]);
         console.info("formattedMessage", formattedMessage);
-    let textOptions = {
-    parse_mode: 'TEXT',
-   };
-        sendToTelegram(bot, JSON.stringify(msg.data[0]),textOptions );
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
     });
     socketConnection.on('operations', (msg: any) => {
