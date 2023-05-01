@@ -19,9 +19,7 @@ const formatRatesCurrent = (rateMessage: any) => {
     const numerator = pl.rate.p;
     const denominator = pl.rate.q;
     const name = rateMessage.content.key;
-    const valid_swaps = rateMessage.storage.valid_swaps;
-    const valid_swap = valid_swaps[name];
-    const scale = valid_swap.from.decimals - valid_swap.to.decimals;
+    const scale = pl.swap.from.token.decimals - pl.swap.to.decimals;
     const rate = numerator / denominator;
     const scaledRate  = rate * (10 ** scale);
 
@@ -113,7 +111,7 @@ const formatOperation = (message:any) => {
   if(entrypoint == 'deposit'){
    return formatDeposit(message);
   }
-   return "<b>" + JSON.stringify(message)  + "</b>";
+   return "<b>" + JSON.stringify(message.parameter)  + "</b>";
 }
 
 export const format = (msgType: MessageType, message:any) => {
