@@ -80,7 +80,7 @@ const getTolerance = (side:number, tolerance:number) => {
 const formatDeposit = (message:any) => {
     const val = message.parameter.value;
     const side = getSide(message.parameter.value.side);
-    const tolerance = getSide(message.parameter.value.tolerance);
+    const tolerance = getTolerance(message.parameter.value.side, message.parameter.value.tolerance);
     const pair = message.parameter.value.swap.from.token.name + "/" + message.parameter.value.swap.to.name;
     const amount = message.parameter.value.swap.from.amount;
 
