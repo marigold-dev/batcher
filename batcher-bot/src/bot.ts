@@ -31,8 +31,8 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
    socketConnection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
       for (let i = 0; i < Object.keys(msg.data).length; i++) {
-      if (msg.data[i].path === 'rates_current') {
         console.info("++++ BIGMAPS +++", msg.data[i]);
+      if (msg.data[i].path === 'rates_current') {
         const formattedMessage = format(MessageType.BIGMAP, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
@@ -42,8 +42,8 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
     for (let i = 0; i < Object.keys(msg.data).length; i++) {
-      if (msg.data[i].parameter.endpoint === 'deposit') {
         console.info("++++ OPERATIONS +++", msg.data[i]);
+      if (msg.data[i].parameter.endpoint === 'deposit') {
         const formattedMessage = format(MessageType.OPERATION, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
