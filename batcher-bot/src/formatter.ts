@@ -76,13 +76,20 @@ const getTolerance = (side:number, tolerance:number) => {
 
 }
 
+const scaleAmount = (amount: number, tokenDecimals: number) => {
+    return amount * (10 ** tokenDecimals);
+};
+
 
 const formatDeposit = (message:any) => {
-    const val = message.parameter.value;
-    const side = getSide(message.parameter.value.side);
-    const tolerance = getTolerance(message.parameter.value.side, message.parameter.value.tolerance);
+    const val = message.parameter.value
+    const storage = message.storage;
+    const side = getSide(val.side);
+    const tolerance = getTolerance(val.side, val.tolerance);
     const pair = message.parameter.value.swap.from.token.name + "/" + message.parameter.value.swap.to.name;
-    const amount = message.parameter.value.swap.from.amount;
+    const from = message.parameter.value.swap.from;
+    const to = message.parameter.value.swap.to;
+    const amount = scaleAmount(from.amount, from.token.decimals);
 
     return "<b> TRADE ON " + pair  + "  </b>  <i>" + side + " - " + tolerance + " </i>  for " + amount + " " + message.parameter.value.swap.from.token.name;
 
