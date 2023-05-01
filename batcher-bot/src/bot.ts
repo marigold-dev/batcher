@@ -36,18 +36,20 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
         const formattedMessage = format(MessageType.BIGMAP, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
-      };
+      }
       }
     });
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
     for (let i = 0; i < Object.keys(msg.data).length; i++) {
         console.info("++++ OPERATIONS +++", msg.data[i].parameter);
+      if (msg.data[i].parameter) {
       if (msg.data[i].parameter.endpoint == 'deposit') {
         const formattedMessage = format(MessageType.OPERATION, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
-      };
+      }
+      }
     }
     });
 
