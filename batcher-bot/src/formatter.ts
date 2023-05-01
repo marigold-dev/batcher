@@ -99,7 +99,7 @@ const formatDeposit = (message:any) => {
     const to = message.parameter.value.swap.to;
     const amount = scaleAmount(from.amount, from.token.decimals);
 
-    return "<b> TRADE ON " + pair  + "  </b>  <i>" + side + " - " + tolerance + " </i>  for " + amount + " " + message.parameter.value.swap.from.token.name;
+    return "<b> TRADE ON " + pair  + "  </b>  <i>" + side + " @ " + tolerance + " </i>  for " + amount + " " + message.parameter.value.swap.from.token.name;
 
 
 }
