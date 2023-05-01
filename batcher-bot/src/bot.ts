@@ -30,16 +30,20 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
 
    socketConnection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
-        const formattedMessage = format(MessageType.BIGMAP, msg.data[0]);
+      for (let i = 0; i < Object.keys(msg.data).length; i++) {
+        const formattedMessage = format(MessageType.BIGMAP, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
+      }
     });
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
-      if (msg.data[0].parameter.endpoint == 'tick') return;
-        const formattedMessage = format(MessageType.OPERATION, msg.data[0]);
+    for (let i = 0; i < Object.keys(msg.data).length; i++) {
+      if (msg.data[i].parameter.endpoint == 'tick') return;
+        const formattedMessage = format(MessageType.OPERATION, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
+    }
     });
 
 };
