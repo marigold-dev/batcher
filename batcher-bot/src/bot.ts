@@ -45,6 +45,7 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
     });
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
+        console.info("++++ OPERATIONS (RECEIVED) +++", msg.data);
     for (let i = 0; i < Object.keys(msg.data).length; i++) {
       try{
         console.info("++++ OPERATIONS +++", msg.data[i].parameter);
