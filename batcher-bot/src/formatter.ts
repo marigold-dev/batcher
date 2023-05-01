@@ -37,12 +37,14 @@ const formatBigMap = (message:any) => {
    if(message.path == "rates_current"){
      return formatRatesCurrent(message)
    }
-
 return message;
-
 }
 
 
+const formatOperation = (message:any) => {
+   console.info("Formatting operation", message);
+   return "<b>" + JSON.stringify(message)  + "</b>";
+}
 
 export const format = (msgType: MessageType, message:any) => {
   console.info(message);
@@ -51,6 +53,11 @@ export const format = (msgType: MessageType, message:any) => {
   if(msgType == MessageType.BIGMAP){
     html =  formatBigMap(message);
   }
+
+  if(msgType == MessageType.OPERATION){
+    html = formatOperation(message);
+  }
+
    console.info("Formatting html", html);
 
    let htmlOptions = {

@@ -23,6 +23,10 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
     contract: contractAddress,
   });
 
+  await socketConnection.invoke('SubscribeToOperations', {
+    address: contractAddress,
+    types: 'transaction',
+  });
 
    socketConnection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
@@ -30,6 +34,13 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
     });
+    socketConnection.on('operations', (msg: any) => {
+      if (!msg.data) return;
+        const formattedMessage = format(MessageType.OPERATION, msg.data[0]);
+        console.info("formattedMessage", formattedMessage);
+        sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
+    });
+
 };
 
  export const start = (bot:Telegraf, socketConnection: HubConnection) => {
