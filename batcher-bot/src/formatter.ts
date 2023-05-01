@@ -84,7 +84,7 @@ const formatDeposit = (message:any) => {
     const pair = message.parameter.value.swap.from.token.name + "/" + message.parameter.value.swap.to.name;
     const amount = message.parameter.value.swap.amount;
 
-    return "<b> TRADE ON " + pair  + "  </b> </br > " + side + " - " + tolerance + " </br>  for " + amount + " " + message.parameter.value.swap.from.token.name;
+    return "<b> TRADE ON " + pair  + "  </b>  <i>" + side + " - " + tolerance + " </i>  for " + amount + " " + message.parameter.value.swap.from.token.name;
 
 
 }
