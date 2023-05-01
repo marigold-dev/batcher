@@ -77,7 +77,7 @@ const getTolerance = (side:number, tolerance:number) => {
 }
 
 const scaleAmount = (amount: number, tokenDecimals: number) => {
-    return amount * (10 ** tokenDecimals);
+    return amount / (10 ** tokenDecimals);
 };
 
 
