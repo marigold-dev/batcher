@@ -38,7 +38,7 @@ const formatBigMap = (message:any) => {
    if(message.path == "rates_current"){
      return formatRatesCurrent(message)
    }
-return "<b>" + JSON.stringify(message.content.value) + "</b>";
+return "<b>" + JSON.stringify(message.content) + "</b>";
 }
 
 const getSide =  (side:number) => {
