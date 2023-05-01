@@ -111,7 +111,8 @@ const formatOperation = (message:any) => {
   if(entrypoint == 'deposit'){
    return formatDeposit(message);
   }
-   return "<b>" + JSON.stringify(message.parameter)  + "</b>";
+   return "<b> OP:" + JSON.stringify(message.parameter)  + "</b>";
+
 }
 
 export const format = (msgType: MessageType, message:any) => {
