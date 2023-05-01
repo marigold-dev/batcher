@@ -36,6 +36,7 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
     });
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
+      if (msg.data[0].parameter.endpoint == tick) return;
         const formattedMessage = format(MessageType.OPERATION, msg.data[0]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);

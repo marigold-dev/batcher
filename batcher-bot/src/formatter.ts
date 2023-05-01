@@ -40,9 +40,62 @@ const formatBigMap = (message:any) => {
 return message;
 }
 
+const getSide =  (side:number) => {
+  if(side == 0){
+    return "BUY";
+  }
+
+  return "SELL";
+}
+
+const getTolerance = (side:number, tolerance:number) => {
+  if(side == 0 ){
+    if(tolerance == 0){
+     return "WORST PRICE / BETTER FILL";
+    }
+
+    if(tolerance == 1) {
+     return "ORACLE";
+    }
+
+    return "BETTER PRICE / WORSE FILL";
+
+  }
+
+
+    if(tolerance == 0){
+     return "BETTER PRICE / WORSE FILL";
+    }
+
+    if(tolerance == 1) {
+     return "ORACLE";
+    }
+
+    return "WORSE PRICE / BETTER FILL";
+
+
+}
+
+
+const formatDeposit = (message:any) => {
+    const val = message.parameter.value;
+    const side = getSide(message.parameter.value.side);
+    const tolerance = getSide(message.parameter.value.tolerance);
+    const pair = message.parameter.value.swap.from.token.name + "/" + message.parameter.value.swap.to.name;
+    const amount = message.parameter.value.swap.amount;
+
+    return "<b> TRADE ON " + pair  + "  </b> </br > " + side + " - " + tolerance + " </br>  for " + amount + " " + message.parameter.value.swap.from.token.name;
+
+
+}
+
 
 const formatOperation = (message:any) => {
    console.info("Formatting operation", message);
+  const entrypoint = message.parameter.entrypoint;
+  if(entrypoint == 'deposit'){
+   return formatDeposit(message);
+  }
    return "<b>" + JSON.stringify(message)  + "</b>";
 }
 
