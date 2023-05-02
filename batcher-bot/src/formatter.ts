@@ -50,7 +50,8 @@ const formatRatesCurrent = (rateMessage: any) => {
 
 const formatBatchChange = (message:any) => {
   try{
-   const val = message.value;
+   console.info("Formatting batch change", message);
+   const val = message.content.value;
    const batch_number = val.batch_number;
    const buy_decimals = val.pair.decimals_0;
    const sell_decimals = val.pair.decimals_1;
