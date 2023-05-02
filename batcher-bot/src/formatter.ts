@@ -61,6 +61,7 @@ const formatBatchChange = (message:any) => {
    const buy_volume = raw_buy_volume / (10 ** buy_decimals);
    const sell_volume = raw_sell_volume / (10 ** sell_decimals);
 
+   let rate_name = getPairName(buy_name, sell_name);
    let status_message = status;
 
    if(status == 'open'){
@@ -71,11 +72,10 @@ const formatBatchChange = (message:any) => {
    }
    if(status == 'cleared'){
      let rate = getScaledRate(val.status.cleared.rate.rate, val.status.cleared.rate.swap);
-     let rate_name = getPairName(buy_name, sell_name);
      status_message = "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate  ;
    }
 
-    return "<b> BATCH UPDATE " + batch_number  + "  </b>  <i>" + status_message + "</i> - <b> BUY VOLUME " + buy_volume + " " + buy_name + " | SELL VOLUME " + sell_volume + " " + sell_name + "</b>";
+    return "<b> BATCH UPDATE " + batch_number  + " " + rate_name + "</b>  <i>" + status_message + "</i> - <b> BUY VOLUME " + buy_volume + " " + buy_name + " | SELL VOLUME " + sell_volume + " " + sell_name + "</b>";
 
 
   } catch (error) {
