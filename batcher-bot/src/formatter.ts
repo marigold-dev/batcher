@@ -33,7 +33,6 @@ const getScaledRate = (rate_obj:any, swap:any) => {
 
 const formatRatesCurrent = (rateMessage: any) => {
 
-   console.info("Formatting rates_current", rateMessage);
   try{
     const name = rateMessage.content.key;
     const pl = rateMessage.content.value;
@@ -50,7 +49,6 @@ const formatRatesCurrent = (rateMessage: any) => {
 
 const formatBatchChange = (message:any) => {
   try{
-   console.info("Formatting batch change", message);
    const val = message.content.value;
    const batch_number = val.batch_number;
    const buy_decimals = val.pair.decimals_0;
@@ -88,7 +86,6 @@ const formatBatchChange = (message:any) => {
 }
 
 const formatBigMap = (message:any) => {
-   console.info("Formatting bigmap", message);
    if(message.path == "rates_current"){
      return formatRatesCurrent(message)
    }
@@ -141,7 +138,6 @@ const scaleAmount = (amount: number, tokenDecimals: number) => {
 
 const formatDeposit = (message:any) => {
     const val = message.parameter.value
-    const storage = message.storage;
     const side = getSide(val.side);
     const tolerance = getTolerance(val.side, val.tolerance);
     const pair =getPairName(message.parameter.value.swap.from.token.name, message.parameter.value.swap.to.name);
@@ -156,7 +152,6 @@ const formatDeposit = (message:any) => {
 
 
 const formatOperation = (message:any) => {
-   console.info("Formatting operation", message);
   const entrypoint = message.parameter.entrypoint;
   if(entrypoint == 'deposit'){
    return formatDeposit(message);
@@ -166,7 +161,6 @@ const formatOperation = (message:any) => {
 }
 
 export const format = (msgType: MessageType, message:any) => {
-  console.info(message);
   try{
   let html = '';
   if(msgType == MessageType.BIGMAP){

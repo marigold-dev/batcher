@@ -31,11 +31,9 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
    socketConnection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
       for (let i = 0; i < Object.keys(msg.data).length; i++) {
-        console.info("++++ BIGMAPS +++", msg.data[i]);
         try{
       if (msg.data[i].path == 'rates_current' || msg.data[i].path == 'batch_set.batches') {
         const formattedMessage = format(MessageType.BIGMAP, msg.data[i]);
-        console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
       }} catch (error) {
         console.info("Error parsing bigmap", error.message);
@@ -45,10 +43,8 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
     });
     socketConnection.on('operations', (msg: any) => {
       if (!msg.data) return;
-        console.info("++++ OPERATIONS (RECEIVED) +++", msg.data);
     for (let i = 0; i < Object.keys(msg.data).length; i++) {
       try{
-        console.info("++++ OPERATIONS +++", msg.data[i].parameter);
       if (msg.data[i].parameter) {
       if (msg.data[i].parameter.entrypoint == 'deposit') {
         const formattedMessage = format(MessageType.OPERATION, msg.data[i]);
