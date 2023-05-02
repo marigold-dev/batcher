@@ -68,7 +68,7 @@ const formatBatchChange = (message:any) => {
       status_message = "Open (" + val.status.open + ")";
    }
    if(status == 'closed'){
-      status_message = "Closed (" + val.status.closed.at + ")";
+      status_message = "Closed (" + val.status.closed.closing_time + ")";
    }
    if(status == 'cleared'){
      let rate = getScaledRate(val.status.cleared.rate.rate, val.status.cleared.rate.swap);
