@@ -16,11 +16,10 @@ const getPairName = (fromName:string, toName:string) => {
   return toName + "/" + fromName;
 };
 
-const getScaledRate= (rate:any, swap:any) => {
+const getScaledRate = (rate_obj:any, swap:any) => {
   try{
-
-    const numerator = rate.p;
-    const denominator = rate.q;
+    const numerator = rate_obj.p;
+    const denominator = rate_obj.q;
     const scale = swap.from.token.decimals - swap.to.decimals;
     const rate = numerator / denominator;
     return rate * (10 ** scale);
