@@ -67,11 +67,11 @@ const formatBatchChange = (message:any) => {
       status_message = "Open (" + val.status.open + ")";
    }
    if(status == 'closed'){
-      status_message = "Closed (" + val.status.closed + ")";
+      status_message = "Closed (" + val.status.closed.at + ")";
    }
    if(status == 'cleared'){
-     let rate = getScaledRate(val.status.cleared.rate, val.status.cleared.swap);
-     let rate_name = getPairName(val.status.cleared.swap.from.token.name, val.status.cleared.to.token.name);
+     let rate = getScaledRate(val.status.cleared.rate.rate, val.status.cleared.rate.swap);
+     let rate_name = getPairName(buy_name, sell_name);
      status_message = "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate  ;
    }
 
@@ -171,7 +171,6 @@ export const format = (msgType: MessageType, message:any) => {
     html = formatOperation(message);
   }
 
-   console.info("Formatting html", html);
 
    let htmlOptions = {
     parse_mode: 'HTML',
