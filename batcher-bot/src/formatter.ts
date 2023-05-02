@@ -8,20 +8,37 @@ export enum MessageType {
   OPERATION = 1
 }
 
+const getPairName = (fromName:string, toName:string) => {
+  if (fromName > toName){
+    return fromName + "/" + toName;
+  }
+
+  return toName + "/" + fromName;
+};
+
+const getScaledRate= (rate:any, swap:any) => {
+  try{
+
+    const numerator = rate.p;
+    const denominator = rate.q;
+    const scale = swap.from.token.decimals - swap.to.decimals;
+    const rate = numerator / denominator;
+    return rate * (10 ** scale);
+  } catch (error) {
+    console.info("Error scaling rate", error.message);
+    console.error(error);
+    return 0;
+  }
+
+}
 
 const formatRatesCurrent = (rateMessage: any) => {
 
    console.info("Formatting rates_current", rateMessage);
   try{
-
-
-   const pl = rateMessage.content.value;
-    const numerator = pl.rate.p;
-    const denominator = pl.rate.q;
     const name = rateMessage.content.key;
-    const scale = pl.swap.from.token.decimals - pl.swap.to.decimals;
-    const rate = numerator / denominator;
-    const scaledRate  = rate * (10 ** scale);
+    const pl = rateMessage.content.value;
+    const scaledRate  = getScaledRate(pl.rate, pl.swap);
 
     return "<u>Oracle Update - <i>" + name + "</i></u>  <b>" + scaledRate + "</b>";
   } catch (error) {
@@ -33,8 +50,41 @@ const formatRatesCurrent = (rateMessage: any) => {
 }
 
 const formatBatchChange = (message:any) => {
-return "<b>" + JSON.stringify(message.content) + "</b>";
+  try{
+   const val = message.value;
+   const batch_number = val.batch_number;
+   const buy_decimals = val.pair.decimals_0;
+   const sell_decimals = val.pair.decimals_1;
+   const buy_name = val.pair.name_0;
+   const sell_name = val.pair.name_1;
+   const status = Object.keys(val.status)[0];
+   const raw_buy_volume = val.volumes.buy_total_volume;
+   const raw_sell_volume = val.volumes.sell_total_volume;
+   const buy_volume = raw_buy_volume / (10 ** buy_decimals);
+   const sell_volume = raw_sell_volume / (10 ** sell_decimals);
 
+   let status_message = status;
+
+   if(status == 'open'){
+      status_message = "Open (" + val.status.open + ")";
+   }
+   if(status == 'closed'){
+      status_message = "Closed (" + val.status.open + ")";
+   }
+   if(status == 'cleared'){
+     let rate = getScaledRate(val.status.cleared.rate, val.status.cleared.swap);
+     let rate_name = getPairName(val.status.cleared.swap.from.token.name, val.status.cleared.to.token.name);
+     status_message = "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate  ;
+   }
+
+    return "<b> BATCH UPDATE " + batch_number  + "  </b>  <i>" + status_message + "</i> - <b> BUY VOLUME " + buy_volume + " " + buy_name + " | SELL VOLUME " + sell_volume + " " + sell_name;
+
+
+  } catch (error) {
+    console.info("Error formatting batch change");
+    console.error(error);
+    return "<b>" + JSON.stringify(message.content) + "</b>";
+  }
 }
 
 const formatBigMap = (message:any) => {
@@ -88,13 +138,6 @@ const scaleAmount = (amount: number, tokenDecimals: number) => {
     return amount / (10 ** tokenDecimals);
 };
 
-const getPairName = (fromName:string, toName:string) => {
-  if (fromName > toName){
-    return fromName + "/" + toName;
-  }
-
-  return toName + "/" + fromName;
-};
 
 const formatDeposit = (message:any) => {
     const val = message.parameter.value
