@@ -69,7 +69,7 @@ const formatBatchChange = (message:any) => {
       status_message = "Open (" + val.status.open + ")";
    }
    if(status == 'closed'){
-      status_message = "Closed (" + val.status.open + ")";
+      status_message = "Closed (" + val.status.closed + ")";
    }
    if(status == 'cleared'){
      let rate = getScaledRate(val.status.cleared.rate, val.status.cleared.swap);
@@ -77,7 +77,7 @@ const formatBatchChange = (message:any) => {
      status_message = "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate  ;
    }
 
-    return "<b> BATCH UPDATE " + batch_number  + "  </b>  <i>" + status_message + "</i> - <b> BUY VOLUME " + buy_volume + " " + buy_name + " | SELL VOLUME " + sell_volume + " " + sell_name;
+    return "<b> BATCH UPDATE " + batch_number  + "  </b>  <i>" + status_message + "</i> - <b> BUY VOLUME " + buy_volume + " " + buy_name + " | SELL VOLUME " + sell_volume + " " + sell_name + "</b>";
 
 
   } catch (error) {
