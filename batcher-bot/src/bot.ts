@@ -50,7 +50,7 @@ const init = async (bot:Telegraf, socketConnection:HubConnection) => {
       try{
         console.info("++++ OPERATIONS +++", msg.data[i].parameter);
       if (msg.data[i].parameter) {
-      if (msg.data[i].parameter.endpoint == 'deposit') {
+      if (msg.data[i].parameter.entrypoint == 'deposit') {
         const formattedMessage = format(MessageType.OPERATION, msg.data[i]);
         console.info("formattedMessage", formattedMessage);
         sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
