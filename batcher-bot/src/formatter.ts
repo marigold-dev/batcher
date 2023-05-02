@@ -32,11 +32,18 @@ const formatRatesCurrent = (rateMessage: any) => {
   }
 }
 
+const formatBatchChange = (message:any) => {
+return "<b>" + JSON.stringify(message.content) + "</b>";
+
+}
 
 const formatBigMap = (message:any) => {
    console.info("Formatting bigmap", message);
    if(message.path == "rates_current"){
      return formatRatesCurrent(message)
+   }
+   if (message.path == 'batch_set.batches') {
+     return formatBatchChange(message);
    }
 return "<b>" + JSON.stringify(message.content) + "</b>";
 }
