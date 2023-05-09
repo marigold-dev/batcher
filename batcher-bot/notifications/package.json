@@ -7,8 +7,10 @@
     "ts-node-nix": "dist/index.js"
   },
   "scripts": {
-    "start": "env-cmd -f .env.ghostnet node dist/index.js",
-    "build": "env-cmd -f .env.ghostnet tsc",
+    "start-ghostnet": "env-cmd -f .env.ghostnet node dist/index.js",
+    "build-ghostnet": "env-cmd -f .env.ghostnet tsc",
+    "start-mainnet": "env-cmd -f .env.mainnet node dist/index.js",
+    "build-mainnet": "env-cmd -f .env.mainnet tsc",
     "dev": "env-cmd -e ghostnet  ts-node-dev --no-notify --respawn src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,6 +22,7 @@
     "@tsconfig/node16-strictest": "^1.0.4",
     "dotenv": "^16.0.3",
     "env-cmd": "^10.1.0",
+    "prelude-ts": "^1.0.6",
     "rxjs": "^7.4.0",
     "telegraf": "^4.12.3-canary.1"
   },
