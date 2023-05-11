@@ -14,7 +14,7 @@ import {
 } from '@/extra_utils/types';
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Space, Col, Row, Drawer, Radio, } from 'antd';
-import { CiTwoTone, DoubleRightOutlined } from '@ant-design/icons';
+import { CiTwoTone, ConsoleSqlOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
@@ -96,7 +96,21 @@ const Welcome: React.FC = () => {
     };
   };
 
+  const setStatusFromBatch = (jsonData:any) => {
+    try {
+        const status = Object.keys(jsonData.value.status)[0];
+        setStatus(status);
+        if (status === BatcherStatus.OPEN) {
+          setOpenTime(jsonData.value.status.open);
+        }
+        if (status === BatcherStatus.CLOSED) {
+          setStatus(BatcherStatus.CLOSED);
+        }
+    } catch (error) {
 
+      console.error('Unable to set status', error);
+    }
+  }
   const getCurrentVolume = async (storage: any) => {
     try {
      const currentBatchIndices = storage.batch_set.current_batch_indices;
@@ -111,22 +125,19 @@ const Welcome: React.FC = () => {
       } else {
         const currentBatchURI =
           bigMapsByIdUri + batchesBigMapId + '/keys/' + currentBatchNumber;
+        console.log('######Volumes - URI', currentBatchURI);
         const data = await fetch(currentBatchURI, {
           method: 'GET',
         });
+        if(data.ok && data.status !== 204) {
         const jsonData = await data.json();
+        setStatusFromBatch(jsonData);
         // eslint-disable-next-line @typescript-eslint/no-shadow
-        const status = Object.keys(jsonData.value.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
-          setOpenTime(jsonData.value.status.open);
-        }
-        if (status === BatcherStatus.CLOSED) {
-          setStatus(BatcherStatus.CLOSED);
-        }
-        console.log('######Volumes', jsonData.value.volumes);
         const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
         setVolumes(scaledVolumes);
+        } else {
+         console.info("Response from current batch api was no ok", data);
+        }
       }
     } catch (error) {
       console.error('Unable to get current volume', error);
@@ -416,6 +427,7 @@ const Welcome: React.FC = () => {
     console.info("== batcher holdings " + batchId, batch_holdings);
       oh = batch_holdings[0];
       ch = batch_holdings[1];
+
       } catch (error) {
         console.error(error);
       }
@@ -672,19 +684,36 @@ const Welcome: React.FC = () => {
       if(userAddress === null){
         if(initialState.userAddress !== null){
           usrAddr = initialState.userAddress;
-          setUserAddress(usrAddr);
         }
       }
+
+      if(usrAddr === null){
+        setBuyBalance(0);
+        setSellBalance(0);
+      } else {
+
       console.log('getTokenBalance-userAddress',usrAddr);
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
       console.log('getTokenBalance-balanceURI',balanceURI);
-      const data = await fetch(balanceURI, { method: 'GET' });
-      await data.json().then(balance => {
+
+      const buyTokenData = await fetch(balanceURI + '&token.contract=' + buyToken.address, { method: 'GET' });
+      const sellTokenData = await fetch(balanceURI + '&token.contract=' + sellToken.address, { method: 'GET' });
+      
+      try{
+      await buyTokenData.json().then(balance => {
       if (Array.isArray(balance)) {
         setTokenAmount(balance, buyBalance, buyToken.address, buyToken.decimals, setBuyBalance);
+      }
+      });
+      } catch (error){
+        console.error(error);
+      }
+      await sellTokenData.json().then(balance => {
+      if (Array.isArray(balance)) {
         setTokenAmount(balance, sellBalance, sellToken.address, sellToken.decimals, setSellBalance);
       }
       });
+      }
     } catch (error) {
       console.error('getTokenBalance-error',error);
       if(!userAddress) {

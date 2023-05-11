@@ -114,7 +114,6 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
         setCaption(connectCaption);
 //        let localstate = JSON.parse(localStorage.getItem("state"));
         let state =  initialState;
-
         let wallet = newWallet();
 
         setCaption(connectingCaption);
