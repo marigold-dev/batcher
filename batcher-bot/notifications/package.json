@@ -7,10 +7,10 @@
     "ts-node-nix": "dist/index.js"
   },
   "scripts": {
-    "start-ghostnet": "env-cmd -f .env.ghostnet node dist/index.js",
-    "build-ghostnet": "env-cmd -f .env.ghostnet tsc",
-    "start-mainnet": "env-cmd -f .env.mainnet node dist/index.js",
-    "build-mainnet": "env-cmd -f .env.mainnet tsc",
+    "start:ghostnet": "env-cmd -f .env.ghostnet node dist/index.js",
+    "build:ghostnet": "env-cmd -f .env.ghostnet tsc",
+    "start:mainnet": "env-cmd -f .env.mainnet node dist/index.js",
+    "build:mainnet": "env-cmd -f .env.mainnet tsc",
     "dev": "env-cmd -e ghostnet  ts-node-dev --no-notify --respawn src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -15,6 +15,8 @@ const channelId = process.env["CHANNEL_ID"];
 const tzktUri = process.env["TZKT_URI_API"];
 
 const sendToTelegram = async (bot: Telegraf, message: string, options: any) => {
+  console.info("Sending message:", message);
+  console.info("With options", options);
   await bot.telegram.sendMessage(channelId, message, options);
 };
 
@@ -36,6 +38,7 @@ const init = async (
 
   socketConnection.on("bigmaps", (msg: any) => {
     if (!msg.data) return;
+    console.info("----->>>>>   Bigmap recevied ", msg.data);
     for (let i = 0; i < Object.keys(msg.data).length; i++) {
       try {
         if (
@@ -49,7 +52,12 @@ const init = async (
           );
           if (formattedMessageOpt.isSome()) {
             const formattedMessage = formattedMessageOpt.get();
-            sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
+            console.info("Bigmap formatted contents", formattedMessage);
+            sendToTelegram(
+              bot,
+              formattedMessage.message,
+              formattedMessage.message_options
+            );
           }
         }
       } catch (error) {
@@ -72,7 +80,11 @@ const init = async (
             if (formattedMessageOpt.isSome()) {
               const formattedMessage = formattedMessageOpt.get();
               console.info("formattedMessage", formattedMessage);
-              sendToTelegram(bot, formattedMessage[0], formattedMessage[1]);
+              sendToTelegram(
+                bot,
+                formattedMessage.message,
+                formattedMessage.message_options
+              );
             }
           }
         }

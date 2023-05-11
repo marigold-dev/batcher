@@ -24,7 +24,7 @@ const socketConnection = new HubConnectionBuilder()
 let notifications_enabled: NotificationsEnabled = {
   deposits: notifications.includes("deposits"),
   rates: notifications.includes("rates"),
-  batch_status: notifications.includes("batch_status"),
+  batch_status: notifications.includes("status_updates"),
 };
 
 start(bot, socketConnection, notifications_enabled);

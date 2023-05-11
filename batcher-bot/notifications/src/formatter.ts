@@ -6,6 +6,9 @@ import {
 } from "./types";
 import { Option, None } from "prelude-ts";
 
+const tzktUri = process.env["TZKT_URI_API"];
+
+// eslint-disable-next-line @typescript-eslint/no-shadow
 const getPairName = (fromName: string, toName: string) => {
   if (fromName > toName) {
     return fromName + "/" + toName;
@@ -44,7 +47,7 @@ const formatRatesCurrent = (rateMessage: any) => {
   }
 };
 
-const formatBatchChange = (message: any) => {
+const formatBatchChange = (message: any): Option<string> => {
   try {
     const val = message.content.value;
     const batch_number = val.batch_number;
@@ -76,34 +79,38 @@ const formatBatchChange = (message: any) => {
         "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate;
     }
 
-    return (
-      "<b> BATCH UPDATE " +
-      batch_number +
-      " " +
-      rate_name +
-      "</b>  <i>" +
-      status_message +
-      "</i> - <b> BUY VOLUME " +
-      buy_volume +
-      " " +
-      buy_name +
-      " | SELL VOLUME " +
-      sell_volume +
-      " " +
-      sell_name +
-      "</b>"
-    );
+    if (buy_volume == 0 || sell_volume == 0) {
+      return Option.none();
+    } else {
+      return Option.of(
+        "<b> BATCH UPDATE " +
+          batch_number +
+          " " +
+          rate_name +
+          "</b>  <i>" +
+          status_message +
+          "</i> - <b> BUY VOLUME " +
+          buy_volume +
+          " " +
+          buy_name +
+          " | SELL VOLUME " +
+          sell_volume +
+          " " +
+          sell_name +
+          "</b>"
+      );
+    }
   } catch (error) {
     console.info("Error formatting batch change");
     console.error(error);
-    return "<b>" + JSON.stringify(message.content) + "</b>";
+    return Option.none();
   }
 };
 
 const formatBigMap = (
   message: any,
   notifications_enabled: NotificationsEnabled
-) : Option<string> => {
+): Option<string> => {
   if (message.path == "rates_current" && notifications_enabled.rates) {
     return Option.of(formatRatesCurrent(message));
   }
@@ -111,7 +118,7 @@ const formatBigMap = (
     message.path == "batch_set.batches" &&
     notifications_enabled.batch_status
   ) {
-    return Option.of(formatBatchChange(message));
+    return formatBatchChange(message);
   }
 
   return Option.none();
@@ -154,6 +161,7 @@ const scaleAmount = (amount: number, tokenDecimals: number) => {
 };
 
 const formatDeposit = (message: any) => {
+  console.info("Formatting deposit message", JSON.stringify(message));
   const val = message.parameter.value;
   const side = getSide(val.side);
   const tolerance = getTolerance(val.side, val.tolerance);
@@ -165,18 +173,20 @@ const formatDeposit = (message: any) => {
   const to = message.parameter.value.swap.to;
   const amount = scaleAmount(from.amount, from.token.decimals);
 
-  return (
-    "<b> TRADE ON " +
-    pair +
-    "  </b>  <i>" +
-    side +
-    " @ " +
-    tolerance +
-    " </i>  for " +
-    amount +
-    " " +
-    message.parameter.value.swap.from.token.name
-  );
+  let batch_id = "";
+  let volumes = "";
+  try {
+    console.info("Message storage", message.storage);
+    const storage = message.storage;
+    const current_batch_ids = storage.batch_set.current_batch_indices;
+    console.info("Current batch ids", current_batch_ids);
+    const pair_batch_id = current_batch_ids[pair];
+    batch_id = `Batch ${pair_batch_id}`;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return `${batch_id} <b> TRADE ON ${pair}</b>  <i> ${side}@${tolerance}</i>  for  <b>${amount} ${message.parameter.value.swap.from.token.name}</b>`;
 };
 
 const formatOperation = (
@@ -203,13 +213,13 @@ export const format = (
 
     if (msgType == MessageType.BIGMAP) {
       const html: Option<string> = formatBigMap(message, notifications_enabled);
-       if (html.isSome()) {
-         const htmlMessage: string  = html.get();
-         return Option.of({
-           message: htmlMessage,
-           message_options: htmlOptions,
+      if (html.isSome()) {
+        const htmlMessage: string = html.get();
+        return Option.of({
+          message: htmlMessage,
+          message_options: htmlOptions,
         });
-       }
+      }
     }
 
     if (msgType == MessageType.OPERATION) {
@@ -223,7 +233,7 @@ export const format = (
       }
     }
 
-      return Option.none();
+    return Option.none();
   } catch (error) {
     console.error(error);
     let textOptions = {
