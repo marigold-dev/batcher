@@ -93,6 +93,17 @@ const Welcome: React.FC = () => {
     };
   };
 
+  const setStatusFromBatch = (jsonData:any) => {
+    try {
+        const status = Object.keys(jsonData.value.status)[0];
+        setStatus(status);
+        if (status === BatcherStatus.OPEN) {
+          setOpenTime(jsonData.value.status.open);
+        }
+        if (status === BatcherStatus.CLOSED) {
+          setStatus(BatcherStatus.CLOSED);
+        }
+    } catch (error) {
 
   const setStatusFromBatch = (sts: string, jsonData: any) => {
     try {
