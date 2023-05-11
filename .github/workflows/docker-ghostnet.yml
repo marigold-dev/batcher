@@ -47,11 +47,11 @@ jobs:
       - name: Build and push release version of notification bot
         uses: docker/build-push-action@v3
         with:
-          file: ./batcher-bot/Dockerfile.bot.notifications.${{ matrix.network }}
+          file: ./batcher-bot/notifications/Dockerfile.bot.notifications.${{ matrix.network }}
           context: ./batcher-bot/notifications
           push: true
           tags: |
-            ghcr.io/marigold-dev/batcher-bot-notification-${{ matrix.network }}:stable
-            ghcr.io/marigold-dev/batcher-bot-notifications-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
           cache-from: type=gha
           cache-to: type=gha,mode=max
