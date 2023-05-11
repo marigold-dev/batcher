@@ -15,6 +15,7 @@ import {
 import { ContractsService, MichelineFormat } from '@dipdup/tzkt-api';
 import { Space, Col, Row, Drawer, Radio, } from 'antd';
 import { CiTwoTone, ConsoleSqlOutlined, DoubleRightOutlined } from '@ant-design/icons';
+
 import type {  RadioChangeEvent } from 'antd';
 import { useModel } from 'umi';
 import {
@@ -691,6 +692,7 @@ const Welcome: React.FC = () => {
         setBuyBalance(0);
         setSellBalance(0);
       } else {
+
 
       console.log('getTokenBalance-userAddress',usrAddr);
       const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
