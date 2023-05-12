@@ -79,7 +79,7 @@ const formatBatchChange = (message: any): Option<string> => {
         "Cleared (" + val.status.cleared.at + ") @ " + rate_name + " " + rate;
     }
 
-    if (buy_volume == 0 || sell_volume == 0) {
+    if (buy_volume == 0 && sell_volume == 0) {
       return Option.none();
     } else {
       return Option.of(
