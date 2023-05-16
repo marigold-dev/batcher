@@ -1,4 +1,4 @@
-import { token, swap, contract_details } from "./types";
+import { token, swap, contract_details, order } from "./types";
 import { Option, None } from "prelude-ts";
 const chalk = require("chalk");
 const figlet = require("figlet");
@@ -50,5 +50,25 @@ export const get_contract_detail_from_storage = (
   return {
     address: address,
     valid_tokens: tokens,
+  };
+};
+
+export const parse_deposit = (o: any): order => {
+  let side = o.side;
+  let tol = o.tolerance;
+  let to_token = parse_token(o.swap.to);
+  let from_token = parse_token(o.swap.from.token);
+  let amount = o.swap.from.amount;
+
+  return {
+    side: side,
+    tolerance: tol,
+    swap: {
+      to: to_token,
+      from: {
+        token: from_token,
+        amount: amount,
+      },
+    },
   };
 };

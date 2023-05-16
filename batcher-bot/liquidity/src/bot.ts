@@ -5,18 +5,19 @@ import {
   batch_provision,
   token_pair,
 } from "./types";
+import { parse_deposit } from "./utils";
 import { submit_deposit, submit_redemption } from "./submitter";
-import { can_provision } from "./provision";
+import { can_provision_jit } from "./provision";
 
 const redeem_on_cleared = (msg: any) => {
   for (let i = 0; i < Object.keys(msg.data).length; i++) {
     try {
       const message = msg.data[i];
-      console.info("Recieved bigmap", message);
       if (message.path == "batch_set.batches") {
         const val = message.content.value;
         const batch_number = val.batch_number;
         const status = Object.keys(val.status)[0];
+        console.info("Recieved bigmap of status", status);
         if (status == "cleared") {
           console.info(`Batch ${batch_number} was cleared. Redeeming `);
         }
@@ -36,27 +37,49 @@ const getPairName = (fromName: string, toName: string) => {
 };
 
 const jit_provision = (
-  msg: any,
+  message: any,
   details: contract_details,
   settings: liquidity_settings
 ) => {
-  const val = msg.parameter.value;
-  const pair: string = getPairName(val.swap.from.token.name, val.swap.to.name);
+  for (let i = 0; i < Object.keys(message.data).length; i++) {
+    try {
+      const msg = message.data[i];
+      if (msg.parameter) {
+        const entrypoint = msg.parameter.entrypoint;
+        if (entrypoint == "deposit") {
+          console.info("Deposit message", msg);
+          const val = msg.parameter.value;
+          const pair: string = getPairName(
+            val.swap.from.token.name,
+            val.swap.to.name
+          );
 
-  try {
-    if (settings.token_pairs.has(pair)) {
-      const jit_setting = settings.token_pairs.get(pair);
-      console.info("Deposit value", val);
-      if (jit_setting) {
-        const order_opt = can_provision(jit_setting);
-        if (order_opt.isSome()) {
-          const ord = order_opt.get();
-          submit_deposit(ord);
+          const current_batch_indices =
+            msg.storage.batch_set.current_batch_indices;
+          const batch_number = current_batch_indices[pair];
+
+          if (settings.token_pairs.has(pair)) {
+            const jit_setting = settings.token_pairs.get(pair);
+            console.info("Deposit value", val);
+            if (jit_setting) {
+              const order = parse_deposit(val);
+              const order_opt = can_provision_jit(
+                batch_number,
+                jit_setting,
+                order
+              );
+              if (order_opt.isSome()) {
+                const ord = order_opt.get();
+                console.info("Provisioning -> ", ord);
+                submit_deposit(ord);
+              }
+            }
+          }
         }
       }
+    } catch (error: any) {
+      console.error(error);
     }
-  } catch (error: any) {
-     console.error(error);
   }
 };
 

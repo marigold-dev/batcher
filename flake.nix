@@ -11,8 +11,7 @@
 
   outputs = { self, nixpkgs, flake-utils, nix-filter }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
+      let pkgs = import nixpkgs { inherit system; };
       in {
         devShells.${system}.default = pkgs.mkShell {
           name = "batcher";
@@ -48,13 +47,7 @@
             name = "batcher";
             src = ./.;
 
-            buildInputs = with pkgs;
-              with ocamlPackages; [
-                cmake
-                glibc
-                nixfmt
-              ];
-
+            buildInputs = with pkgs; with ocamlPackages; [ cmake glibc nixfmt ];
 
             buildPhase = ''
               mkdir -p $out
