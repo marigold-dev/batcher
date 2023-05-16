@@ -1,4 +1,10 @@
-import { batch_provision, order, token_pair, contract_details, token } from "./types";
+import {
+  batch_provision,
+  order,
+  token_pair,
+  contract_details,
+  token,
+} from "./types";
 import { Option } from "prelude-ts";
 
 const provision = new Map<number, batch_provision>();
@@ -50,18 +56,12 @@ const provision_sell = (
   let upper_provision_bound = token_pair.sell_limit_per_batch;
   let remaining = upper_provision_bound - existing_sell_provision;
 
-  console.info("Existing provision", existing_provision);
-  console.info("Upper provision bound", upper_provision_bound);
-  console.info("Remaining", remaining);
-
   if (remaining <= 0) {
     return Option.none();
   }
 
   let sell_decimals = order.swap.to.decimals;
-  console.info("Sell decimals", sell_decimals);
   let scaled_amount = remaining * 10 ** sell_decimals;
-  console.info("Scaled amount", scaled_amount);
 
   let prov_order: order = {
     swap: {
@@ -108,18 +108,12 @@ const provision_buy = (
   let upper_provision_bound = token_pair.buy_limit_per_batch;
   let remaining = upper_provision_bound - existing_buy_provision;
 
-  console.info("Existing provision", existing_provision);
-  console.info("Upper provision bound", upper_provision_bound);
-  console.info("Remaining", remaining);
-
   if (remaining <= 0) {
     return Option.none();
   }
 
   let buy_decimals = order.swap.to.decimals;
-  console.info("Buy decimals", buy_decimals);
   let scaled_amount = remaining * 10 ** buy_decimals;
-  console.info("Scaled amount", scaled_amount);
 
   let prov_order: order = {
     swap: {
@@ -154,46 +148,46 @@ export const can_provision_always_on = (
   let s = token_pair.side;
 
   try {
-
-  let buy_decimals = buy_token.decimals;
-  let buy_scaled_amount = token_pair.buy_limit_per_batch * 10 ** buy_decimals;
+    let buy_decimals = buy_token.decimals;
+    let buy_scaled_amount = token_pair.buy_limit_per_batch * 10 ** buy_decimals;
 
     let buy_order = {
       swap: {
-         from: {
-           token: buy_token,
-           amount: buy_scaled_amount,
-         },
-         to: sell_token
+        from: {
+          token: buy_token,
+          amount: buy_scaled_amount,
+        },
+        to: sell_token,
       },
       side: 0,
       tolerance: parse_tolerance(0, token_pair.buy_tolerance),
     };
 
-  let sell_decimals = sell_token.decimals;
-  let sell_scaled_amount = token_pair.sell_limit_per_batch * 10 ** sell_decimals;
+    let sell_decimals = sell_token.decimals;
+    let sell_scaled_amount =
+      token_pair.sell_limit_per_batch * 10 ** sell_decimals;
 
     let sell_order = {
       swap: {
-         from: {
-           token: sell_token,
-           amount: sell_scaled_amount,
-         },
-         to: buy_token
+        from: {
+          token: sell_token,
+          amount: sell_scaled_amount,
+        },
+        to: buy_token,
       },
       side: 1,
       tolerance: parse_tolerance(1, token_pair.buy_tolerance),
     };
 
-    if (s = "sell") {
-       orders.push(sell_order);
+    if ((s = "sell")) {
+      orders.push(sell_order);
     }
-    if (s = "buy") {
-       orders.push(buy_order);
+    if ((s = "buy")) {
+      orders.push(buy_order);
     }
-    if (s = "both") {
-       orders.push(buy_order);
-       orders.push(sell_order);
+    if ((s = "both")) {
+      orders.push(buy_order);
+      orders.push(sell_order);
     }
   } catch (error: any) {
     console.error(error);
@@ -211,10 +205,6 @@ export const can_provision_jit = (
   token_pair: token_pair,
   order: order
 ): Option<order> => {
-  console.info("Provision-order", order);
-  console.info("Provision-token-pair", token_pair);
-  console.info("Provision-batch_id", batch_number);
-
   let s = token_pair.side;
 
   if (order.side == 0) {

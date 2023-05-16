@@ -45,7 +45,6 @@ const always_on_provision = (
   for (let i = 0; i < Object.keys(message.data).length; i++) {
     try {
       const msg = message.data[i];
-      console.info("Always on message", msg);
       if (msg.path == "batch_set.batches") {
         console.info("Is batch change");
         const val = msg.content.value;
@@ -61,21 +60,23 @@ const always_on_provision = (
           if (settings.token_pairs.has(pair)) {
             const setting = settings.token_pairs.get(pair);
             if (setting) {
-               console.info(`Batch ${batch_number} is open. Provisioning liquidity`);
-               let buy_token = {
-                 token_id: raw_pair.token_id_0,
-                 name: raw_pair.name_0,
-                 decimals: raw_pair.decimals_0,
-                 standard: raw_pair.standard_0,
-                 address: raw_pair.address_0,
-               };
-               let sell_token = {
-                 token_id: raw_pair.token_id_1,
-                 name: raw_pair.name_1,
-                 decimals: raw_pair.decimals_1,
-                 standard: raw_pair.standard_1,
-                 address: raw_pair.address_1,
-               };
+              console.info(
+                `Batch ${batch_number} is open. Provisioning liquidity`
+              );
+              let buy_token = {
+                token_id: raw_pair.token_id_0,
+                name: raw_pair.name_0,
+                decimals: raw_pair.decimals_0,
+                standard: raw_pair.standard_0,
+                address: raw_pair.address_0,
+              };
+              let sell_token = {
+                token_id: raw_pair.token_id_1,
+                name: raw_pair.name_1,
+                decimals: raw_pair.decimals_1,
+                standard: raw_pair.standard_1,
+                address: raw_pair.address_1,
+              };
 
               const order_list_opt = can_provision_always_on(
                 batch_number,
@@ -114,7 +115,6 @@ const jit_provision = (
       if (msg.parameter) {
         const entrypoint = msg.parameter.entrypoint;
         if (entrypoint == "deposit") {
-          console.info("Deposit message", msg);
           const val = msg.parameter.value;
           const pair: string = getPairName(
             val.swap.from.token.name,
