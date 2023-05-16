@@ -6,8 +6,11 @@ import {
   token_pair,
 } from "./types";
 import { parse_deposit } from "./utils";
-import { submit_deposit, submit_redemption } from "./submitter";
+import { init_toolkit, submit_deposit, submit_redemption } from "./submitter";
 import { can_provision_always_on, can_provision_jit } from "./provision";
+
+// FIXME: move somewhere else?
+init_toolkit();
 
 const redeem_on_cleared = (msg: any) => {
   for (let i = 0; i < Object.keys(msg.data).length; i++) {
