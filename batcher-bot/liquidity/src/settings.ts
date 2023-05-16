@@ -25,7 +25,6 @@ export const load_settings = (settings_path: string): liquidity_settings => {
     };
     tpm.set(tp.name, tsett);
   }
-
   console.info("Liq Settings", tpm);
 
   return {

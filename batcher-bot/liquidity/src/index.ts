@@ -54,7 +54,7 @@ cli
 cli
   .command("always-on")
   .description("Run always-on liquidity for Batcher")
-  .option("-a, --amount <amount>", "trade amount")
+  .argument("<string>", "Path to settings file")
   .action((p: string) => {
     const sett = load_settings(p);
     preload().then((contract_config: contract_details) => {
