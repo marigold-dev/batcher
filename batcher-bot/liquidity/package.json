@@ -17,6 +17,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@taquito/signer": "^16.1.2",
+    "@taquito/taquito": "^16.1.2",
     "@dipdup/tzkt-api": "^0.0.1",
     "@microsoft/signalr": "^7.0.5",
     "chalk": "^4.1.2",
