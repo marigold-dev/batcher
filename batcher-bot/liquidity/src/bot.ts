@@ -17,7 +17,6 @@ const redeem_on_cleared = (msg: any) => {
         const val = message.content.value;
         const batch_number = val.batch_number;
         const status = Object.keys(val.status)[0];
-        console.info("Recieved bigmap of status", status);
         if (status == "cleared") {
           console.info(`Batch ${batch_number} was cleared. Redeeming `);
           submit_redemption();
@@ -54,7 +53,6 @@ const always_on_provision = (
         console.info("pair", val.pair);
         console.info("status", val.status);
         console.info("batch_number", batch_number);
-        console.info("Recieved bigmap of status", status);
         if (status == "open") {
           const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
           if (settings.token_pairs.has(pair)) {
