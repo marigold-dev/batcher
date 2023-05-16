@@ -48,7 +48,7 @@ const always_on_provision = (
       console.info("Always on message", msg);
       if (msg.path == "batch_set.batches") {
         console.info("Is batch change");
-        const val = message.content.value;
+        const val = msg.content.value;
         const batch_number = val.batch_number;
         const status = Object.keys(val.status)[0];
         const raw_pair = val.pair;
@@ -57,11 +57,11 @@ const always_on_provision = (
         console.info("batch_number", batch_number);
         console.info("Recieved bigmap of status", status);
         if (status == "open") {
-          console.info(`Batch ${batch_number} is open. Provisioning liquidity`);
           const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
           if (settings.token_pairs.has(pair)) {
             const setting = settings.token_pairs.get(pair);
             if (setting) {
+               console.info(`Batch ${batch_number} is open. Provisioning liquidity`);
                let buy_token = {
                  token_id: raw_pair.token_id_0,
                  name: raw_pair.name_0,
