@@ -27,8 +27,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./dist/batcher-liquidity-bot.d.ts
-            ./dist/batcher-liquidity-bot.js
-            ./src/liquidity-config-example-ghostnet.json
-            ./src/liquidity-config-example-mainnet.json
+            ./batcher-bot/liquidity/dist/batcher-liquidity-bot.d.ts
+            ./batcher-bot/liquidity/dist/batcher-liquidity-bot.js
+            ./batcher-bot/liquidity/src/liquidity-config-example-ghostnet.json
+            ./batcher-bot/liquidity/src/liquidity-config-example-mainnet.json
             README.md
