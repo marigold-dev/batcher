@@ -1,14 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
-    "lib": ["es6", "es2015", "dom"],
+    "target": "es6",
+    "module": "system",
+    "lib": ["es2020", "dom"],
     "declaration": true,
-    "outDir": "lib",
-    "rootDir": "src",
-    "strict": true,
+    "outDir": "./dist",
+    "outFile": "./dist/batcher-liquidity-bot.js",
+    "rootDir": "./src",
+    "strict": false,
     "types": ["node"],
     "esModuleInterop": true,
-    "resolveJsonModule": true
-  }
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "moduleResolution": "nodenext"
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

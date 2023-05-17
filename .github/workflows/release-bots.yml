@@ -1,0 +1,28 @@
+name: Release Liquidity Bots
+
+on:
+  push:
+    tags:
+      - 'bots-v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '18.x'
+      - name: Install modules
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/batcher-liquidity-bot.d.ts
+            dist/batcher-liquidity-bot.js
+            README.md
