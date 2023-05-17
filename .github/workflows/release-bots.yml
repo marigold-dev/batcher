@@ -23,12 +23,16 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Tar compress
+        run: tar -cvf batcher-liquidity-bot.tar.xz
+      - name: Hash Tar
+        run: echo $(md5sum batcher-liquidity-bot.tar.xz) > batcher-liquidity-bot.hash.md
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          prerelease: true
+          fail_on_unmatched_files: true
+
           files: |
-            ./batcher-bot/liquidity/dist/batcher-liquidity-bot.d.ts
-            ./batcher-bot/liquidity/dist/batcher-liquidity-bot.js
-            ./batcher-bot/liquidity/src/liquidity-config-example-ghostnet.json
-            ./batcher-bot/liquidity/src/liquidity-config-example-mainnet.json
-            README.md
+            ./batcher-bot/liquidity/batcher-liquidity-bot.tar.xz
+            ./batcher-bot/liquidity/batcher-liquidity-bot.hash.md
