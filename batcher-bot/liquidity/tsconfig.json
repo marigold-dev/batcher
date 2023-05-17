@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "system",
+    "module": "commonjs",
     "lib": ["es2020", "dom"],
     "declaration": true,
     "outDir": "./dist",
-    "outFile": "./dist/batcher-liquidity-bot.js",
     "rootDir": "./src",
     "strict": false,
     "types": ["node"],
