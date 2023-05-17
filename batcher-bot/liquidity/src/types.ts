@@ -11,15 +11,18 @@ export type token_pair = {
 };
 
 export type liquidity_settings = {
+  batcher_address: string;
+  tezos_node_uri: string;
+  tzkt_uri_api: string;
   token_pairs: Map<string, token_pair>;
 };
 
 export type token = {
   token_id: number;
   name: string;
-  address: Option<string>;
+  address: string;
   decimals: number;
-  standard: Option<string>;
+  standard: string;
 };
 
 export type token_amount = {
@@ -33,6 +36,7 @@ export type swap = {
 };
 
 export type contract_details = {
+  user_address: string;
   address: string;
   valid_tokens: Map<string, token>;
 };

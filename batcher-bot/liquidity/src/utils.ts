@@ -23,9 +23,9 @@ export const parse_token = (jt: any): token => {
   return {
     token_id: jt.token_id,
     name: jt.name,
-    address: Option.of(jt.address),
+    address: jt.address,
     decimals: jt.decimals,
-    standard: Option.of(jt.standard),
+    standard: jt.standard,
   };
 };
 
@@ -43,11 +43,13 @@ export const parse_tokens_from_storage = (storage: any): Map<string, token> => {
 };
 
 export const get_contract_detail_from_storage = (
+  user_address: string,
   address: string,
   storage: any
 ): contract_details => {
   let tokens = parse_tokens_from_storage(storage);
   return {
+    user_address: user_address,
     address: address,
     valid_tokens: tokens,
   };

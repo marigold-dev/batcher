@@ -1,0 +1,15 @@
+{
+  "batcher_address": "KT1VbeN9etQe5c2b6EAFfCZVaSTpiieHj5u1",
+  "tezos_node_uri": "https://ghostnet.tezos.marigold.dev",
+  "tzkt_uri_api": "https://api.ghostnet.tzkt.io",
+  "token_pairs":  [
+    {
+      "name": "tzBTC/USDT",
+      "side": "both",
+      "buy_limit_per_batch": 0.02,
+      "buy_tolerance": "oracle",
+      "sell_limit_per_batch": 200,
+      "sell_tolerance": "oracle"
+    }
+  ]
+}

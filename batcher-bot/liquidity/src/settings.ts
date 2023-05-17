@@ -28,6 +28,9 @@ export const load_settings = (settings_path: string): liquidity_settings => {
   console.info("Liquidity Settings", tpm);
 
   return {
+    batcher_address: settings.batcher_address,
+    tezos_node_uri: settings.tezos_node_uri,
+    tzkt_uri_api: settings.tzkt_uri_api,
     token_pairs: tpm,
   };
 };

@@ -1,36 +1,44 @@
 #!/usr/bin/env node
-import { config } from "dotenv";
+import { TezosToolkit } from "@taquito/taquito";
+import { InMemorySigner } from "@taquito/signer";
 import { run_jit, run_always_on } from "./bot";
-import { liquidity_type, contract_details } from "./types";
+import { contract_details, liquidity_settings } from "./types";
 import { load_settings } from "./settings";
-import { ContractsService } from "@dipdup/tzkt-api";
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { get_contract_detail_from_storage, echo_terminal } from "./utils";
-import { Option, None } from "prelude-ts";
-const chalk = require("chalk");
+import { Option } from "prelude-ts";
 const clear = require("clear");
-const figlet = require("figlet");
 const { Command } = require("commander");
 const cli = new Command();
 
-config();
 clear();
 
 echo_terminal("Batcher Bot", Option.none());
 
-const contract_address = process.env["BATCHER_ADDRESS"] || "No address defined";
-const tzkt_api_uri = process.env["TZKT_URI_API"] || "No api defined";
-const socket_connection = new HubConnectionBuilder()
-  .withUrl(tzkt_api_uri + "/v1/ws")
-  .build();
-
-const preload = async (): Promise<contract_details> => {
-  const contract_uri: string = `${tzkt_api_uri}/v1/contracts/${contract_address}/storage`;
+const get_connection = (uri: string): HubConnection => {
+  return new HubConnectionBuilder().withUrl(uri + "/v1/ws").build();
+};
+const preload = async (
+  tezos: TezosToolkit,
+  settings: liquidity_settings
+): Promise<contract_details> => {
+  const contract_uri: string = `${settings.tzkt_uri_api}/v1/contracts/${settings.batcher_address}/storage`;
   console.info("contract_uri", contract_uri);
+  tezos.setProvider({
+    signer: await InMemorySigner.fromSecretKey(
+      process.env["TEZOS_PRIV_KEY"] || "No priv key defined"
+    ),
+  });
+
+  const user_address = await tezos.signer.publicKeyHash();
   return fetch(contract_uri)
     .then((response) => response.json())
     .then((json) => {
-      return get_contract_detail_from_storage(contract_address, json);
+      return get_contract_detail_from_storage(
+        user_address,
+        settings.batcher_address,
+        json
+      );
     });
 };
 
@@ -45,9 +53,11 @@ cli
   .argument("<string>", "Path to settings file")
   .action((p: string) => {
     const sett = load_settings(p);
-    preload().then((contract_config: contract_details) => {
+    const socket_connection = get_connection(sett.tzkt_uri_api);
+    const Tezos = new TezosToolkit(sett.tezos_node_uri);
+    preload(Tezos, sett).then((contract_config: contract_details) => {
       echo_terminal("Just-In-Time-Liquidity", Option.of("Mnemonic"));
-      run_jit(contract_config, sett, socket_connection);
+      run_jit(Tezos, contract_config, sett, socket_connection);
     });
   });
 
@@ -57,9 +67,11 @@ cli
   .argument("<string>", "Path to settings file")
   .action((p: string) => {
     const sett = load_settings(p);
-    preload().then((contract_config: contract_details) => {
+    const socket_connection = get_connection(sett.tzkt_uri_api);
+    const Tezos = new TezosToolkit(sett.tezos_node_uri);
+    preload(Tezos, sett).then((contract_config: contract_details) => {
       echo_terminal("Always-On-Liquidity", Option.of("Mnemonic"));
-      run_always_on(contract_config, sett, socket_connection);
+      run_always_on(Tezos, contract_config, sett, socket_connection);
     });
   });
 

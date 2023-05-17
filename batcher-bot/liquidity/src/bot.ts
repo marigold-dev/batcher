@@ -6,13 +6,15 @@ import {
   token_pair,
 } from "./types";
 import { parse_deposit } from "./utils";
-import { init_toolkit, submit_deposit, submit_redemption } from "./submitter";
+import { submit_deposit, submit_redemption } from "./submitter";
 import { can_provision_always_on, can_provision_jit } from "./provision";
+import { TezosToolkit } from "@taquito/taquito";
 
-// FIXME: move somewhere else?
-init_toolkit();
-
-const redeem_on_cleared = (msg: any) => {
+const redeem_on_cleared = (
+  batcher_contract: string,
+  msg: any,
+  tezos: TezosToolkit
+) => {
   for (let i = 0; i < Object.keys(msg.data).length; i++) {
     try {
       const message = msg.data[i];
@@ -22,7 +24,9 @@ const redeem_on_cleared = (msg: any) => {
         const status = Object.keys(val.status)[0];
         if (status == "cleared") {
           console.info(`Batch ${batch_number} was cleared. Redeeming `);
-          submit_redemption();
+          submit_redemption(batcher_contract, tezos).then(() => {
+            console.info(`Redeemed holdings `);
+          });
         }
       }
     } catch (error: any) {
@@ -40,6 +44,7 @@ const getPairName = (fromName: string, toName: string) => {
 };
 
 const always_on_provision = (
+  tezos: TezosToolkit,
   message: any,
   details: contract_details,
   settings: liquidity_settings
@@ -92,7 +97,9 @@ const always_on_provision = (
                 for (let j = 0; j < ords.length; j++) {
                   let ord = ords[i];
                   console.info("Provisioning -> ", ord);
-                  submit_deposit(ord);
+                  submit_deposit(details, ord, tezos).then(() => {
+                    console.info("Provisioned order.");
+                  });
                 }
               }
             }
@@ -106,6 +113,7 @@ const always_on_provision = (
 };
 
 const jit_provision = (
+  tezos: TezosToolkit,
   message: any,
   details: contract_details,
   settings: liquidity_settings
@@ -115,7 +123,9 @@ const jit_provision = (
       const msg = message.data[i];
       if (msg.parameter) {
         const entrypoint = msg.parameter.entrypoint;
-        if (entrypoint == "deposit") {
+        const sender = msg.sender.address;
+        if (entrypoint == "deposit" && sender != details.user_address) {
+          console.info("Deposit msg", msg);
           const val = msg.parameter.value;
           const pair: string = getPairName(
             val.swap.from.token.name,
@@ -128,7 +138,6 @@ const jit_provision = (
 
           if (settings.token_pairs.has(pair)) {
             const jit_setting = settings.token_pairs.get(pair);
-            console.info("Deposit value", val);
             if (jit_setting) {
               const order = parse_deposit(val);
               const order_opt = can_provision_jit(
@@ -138,8 +147,10 @@ const jit_provision = (
               );
               if (order_opt.isSome()) {
                 const ord = order_opt.get();
-                console.info("Provisioning -> ", ord);
-                submit_deposit(ord);
+                console.info("Provisioning -> ", JSON.stringify(ord));
+                submit_deposit(details, ord, tezos).then(() => {
+                  console.info("Provisioned order.");
+                });
               }
             }
           }
@@ -152,6 +163,7 @@ const jit_provision = (
 };
 
 export const run_jit = async (
+  tezos: TezosToolkit,
   details: contract_details,
   settings: liquidity_settings,
   socket_connection: HubConnection
@@ -169,16 +181,17 @@ export const run_jit = async (
 
   socket_connection.on("operations", (msg: any) => {
     if (!msg.data) return;
-    jit_provision(msg, details, settings);
+    jit_provision(tezos, msg, details, settings);
   });
 
   socket_connection.on("bigmaps", (msg: any) => {
     if (!msg.data) return;
-    redeem_on_cleared(msg);
+    redeem_on_cleared(details.address, msg, tezos);
   });
 };
 
 export const run_always_on = async (
+  tezos: TezosToolkit,
   details: contract_details,
   settings: liquidity_settings,
   socket_connection: HubConnection
@@ -191,7 +204,7 @@ export const run_always_on = async (
 
   socket_connection.on("bigmaps", (msg: any) => {
     if (!msg.data) return;
-    always_on_provision(msg, details, settings);
-    redeem_on_cleared(msg);
+    always_on_provision(tezos, msg, details, settings);
+    redeem_on_cleared(details.address, msg, tezos);
   });
 };
