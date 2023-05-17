@@ -36,7 +36,8 @@ jobs:
         with:
           prerelease: true
           fail_on_unmatched_files: true
-
           files: |
             ./batcher-bot/liquidity/batcher-liquidity-bot.tar.xz
             ./batcher-bot/liquidity/batcher-liquidity-bot.tar.hash.md
+            ./batcher-bot/liquidity/batcher-liquidity-bot.zip
+            ./batcher-bot/liquidity/batcher-liquidity-bot.zip.hash.md
