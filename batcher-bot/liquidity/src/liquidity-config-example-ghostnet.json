@@ -7,9 +7,17 @@
       "name": "tzBTC/USDT",
       "side": "both",
       "buy_limit_per_batch": 0.02,
-      "buy_tolerance": "oracle",
+      "buy_tolerance": "worse",
       "sell_limit_per_batch": 200,
       "sell_tolerance": "oracle"
+    },
+    {
+      "name": "tzBTC/EURL",
+      "side": "either",
+      "buy_limit_per_batch": 0.02,
+      "buy_tolerance": "oracle",
+      "sell_limit_per_batch": 220,
+      "sell_tolerance": "better"
     }
   ]
 

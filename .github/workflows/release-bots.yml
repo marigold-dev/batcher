@@ -29,4 +29,6 @@ jobs:
           files: |
             dist/batcher-liquidity-bot.d.ts
             dist/batcher-liquidity-bot.js
+            src/liquidity-config-example-ghostnet.json
+            src/liquidity-config-example-mainnet.json
             README.md
