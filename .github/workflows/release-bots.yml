@@ -1,10 +1,14 @@
 name: Release Liquidity Bots
 
 on:
+  workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
   push:
     tags:
       - 'bots-v*'
 
+defaults:
+  run:
+    working-directory: batcher-bot/liquidity
 jobs:
   release:
     runs-on: ubuntu-latest
