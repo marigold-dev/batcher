@@ -24,7 +24,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Tar compress
-        run: tar -cvf batcher-liquidity-bot.tar.xz
+        run: tar -cvf batcher-liquidity-bot.tar.xz dist/*
       - name: Hash Tar
         run: echo $(md5sum batcher-liquidity-bot.tar.xz) > batcher-liquidity-bot.hash.md
       - name: Release
