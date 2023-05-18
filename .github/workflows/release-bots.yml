@@ -23,6 +23,8 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Package
+        run: npm run package
       - name: Tar compress
         run: tar -cvf batcher-liquidity-bot.tar.xz dist/*
       - name: Hash Tar
