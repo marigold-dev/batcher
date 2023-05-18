@@ -12,8 +12,5 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "moduleResolution": "nodenext"
-  },
-  "exclude": [
-    "node_modules"
-  ]
+  }
 }
