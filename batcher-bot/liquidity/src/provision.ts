@@ -148,7 +148,9 @@ export const can_provision_always_on = (
   let s = token_pair.side;
 
   try {
-    if (!provision.has(batch_number)) {
+    let already_provisioned = provision.has(batch_number)
+    console.info("Already provisioned", already_provisioned);
+    if(!already_provisioned) {
 
   let updated_provision: batch_provision = {
     batch_number: batch_number,

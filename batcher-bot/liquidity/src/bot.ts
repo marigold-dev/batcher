@@ -53,16 +53,13 @@ const always_on_provision = (
     try {
       const msg = message.data[i];
       if (msg.path == "batch_set.batches") {
-        console.info("Is batch change");
         const val = msg.content.value;
         const batch_number = val.batch_number;
         const status = Object.keys(val.status)[0];
         const raw_pair = val.pair;
-        console.info("pair", val.pair);
-        console.info("status", val.status);
-        console.info("batch_number", batch_number);
+        const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
+        console.info("Batch change",`${batch_number} ${pair} was ${val.status}`);
         if (status == "open") {
-          const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
           if (settings.token_pairs.has(pair)) {
             const setting = settings.token_pairs.get(pair);
             if (setting) {
