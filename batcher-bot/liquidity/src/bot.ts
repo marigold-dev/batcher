@@ -58,7 +58,7 @@ const always_on_provision = (
         const status = Object.keys(val.status)[0];
         const raw_pair = val.pair;
         const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
-        console.info("Batch change",`${batch_number} ${pair} was ${val.status}`);
+        console.info("Batch change",`${batch_number} ${pair} was ${JSON.stringify(val.status)}`);
         if (status == "open") {
           if (settings.token_pairs.has(pair)) {
             const setting = settings.token_pairs.get(pair);
