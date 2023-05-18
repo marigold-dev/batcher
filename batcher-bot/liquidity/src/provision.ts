@@ -148,46 +148,61 @@ export const can_provision_always_on = (
   let s = token_pair.side;
 
   try {
-    let buy_decimals = buy_token.decimals;
-    let buy_scaled_amount = token_pair.buy_limit_per_batch * 10 ** buy_decimals;
+    if (!provision.has(batch_number)) {
 
-    let buy_order = {
-      swap: {
-        from: {
-          token: buy_token,
-          amount: buy_scaled_amount,
+  let updated_provision: batch_provision = {
+    batch_number: batch_number,
+    buy_side_provision: 0,
+    sell_side_provision: 0,
+  };
+
+
+      let buy_decimals = buy_token.decimals;
+      let buy_scaled_amount =
+        token_pair.buy_limit_per_batch * 10 ** buy_decimals;
+
+      let buy_order = {
+        swap: {
+          from: {
+            token: buy_token,
+            amount: buy_scaled_amount,
+          },
+          to: sell_token,
         },
-        to: sell_token,
-      },
-      side: 0,
-      tolerance: parse_tolerance(0, token_pair.buy_tolerance),
-    };
+        side: 0,
+        tolerance: parse_tolerance(0, token_pair.buy_tolerance),
+      };
 
-    let sell_decimals = sell_token.decimals;
-    let sell_scaled_amount =
-      token_pair.sell_limit_per_batch * 10 ** sell_decimals;
+      let sell_decimals = sell_token.decimals;
+      let sell_scaled_amount =
+        token_pair.sell_limit_per_batch * 10 ** sell_decimals;
 
-    let sell_order = {
-      swap: {
-        from: {
-          token: sell_token,
-          amount: sell_scaled_amount,
+      let sell_order = {
+        swap: {
+          from: {
+            token: sell_token,
+            amount: sell_scaled_amount,
+          },
+          to: buy_token,
         },
-        to: buy_token,
-      },
-      side: 1,
-      tolerance: parse_tolerance(1, token_pair.buy_tolerance),
-    };
+        side: 1,
+        tolerance: parse_tolerance(1, token_pair.buy_tolerance),
+      };
 
-    if ((s = "sell")) {
-      orders.push(sell_order);
-    }
-    if ((s = "buy")) {
-      orders.push(buy_order);
-    }
-    if ((s = "both")) {
-      orders.push(buy_order);
-      orders.push(sell_order);
+      if ((s = "sell")) {
+        orders.push(sell_order);
+        updated_provision = { ...updated_provision, sell_side_provision: token_pair.sell_limit_per_batch  }
+      }
+      if ((s = "buy")) {
+        orders.push(buy_order);
+        updated_provision = { ...updated_provision, buy_side_provision: token_pair.buy_limit_per_batch  }
+      }
+      if ((s = "both")) {
+        orders.push(buy_order);
+        orders.push(sell_order);
+        updated_provision = { ...updated_provision, sell_side_provision: token_pair.sell_limit_per_batch, buy_side_provision: token_pair.buy_limit_per_batch  }
+      }
+      provision.set(batch_number, updated_provision);
     }
   } catch (error: any) {
     console.error(error);
