@@ -43,6 +43,29 @@ const getPairName = (fromName: string, toName: string) => {
   return toName + "/" + fromName;
 };
 
+const parse_status = (status:any) => {
+
+  try{
+    const status_keys = Object.keys(status)[0];
+   console.info("Status keys", status_keys);
+   console.info("Status", status);
+    if (status_keys.includes("cleared")){
+      return `cleared @ ${status.cleared.at}`;
+    }
+
+    if (status_keys.includes("closed")){
+      return `closed @ ${status.closed.closing_time}`;
+    }
+      return `opened @ ${status.open}`;
+ } catch (error:any)
+ {
+   console.info("Error parsing status");
+   console.error(error);
+ }
+
+
+}
+
 const always_on_provision = (
   tezos: TezosToolkit,
   message: any,
@@ -58,7 +81,8 @@ const always_on_provision = (
         const status = Object.keys(val.status)[0];
         const raw_pair = val.pair;
         const pair: string = getPairName(raw_pair.name_0, raw_pair.name_1);
-        console.info("Batch change",`${batch_number} ${pair} was ${JSON.stringify(val.status)}`);
+        const parsed_status = parse_status(val.status);
+        console.info("Batch change",`${batch_number} ${pair} was ${parsed_status}`);
         if (status == "open") {
           if (settings.token_pairs.has(pair)) {
             const setting = settings.token_pairs.get(pair);
