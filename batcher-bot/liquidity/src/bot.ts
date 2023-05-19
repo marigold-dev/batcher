@@ -188,15 +188,6 @@ export const run_jit = async (
 ) => {
   await socket_connection.start();
 
-  await socket_connection.invoke("SubscribeToOperations", {
-    address: details.address,
-    types: "transaction",
-  });
-
-  await socket_connection.invoke("SubscribeToBigMaps", {
-    contract: details.address,
-  });
-
   socket_connection.on("operations", (msg: any) => {
     if (!msg.data) return;
     jit_provision(tezos, msg, details, settings);
@@ -206,6 +197,16 @@ export const run_jit = async (
     if (!msg.data) return;
     redeem_on_cleared(details.address, msg, tezos);
   });
+
+  await socket_connection.invoke("SubscribeToOperations", {
+    address: details.address,
+    types: "transaction",
+  });
+
+  await socket_connection.invoke("SubscribeToBigMaps", {
+    contract: details.address,
+  });
+
 };
 
 export const run_always_on = async (
