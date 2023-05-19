@@ -145,10 +145,10 @@ export const can_provision_always_on = (
   details: contract_details
 ): Option<Array<order>> => {
   let orders = new Array<order>();
-  let s = token_pair.side;
+  const s = token_pair.side;
 
   try {
-    let already_provisioned = provision.has(batch_number)
+    const already_provisioned = provision.has(batch_number)
     console.info("Already provisioned", already_provisioned);
     if(!already_provisioned) {
 
@@ -159,11 +159,11 @@ export const can_provision_always_on = (
   };
 
 
-      let buy_decimals = buy_token.decimals;
-      let buy_scaled_amount =
+      const buy_decimals = buy_token.decimals;
+      const buy_scaled_amount =
         token_pair.buy_limit_per_batch * 10 ** buy_decimals;
 
-      let buy_order = {
+      const buy_order = {
         swap: {
           from: {
             token: buy_token,
@@ -179,7 +179,7 @@ export const can_provision_always_on = (
       let sell_scaled_amount =
         token_pair.sell_limit_per_batch * 10 ** sell_decimals;
 
-      let sell_order = {
+      const sell_order = {
         swap: {
           from: {
             token: sell_token,
@@ -191,15 +191,15 @@ export const can_provision_always_on = (
         tolerance: parse_tolerance(1, token_pair.buy_tolerance),
       };
 
-      if ((s = "sell")) {
+      if ((s == "sell")) {
         orders.push(sell_order);
         updated_provision = { ...updated_provision, sell_side_provision: token_pair.sell_limit_per_batch  }
       }
-      if ((s = "buy")) {
+      if ((s == "buy")) {
         orders.push(buy_order);
         updated_provision = { ...updated_provision, buy_side_provision: token_pair.buy_limit_per_batch  }
       }
-      if ((s = "both")) {
+      if ((s == "both")) {
         orders.push(buy_order);
         orders.push(sell_order);
         updated_provision = { ...updated_provision, sell_side_provision: token_pair.sell_limit_per_batch, buy_side_provision: token_pair.buy_limit_per_batch  }
@@ -222,7 +222,7 @@ export const can_provision_jit = (
   token_pair: token_pair,
   order: order
 ): Option<order> => {
-  let s = token_pair.side;
+  const s = token_pair.side;
 
   if (order.side == 0) {
     if (s == "both" || s == "either" || s == "sell") {
