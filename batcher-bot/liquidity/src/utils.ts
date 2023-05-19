@@ -33,11 +33,10 @@ export const parse_tokens_from_storage = (storage: any): Map<string, token> => {
   const map = new Map();
   if (storage.valid_tokens) {
     let vt = storage.valid_tokens;
-    for (let i = 0; i < Object.keys(vt).length; i++) {
-      const key = Object.keys(vt)[i];
+    Object.keys(vt).forEach(key => {
       let token = parse_token(vt[key]);
       map.set(key, token);
-    }
+    });
   }
   return map;
 };
