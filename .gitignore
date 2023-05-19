@@ -57,5 +57,8 @@ USDT_token_storage.tz
 # Tezos client artefacts
 .tezos-client/
 
+node_modules
 ./*/node_modules/
+dist
 batcher-bot/notifications/node_modules/
+batcher-bot/liquidity/node_modules/
