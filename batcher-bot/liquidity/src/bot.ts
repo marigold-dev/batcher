@@ -46,14 +46,11 @@ const getPairName = (fromName: string, toName: string) => {
 const parse_status = (status:any) => {
 
   try{
-    const status_keys = Object.keys(status)[0];
-   console.info("Status keys", status_keys);
-   console.info("Status", status);
-    if (status_keys.includes("cleared")){
+    if ('cleared' in status){
       return `cleared @ ${status.cleared.at}`;
     }
 
-    if (status_keys.includes("closed")){
+    if ('closed' in status){
       return `closed @ ${status.closed.closing_time}`;
     }
       return `opened @ ${status.open}`;
