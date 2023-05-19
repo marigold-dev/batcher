@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'release-ghostnet'
+  workflow_dispatch:
 
 jobs:
   ui:
