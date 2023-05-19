@@ -24,10 +24,12 @@ const preload = async (
 ): Promise<contract_details> => {
   const contract_uri: string = `${settings.tzkt_uri_api}/v1/contracts/${settings.batcher_address}/storage`;
   console.info("contract_uri", contract_uri);
+  const priv_key = process.env["TEZOS_PRIV_KEY"];
+  if(!priv_key){
+    throw new Error("A Tezos private key is required to run the liquidity bot");
+  }
   tezos.setProvider({
-    signer: await InMemorySigner.fromSecretKey(
-      process.env["TEZOS_PRIV_KEY"] || "No priv key defined"
-    ),
+    signer: await InMemorySigner.fromSecretKey(priv_key),
   });
 
   const user_address = await tezos.signer.publicKeyHash();
