@@ -41,7 +41,7 @@ const provision_sell = (
   let existing_buy_provision = 0;
   let existing_sell_provision = 0;
 
-  let existing_provision = provision.get(batch_number);
+  const existing_provision = provision.get(batch_number);
   try {
     if (existing_provision) {
       existing_buy_provision = existing_provision.buy_side_provision;
@@ -53,17 +53,17 @@ const provision_sell = (
     return Option.none();
   }
 
-  let upper_provision_bound = token_pair.sell_limit_per_batch;
-  let remaining = upper_provision_bound - existing_sell_provision;
+  const upper_provision_bound = token_pair.sell_limit_per_batch;
+  const remaining = upper_provision_bound - existing_sell_provision;
 
   if (remaining <= 0) {
     return Option.none();
   }
 
-  let sell_decimals = order.swap.to.decimals;
-  let scaled_amount = remaining * 10 ** sell_decimals;
+  const sell_decimals = order.swap.to.decimals;
+  const scaled_amount = remaining * 10 ** sell_decimals;
 
-  let prov_order: order = {
+  const prov_order: order = {
     swap: {
       from: {
         token: order.swap.to,
@@ -74,7 +74,7 @@ const provision_sell = (
     side: 1,
     tolerance: parse_tolerance(1, token_pair.sell_tolerance),
   };
-  let updated_provision: batch_provision = {
+  const updated_provision: batch_provision = {
     batch_number: batch_number,
     buy_side_provision: existing_buy_provision,
     sell_side_provision: existing_sell_provision + remaining,
@@ -93,7 +93,7 @@ const provision_buy = (
   let existing_buy_provision = 0;
   let existing_sell_provision = 0;
 
-  let existing_provision = provision.get(batch_number);
+  const existing_provision = provision.get(batch_number);
   try {
     if (existing_provision) {
       existing_buy_provision = existing_provision.buy_side_provision;
@@ -105,15 +105,15 @@ const provision_buy = (
     return Option.none();
   }
 
-  let upper_provision_bound = token_pair.buy_limit_per_batch;
-  let remaining = upper_provision_bound - existing_buy_provision;
+  const upper_provision_bound = token_pair.buy_limit_per_batch;
+  const remaining = upper_provision_bound - existing_buy_provision;
 
   if (remaining <= 0) {
     return Option.none();
   }
 
-  let buy_decimals = order.swap.to.decimals;
-  let scaled_amount = remaining * 10 ** buy_decimals;
+  const buy_decimals = order.swap.to.decimals;
+  const scaled_amount = remaining * 10 ** buy_decimals;
 
   let prov_order: order = {
     swap: {
@@ -126,7 +126,7 @@ const provision_buy = (
     side: 0,
     tolerance: parse_tolerance(0, token_pair.sell_tolerance),
   };
-  let updated_provision: batch_provision = {
+  const updated_provision: batch_provision = {
     batch_number: batch_number,
     buy_side_provision: existing_buy_provision + remaining,
     sell_side_provision: existing_sell_provision,
