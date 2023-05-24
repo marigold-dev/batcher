@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button, Space, Typography, Col, message, Table } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
@@ -15,6 +15,7 @@ const Holdings: React.FC<HoldingsProps> = ({
   setClearedHoldings,
   updateAll,
   setUpdateAll,
+  hasClearedHoldings,
 }: HoldingsProps) => {
 
   const { initialState  } = useModel('@@initialState');
@@ -108,9 +109,13 @@ const Holdings: React.FC<HoldingsProps> = ({
       </Space>
       <Space className="batcher-price" direction="vertical">
         <Col className="batcher-redeem-btn">
+        { hasClearedHoldings ? (
           <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
             Redeem
           </Button>
+        ) : (
+          <div></div>
+        )}
         </Col>
       </Space>
     </Col>

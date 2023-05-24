@@ -239,6 +239,7 @@ export type HoldingsProps = {
   setClearedHoldings: Dispatch<SetStateAction<Map<string,number>>>;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  hasClearedHoldings: boolean;
 
 };
 
