@@ -93,17 +93,6 @@ const Welcome: React.FC = () => {
     };
   };
 
-  const setStatusFromBatch = (jsonData:any) => {
-    try {
-        const status = Object.keys(jsonData.value.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
-          setOpenTime(jsonData.value.status.open);
-        }
-        if (status === BatcherStatus.CLOSED) {
-          setStatus(BatcherStatus.CLOSED);
-        }
-    } catch (error) {
 
   const setStatusFromBatch = (sts: string, jsonData: any) => {
     try {
@@ -429,7 +418,6 @@ const Welcome: React.FC = () => {
     return [open_holdings, cleared_holdings];
   };
 
-
   const updateHoldings = async (storage: any) => {
     let oh = openHoldings;
     let ch = clearedHoldings;
@@ -489,11 +477,6 @@ const Welcome: React.FC = () => {
     }
     setHasClearedHoldings(sum_of_holdings > 0);
   };
-
-
-
-
-
 
   const getBatches = async (storage: any) => {
     await getCurrentVolume(storage);
