@@ -22,6 +22,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   openTime,
   updateAll,
   setUpdateAll,
+  batchNumber,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
 
@@ -76,6 +77,13 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             ) : (
               <div />
             )}
+        { (batchNumber > 0) ? (
+              <div className="batcher-time-difference">
+                <Typography className="p-13">{ 'Batch #' + batchNumber }</Typography>
+              </div>
+        ) : (
+          <div></div>
+        )}
           </Space>
         </Col>
         <Col className="batcher-balance" xs={24} lg={9}>

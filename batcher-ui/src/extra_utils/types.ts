@@ -201,6 +201,7 @@ export type BatcherInfoProps = {
   openTime: string;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  batchNumber: number;
 };
 
 export type BatcherActionProps = {

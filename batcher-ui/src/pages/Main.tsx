@@ -75,6 +75,7 @@ const Welcome: React.FC = () => {
   const [feeInMutez, setFeeInMutez] = useState<number>(0);
   const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
   const [updateAll, setUpdateAll] = useState<boolean>(false);
+  const [batchNumber, setBatchNumber] = useState<number>(0);
 
   const pullStorage = async () => {
     const storage = await contractsService.getStorage({
@@ -96,7 +97,7 @@ const Welcome: React.FC = () => {
     };
   };
 
-  const setStatusFromBatch = (sts:string, jsonData:any) => {
+  const setStatusFromBatch = (sts: string, jsonData: any) => {
     try {
         if (sts === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
@@ -122,10 +123,12 @@ const Welcome: React.FC = () => {
      console.log('current_batch_number', currentBatchNumber);
 
       if (currentBatchNumber === 0) {
+        setBatchNumber(0);
         setStatus(BatcherStatus.NONE);
         const vols: Volumes = getEmptyVolumes();
         setVolumes(vols);
       } else {
+        setBatchNumber(currentBatchNumber);
         const currentBatchURI =
           bigMapsByIdUri + batchesBigMapId + '/keys/' + currentBatchNumber;
         console.log('######Volumes - URI', currentBatchURI);
@@ -770,6 +773,7 @@ const Welcome: React.FC = () => {
            if (m.path == "batch_set.batches") {
                const val = m.content.value;
                const batch_number = val.batch_number;
+               setBatchNumber(batch_number);
                const sts = Object.keys(val.status)[0];
                setStatusFromBatch(sts,m.content);
            };
@@ -829,6 +833,7 @@ const Welcome: React.FC = () => {
         openTime={openTime}
         updateAll={updateAll}
         setUpdateAll={setUpdateAll}
+        batchNumber={batchNumber}
       />
       <BatcherAction
         content={content}
