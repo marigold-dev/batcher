@@ -255,7 +255,6 @@ export type VolumeProps = {
   volumes: Volumes;
 };
 
-
 export const BUY = 'bUY';
 export const SELL = 'sELL';
 export const CLEARED = 'cleared';
