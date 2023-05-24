@@ -1,8 +1,8 @@
 import Footer from '@/components/Footer';
 import React, { useState, useEffect } from 'react';
 import RightContent from '@/components/RightContent';
-import { AccountInfo } from "@airgap/beacon-sdk";
-import { BeaconWallet } from "@taquito/beacon-wallet";
+import { AccountInfo } from '@airgap/beacon-sdk';
+import { BeaconWallet } from '@taquito/beacon-wallet';
 import { PageLoading } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from 'umi';
 import defaultSettings from '../config/defaultSettings';
@@ -27,8 +27,7 @@ export async function getInitialState(): Promise<any> {
 
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    rightContentRender: () => <RightContent
-    />,
+    rightContentRender: () => <RightContent />,
     disableContentMargin: false,
     waterMarkProps: {
       content: initialState?.currentUser?.name,
@@ -37,8 +36,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     menuHeaderRender: undefined,
     ...initialState?.settings,
     childrenRender: () => {
-      return <Main
-      />;
+      return <Main />;
     },
   };
 };

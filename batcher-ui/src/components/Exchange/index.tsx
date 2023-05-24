@@ -5,7 +5,7 @@ import {  compose, OpKind,  WalletContract, } from "@taquito/taquito";
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps, PriceType, } from '@/extra_utils/types';
+import { ExchangeProps, PriceType, BatcherStatus } from '@/extra_utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
 import { tzip12, Tzip12Module } from "@taquito/tzip12";
@@ -22,7 +22,8 @@ const Exchange: React.FC<ExchangeProps> = ({
   sellToken,
   showDrawer,
   updateAll,
-  setUpdateAll
+  setUpdateAll,
+  status
 }: ExchangeProps) => {
 
 
@@ -31,6 +32,7 @@ const Exchange: React.FC<ExchangeProps> = ({
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
+  const [batchClosed, setBatchClosed] = useState(false);
 
   const [form] = Form.useForm();
 
@@ -54,7 +56,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     if (!userAddress) {
       return;
     }
-    
+
     tezos.setWalletProvider(initialState.wallet);
 
     console.info("tezos", initialState.tezos);
@@ -90,7 +92,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         tolerance = 0;
      }
     }
-     
+
 
 
     // This is for fa2 token standard. I.e, USDT token
@@ -224,6 +226,20 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
   };
 
+
+  const isBatchClosed = () => {
+    console.info("EXCHANGE: isBatchClosed", status);
+    if (status === BatcherStatus.CLOSED) {
+     setBatchClosed(true);
+    } else {
+     setBatchClosed(false);
+    }
+
+ };
+
+  useEffect(() => {
+    isBatchClosed();
+  }, [status]);
   return (
     <div>
       <Form onFinish={depositToken} form={form}>
@@ -323,7 +339,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             To {inversion ? sellToken.name : buyToken.name}
           </Typography>
         </Col>
-        {userAddress ? (
+        {userAddress && (!batchClosed) ? (
           <Form.Item>
             <div className="tx-align">
               <Button className="swap-btn mtb-25" type="primary" htmlType="submit" danger>

@@ -24,7 +24,7 @@ import {
   setSocketTokenAmount,
   scaleStringAmountDown,
 } from '@/extra_utils/utils';
-import { connection, init } from '@/extra_utils/webSocketUtils';
+import { connection, init_contract, init_user } from '@/extra_utils/webSocketUtils';
 import { scaleAmountUp, zeroHoldings } from '@/extra_utils/utils';
 import Holdings from '@/components/Holdings';
 import { TezosToolkit } from '@taquito/taquito';
@@ -82,7 +82,6 @@ const Welcome: React.FC = () => {
       level: 0,
       path: null,
     });
-    console.log('##storage', storage);
     return storage;
   };
 
@@ -97,16 +96,19 @@ const Welcome: React.FC = () => {
     };
   };
 
-  const setStatusFromBatch = (jsonData:any) => {
+  const setStatusFromBatch = (sts:string, jsonData:any) => {
     try {
-        const status = Object.keys(jsonData.value.status)[0];
-        setStatus(status);
-        if (status === BatcherStatus.OPEN) {
+        if (sts === BatcherStatus.OPEN) {
           setOpenTime(jsonData.value.status.open);
-        }
-        if (status === BatcherStatus.CLOSED) {
+          setStatus(BatcherStatus.OPEN);
+        } else if (sts === BatcherStatus.CLOSED) {
           setStatus(BatcherStatus.CLOSED);
+        } else if (sts === BatcherStatus.CLEARED) {
+           setStatus(BatcherStatus.CLEARED);
+        } else {
+          console.error('Unable to set status', sts);
         }
+
     } catch (error) {
 
       console.error('Unable to set status', error);
@@ -132,7 +134,8 @@ const Welcome: React.FC = () => {
         });
         if(data.ok && data.status !== 204) {
         const jsonData = await data.json();
-        setStatusFromBatch(jsonData);
+        const sts = Object.keys(jsonData.value.status)[0];
+        setStatusFromBatch(sts, jsonData);
         // eslint-disable-next-line @typescript-eslint/no-shadow
         const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
         setVolumes(scaledVolumes);
@@ -167,7 +170,7 @@ const Welcome: React.FC = () => {
     }
    };
 
-  const getOriginalDepositAmounts = (side:any, initialBuySideAmount:number, initialSellSideAmount:number, depositValue:number) => {
+  const getOriginalDepositAmounts = (side: any, initialBuySideAmount: number, initialSellSideAmount: number, depositValue: number) => {
     if (Object.keys(side).at(0) === "buy"){
         initialBuySideAmount += Math.floor(depositValue) / 10 ** buyToken.decimals;
     } else if (Object.keys(side).at(0) === "sell") {
@@ -179,7 +182,7 @@ const Welcome: React.FC = () => {
 
   };
 
-  const wasInClearingForBatch = (side_obj:any, order_tolerance_obj:any, clearing_tolerance_obj:any) => {
+  const wasInClearingForBatch = (side_obj: any, order_tolerance_obj: any, clearing_tolerance_obj: any) => {
       console.info("wasInClearingForBatch - side_obj", side_obj);
       console.info("wasInClearingForBatch - order_tolerance_obj", order_tolerance_obj);
       console.info("wasInClearingForBatch - clearing_tolerance_obj", clearing_tolerance_obj);
@@ -281,19 +284,19 @@ const Welcome: React.FC = () => {
   const findTokensForBatch = (batch: any) => {
 
     const pair =  batch.pair
-    const tokens:tokens = {
+    const tokns: tokens = {
       buy_token_name : pair.name_0,
       sell_token_name : pair.name_1,
 
     }
-    return tokens;
+    return tokns;
   };
 
 
 
   const calculateHoldingFromBatch = (batch: any, ubots: any, open_holdings: Map<string, number> , cleared_holdings: Map<string, number> ) => {
 
-   const tokens = findTokensForBatch(batch);
+   const tokns = findTokensForBatch(batch);
     const depositsInBatches = ubots.value;
     const userBatchLength = depositsInBatches[batch.batch_number].length;
 
@@ -304,13 +307,13 @@ const Welcome: React.FC = () => {
         const depObject = ubots.value[batch.batch_number].at(j);
         const side = depObject.key.side;
         const value = depObject.value;
-        let initialBuySideOpenAmount = open_holdings.get(tokens.buy_token_name);
-        let initialSellSideOpenAmount = open_holdings.get(tokens.sell_token_name);
+        let initialBuySideOpenAmount = open_holdings.get(tokns.buy_token_name);
+        let initialSellSideOpenAmount = open_holdings.get(tokns.sell_token_name);
         const updatedValues = getOriginalDepositAmounts(side,initialBuySideOpenAmount, initialSellSideOpenAmount,value);
         initialBuySideOpenAmount += updatedValues.at(0);
         initialSellSideOpenAmount += updatedValues.at(1);
-        open_holdings.set(tokens.buy_token_name,initialBuySideOpenAmount);
-        open_holdings.set(tokens.sell_token_name, initialSellSideOpenAmount);
+        open_holdings.set(tokns.buy_token_name,initialBuySideOpenAmount);
+        open_holdings.set(tokns.sell_token_name, initialSellSideOpenAmount);
         } catch (error) {
           console.error(error);
         }
@@ -324,8 +327,6 @@ const Welcome: React.FC = () => {
       const buy_side_volume_subject_to_clearing = clearing.total_cleared_volumes.buy_side_volume_subject_to_clearing;
       const sell_side_volume_subject_to_clearing = clearing.total_cleared_volumes.sell_side_volume_subject_to_clearing;
 
-      let rate_data = clearing.clearing_rate.rate;
-
       for (let j = 0; j < userBatchLength; j++) {
         try{
         const depObject = ubots.value[batch.batch_number].at(j);
@@ -334,44 +335,44 @@ const Welcome: React.FC = () => {
         const value = depObject.value;
 
         if (buy_side_cleared_volume === 0 || sell_side_cleared_volume === 0 ){
-        let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-        let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+        let initialBuySideAmount = cleared_holdings.get(tokns.buy_token_name);
+        let initialSellSideAmount = cleared_holdings.get(tokns.sell_token_name);
         const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
         initialBuySideAmount += updatedValues.at(0);
         initialSellSideAmount += updatedValues.at(1);
-        cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
-        cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
+        cleared_holdings.set(tokns.buy_token_name,initialBuySideAmount);
+        cleared_holdings.set(tokns.sell_token_name, initialSellSideAmount);
         } else
         {
           const wasInClearing = wasInClearingForBatch(side, tol,clearing.clearing_tolerance);
           if (wasInClearing) {
             if (Object.keys(side).at(0) === "buy") {
-               let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+               let initialBuySideAmount = cleared_holdings.get(tokns.buy_token_name);
+               let initialSellSideAmount = cleared_holdings.get(tokns.sell_token_name);
                const payout = convertHoldingToPayout(value,buy_side_volume_subject_to_clearing,buy_side_cleared_volume, sell_side_cleared_volume,buyToken.decimals, sellToken.decimals);
                initialSellSideAmount += payout.at(0);
                initialBuySideAmount += payout.at(1);
-               cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
-               cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
+               cleared_holdings.set(tokns.buy_token_name,initialBuySideAmount);
+               cleared_holdings.set(tokns.sell_token_name, initialSellSideAmount);
             } else if (Object.keys(side).at(0) === "sell"){
-               let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-               let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+               let initialBuySideAmount = cleared_holdings.get(tokns.buy_token_name);
+               let initialSellSideAmount = cleared_holdings.get(tokns.sell_token_name);
                const payout = convertHoldingToPayout(value,sell_side_volume_subject_to_clearing, sell_side_cleared_volume, buy_side_cleared_volume, sellToken.decimals, buyToken.decimals);
                initialBuySideAmount += payout.at(0);
                initialSellSideAmount += payout.at(1);
-               cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
-               cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
+               cleared_holdings.set(tokns.buy_token_name,initialBuySideAmount);
+               cleared_holdings.set(tokns.sell_token_name, initialSellSideAmount);
             } else {
               console.error("Unable to determine side for a deposit that was in clearing");
             }
           } else {
-           let initialBuySideAmount = cleared_holdings.get(tokens.buy_token_name);
-           let initialSellSideAmount = cleared_holdings.get(tokens.sell_token_name);
+           let initialBuySideAmount = cleared_holdings.get(tokns.buy_token_name);
+           let initialSellSideAmount = cleared_holdings.get(tokns.sell_token_name);
            const updatedValues = getOriginalDepositAmounts(side,initialBuySideAmount, initialSellSideAmount,value);
            initialBuySideAmount += updatedValues.at(0);
            initialSellSideAmount += updatedValues.at(1);
-           cleared_holdings.set(tokens.buy_token_name,initialBuySideAmount);
-           cleared_holdings.set(tokens.sell_token_name, initialSellSideAmount);
+           cleared_holdings.set(tokns.buy_token_name,initialBuySideAmount);
+           cleared_holdings.set(tokns.sell_token_name, initialSellSideAmount);
           }
         }
 
@@ -423,7 +424,7 @@ const Welcome: React.FC = () => {
       }
 
       try{
-      let batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, oh, ch);
+      const batch_holdings = calculateHoldingFromBatch(batch.value,userBatches, oh, ch);
 
     console.info("== batcher holdings " + batchId, batch_holdings);
       oh = batch_holdings[0];
@@ -502,14 +503,14 @@ const Welcome: React.FC = () => {
       const sellTokenData = token_map.get(sellToken.name);
        console.log("sellTokenAddress",sellToken.address);
 
-      const bToken : token = {
+      const bToken: token = {
         token_id: buyTokenData.token_id,
         name: buyTokenData.name,
         address: buyTokenData.address,
         decimals: buyTokenData.decimals,
         standard: buyTokenData.standard,
       };
-      const sToken : token = {
+      const sToken: token = {
         token_id: sellTokenData.token_id,
         name: sellTokenData.name,
         address: sellTokenData.address,
@@ -534,9 +535,9 @@ const Welcome: React.FC = () => {
       // eslint-disable-next-line @typescript-eslint/no-shadow
       console.info("rates",rates);
       console.info("tokenPair",tokenPair);
-      const rate = rates.filter((r) => r.key == tokenPair)[0].value;
-      const numerator = rate.rate.p;
-      const denominator = rate.rate.q;
+      const rte = rates.filter((r) => r.key == tokenPair)[0].value;
+      const numerator = rte.rate.p;
+      const denominator = rte.rate.q;
       const scaledPow = buyToken.decimals - sellToken.decimals;
       const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
       setRate(scaledRate);
@@ -580,13 +581,13 @@ const Welcome: React.FC = () => {
     const pair = e.target.value;
     console.log('pair changed', pair);
     setTokenPair(pair);
-    const swap = tokenMap.get(pair);
+    const swp = tokenMap.get(pair);
     console.log('pair changed to ', swap);
     // Set Buy Token Details
-    setBuyToken(swap.swap.from.token);
+    setBuyToken(swp.swap.from.token);
 
     // Set Sell Token Details
-    setSellToken(swap.swap.to);
+    setSellToken(swp.swap.to);
 
  };
 
@@ -594,9 +595,9 @@ const Welcome: React.FC = () => {
       return (
             <>
             {
-            swaps.map((swap) =>
-                <React.Fragment key={swap}>
-                       <Radio.Button className="batcher-nav-btn" value={swap} onChange={changeTokenPair} >{swap}</Radio.Button>
+            swaps.map((swp) =>
+                <React.Fragment key={swp}>
+                       <Radio.Button className="batcher-nav-btn" value={swp} onChange={changeTokenPair} >{swp}</Radio.Button>
                 </React.Fragment>
             )}
         </>
@@ -609,6 +610,7 @@ const Welcome: React.FC = () => {
   useEffect(() => {
     getPairs();
   }, [tokenMap]);
+
   // eslint-disable-next-line @typescript-eslint/no-shadow
   const renderRightContent = (content: ContentType) => {
     console.log('rendering content');
@@ -628,6 +630,7 @@ const Welcome: React.FC = () => {
             showDrawer={showDrawer}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
+            status={status}
           />
         );
       case ContentType.VOLUME:
@@ -663,6 +666,7 @@ const Welcome: React.FC = () => {
             showDrawer={showDrawer}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
+            status={status}
           />
         );
     }
@@ -700,7 +704,7 @@ const Welcome: React.FC = () => {
 
       const buyTokenData = await fetch(balanceURI + '&token.contract=' + buyToken.address, { method: 'GET' });
       const sellTokenData = await fetch(balanceURI + '&token.contract=' + sellToken.address, { method: 'GET' });
-      
+
       try{
       await buyTokenData.json().then(balance => {
       if (Array.isArray(balance)) {
@@ -759,18 +763,28 @@ const Welcome: React.FC = () => {
 
     connection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
+      console.info("#######WS###### - bigmap", msg)
+      for (let i = 0; i < Object.keys(msg.data).length; i++) {
+      try {
+           const m = msg.data[i];
+           if (m.path == "batch_set.batches") {
+               const val = m.content.value;
+               const batch_number = val.batch_number;
+               const sts = Object.keys(val.status)[0];
+               setStatusFromBatch(sts,m.content);
+           };
 
-      const bigmapsdata = msg.data[0];
-      console.info("#######WS###### - bigmap", msg.data[0])
 
-      if(bigmapsdata.bigmap == ratesBigMapId){
-        updateRate(msg.data[0]);
+           if (m.path == "rates_current" ){
+              updateRate(m);
+              };
+        } catch (error: any) {
+           console.error(error);
+        }
       }
-    });
-
-   if (userAddress) {
-    init(userAddress).then(r => console.log(r));
     }
+    );
+
 
   };
 
@@ -780,6 +794,7 @@ const Welcome: React.FC = () => {
 
   useEffect(() => {
     refreshStorage().then(r => console.log(r));
+    init_contract().then(r => console.log(r));
     handleWebsocket();
   }, []);
 
@@ -795,6 +810,7 @@ const Welcome: React.FC = () => {
   useEffect(() => {
     console.log("User address changed - refreshing from storage")
     refreshStorage().then(r => console.log(r));
+    init_user(userAddress).then(r => console.log(r));
   }, [userAddress]);
 
 
