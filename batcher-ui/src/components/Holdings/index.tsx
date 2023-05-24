@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button, Space, Typography, Col, message, Table } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
@@ -15,9 +15,9 @@ const Holdings: React.FC<HoldingsProps> = ({
   setClearedHoldings,
   updateAll,
   setUpdateAll,
+  hasClearedHoldings,
 }: HoldingsProps) => {
-
-  const { initialState  } = useModel('@@initialState');
+  const { initialState } = useModel('@@initialState');
 
   const triggerUpdate = () => {
     setTimeout(function () {
@@ -26,28 +26,26 @@ const Holdings: React.FC<HoldingsProps> = ({
     }, 5000);
   };
 
-
-  const generateHoldings = (dict:Map<string,number>) => {
-     var data = [];
-     for (const key of dict) {
-
-                    data.push({
-                      token: key[0],
-                      holding: key[1],
-                     });
-     };
-      return (
-            <>
-            {
-            data.map((h) =>
-                <React.Fragment key={h.token}>
-                  <Typography> {h.holding}  {h.token} | </Typography>
-                </React.Fragment>
-            )}
-        </>
+  const generateHoldings = (dict: Map<string, number>) => {
+    var data = [];
+    for (const key of dict) {
+      data.push({
+        token: key[0],
+        holding: key[1],
+      });
+    }
+    return (
+      <>
+        {data.map((h) => (
+          <React.Fragment key={h.token}>
+            <Typography>
+              {' '}
+              {h.holding} {h.token} |{' '}
+            </Typography>
+          </React.Fragment>
+        ))}
+      </>
     );
-
-
   };
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
@@ -66,8 +64,8 @@ const Holdings: React.FC<HoldingsProps> = ({
           message.error('Failed to redeem holdings');
           console.error('Failed to redeem holdings' + confirm);
         } else {
-          setOpenHoldings(new Map<string,number>());
-          setClearedHoldings(new Map<string,number>());
+          setOpenHoldings(new Map<string, number>());
+          setClearedHoldings(new Map<string, number>());
           loading();
           message.success('Successfully redeemed holdings');
           triggerUpdate();
@@ -88,10 +86,7 @@ const Holdings: React.FC<HoldingsProps> = ({
         <Typography className="batcher-title p-16">Open/Closed Batches</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="horizontal">
-                  <Typography>Holdings => </Typography>
-          | {
-             generateHoldings(openHoldings)
-          }
+            <Typography>Holdings =&gt; </Typography>| {generateHoldings(openHoldings)}
           </Space>
         </Col>
       </Space>
@@ -99,18 +94,20 @@ const Holdings: React.FC<HoldingsProps> = ({
         <Typography className="batcher-title p-16">Cleared Batches (Redeemable)</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
           <Space direction="horizontal">
-                  <Typography>Holdings => </Typography>
-          {
-            generateHoldings(clearedHoldings)
-          }
+            <Typography>Holdings =&gt; </Typography>
+            {generateHoldings(clearedHoldings)}
           </Space>
         </Col>
       </Space>
       <Space className="batcher-price" direction="vertical">
         <Col className="batcher-redeem-btn">
-          <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
-            Redeem
-          </Button>
+          {hasClearedHoldings ? (
+            <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
+              Redeem
+            </Button>
+          ) : (
+            <div></div>
+          )}
         </Col>
       </Space>
     </Col>
