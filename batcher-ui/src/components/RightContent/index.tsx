@@ -8,11 +8,9 @@ import { BeaconWallet } from '@taquito/beacon-wallet';
 import { getNetworkType } from '@/extra_utils/utils';
 import '@/components/RightContent/index.less';
 import { connection } from '@/extra_utils/webSocketUtils';
-import { LocalStorage } from "@airgap/beacon-sdk";
+import { LocalStorage } from '@airgap/beacon-sdk';
 
 export type SiderTheme = 'light' | 'dark';
-
-
 
 const GlobalHeaderRight: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
@@ -28,20 +26,16 @@ const GlobalHeaderRight: React.FC = () => {
     className = `${styles.right}  ${styles.dark}`;
   }
 
-const connectCaption = "Connect Wallet";
-const connectingCaption = "Connecting...";
-const disconnectCaption = "Disconnect Wallet";
-const disconnectingCaption = "Disconnecting...";
-const [ caption, setCaption ] = useState<string>(connectCaption);
+  const connectCaption = 'Connect Wallet';
+  const connectingCaption = 'Connecting...';
+  const disconnectCaption = 'Disconnect Wallet';
+  const disconnectingCaption = 'Disconnecting...';
+  const [caption, setCaption] = useState<string>(connectCaption);
 
   const items: MenuProps['items'] = [
     {
       key: '1',
-      label: (
-        <Typography className="p-12">
-          { caption }
-        </Typography>
-      ),
+      label: <Typography className="p-12">{caption}</Typography>,
     },
   ];
 
@@ -50,9 +44,8 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
     onClick: !initialState.userAddress ? () => connectWallet() : () => disconnectWallet(),
   };
 
-
   const connectWallet = async () => {
-      console.info("=== STATE ===  state change check ", initialState);
+    console.info('=== STATE ===  state change check ', initialState);
     if (!initialState.userAddress) {
       setCaption(connectingCaption);
       const wallet = new BeaconWallet({
@@ -69,27 +62,32 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
       tezos.setWalletProvider(wallet);
       const activeAccount = await wallet.client.getActiveAccount();
       const userAddress = activeAccount ? await wallet.getPKH() : null;
-      let updatedState = { ...initialState, wallet: wallet, userAddress: userAddress, userAccount: activeAccount};
+      let updatedState = {
+        ...initialState,
+        wallet: wallet,
+        userAddress: userAddress,
+        userAccount: activeAccount,
+      };
 
       setCaption(disconnectCaption);
-//      localStorage.setItem("state", JSON.stringify(updatedState));
-      console.log("localstroage - after connect", localStorage);
+      //      localStorage.setItem("state", JSON.stringify(updatedState));
+      console.log('localstroage - after connect', localStorage);
       setInitialState(updatedState);
-      console.log("Setting initialState", updatedState);
+      console.log('Setting initialState', updatedState);
     }
   };
 
   const disconnectWallet = async () => {
-    console.info("Disconnecting wallet");
+    console.info('Disconnecting wallet');
     setCaption(disconnectingCaption);
     await connection.stop();
-    try{
-    await initialState.wallet.clearActiveAccount();
+    try {
+      await initialState.wallet.clearActiveAccount();
     } catch (error) {
       console.error(error);
     }
-    let updatedState = { ...initialState, wallet: null, userAddress: null, userAccount:null };
-    localStorage.setItem("state", JSON.stringify(updatedState));
+    let updatedState = { ...initialState, wallet: null, userAddress: null, userAccount: null };
+    localStorage.setItem('state', JSON.stringify(updatedState));
     setInitialState(updatedState);
     setCaption(connectCaption);
   };
@@ -98,44 +96,43 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
     window.scrollTo(0, 0);
   };
 
- const newWallet = () => {
-
+  const newWallet = () => {
     return new BeaconWallet({
-          name: 'batcher',
-          preferredNetwork: getNetworkType(),
-        });
-
- };
-
+      name: 'batcher',
+      preferredNetwork: getNetworkType(),
+    });
+  };
 
   useEffect(() => {
     (async () => {
       try {
         setCaption(connectCaption);
-//        let localstate = JSON.parse(localStorage.getItem("state"));
-        let state =  initialState;
+        //        let localstate = JSON.parse(localStorage.getItem("state"));
+        let state = initialState;
         let wallet = newWallet();
 
         setCaption(connectingCaption);
         tezos.setWalletProvider(wallet);
         const activeAccount = await wallet.client.getActiveAccount();
         if (activeAccount) {
-          console.info("=== STATE ===  no dep check - active account ", activeAccount);
+          console.info('=== STATE ===  no dep check - active account ', activeAccount);
           const userAddress = await wallet.getPKH();
-          let updatedState = { ...state, wallet: wallet, userAddress: userAddress,  userAccount: activeAccount, };
+          let updatedState = {
+            ...state,
+            wallet: wallet,
+            userAddress: userAddress,
+            userAccount: activeAccount,
+          };
           // localStorage.setItem("state", JSON.stringify(updatedState));
           setInitialState(updatedState);
           setCaption(disconnectCaption);
         } else {
-
-
-        setCaption(connectCaption);
+          setCaption(connectCaption);
         }
       } catch (error) {
-          setCaption(connectCaption);
-          console.error(error);
+        setCaption(connectCaption);
+        console.error(error);
       }
-
     })();
   }, []);
   return (
@@ -147,7 +144,7 @@ const [ caption, setCaption ] = useState<string>(connectCaption);
           onClick={!initialState.userAddress ? connectWallet : disconnectWallet}
           danger
         >
-          { caption }
+          {caption}
         </Button>
         <div onClick={scrollToTop}>
           <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">

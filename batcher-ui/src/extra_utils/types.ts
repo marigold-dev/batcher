@@ -267,4 +267,3 @@ export type tokens = {
   buy_token_name: string;
   sell_token_name: string;
 };
-

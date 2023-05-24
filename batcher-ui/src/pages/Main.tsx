@@ -93,19 +93,19 @@ const Welcome: React.FC = () => {
     };
   };
 
-const setStatusFromBatch = (sts:string, jsonData:any) => {
 
+  const setStatusFromBatch = (sts: string, jsonData: any) => {
     try {
-        if (sts === BatcherStatus.OPEN) {
-          setOpenTime(jsonData.value.status.open);
-          setStatus(BatcherStatus.OPEN);
-        } else if (sts === BatcherStatus.CLOSED) {
-          setStatus(BatcherStatus.CLOSED);
-        } else if (sts === BatcherStatus.CLEARED) {
-           setStatus(BatcherStatus.CLEARED);
-        } else {
-          console.error('Unable to set status', sts);
-        }
+      if (sts === BatcherStatus.OPEN) {
+        setOpenTime(jsonData.value.status.open);
+        setStatus(BatcherStatus.OPEN);
+      } else if (sts === BatcherStatus.CLOSED) {
+        setStatus(BatcherStatus.CLOSED);
+      } else if (sts === BatcherStatus.CLEARED) {
+        setStatus(BatcherStatus.CLEARED);
+      } else {
+        console.error('Unable to set status', sts);
+      }
     } catch (error) {
       console.error('Unable to set status', error);
     }
@@ -132,13 +132,13 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
         const data = await fetch(currentBatchURI, {
           method: 'GET',
         });
-        if(data.ok && data.status !== 204) {
-        const jsonData = await data.json();
-        const sts = Object.keys(jsonData.value.status)[0];
-        setStatusFromBatch(sts, jsonData);
-        // eslint-disable-next-line @typescript-eslint/no-shadow
-        const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
-        setVolumes(scaledVolumes);
+        if (data.ok && data.status !== 204) {
+          const jsonData = await data.json();
+          const sts = Object.keys(jsonData.value.status)[0];
+          setStatusFromBatch(sts, jsonData);
+          // eslint-disable-next-line @typescript-eslint/no-shadow
+          const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
+          setVolumes(scaledVolumes);
         } else {
           console.info('Response from current batch api was no ok', data);
         }
@@ -172,58 +172,38 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
       console.error('Unable to update swap map', error);
     }
   };
-  const getOriginalDepositAmounts = (side: any, initialBuySideAmount: number, initialSellSideAmount: number, depositValue: number) => {
-    if (Object.keys(side).at(0) === "buy"){
-        initialBuySideAmount += Math.floor(depositValue) / 10 ** buyToken.decimals;
-    } else if (Object.keys(side).at(0) === "sell") {
-        initialSellSideAmount += Math.floor(depositValue) / 10 ** sellToken.decimals;
+  const getOriginalDepositAmounts = (
+    side: any,
+    initialBuySideAmount: number,
+    initialSellSideAmount: number,
+    depositValue: number,
+  ) => {
+    if (Object.keys(side).at(0) === 'buy') {
+      initialBuySideAmount += Math.floor(depositValue) / 10 ** buyToken.decimals;
+    } else if (Object.keys(side).at(0) === 'sell') {
+      initialSellSideAmount += Math.floor(depositValue) / 10 ** sellToken.decimals;
     } else {
       console.error("Couldn't understand which side the deposit was on");
     }
     return [initialBuySideAmount, initialSellSideAmount];
   };
 
-  const wasInClearingForBatch = (side_obj: any, order_tolerance_obj: any, clearing_tolerance_obj: any) => {
-      console.info("wasInClearingForBatch - side_obj", side_obj);
-      console.info("wasInClearingForBatch - order_tolerance_obj", order_tolerance_obj);
-      console.info("wasInClearingForBatch - clearing_tolerance_obj", clearing_tolerance_obj);
-      const side = Object.keys(side_obj).at(0);
-      const order_tolerance = Object.keys(order_tolerance_obj).at(0);
-      const clearing_tolerance = Object.keys(clearing_tolerance_obj).at(0);
-      console.info("wasInClearingForBatch - side", side);
-      console.info("wasInClearingForBatch - order_tolerance", order_tolerance);
-      console.info("wasInClearingForBatch - clearing_tolerance", clearing_tolerance);
-      if (side == "buy") {
-        if (clearing_tolerance === "minus") {
-            if (order_tolerance === "minus"){
-              return true;
-            } else if (order_tolerance === "exact") {
-              return false;
-            } else if (order_tolerance === "plus") {
-              return false;
-            } else {
-              console.error("Could not determine order tolerance for buy deposit");
-            }
-        } else if (clearing_tolerance === "exact") {
-            if (order_tolerance === "minus"){
-              return true;
-            } else if (order_tolerance === "exact") {
-              return true;
-            } else if (order_tolerance === "plus") {
-              return false;
-            } else {
-              console.error("Could not determine order tolerance for buy deposit");
-            }
-        } else if (clearing_tolerance === "plus") {
-            if (order_tolerance === "minus"){
-              return true;
-            } else if (order_tolerance === "exact") {
-              return true;
-            } else if (order_tolerance === "plus") {
-              return true;
-            } else {
-              console.error("Could not determine order tolerance for buy deposit");
-            }
+  const wasInClearingForBatch = (
+    side_obj: any,
+    order_tolerance_obj: any,
+    clearing_tolerance_obj: any,
+  ) => {
+    const side = Object.keys(side_obj).at(0);
+    const order_tolerance = Object.keys(order_tolerance_obj).at(0);
+    const clearing_tolerance = Object.keys(clearing_tolerance_obj).at(0);
+    if (side == 'buy') {
+      if (clearing_tolerance === 'minus') {
+        if (order_tolerance === 'minus') {
+          return true;
+        } else if (order_tolerance === 'exact') {
+          return false;
+        } else if (order_tolerance === 'plus') {
+          return false;
         } else {
           console.error('Could not determine order tolerance for buy deposit');
         }
@@ -328,7 +308,7 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
 
     if (Object.keys(batch.status)[0] !== BatcherStatus.CLEARED) {
       for (let j = 0; j < userBatchLength; j++) {
-       try {
+        try {
           const depObject = ubots.value[batch.batch_number].at(j);
           const side = depObject.key.side;
           const value = depObject.value;
@@ -462,7 +442,6 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
         return;
       }
 
-
       for (let i = 0; i < Object.keys(userBatches.value).length; i++) {
         const batchId = Object.keys(userBatches.value).at(i);
 
@@ -497,7 +476,6 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
       sum_of_holdings = sum_of_holdings + value;
     }
     setHasClearedHoldings(sum_of_holdings > 0);
-
   };
 
   const getBatches = async (storage: any) => {
@@ -570,9 +548,9 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
       // eslint-disable-next-line @typescript-eslint/no-shadow
       console.info('rates', rates);
       console.info('tokenPair', tokenPair);
-      const rate = rates.filter((r) => r.key == tokenPair)[0].value;
-      const numerator = rate.rate.p;
-      const denominator = rate.rate.q;
+      const rt = rates.filter((r) => r.key == tokenPair)[0].value;
+      const numerator = rt.rate.p;
+      const denominator = rt.rate.q;
 
       const scaledPow = buyToken.decimals - sellToken.decimals;
       const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
@@ -602,14 +580,11 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
 
   const getPairs = () => {
     const swps = [];
-    console.log('swap_map', tokenMap);
     for (const keyvalue of tokenMap) {
       console.log(keyvalue);
       swps.push(keyvalue[0]);
     }
     setSwaps(swps);
-    console.log('swps', swps);
-    console.log('swaps', swaps);
   };
 
   const changeTokenPair = (e: RadioChangeEvent) => {
@@ -623,19 +598,19 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
 
     // Set Sell Token Details
     setSellToken(swp.swap.to);
-
- };
+  };
 
   const generatePairs = () => {
-      return (
-            <>
-            {
-            swaps.map((swp) =>
-                <React.Fragment key={swp}>
-                       <Radio.Button className="batcher-nav-btn" value={swp} onChange={changeTokenPair} >{swp}</Radio.Button>
-                </React.Fragment>
-            )}
-        </>
+    return (
+      <>
+        {swaps.map((swp) => (
+          <React.Fragment key={swp}>
+            <Radio.Button className="batcher-nav-btn" value={swp} onChange={changeTokenPair}>
+              {swp}
+            </Radio.Button>
+          </React.Fragment>
+        ))}
+      </>
     );
   };
 
@@ -739,27 +714,32 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
           method: 'GET',
         });
 
-      console.log('getTokenBalance-userAddress',usrAddr);
-      const balanceURI = REACT_APP_TZKT_URI_API + '/v1/tokens/balances?account=' + usrAddr;
-      console.log('getTokenBalance-balanceURI',balanceURI);
-
-      const buyTokenData = await fetch(balanceURI + '&token.contract=' + buyToken.address, { method: 'GET' });
-      const sellTokenData = await fetch(balanceURI + '&token.contract=' + sellToken.address, { method: 'GET' });
-
-      try{
-      await buyTokenData.json().then(balance => {
-      if (Array.isArray(balance)) {
-        setTokenAmount(balance, buyBalance, buyToken.address, buyToken.decimals, setBuyBalance);
-      }
-      });
-      } catch (error){
-        console.error(error);
-      }
-      await sellTokenData.json().then(balance => {
-      if (Array.isArray(balance)) {
-        setTokenAmount(balance, sellBalance, sellToken.address, sellToken.decimals, setSellBalance);
-      }
-      });
+        try {
+          await buyTokenData.json().then((balance) => {
+            if (Array.isArray(balance)) {
+              setTokenAmount(
+                balance,
+                buyBalance,
+                buyToken.address,
+                buyToken.decimals,
+                setBuyBalance,
+              );
+            }
+          });
+        } catch (error) {
+          console.error(error);
+        }
+        await sellTokenData.json().then((balance) => {
+          if (Array.isArray(balance)) {
+            setTokenAmount(
+              balance,
+              sellBalance,
+              sellToken.address,
+              sellToken.decimals,
+              setSellBalance,
+            );
+          }
+        });
       }
     } catch (error) {
       console.error('getTokenBalance-error', error);
@@ -802,30 +782,25 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
 
     connection.on('bigmaps', (msg: any) => {
       if (!msg.data) return;
-      console.info("#######WS###### - bigmap", msg)
+      console.info('#######WS###### - bigmap', msg);
       for (let i = 0; i < Object.keys(msg.data).length; i++) {
-      try {
-           const m = msg.data[i];
-           if (m.path == "batch_set.batches") {
-               const val = m.content.value;
-               const batch_number = val.batch_number;
-               setBatchNumber(batch_number);
-               const sts = Object.keys(val.status)[0];
-               setStatusFromBatch(sts,m.content);
-           };
+        try {
+          const m = msg.data[i];
+          if (m.path == 'batch_set.batches') {
+            const val = m.content.value;
+            const batch_number = val.batch_number;
+            const sts = Object.keys(val.status)[0];
+            setStatusFromBatch(sts, m.content);
+          }
 
-
-           if (m.path == "rates_current" ){
-              updateRate(m);
-              };
+          if (m.path == 'rates_current') {
+            updateRate(m);
+          }
         } catch (error: any) {
-           console.error(error);
+          console.error(error);
         }
       }
-    }
-    );
-
-
+    });
   };
 
   const refreshStorage = async () => {
@@ -833,8 +808,8 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
   };
 
   useEffect(() => {
-    refreshStorage().then(r => console.log(r));
-    init_contract().then(r => console.log(r));
+    refreshStorage().then((r) => console.log(r));
+    init_contract().then((r) => console.log(r));
     handleWebsocket();
   }, []);
 
@@ -848,9 +823,9 @@ const setStatusFromBatch = (sts:string, jsonData:any) => {
   }, [buyToken.address, sellToken.address, updateAll]);
 
   useEffect(() => {
-    console.log("User address changed - refreshing from storage")
-    refreshStorage().then(r => console.log(r));
-    init_user(userAddress).then(r => console.log(r));
+    console.log('User address changed - refreshing from storage');
+    refreshStorage().then((r) => console.log(r));
+    init_user(userAddress).then((r) => console.log(r));
   }, [userAddress]);
 
   return (
