@@ -172,7 +172,6 @@ export type OrderBookProps = {
   sellToken: token;
 };
 
-
 export type ExchangeProps = {
   userAddress: string;
   buyBalance: number;
@@ -186,6 +185,7 @@ export type ExchangeProps = {
   showDrawer: Dispatch<SetStateAction<boolean>>;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  status: string;
 };
 
 export type BatcherInfoProps = {
@@ -201,10 +201,11 @@ export type BatcherInfoProps = {
   openTime: string;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  batchNumber: number;
 };
 
 export type BatcherActionProps = {
-  content: ContentType,
+  content: ContentType;
   setContent: Dispatch<SetStateAction<ContentType>>;
 };
 export class aggregate_orders {
@@ -228,20 +229,18 @@ export type BatcherStepperProps = {
   status: string;
 };
 
-
 export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
-  openHoldings: Map<string,number>;
-  clearedHoldings: Map<string,number>;
-  setOpenHoldings: Dispatch<SetStateAction<Map<string,number>>>;
-  setClearedHoldings: Dispatch<SetStateAction<Map<string,number>>>;
+  openHoldings: Map<string, number>;
+  clearedHoldings: Map<string, number>;
+  setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>;
+  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
-
+  hasClearedHoldings: boolean;
 };
-
 
 export type Volumes = {
   buy_minus_volume: string;
@@ -256,7 +255,6 @@ export type VolumeProps = {
   volumes: Volumes;
 };
 
-
 export const BUY = 'bUY';
 export const SELL = 'sELL';
 export const CLEARED = 'cleared';
@@ -268,4 +266,4 @@ export const PLUS = 'pLUS';
 export type tokens = {
   buy_token_name: string;
   sell_token_name: string;
-}
+};

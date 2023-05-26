@@ -22,22 +22,31 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   openTime,
   updateAll,
   setUpdateAll,
+  batchNumber,
 }: BatcherInfoProps) => {
   const { initialState } = useModel('@@initialState');
 
   const triggerUpdate = () => {
     if (status === BatcherStatus.OPEN && openTime) {
-    setTimeout(function () {
-      const u = !updateAll;
-      setUpdateAll(u);
-    },600000);
-   }
+      setTimeout(function () {
+        const u = !updateAll;
+        setUpdateAll(u);
+      }, 600000);
+    }
   };
-
 
   useEffect(() => {
     triggerUpdate();
   }, [status]);
+
+const get_batch_prefix = () => {
+
+   if(status == BatcherStatus.CLEARED){
+     return "Last Batch ";
+   }
+  return "Current Batch ";
+
+};
 
   const get_time_difference = () => {
     if (status === BatcherStatus.OPEN && openTime) {
@@ -45,8 +54,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
       const open = parseISO(openTime);
       const batcherClose = add(open, { minutes: 10 });
       const diff = differenceInMinutes(batcherClose, now);
-      if (diff < 0)
-      {
+      if (diff < 0) {
         return 0;
       } else {
         return diff;
@@ -76,6 +84,13 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             ) : (
               <div />
             )}
+        { (batchNumber > 0) ? (
+              <div className="batcher-time-difference">
+                <Typography className="p-13">{ get_batch_prefix() + '#' + batchNumber }</Typography>
+              </div>
+        ) : (
+          <div></div>
+        )}
           </Space>
         </Col>
         <Col className="batcher-balance" xs={24} lg={9}>
@@ -83,14 +98,10 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             <Space className="pd-0">
               <Typography className="batcher-title p-16">Balances</Typography>
               <Typography className="batcher-title p-13">
-                {inversion
-                  ? buyBalance + ' ' + buyTokenName
-                  : sellBalance + ' ' + sellTokenName}
+                {inversion ? buyBalance + ' ' + buyTokenName : sellBalance + ' ' + sellTokenName}
               </Typography>
               <Typography className="batcher-title p-13">
-                {inversion
-                  ? sellBalance + ' ' + sellTokenName
-                  : buyBalance + ' ' + buyTokenName}
+                {inversion ? sellBalance + ' ' + sellTokenName : buyBalance + ' ' + buyTokenName}
               </Typography>
             </Space>
           </Col>
@@ -109,7 +120,9 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
           <Col className="batcher-price" span={24}>
             <Space className="pd-0">
               <Typography className="batcher-title p-16">Oracle Price</Typography>
-              <Typography className="batcher-title p-13">{rate} {tokenPair}</Typography>
+              <Typography className="batcher-title p-13">
+                {rate} {tokenPair}
+              </Typography>
             </Space>
           </Col>
         </Col>
