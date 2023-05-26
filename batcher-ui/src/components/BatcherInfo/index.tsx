@@ -39,6 +39,15 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
     triggerUpdate();
   }, [status]);
 
+const get_batch_prefix = () => {
+
+   if(status == BatcherStatus.CLEARED){
+     return "Last Batch ";
+   }
+  return "Current Batch ";
+
+};
+
   const get_time_difference = () => {
     if (status === BatcherStatus.OPEN && openTime) {
       const now = new Date();
@@ -77,7 +86,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             )}
         { (batchNumber > 0) ? (
               <div className="batcher-time-difference">
-                <Typography className="p-13">{ 'Batch #' + batchNumber }</Typography>
+                <Typography className="p-13">{ get_batch_prefix() + '#' + batchNumber }</Typography>
               </div>
         ) : (
           <div></div>
