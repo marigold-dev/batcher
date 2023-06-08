@@ -28,23 +28,8 @@ let f(_:unit) : Batcher.Storage.t = {
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
         swap = {
-            from = {
-              amount = 1n;
-              token = {
-                token_id = 0n;
-                name = "tzBTC";
-                address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
-                decimals = 8n;
-                standard = Some "FA1.2 token"
-              }
-            };
-            to = {
-              token_id = 0n;
-              name = "USDT";
-              address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
-              decimals = 6n;
-              standard = Some "FA2 token";
-            }
+            from =  "tzBTC";
+            to =  "USDT";
         };
         oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
         oracle_asset_name = "BTC-USDT";
@@ -54,23 +39,8 @@ let f(_:unit) : Batcher.Storage.t = {
     );
     ("tzBTC/EURL", {
         swap = {
-          from = {
-            amount = 1n;
-            token = {
-              token_id = 0n;
-              name = "tzBTC";
-              address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
-              decimals = 8n;
-              standard = Some "FA1.2 token";
-            }
-          };
-          to = {
-            token_id = 0n;
-            name = "EURL";
-            address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
-            decimals = 6n;
-            standard = Some "FA2 token";
-          }
+          from = "tzBTC";
+          to = "EURL";
         };
         oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
         oracle_asset_name = "BTC-EUR";
@@ -79,7 +49,7 @@ let f(_:unit) : Batcher.Storage.t = {
       }
     )
   ];
-  rates_current = (Big_map.empty : Batcher.Storage.rates_current);
+  rates_current = (Big_map.empty : Batcher.rates_current);
   batch_set = {
     current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
