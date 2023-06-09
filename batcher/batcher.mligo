@@ -1693,7 +1693,7 @@ let confirm_swap_pair_is_disabled_prior_to_removal
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order storage.valid_tokens in
+  let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
@@ -1788,7 +1788,7 @@ let tick_price
   let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
-  let pair = Utils.pair_of_rate oracle_rate storage.valid_tokens in
+  let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
   let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time batch_set in
