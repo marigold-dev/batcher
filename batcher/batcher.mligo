@@ -220,7 +220,7 @@ type volumes = [@layout:comb] {
   sell_total_volume : nat;
 }
 
-type pair = token * token
+type pair = string * string
 
 (* This represents the type of order.  I.e. buy/sell and which level*)
 type ordertype = [@layout:comb] {
@@ -550,17 +550,13 @@ let get_rate_name_from_swap (s : swap_reduced) : string =
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
-let get_rate_name_from_pair (s : token * token) : string =
-  let base, quote = s in
-  let base_name = base.name in
-  let quote_name = quote.name in
+let get_rate_name_from_pair (s : pair) : string =
+  let base_name, quote_name = s in
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
-let get_inverse_rate_name_from_pair (s : token * token) : string =
-  let base, quote = s in
-  let quote_name = quote.name in
-  let base_name = base.name in
+let get_inverse_rate_name_from_pair (s :  pair) : string =
+  let base_name, quote_name = s in
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
@@ -573,28 +569,23 @@ let get_rate_name
 [@inline]
 let pair_of_swap
   (side: side)
-  (swap: swap_reduced)
-  (tokens: valid_tokens): (token * token) =
-  let from_token = get_token swap.from tokens in
-  let to_token = get_token swap.to tokens in
+  (swap: swap_reduced): (pair) =
   match side with
-  | Buy -> from_token, to_token
-  | Sell -> to_token, from_token
+  | Buy -> swap.from, swap.to
+  | Sell -> swap.to, swap.from
 
 [@inline]
 let pair_of_rate
-  (r : exchange_rate)
-  (tokens: valid_tokens): (token * token) = pair_of_swap Buy r.swap tokens
+  (r : exchange_rate): pair = pair_of_swap Buy r.swap
 
 [@inline]
 let pair_of_external_swap
-  (order : external_swap_order)
-  (tokens: valid_tokens): (token * token) =
+  (order : external_swap_order): pair =
   (* Note:  we assume left-handedness - i.e. direction is buy side*)
   let swap = order.swap in
   let side = nat_to_side order.side in
   let swap_reduced = swap_to_swap_reduced swap in
-  pair_of_swap side swap_reduced tokens
+  pair_of_swap side swap_reduced
 
 [@inline]
 let get_current_batch_index
@@ -1135,9 +1126,8 @@ let are_equivalent_tokens
 let is_valid_swap_pair
   (side: side)
   (swap: swap_reduced)
-  (valid_swaps: valid_swaps)
-  (tokens: valid_tokens): swap_reduced =
-  let token_pair = Utils.pair_of_swap side swap tokens in
+  (valid_swaps: valid_swaps): swap_reduced =
+  let token_pair = Utils.pair_of_swap side swap in
   let rate_name = Utils.get_rate_name_from_pair token_pair in
   if Map.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
 
@@ -1240,7 +1230,7 @@ let validate
                 | None -> failwith unsupported_swap_type
                 | Some tt -> if (Token_Utils.are_equivalent_tokens from ft) && (Token_Utils.are_equivalent_tokens to tt) then
                               let sr = Utils.swap_to_swap_reduced swap in
-                              Token_Utils.is_valid_swap_pair side sr valid_swaps valid_tokens
+                              Token_Utils.is_valid_swap_pair side sr valid_swaps
                             else
                               failwith unsupported_swap_type)
 
@@ -1334,7 +1324,7 @@ let set_sell_side_volume
 let make
   (batch_number: nat)
   (timestamp: timestamp)
-  (pair: token * token) : batch =
+  (pair: pair) : batch =
   let volumes: volumes = {
       buy_minus_volume = 0n;
       buy_exact_volume = 0n;
