@@ -284,6 +284,14 @@ type valid_swaps =  (string, valid_swap_reduced) map
 (* The current, most up to date exchange rates between tokens  *)
 type rates_current = (string, exchange_rate) big_map
 
+type fees = {
+   to_burn: tez;
+   to_refund: tez;
+   payer: address;
+   burner: address;
+}
+
+
 [@inline]
 let get_token
   (token_name: string)
@@ -891,14 +899,19 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens) =
-  let u_tam: token_amount_map  = if was_in_clearing vols ot c then
-                                          get_cleared_payout ot amt c tam tokens
-                                        else
-                                          let ta: token_amount = TokenAmount.recover ot amt c tokens in
-                                          TokenAmountMap.increase ta tam
+  ((c, tam, vols, tokens, fees, fee_in_mutez), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez) =
+  let (u_tam, u_fees) = if was_in_clearing vols ot c then
+                          let tm = get_cleared_payout ot amt c tam tokens in
+                          let f = fees.to_burn + fee_in_mutez in
+                          let uf = { fees with to_burn = f; } in
+                          (tm, uf)
+                        else
+                          let ta: token_amount = TokenAmount.recover ot amt c tokens in
+                          let f = fees.to_refund + fee_in_mutez in
+                          let uf = { fees with to_refund = f; } in
+                          (TokenAmountMap.increase ta tam, uf)
   in
-  (c, u_tam, vols, tokens)
+  (c, u_tam, vols, tokens, u_fees, fee_in_mutez)
 
 end
 
@@ -926,28 +939,30 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
-    | None -> bots, tam, bts, tokens
+    | None -> bots, tam, bts, tokens, fees, fee_in_mutez
     | Some batch -> (match get_clearing batch with
-                      | None -> bots, tam, bts, tokens
-                      | Some c -> let _c, u_tam, _vols, _tokns = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens )  in
+                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez
+                      | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez)  in
                                   let u_bots = Map.remove batch_number bots in
-                                  u_bots,u_tam, bts, tokens)
+                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez)
 
 [@inline]
 let collect_redemption_payouts
     (holder: address)
     (batch_set: batch_set)
     (ubots: user_batch_ordertypes)
-    (tokens: valid_tokens):  (user_batch_ordertypes * token_amount_map) =
+    (tokens: valid_tokens)
+    (fees: fees)
+    (fee_in_mutez: tez):  (fees * user_batch_ordertypes * token_amount_map) =
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
-    | None -> ubots, empty_tam
-    | Some bots -> let u_bots, u_tam, _bs, _tkns = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens) in
+    | None -> fees, ubots, empty_tam
+    | Some bots -> let u_bots, u_tam, _bs, _tkns, u_fees, _fim = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
-                   updated_ubots, u_tam
+                   u_fees, updated_ubots, u_tam
 
 
 [@inline]
@@ -1088,23 +1103,48 @@ type storage = Storage.t
 let get_treasury_vault () : address = Tezos.get_self_address ()
 
 [@inline]
+let resolve_fees
+  (fees: fees)
+  (token_ops: operation list): operation list =
+  let fee_burn_op = if fees.to_burn > 0mutez then
+                      Some (Treasury_Utils.transfer_fee fees.burner fees.to_burn)
+                    else
+                      None
+  in
+  let fee_refund_op = if fees.to_refund > 0mutez then
+                        Some (Treasury_Utils.transfer_fee fees.payer fees.to_refund)
+                      else
+                        None
+  in
+  match (fee_burn_op, fee_refund_op) with
+  | Some fbo, Some fro -> fbo :: fro :: token_ops
+  | Some fbo, None -> fbo :: token_ops
+  | None, Some fro ->  fro :: token_ops
+  | None, None -> []
+
+
+[@inline]
 let deposit
     (deposit_address : address)
-    (deposited_token : token_amount)
-    (fee_recipient: address)
-    (fee_amount: tez) : operation list  =
+    (deposited_token : token_amount) : operation list  =
       let treasury_vault = get_treasury_vault () in
-      let fee_transfer_op = Treasury_Utils.transfer_fee fee_recipient fee_amount in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
-      [ fee_transfer_op ; deposit_op]
+      [ deposit_op]
 
 [@inline]
 let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let updated_ubots, payout_token_map = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes storage.valid_tokens in
+      let fees = {
+        to_burn = 0mutez;
+        to_refund = 0mutez;
+        payer = redeem_address;
+        burner = storage.fee_recipient;
+      } in
+      let fees, updated_ubots, payout_token_map = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes storage.valid_tokens fees storage.fee_in_mutez in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
+      let operations = resolve_fees fees operations in
       let updated_storage = { storage with user_batch_ordertypes = updated_ubots; } in
       (operations, updated_storage)
 
@@ -1719,8 +1759,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
          storage with batch_set = updated_batch_set;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
-       let fee_recipient = storage.fee_recipient in
-       let treasury_ops = Treasury.deposit order.trader order.swap.from fee_recipient fee_amount_in_mutez in
+       let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
       else
