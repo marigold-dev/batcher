@@ -2472,6 +2472,21 @@
                          PUSH mutez 0 ;
                          DUP 3 ;
                          CDR ;
+                         CDR ;
+                         COMPARE ;
+                         GT ;
+                         IF { DUP 2 ;
+                              CAR ;
+                              CDR ;
+                              CONTRACT unit ;
+                              IF_NONE
+                                { PUSH nat 102 ; FAILWITH }
+                                { DUP 3 ; CDR ; CDR ; UNIT ; TRANSFER_TOKENS } ;
+                              CONS }
+                            {} ;
+                         PUSH mutez 0 ;
+                         DUP 3 ;
+                         CDR ;
                          CAR ;
                          COMPARE ;
                          GT ;
@@ -2480,42 +2495,23 @@
                               CAR ;
                               CONTRACT unit ;
                               IF_NONE
-                                { PUSH nat 102 ; FAILWITH }
-                                { DUP 3 ; CDR ; CAR ; UNIT ; TRANSFER_TOKENS } ;
-                              SOME }
-                            { NONE operation } ;
-                         PUSH mutez 0 ;
-                         DUP 4 ;
-                         CDR ;
-                         CDR ;
-                         COMPARE ;
-                         GT ;
-                         IF { DUP 3 ;
-                              CAR ;
-                              CDR ;
-                              CONTRACT unit ;
-                              IF_NONE
-                                { DIG 2 ; DROP ; PUSH nat 102 ; FAILWITH }
-                                { DIG 3 ; CDR ; CDR ; UNIT ; TRANSFER_TOKENS } ;
-                              SOME }
-                            { DIG 2 ; DROP ; NONE operation } ;
-                         DUP 5 ;
-                         DIG 5 ;
+                                { SWAP ; DROP ; PUSH nat 102 ; FAILWITH }
+                                { DIG 2 ; CDR ; CAR ; UNIT ; TRANSFER_TOKENS } ;
+                              CONS }
+                            { SWAP ; DROP } ;
+                         DUP 3 ;
+                         DIG 3 ;
                          CDR ;
                          DUP ;
                          CAR ;
                          DUP ;
                          CDR ;
-                         DIG 7 ;
+                         DIG 5 ;
                          UPDATE 1 ;
                          UPDATE 2 ;
                          UPDATE 1 ;
                          UPDATE 2 ;
-                         DIG 2 ;
-                         IF_NONE
-                           { SWAP ;
-                             IF_NONE { SWAP ; DROP ; NIL operation } { DIG 2 ; SWAP ; CONS } }
-                           { DIG 2 ; IF_NONE { DIG 2 } { DIG 3 ; SWAP ; CONS } ; SWAP ; CONS } } ;
+                         SWAP } ;
                      PAIR } }
                { DIG 3 ;
                  DROP ;

@@ -1106,22 +1106,16 @@ let get_treasury_vault () : address = Tezos.get_self_address ()
 let resolve_fees
   (fees: fees)
   (token_ops: operation list): operation list =
-  let fee_burn_op = if fees.to_burn > 0mutez then
-                      Some (Treasury_Utils.transfer_fee fees.burner fees.to_burn)
-                    else
-                      None
+  let token_ops =
+    if fees.to_refund > 0mutez then
+      Treasury_Utils.transfer_fee fees.payer fees.to_refund :: token_ops
+    else
+      token_ops
   in
-  let fee_refund_op = if fees.to_refund > 0mutez then
-                        Some (Treasury_Utils.transfer_fee fees.payer fees.to_refund)
-                      else
-                        None
-  in
-  match (fee_burn_op, fee_refund_op) with
-  | Some fbo, Some fro -> fbo :: fro :: token_ops
-  | Some fbo, None -> fbo :: token_ops
-  | None, Some fro ->  fro :: token_ops
-  | None, None -> []
-
+  if fees.to_burn > 0mutez then
+    Treasury_Utils.transfer_fee fees.burner fees.to_burn :: token_ops
+  else
+    token_ops
 
 [@inline]
 let deposit
