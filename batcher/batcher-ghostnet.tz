@@ -2472,6 +2472,35 @@
                          PUSH mutez 0 ;
                          DUP 3 ;
                          CDR ;
+                         CDR ;
+                         COMPARE ;
+                         GT ;
+                         IF { DUP 2 ;
+                              CAR ;
+                              CDR ;
+                              CONTRACT unit ;
+                              IF_NONE
+                                { PUSH nat 102 ; FAILWITH }
+                                { DUP 3 ; CDR ; CDR ; UNIT ; TRANSFER_TOKENS } ;
+                              CONS }
+                            {} ;
+                         PUSH mutez 0 ;
+                         DUP 3 ;
+                         CDR ;
+                         CAR ;
+                         COMPARE ;
+                         GT ;
+                         IF { DUP 2 ;
+                              CAR ;
+                              CAR ;
+                              CONTRACT unit ;
+                              IF_NONE
+                                { SWAP ; DROP ; PUSH nat 102 ; FAILWITH }
+                                { DIG 2 ; CDR ; CAR ; UNIT ; TRANSFER_TOKENS } ;
+                              CONS }
+                            { SWAP ; DROP } ;
+                         DUP 3 ;
+                         CDR ;
                          CAR ;
                          COMPARE ;
                          GT ;
