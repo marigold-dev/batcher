@@ -1400,6 +1400,14 @@ let should_be_cleared
       current_time > closing_time + price_wait_window_in_seconds
     | _ -> false
 
+
+[@inline]
+let is_cleared
+  (batch: batch) : bool =
+  match batch.status with
+  | Cleared _ -> true
+  | _ -> false
+
 [@inline]
 let start_period
   (pair : pair)
@@ -1498,8 +1506,12 @@ let get_current_batch_without_opening
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  None, batch_set
-  | Some cb ->  let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
-                Some batch, batch_set
+  | Some cb -> let is_cleared = is_cleared cb in
+               if is_cleared then
+                 Some cb, batch_set
+                else
+                 let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
+                 Some batch, batch_set
 
 [@inline]
 let get_current_batch
