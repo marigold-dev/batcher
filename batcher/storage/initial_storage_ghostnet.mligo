@@ -6,21 +6,21 @@ let f(_:unit) : Batcher.Storage.t = {
     (("tzBTC"), {
       token_id = 0n;
       name = "tzBTC";
-      address = Some(("KT1MQJKqrB982V7hqDo3MjCV2aCS6Dyt5PLz" : address));
+      address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
     (("EURL"),{
       token_id = 0n;
       name = "EURL";
-      address = Some(("KT1TT98YGciWf2aMnD1denvXt9f2dRYYwM9L" : address));
+      address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     });
     (("USDT"),{
       token_id = 0n;
       name = "USDT";
-      address = Some(("KT1GTfkgQi3wkhhNTCUCEy5E5puCYfRsRPRk" : address));
+      address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     })
