@@ -6,17 +6,7 @@
       (Pair (Pair {} 1)
             {}
             { Elt "tzBTC/EURL"
-                  (Pair (Pair (Pair (Pair 0 "tzBTC" (Some "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn") 8 (Some "FA1.2 token"))
-                                    1)
-                              0
-                              "EURL"
-                              (Some "KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8")
-                              6
-                              (Some "FA2 token"))
-                        "KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG"
-                        "BTC-EUR"
-                        6
-                        False) ;
+                  (Pair (Pair "tzBTC" "EURL") "KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG" "BTC-EUR" 6 False) ;
               Elt "tzBTC/USDT"
                   (Pair (Pair (Pair (Pair 0 "tzBTC" (Some "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn") 8 (Some "FA1.2 token"))
                                     1)

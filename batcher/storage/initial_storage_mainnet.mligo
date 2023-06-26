@@ -84,7 +84,7 @@ let f(_:unit) : Batcher.Storage.t = {
       }
     )
   ];
-  rates_current = (Big_map.empty : Batcher.Storage.rates_current);
+  rates_current = (Big_map.empty : Batcher.rates_current);
   batch_set = {
     current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
