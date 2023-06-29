@@ -42,6 +42,7 @@
 [@inline] let token_name_not_in_list_of_valid_tokens : nat                       = 138n
 [@inline] let no_orders_for_user_address : nat                                   = 139n
 [@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
+[@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
 
 (* Constants *)
 
@@ -239,6 +240,8 @@ type batch_ordertypes = (nat,  ordertypes) map
 (* Associated user address to a given set of batches and ordertypes  *)
 type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
+(* The count of unredeemed addresses associated with each batch. This is used to clear fully redeedmed batches *)
+type batch_holdings = (nat,nat) big_map
 
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
@@ -349,8 +352,53 @@ module TokenAmountMap = struct
 
 end
 
-module Storage = struct
+module BatchHoldings_Utils = struct
 
+
+[@inline]
+let increase_holding
+  (batch_number: nat)
+  (batch_holdings: batch_holdings): batch_holdings =
+  match Big_map.find_opt batch_number batch_holdings with
+  | None -> Big_map.add batch_number 1n batch_holdings
+  | Some h -> let nh = h + 1n in
+              Big_map.update batch_number (Some nh) batch_holdings
+
+
+[@inline]
+let add_batch_holding
+  (batch_number: nat)
+  (address: address)
+  (ubots: user_batch_ordertypes)
+  (batch_holdings: batch_holdings): batch_holdings =
+  match Big_map.find_opt address ubots with
+  | Some bots -> (match Map.find_opt batch_number bots with
+                  | Some _ -> batch_holdings
+                  | None   -> increase_holding batch_number batch_holdings)
+  | None -> increase_holding batch_number batch_holdings
+
+[@inline]
+let remove_batch_holding
+  (batch_number: nat)
+  (batch_holdings: batch_holdings): batch_holdings =
+  match Big_map.find_opt batch_number batch_holdings with
+  | None -> failwith cannot_decrease_holdings_of_removed_batch
+  | Some h -> let nh = abs(h - 1n) in
+              if nh > 0n then
+                 Big_map.update batch_number (Some nh) batch_holdings
+              else
+                 Big_map.remove batch_number batch_holdings
+
+
+[@inline]
+let can_batch_be_removed
+  (batch_number: nat)
+  (batch_holdings: batch_holdings): bool = Big_map.mem batch_number batch_holdings
+
+end
+
+
+module Storage = struct
 
   type t = {
     metadata: metadata;
@@ -360,6 +408,7 @@ module Storage = struct
     batch_set : batch_set;
     last_order_number : nat;
     user_batch_ordertypes: user_batch_ordertypes;
+    batch_holdings: batch_holdings;
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address;
@@ -1879,6 +1928,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
+       let new_b_holdings = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes storage.batch_holdings in
        let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_volumes = Batch_Utils.update_volumes order current_batch in
        let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
@@ -1886,7 +1936,8 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
        let updated_storage = {
          storage with batch_set = updated_batch_set;
          last_order_number = next_order_number;
-         user_batch_ordertypes = new_ubot; } in
+         user_batch_ordertypes = new_ubot;
+         batch_holdings = new_b_holdings; } in
        let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
