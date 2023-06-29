@@ -41,6 +41,7 @@
 [@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
 [@inline] let token_name_not_in_list_of_valid_tokens : nat                       = 138n
 [@inline] let no_orders_for_user_address : nat                                   = 139n
+[@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
 
 (* Constants *)
 
@@ -1337,6 +1338,12 @@ type batch_status =
   | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
 
+[@inline]
+let is_batch_open
+  (batch:batch): bool =
+  match batch.status with
+  | Open _ -> true
+  | _ -> false
 
 
 [@inline]
@@ -1760,14 +1767,12 @@ let remove_orders_from_batch
 
 [@inline]
 let remove_orders
-  (pair: pair)
   (ot: ordertypes)
-  (batch_number: nat)
+  (batch:batch)
+  (batch_set: batch_set)
   (storage: storage) =
-  let current_time = Tezos.get_now () in
-  let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
   let batch = remove_orders_from_batch ot batch in
-  let batches =  Big_map.update batch_number (Some batch) batch_set.batches in
+  let batches =  Big_map.update batch.batch_number (Some batch) batch_set.batches in
   let batch_set = { batch_set with batches = batches } in
   let storage = {storage with batch_set = batch_set} in
   storage
@@ -1787,19 +1792,20 @@ let remove_order_types
 
 [@inline]
 let cancel_order
-  (pair_name: string)
   (pair: pair)
   (holder: address)
   (valid_swap: valid_swap)
   (storage: storage) : result =
   let ubots = storage.user_batch_ordertypes in
-  let batch_number = (match Map.find_opt pair_name storage.batch_set.current_batch_indices with
-                      | None -> failwith no_open_batch
-                      | Some i -> i) in
+  let current_time = Tezos.get_now () in
+  let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
+  let () = if not (Batch_Utils.is_batch_open batch) then
+             failwith cannot_cancel_orders_for_a_batch_that_isn_not_open
+           in
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
-  | Some bot -> let orders_to_remove, storage = remove_order_types batch_number holder bot storage in
-                let storage = remove_orders pair orders_to_remove batch_number storage in
+  | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
+                let storage = remove_orders orders_to_remove batch batch_set storage in
                 refund_orders holder orders_to_remove valid_swap storage
 
 [@inline]
@@ -1813,7 +1819,7 @@ let cancel
   match Map.find_opt pair_name storage.valid_swaps with
   | None -> failwith swap_does_not_exist
   | Some vswpr -> let vswp = Utils.valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
-                  cancel_order pair_name pair sender vswp storage
+                  cancel_order pair sender vswp storage
 
 [@inline]
 let oracle_price_is_not_stale
@@ -1834,19 +1840,13 @@ let is_oracle_price_newer_than_current
   | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
   | None   -> ()
 
-[@inline]
-let is_batch_open
-  (batch:batch): bool =
-  match batch.status with
-  | Open _ -> true
-  | _ -> false
 
 [@inline]
 let confirm_oracle_price_is_available_before_deposit
   (pair:pair)
   (batch:batch)
   (storage:storage) : unit =
-  if is_batch_open batch then () else
+  if Batch_Utils.is_batch_open batch then () else
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
