@@ -991,30 +991,39 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez, bh),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez * batch_holdings) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez * batch_holdings) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
-    | None -> bots, tam, bts, tokens, fees, fee_in_mutez
+    | None -> bots, tam, bts, tokens, fees, fee_in_mutez, bh
     | Some batch -> (match get_clearing batch with
-                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez
+                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez, bh
                       | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez)  in
+                                  let bh = BatchHoldings_Utils.remove_batch_holding batch.batch_number bh in
+                                  let bts = if BatchHoldings_Utils.can_batch_be_removed batch.batch_number bh then
+                                              let batches = Big_map.remove batch.batch_number bts.batches in
+                                              { bts with batches = batches;  }
+                                            else
+                                              bts
+                                  in
                                   let u_bots = Map.remove batch_number bots in
-                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez)
+                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez, bh)
 
 [@inline]
 let collect_redemption_payouts
     (holder: address)
-    (batch_set: batch_set)
-    (ubots: user_batch_ordertypes)
-    (tokens: valid_tokens)
     (fees: fees)
-    (fee_in_mutez: tez):  (fees * user_batch_ordertypes * token_amount_map) =
+    (storage: Storage.t):  (fees * user_batch_ordertypes * batch_holdings * batch_set * token_amount_map) =
+    let fee_in_mutez = storage.fee_in_mutez in
+    let batch_set = storage.batch_set in
+    let ubots = storage.user_batch_ordertypes in
+    let batch_holdings = storage.batch_holdings in
+    let tokens = storage.valid_tokens in
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
-    | None -> fees, ubots, empty_tam
-    | Some bots -> let u_bots, u_tam, _bs, _tkns, u_fees, _fim = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) in
+    | None -> fees, ubots, batch_holdings, batch_set, empty_tam
+    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim, bh = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez, batch_holdings) in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
-                   u_fees, updated_ubots, u_tam
+                   u_fees, updated_ubots, bh, bs, u_tam
 
 
 [@inline]
@@ -1177,6 +1186,7 @@ let deposit
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
       [ deposit_op]
 
+
 [@inline]
 let redeem
     (redeem_address : address)
@@ -1188,10 +1198,10 @@ let redeem
         payer = redeem_address;
         burner = storage.fee_recipient;
       } in
-      let fees, updated_ubots, payout_token_map = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes storage.valid_tokens fees storage.fee_in_mutez in
+      let fees, updated_ubots, updated_batch_holdings, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let operations = resolve_fees fees operations in
-      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; } in
+      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_holdings = updated_batch_holdings; batch_set = updated_batch_set;  } in
       (operations, updated_storage)
 
 end
