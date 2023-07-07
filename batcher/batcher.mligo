@@ -393,7 +393,7 @@ let remove_batch_holding
 [@inline]
 let can_batch_be_removed
   (batch_number: nat)
-  (batch_holdings: batch_holdings): bool = Big_map.mem batch_number batch_holdings
+  (batch_holdings: batch_holdings): bool = not Big_map.mem batch_number batch_holdings
 
 end
 

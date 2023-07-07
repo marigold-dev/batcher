@@ -2982,6 +2982,7 @@
                                             DUP 5 ;
                                             CAR ;
                                             MEM ;
+                                            NOT ;
                                             IF { DUP 6 ;
                                                  DIG 6 ;
                                                  CDR ;
