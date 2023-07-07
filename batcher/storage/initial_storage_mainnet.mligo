@@ -56,7 +56,6 @@ let f(_:unit) : Batcher.Storage.t = {
   };
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
-  batch_holdings = (Big_map.empty: Batcher.batch_holdings);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);

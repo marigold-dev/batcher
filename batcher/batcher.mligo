@@ -43,6 +43,8 @@
 [@inline] let no_orders_for_user_address : nat                                   = 139n
 [@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
 [@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
+[@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
+[@inline] let batch_already_removed : nat                                        = 143n
 
 (* Constants *)
 
@@ -240,15 +242,13 @@ type batch_ordertypes = (nat,  ordertypes) map
 (* Associated user address to a given set of batches and ordertypes  *)
 type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
-(* The count of unredeemed addresses associated with each batch. This is used to clear fully redeedmed batches *)
-type batch_holdings = (nat,nat) big_map
-
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
   batch_number: nat;
   status : batch_status;
   volumes : volumes;
   pair : pair;
+  holdings : nat;
 }
 
 type batch_indices = (string,  nat) map
@@ -358,42 +358,43 @@ module BatchHoldings_Utils = struct
 [@inline]
 let increase_holding
   (batch_number: nat)
-  (batch_holdings: batch_holdings): batch_holdings =
-  match Big_map.find_opt batch_number batch_holdings with
-  | None -> Big_map.add batch_number 1n batch_holdings
-  | Some h -> let nh = h + 1n in
-              Big_map.update batch_number (Some nh) batch_holdings
-
+  (batches: batches): batches =
+  match Big_map.find_opt batch_number batches with
+  | None  -> failwith cannot_increase_holdings_of_batch_that_does_not_exist
+  | Some b -> let bh = b.holdings + 1n in
+              let b = { b with holdings = bh; } in
+              Big_map.update batch_number (Some b) batches
 
 [@inline]
 let add_batch_holding
   (batch_number: nat)
   (address: address)
   (ubots: user_batch_ordertypes)
-  (batch_holdings: batch_holdings): batch_holdings =
+  (batches: batches): batches =
   match Big_map.find_opt address ubots with
   | Some bots -> (match Map.find_opt batch_number bots with
-                  | Some _ -> batch_holdings
-                  | None   -> increase_holding batch_number batch_holdings)
-  | None -> increase_holding batch_number batch_holdings
+                  | Some _ -> batches
+                  | None   -> increase_holding batch_number batches)
+  | None -> increase_holding batch_number batches
 
 [@inline]
 let remove_batch_holding
   (batch_number: nat)
-  (batch_holdings: batch_holdings): batch_holdings =
-  match Big_map.find_opt batch_number batch_holdings with
+  (batches: batches): batches =
+  match Big_map.find_opt batch_number batches with
   | None -> failwith cannot_decrease_holdings_of_removed_batch
-  | Some h -> let nh = abs(h - 1n) in
-              if nh > 0n then
-                 Big_map.update batch_number (Some nh) batch_holdings
-              else
-                 Big_map.remove batch_number batch_holdings
+  | Some b -> let nh = abs(b.holdings - 1n) in
+              let b = { b with holdings = nh; } in
+              Big_map.update batch_number (Some b) batches
 
 
 [@inline]
 let can_batch_be_removed
   (batch_number: nat)
-  (batch_holdings: batch_holdings): bool = not Big_map.mem batch_number batch_holdings
+  (batches: batches): bool =
+  match Big_map.find_opt batch_number batches with
+                | None -> failwith cannot_decrease_holdings_of_removed_batch
+                | Some b -> b.holdings <= 0n
 
 end
 
@@ -408,7 +409,6 @@ module Storage = struct
     batch_set : batch_set;
     last_order_number : nat;
     user_batch_ordertypes: user_batch_ordertypes;
-    batch_holdings: batch_holdings;
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address;
@@ -991,39 +991,38 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens, fees, fee_in_mutez, bh),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez * batch_holdings) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez * batch_holdings) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
-    | None -> bots, tam, bts, tokens, fees, fee_in_mutez, bh
+    | None -> bots, tam, bts, tokens, fees, fee_in_mutez
     | Some batch -> (match get_clearing batch with
-                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez, bh
+                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez
                       | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez)  in
-                                  let bh = BatchHoldings_Utils.remove_batch_holding batch.batch_number bh in
-                                  let bts = if BatchHoldings_Utils.can_batch_be_removed batch.batch_number bh then
+                                  let batches = BatchHoldings_Utils.remove_batch_holding batch.batch_number batches in
+                                  let bts = if BatchHoldings_Utils.can_batch_be_removed batch.batch_number batches then
                                               let batches = Big_map.remove batch.batch_number bts.batches in
                                               { bts with batches = batches;  }
                                             else
-                                              bts
+                                              { bts with batches = batches;  }
                                   in
                                   let u_bots = Map.remove batch_number bots in
-                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez, bh)
+                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez)
 
 [@inline]
 let collect_redemption_payouts
     (holder: address)
     (fees: fees)
-    (storage: Storage.t):  (fees * user_batch_ordertypes * batch_holdings * batch_set * token_amount_map) =
+    (storage: Storage.t):  (fees * user_batch_ordertypes * batch_set * token_amount_map) =
     let fee_in_mutez = storage.fee_in_mutez in
     let batch_set = storage.batch_set in
     let ubots = storage.user_batch_ordertypes in
-    let batch_holdings = storage.batch_holdings in
     let tokens = storage.valid_tokens in
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
-    | None -> fees, ubots, batch_holdings, batch_set, empty_tam
-    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim, bh = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez, batch_holdings) in
+    | None -> fees, ubots, batch_set, empty_tam
+    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
-                   u_fees, updated_ubots, bh, bs, u_tam
+                   u_fees, updated_ubots,  bs, u_tam
 
 
 [@inline]
@@ -1198,10 +1197,10 @@ let redeem
         payer = redeem_address;
         burner = storage.fee_recipient;
       } in
-      let fees, updated_ubots, updated_batch_holdings, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
+      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let operations = resolve_fees fees operations in
-      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_holdings = updated_batch_holdings; batch_set = updated_batch_set;  } in
+      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
       (operations, updated_storage)
 
 end
@@ -1469,6 +1468,7 @@ let make
     status = Open { start_time = timestamp } ;
     pair = pair;
     volumes = volumes;
+    holdings = 0n;
   }
 
 [@inline]
@@ -1938,16 +1938,15 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
-       let new_b_holdings = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes storage.batch_holdings in
-       let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_volumes = Batch_Utils.update_volumes order current_batch in
        let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
+       let updated_batches = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes updated_batches in
+       let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_batch_set = { current_batch_set with batches = updated_batches } in
        let updated_storage = {
          storage with batch_set = updated_batch_set;
          last_order_number = next_order_number;
-         user_batch_ordertypes = new_ubot;
-         batch_holdings = new_b_holdings; } in
+         user_batch_ordertypes = new_ubot; } in
        let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
