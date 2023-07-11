@@ -233,13 +233,17 @@ export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
-  openHoldings: Map<string, number>;
-  clearedHoldings: Map<string, number>;
-  setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>;
-  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>;
+  openHoldings: Map<string, holding>;
+  closedHoldings: Map<string, holding>;
+  clearedHoldings: Map<string, holding>;
+  setOpenHoldings: Dispatch<SetStateAction<Map<string, holding>>>;
+  setClearedHoldings: Dispatch<SetStateAction<Map<string, holding>>>;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;
   hasClearedHoldings: boolean;
+  hasClosedHoldings: boolean;
+  hasOpenHoldings: boolean;
+  tokenMap: Map<string, swap>;
 };
 
 export type Volumes = {
@@ -267,3 +271,12 @@ export type tokens = {
   buy_token_name: string;
   sell_token_name: string;
 };
+
+export type holding = {
+   pair: string;
+   buy_token_name: string;
+   sell_token_name: string;
+   buy_token_holding: number;
+   sell_token_holding: number;
+
+}

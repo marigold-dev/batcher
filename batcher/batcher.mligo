@@ -41,7 +41,7 @@
 [@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
 [@inline] let token_name_not_in_list_of_valid_tokens : nat                       = 138n
 [@inline] let no_orders_for_user_address : nat                                   = 139n
-[@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
+[@inline] let cannot_cancel_orders_for_a_batch_that_is_not_open : nat            = 140n
 
 (* Constants *)
 

@@ -17,6 +17,15 @@ export const setTokenAmount = (
   setBalance(tokAmount);
 };
 
+export const getLexicographicalPairName = (token1: string, token2: string) => {
+  if (token1 > token2) {
+     return token1 + '/' + token2;
+  } else {
+     return token2 + '/' + token1;
+  }
+
+};
+
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
   return amount * scale;
