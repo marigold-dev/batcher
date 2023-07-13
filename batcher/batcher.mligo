@@ -4,7 +4,7 @@
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
 [@inline] let invalid_token_address : nat                                        = 101n
 [@inline] let invalid_tezos_address : nat                                        = 102n
-[@inline] let no_open_batch_for_deposits : nat                                   = 103n
+[@inline] let no_open_batch : nat                                                = 103n
 [@inline] let batch_should_be_cleared : nat                                      = 104n
 [@inline] let trying_to_close_batch_which_is_not_open : nat                      = 105n
 [@inline] let unable_to_parse_side_from_external_order : nat                     = 106n
@@ -40,6 +40,11 @@
 [@inline] let cannot_update_scale_factor_to_more_than_the_maximum : nat          = 136n
 [@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
 [@inline] let token_name_not_in_list_of_valid_tokens : nat                       = 138n
+[@inline] let no_orders_for_user_address : nat                                   = 139n
+[@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
+[@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
+[@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
+[@inline] let batch_already_removed : nat                                        = 143n
 
 (* Constants *)
 
@@ -220,7 +225,7 @@ type volumes = [@layout:comb] {
   sell_total_volume : nat;
 }
 
-type pair = token * token
+type pair = string * string
 
 (* This represents the type of order.  I.e. buy/sell and which level*)
 type ordertype = [@layout:comb] {
@@ -237,13 +242,13 @@ type batch_ordertypes = (nat,  ordertypes) map
 (* Associated user address to a given set of batches and ordertypes  *)
 type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
-
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
   batch_number: nat;
   status : batch_status;
   volumes : volumes;
   pair : pair;
+  holdings : nat;
 }
 
 type batch_indices = (string,  nat) map
@@ -283,6 +288,14 @@ type valid_swaps =  (string, valid_swap_reduced) map
 
 (* The current, most up to date exchange rates between tokens  *)
 type rates_current = (string, exchange_rate) big_map
+
+type fees = {
+   to_burn: tez;
+   to_refund: tez;
+   payer: address;
+   burner: address;
+}
+
 
 [@inline]
 let get_token
@@ -339,8 +352,54 @@ module TokenAmountMap = struct
 
 end
 
-module Storage = struct
+module BatchHoldings_Utils = struct
 
+
+[@inline]
+let increase_holding
+  (batch_number: nat)
+  (batches: batches): batches =
+  match Big_map.find_opt batch_number batches with
+  | None  -> failwith cannot_increase_holdings_of_batch_that_does_not_exist
+  | Some b -> let bh = b.holdings + 1n in
+              let b = { b with holdings = bh; } in
+              Big_map.update batch_number (Some b) batches
+
+[@inline]
+let add_batch_holding
+  (batch_number: nat)
+  (address: address)
+  (ubots: user_batch_ordertypes)
+  (batches: batches): batches =
+  match Big_map.find_opt address ubots with
+  | Some bots -> (match Map.find_opt batch_number bots with
+                  | Some _ -> batches
+                  | None   -> increase_holding batch_number batches)
+  | None -> increase_holding batch_number batches
+
+[@inline]
+let remove_batch_holding
+  (batch_number: nat)
+  (batches: batches): batches =
+  match Big_map.find_opt batch_number batches with
+  | None -> failwith cannot_decrease_holdings_of_removed_batch
+  | Some b -> let nh = abs(b.holdings - 1n) in
+              let b = { b with holdings = nh; } in
+              Big_map.update batch_number (Some b) batches
+
+
+[@inline]
+let can_batch_be_removed
+  (batch_number: nat)
+  (batches: batches): bool =
+  match Big_map.find_opt batch_number batches with
+                | None -> failwith cannot_decrease_holdings_of_removed_batch
+                | Some b -> b.holdings <= 0n
+
+end
+
+
+module Storage = struct
 
   type t = {
     metadata: metadata;
@@ -550,17 +609,13 @@ let get_rate_name_from_swap (s : swap_reduced) : string =
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
-let get_rate_name_from_pair (s : token * token) : string =
-  let base, quote = s in
-  let base_name = base.name in
-  let quote_name = quote.name in
+let get_rate_name_from_pair (s : pair) : string =
+  let base_name, quote_name = s in
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
-let get_inverse_rate_name_from_pair (s : token * token) : string =
-  let base, quote = s in
-  let quote_name = quote.name in
-  let base_name = base.name in
+let get_inverse_rate_name_from_pair (s :  pair) : string =
+  let base_name, quote_name = s in
   find_lexicographical_pair_name quote_name base_name
 
 [@inline]
@@ -570,31 +625,27 @@ let get_rate_name
   let quote_name = r.swap.to in
   find_lexicographical_pair_name quote_name base_name
 
+
 [@inline]
 let pair_of_swap
   (side: side)
-  (swap: swap_reduced)
-  (tokens: valid_tokens): (token * token) =
-  let from_token = get_token swap.from tokens in
-  let to_token = get_token swap.to tokens in
+  (swap: swap_reduced): (pair) =
   match side with
-  | Buy -> from_token, to_token
-  | Sell -> to_token, from_token
+  | Buy -> swap.from, swap.to
+  | Sell -> swap.to, swap.from
 
 [@inline]
 let pair_of_rate
-  (r : exchange_rate)
-  (tokens: valid_tokens): (token * token) = pair_of_swap Buy r.swap tokens
+  (r : exchange_rate): pair = pair_of_swap Buy r.swap
 
 [@inline]
 let pair_of_external_swap
-  (order : external_swap_order)
-  (tokens: valid_tokens): (token * token) =
+  (order : external_swap_order): pair =
   (* Note:  we assume left-handedness - i.e. direction is buy side*)
   let swap = order.swap in
   let side = nat_to_side order.side in
   let swap_reduced = swap_to_swap_reduced swap in
-  pair_of_swap side swap_reduced tokens
+  pair_of_swap side swap_reduced
 
 [@inline]
 let get_current_batch_index
@@ -900,14 +951,19 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens) =
-  let u_tam: token_amount_map  = if was_in_clearing vols ot c then
-                                          get_cleared_payout ot amt c tam tokens
-                                        else
-                                          let ta: token_amount = TokenAmount.recover ot amt c tokens in
-                                          TokenAmountMap.increase ta tam
+  ((c, tam, vols, tokens, fees, fee_in_mutez), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez) =
+  let (u_tam, u_fees) = if was_in_clearing vols ot c then
+                          let tm = get_cleared_payout ot amt c tam tokens in
+                          let f = fees.to_burn + fee_in_mutez in
+                          let uf = { fees with to_burn = f; } in
+                          (tm, uf)
+                        else
+                          let ta: token_amount = TokenAmount.recover ot amt c tokens in
+                          let f = fees.to_refund + fee_in_mutez in
+                          let uf = { fees with to_refund = f; } in
+                          (TokenAmountMap.increase ta tam, uf)
   in
-  (c, u_tam, vols, tokens)
+  (c, u_tam, vols, tokens, u_fees, fee_in_mutez)
 
 end
 
@@ -935,28 +991,38 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
-    | None -> bots, tam, bts, tokens
+    | None -> bots, tam, bts, tokens, fees, fee_in_mutez
     | Some batch -> (match get_clearing batch with
-                      | None -> bots, tam, bts, tokens
-                      | Some c -> let _c, u_tam, _vols, _tokns = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens )  in
+                      | None -> bots, tam, bts, tokens, fees, fee_in_mutez
+                      | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez)  in
+                                  let batches = BatchHoldings_Utils.remove_batch_holding batch.batch_number batches in
+                                  let bts = if BatchHoldings_Utils.can_batch_be_removed batch.batch_number batches then
+                                              let batches = Big_map.remove batch.batch_number bts.batches in
+                                              { bts with batches = batches;  }
+                                            else
+                                              { bts with batches = batches;  }
+                                  in
                                   let u_bots = Map.remove batch_number bots in
-                                  u_bots,u_tam, bts, tokens)
+                                  u_bots,u_tam, bts, tokens, fs, fee_in_mutez)
 
 [@inline]
 let collect_redemption_payouts
     (holder: address)
-    (batch_set: batch_set)
-    (ubots: user_batch_ordertypes)
-    (tokens: valid_tokens):  (user_batch_ordertypes * token_amount_map) =
+    (fees: fees)
+    (storage: Storage.t):  (fees * user_batch_ordertypes * batch_set * token_amount_map) =
+    let fee_in_mutez = storage.fee_in_mutez in
+    let batch_set = storage.batch_set in
+    let ubots = storage.user_batch_ordertypes in
+    let tokens = storage.valid_tokens in
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
-    | None -> ubots, empty_tam
-    | Some bots -> let u_bots, u_tam, _bs, _tkns = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens) in
+    | None -> fees, ubots, batch_set, empty_tam
+    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
-                   updated_ubots, u_tam
+                   u_fees, updated_ubots,  bs, u_tam
 
 
 [@inline]
@@ -1097,24 +1163,44 @@ type storage = Storage.t
 let get_treasury_vault () : address = Tezos.get_self_address ()
 
 [@inline]
+let resolve_fees
+  (fees: fees)
+  (token_ops: operation list): operation list =
+  let token_ops =
+    if fees.to_refund > 0mutez then
+      Treasury_Utils.transfer_fee fees.payer fees.to_refund :: token_ops
+    else
+      token_ops
+  in
+  if fees.to_burn > 0mutez then
+    Treasury_Utils.transfer_fee fees.burner fees.to_burn :: token_ops
+  else
+    token_ops
+
+[@inline]
 let deposit
     (deposit_address : address)
-    (deposited_token : token_amount)
-    (fee_recipient: address)
-    (fee_amount: tez) : operation list  =
+    (deposited_token : token_amount) : operation list  =
       let treasury_vault = get_treasury_vault () in
-      let fee_transfer_op = Treasury_Utils.transfer_fee fee_recipient fee_amount in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
-      [ fee_transfer_op ; deposit_op]
+      [ deposit_op]
+
 
 [@inline]
 let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
-      let updated_ubots, payout_token_map = Ubots.collect_redemption_payouts redeem_address storage.batch_set storage.user_batch_ordertypes storage.valid_tokens in
+      let fees = {
+        to_burn = 0mutez;
+        to_refund = 0mutez;
+        payer = redeem_address;
+        burner = storage.fee_recipient;
+      } in
+      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
-      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; } in
+      let operations = resolve_fees fees operations in
+      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
       (operations, updated_storage)
 
 end
@@ -1135,9 +1221,8 @@ let are_equivalent_tokens
 let is_valid_swap_pair
   (side: side)
   (swap: swap_reduced)
-  (valid_swaps: valid_swaps)
-  (tokens: valid_tokens): swap_reduced =
-  let token_pair = Utils.pair_of_swap side swap tokens in
+  (valid_swaps: valid_swaps): swap_reduced =
+  let token_pair = Utils.pair_of_swap side swap in
   let rate_name = Utils.get_rate_name_from_pair token_pair in
   if Map.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
 
@@ -1240,7 +1325,7 @@ let validate
                 | None -> failwith unsupported_swap_type
                 | Some tt -> if (Token_Utils.are_equivalent_tokens from ft) && (Token_Utils.are_equivalent_tokens to tt) then
                               let sr = Utils.swap_to_swap_reduced swap in
-                              Token_Utils.is_valid_swap_pair side sr valid_swaps valid_tokens
+                              Token_Utils.is_valid_swap_pair side sr valid_swaps
                             else
                               failwith unsupported_swap_type)
 
@@ -1310,6 +1395,39 @@ type batch_status =
   | Closed of { start_time : timestamp ; closing_time : timestamp }
   | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
+
+[@inline]
+let is_batch_open
+  (batch:batch): bool =
+  match batch.status with
+  | Open _ -> true
+  | _ -> false
+
+
+[@inline]
+let reduce_volumes
+  (ots: ordertypes)
+  (volumes:volumes): volumes =
+  let reduce_volume_for_ot (vols, (ot, amt) : volumes * (ordertype * nat)) : volumes =
+    let side = ot.side in
+    let tolerance = ot.tolerance in
+    match side with
+    | Buy -> let total_buy_side_volume = abs(vols.buy_total_volume - amt)
+             in
+             (match tolerance with
+              | Minus -> { vols with buy_minus_volume = abs(vols.buy_minus_volume - amt); buy_total_volume = total_buy_side_volume; }
+              | Exact -> { vols with buy_exact_volume = abs(vols.buy_exact_volume - amt);  buy_total_volume = total_buy_side_volume; }
+              | Plus -> { vols with buy_plus_volume = abs(vols.buy_plus_volume - amt);  buy_total_volume = total_buy_side_volume; })
+    | Sell -> let total_sell_side_volume = abs(vols.sell_total_volume - amt)
+              in
+              (match tolerance with
+               | Minus -> { vols with sell_minus_volume = abs(vols.sell_minus_volume - amt); sell_total_volume = total_sell_side_volume; }
+               | Exact -> { vols with sell_exact_volume = abs(vols.sell_exact_volume - amt);  sell_total_volume = total_sell_side_volume; }
+               | Plus -> { vols with sell_plus_volume = abs(vols.sell_plus_volume - amt);  sell_total_volume = total_sell_side_volume; })
+  in
+  Map.fold reduce_volume_for_ot ots volumes
+
+
 [@inline]
 let set_buy_side_volume
   (order: swap_order)
@@ -1334,7 +1452,7 @@ let set_sell_side_volume
 let make
   (batch_number: nat)
   (timestamp: timestamp)
-  (pair: token * token) : batch =
+  (pair: pair) : batch =
   let volumes: volumes = {
       buy_minus_volume = 0n;
       buy_exact_volume = 0n;
@@ -1350,6 +1468,7 @@ let make
     status = Open { start_time = timestamp } ;
     pair = pair;
     volumes = volumes;
+    holdings = 0n;
   }
 
 [@inline]
@@ -1369,6 +1488,14 @@ let should_be_cleared
     | Closed { start_time = _; closing_time } ->
       current_time > closing_time + price_wait_window_in_seconds
     | _ -> false
+
+
+[@inline]
+let is_cleared
+  (batch: batch) : bool =
+  match batch.status with
+  | Cleared _ -> true
+  | _ -> false
 
 [@inline]
 let start_period
@@ -1429,6 +1556,7 @@ let update_volumes
   in
   { batch with volumes = updated_vols;  }
 
+
 [@inline]
 let can_deposit
   (batch:batch) : bool =
@@ -1468,8 +1596,12 @@ let get_current_batch_without_opening
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  None, batch_set
-  | Some cb ->  let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
-                Some batch, batch_set
+  | Some cb -> let is_cleared = is_cleared cb in
+               if is_cleared then
+                 Some cb, batch_set
+                else
+                 let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
+                 Some batch, batch_set
 
 [@inline]
 let get_current_batch
@@ -1582,6 +1714,7 @@ type entrypoint =
   | Deposit of external_swap_order
   | Tick of string
   | Redeem
+  | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
   | Add_token_swap_pair of valid_swap
@@ -1611,6 +1744,8 @@ let reject_if_tez_supplied(): unit =
 let is_administrator
   (storage : storage) : unit =
   if Tezos.get_sender () = storage.administrator then () else failwith sender_not_administrator
+
+
 
 [@inline]
 let finalize
@@ -1656,6 +1791,94 @@ let get_valid_swap_reduced
  | Some vswp -> vswp
  | None -> failwith swap_does_not_exist
 
+[@inline]
+let refund_orders
+  (refund_address: address)
+  (ots: ordertypes)
+  (valid_swap:valid_swap)
+  (storage: storage): result =
+  let fee = storage.fee_in_mutez in
+  let collect_refunds ((tam,mutez_to_ref), (ot, amt): ((token_amount_map * tez) * (ordertype * nat))) : (token_amount_map * tez) =
+    let token  = match ot.side with
+                 | Buy -> valid_swap.swap.from.token
+                 | Sell -> valid_swap.swap.to
+    in
+    let ta = {
+       token = token;
+       amount = amt;
+    } in
+    let tam = TokenAmountMap.increase ta tam in
+    let mutez_to_ref = mutez_to_ref + fee in
+    tam, mutez_to_ref
+  in
+  let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
+  let treasury_vault = Treasury.get_treasury_vault () in
+  let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
+  let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee refund_address tez_refunds :: operations else operations in
+  operations, storage
+
+[@inline]
+let remove_orders_from_batch
+  (ots: ordertypes)
+  (batch: batch): batch =
+  let volumes = Batch_Utils.reduce_volumes ots batch.volumes in
+  { batch with volumes = volumes}
+
+[@inline]
+let remove_orders
+  (ot: ordertypes)
+  (batch:batch)
+  (batch_set: batch_set)
+  (storage: storage) =
+  let batch = remove_orders_from_batch ot batch in
+  let batches =  Big_map.update batch.batch_number (Some batch) batch_set.batches in
+  let batch_set = { batch_set with batches = batches } in
+  let storage = {storage with batch_set = batch_set} in
+  storage
+
+[@inline]
+let remove_order_types
+  (batch_number: nat)
+  (holder: address)
+  (bot: batch_ordertypes)
+  (storage:storage) : ordertypes * storage =
+  match Map.find_opt batch_number bot with
+  | None -> failwith no_orders_for_user_address
+  | Some ots -> let bot = Map.remove batch_number bot in
+                let ubots = Big_map.update holder (Some bot) storage.user_batch_ordertypes in
+                let storage = { storage with user_batch_ordertypes = ubots;} in
+                (ots,storage)
+
+[@inline]
+let cancel_order
+  (pair: pair)
+  (holder: address)
+  (valid_swap: valid_swap)
+  (storage: storage) : result =
+  let ubots = storage.user_batch_ordertypes in
+  let current_time = Tezos.get_now () in
+  let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
+  let () = if not (Batch_Utils.is_batch_open batch) then
+             failwith cannot_cancel_orders_for_a_batch_that_isn_not_open
+           in
+  match Big_map.find_opt holder ubots with
+  | None -> failwith no_orders_for_user_address
+  | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
+                let storage = remove_orders orders_to_remove batch batch_set storage in
+                refund_orders holder orders_to_remove valid_swap storage
+
+[@inline]
+let cancel
+  (pair: pair)
+  (storage: storage): result =
+  let () = reject_if_tez_supplied () in
+  let sender = Tezos.get_sender () in
+  let token_one, token_two = pair in
+  let pair_name = Utils.find_lexicographical_pair_name token_one token_two in
+  match Map.find_opt pair_name storage.valid_swaps with
+  | None -> failwith swap_does_not_exist
+  | Some vswpr -> let vswp = Utils.valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
+                  cancel_order pair sender vswp storage
 
 [@inline]
 let oracle_price_is_not_stale
@@ -1676,19 +1899,13 @@ let is_oracle_price_newer_than_current
   | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
   | None   -> ()
 
-[@inline]
-let is_batch_open
-  (batch:batch): bool =
-  match batch.status with
-  | Open _ -> true
-  | _ -> false
 
 [@inline]
 let confirm_oracle_price_is_available_before_deposit
   (pair:pair)
   (batch:batch)
   (storage:storage) : unit =
-  if is_batch_open batch then () else
+  if Batch_Utils.is_batch_open batch then () else
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
@@ -1703,7 +1920,7 @@ let confirm_swap_pair_is_disabled_prior_to_removal
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order storage.valid_tokens in
+  let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
@@ -1721,22 +1938,22 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
-       let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_volumes = Batch_Utils.update_volumes order current_batch in
        let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
+       let updated_batches = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes updated_batches in
+       let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
        let updated_batch_set = { current_batch_set with batches = updated_batches } in
        let updated_storage = {
          storage with batch_set = updated_batch_set;
          last_order_number = next_order_number;
          user_batch_ordertypes = new_ubot; } in
-       let fee_recipient = storage.fee_recipient in
-       let treasury_ops = Treasury.deposit order.trader order.swap.from fee_recipient fee_amount_in_mutez in
+       let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
       else
         failwith too_many_unredeemed_orders
   else
-    failwith no_open_batch_for_deposits
+    failwith no_open_batch
 
 [@inline]
 let redeem
@@ -1798,7 +2015,7 @@ let tick_price
   let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
-  let pair = Utils.pair_of_rate oracle_rate storage.valid_tokens in
+  let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
   let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time batch_set in
@@ -1958,6 +2175,7 @@ let main
   (* User endpoints *)
    | Deposit order -> deposit order storage
    | Redeem -> redeem storage
+   | Cancel pair -> cancel pair storage
   (* Maintenance endpoint *)
    | Tick r ->  tick r storage
   (* Admin endpoints *)
