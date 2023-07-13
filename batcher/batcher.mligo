@@ -1095,6 +1095,7 @@ let transfer_fee (receiver : address) (amount : tez) : operation =
     | None -> failwith invalid_tezos_address
     | Some rec_address -> Tezos.transaction () amount rec_address
 
+
 end
 
 
@@ -1765,21 +1766,48 @@ let remove_order_types
                 (ots,storage)
 
 [@inline]
+let refund_orders
+  (refund_address: address)
+  (ots: ordertypes)
+  (valid_swap:valid_swap)
+  (storage: storage): result =
+  let fee = storage.fee_in_mutez in
+  let collect_refunds ((tam,mutez_to_ref), (ot, amt): ((token_amount_map * tez) * (ordertype * nat))) : (token_amount_map * tez) =
+    let token  = match ot.side with
+                 | Buy -> valid_swap.swap.from.token
+                 | Sell -> valid_swap.swap.to
+    in
+    let ta = {
+       token = token;
+       amount = amt;
+    } in
+    let tam = TokenAmountMap.increase ta tam in
+    let mutez_to_ref = mutez_to_ref + fee in
+    tam, mutez_to_ref
+  in
+  let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
+  let treasury_vault = Treasury.get_treasury_vault () in
+  let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
+  let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee storage.fee_recipient tez_refunds :: operations else operations in
+  operations, storage
+
+[@inline]
 let cancel_order
   (pair: pair)
   (holder: address)
+  (valid_swap: valid_swap)
   (storage: storage) : result =
   let ubots = storage.user_batch_ordertypes in
   let current_time = Tezos.get_now () in
   let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
   let () = if not (Batch_Utils.is_batch_open batch) then
-             failwith cannot_cancel_orders_for_a_batch_that_isn_not_open
-           in
+             failwith cannot_cancel_orders_for_a_batch_that_is_not_open
+  in
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
   | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
                 let storage = remove_orders orders_to_remove batch batch_set storage in
-                no_op storage
+                refund_orders holder orders_to_remove valid_swap storage
 
 [@inline]
 let cancel
@@ -1791,7 +1819,8 @@ let cancel
   let pair_name = Utils.find_lexicographical_pair_name token_one token_two in
   match Map.find_opt pair_name storage.valid_swaps with
   | None -> failwith swap_does_not_exist
-  | Some _ -> cancel_order pair sender storage
+  | Some vswpr -> let vswp = Utils.valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
+                  cancel_order pair sender vswp storage
 
 [@inline]
 let oracle_price_is_not_stale
