@@ -70,7 +70,7 @@ build-fa12-tzBTC:
 	$(call compile_contract,tokens/fa12/main.mligo, tzBTC_fa12_token.tz)
 	$(call compile_storage,tokens/fa12/storage/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
 test:
-	$(call test_ligo,test/test_batcher_sc.mligo)
+	$(call test_ligo,test/test.mligo)
 measure:
 	$(call measure_contract,batcher.mligo)
 install:
