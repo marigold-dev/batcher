@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 'release-ghostnet'
+  pull_request:
+    branches:
+      - 'release-ghostnet'
+    types:
+      - closed
   workflow_dispatch:
 
 jobs:

@@ -1,0 +1,4 @@
+[submodule "docs/theme"]
+	path = docs/theme
+	url = https://github.com/marigold-dev/marigold-docs-theme.git
+	branch = main

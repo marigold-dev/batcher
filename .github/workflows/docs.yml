@@ -1,0 +1,27 @@
+on:
+  push:
+    paths:
+      - docs/**
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+           mdbook-version: 'latest'
+      - run: mdbook build docs/
+      - name: store Artefact
+        uses: actions/upload-artifact@v2
+        with:
+          name: "batcher-docs"
+          path: ./docs/book
+          retention-days: 1
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/book
