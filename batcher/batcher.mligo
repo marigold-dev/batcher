@@ -41,7 +41,7 @@
 [@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
 [@inline] let token_name_not_in_list_of_valid_tokens : nat                       = 138n
 [@inline] let no_orders_for_user_address : nat                                   = 139n
-[@inline] let cannot_cancel_orders_for_a_batch_that_isn_not_open : nat           = 140n
+[@inline] let cannot_cancel_orders_for_a_batch_that_is_not_open : nat            = 140n
 [@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
 [@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
 [@inline] let batch_already_removed : nat                                        = 143n
@@ -1152,6 +1152,7 @@ let transfer_fee (receiver : address) (amount : tez) : operation =
     | None -> failwith invalid_tezos_address
     | Some rec_address -> Tezos.transaction () amount rec_address
 
+
 end
 
 
@@ -1792,32 +1793,7 @@ let get_valid_swap_reduced
  | None -> failwith swap_does_not_exist
 
 [@inline]
-let refund_orders
-  (refund_address: address)
-  (ots: ordertypes)
-  (valid_swap:valid_swap)
-  (storage: storage): result =
-  let fee = storage.fee_in_mutez in
-  let collect_refunds ((tam,mutez_to_ref), (ot, amt): ((token_amount_map * tez) * (ordertype * nat))) : (token_amount_map * tez) =
-    let token  = match ot.side with
-                 | Buy -> valid_swap.swap.from.token
-                 | Sell -> valid_swap.swap.to
-    in
-    let ta = {
-       token = token;
-       amount = amt;
-    } in
-    let tam = TokenAmountMap.increase ta tam in
-    let mutez_to_ref = mutez_to_ref + fee in
-    tam, mutez_to_ref
-  in
-  let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
-  let treasury_vault = Treasury.get_treasury_vault () in
-  let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
-  let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee refund_address tez_refunds :: operations else operations in
-  operations, storage
 
-[@inline]
 let remove_orders_from_batch
   (ots: ordertypes)
   (batch: batch): batch =
@@ -1850,6 +1826,32 @@ let remove_order_types
                 (ots,storage)
 
 [@inline]
+let refund_orders
+  (refund_address: address)
+  (ots: ordertypes)
+  (valid_swap:valid_swap)
+  (storage: storage): result =
+  let fee = storage.fee_in_mutez in
+  let collect_refunds ((tam,mutez_to_ref), (ot, amt): ((token_amount_map * tez) * (ordertype * nat))) : (token_amount_map * tez) =
+    let token  = match ot.side with
+                 | Buy -> valid_swap.swap.from.token
+                 | Sell -> valid_swap.swap.to
+    in
+    let ta = {
+       token = token;
+       amount = amt;
+    } in
+    let tam = TokenAmountMap.increase ta tam in
+    let mutez_to_ref = mutez_to_ref + fee in
+    tam, mutez_to_ref
+  in
+  let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
+  let treasury_vault = Treasury.get_treasury_vault () in
+  let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
+  let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee storage.fee_recipient tez_refunds :: operations else operations in
+  operations, storage
+
+[@inline]
 let cancel_order
   (pair: pair)
   (holder: address)
@@ -1859,8 +1861,7 @@ let cancel_order
   let current_time = Tezos.get_now () in
   let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
   let () = if not (Batch_Utils.is_batch_open batch) then
-             failwith cannot_cancel_orders_for_a_batch_that_isn_not_open
-           in
+             failwith cannot_cancel_orders_for_a_batch_that_is_not_open
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
   | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
