@@ -1,10 +1,11 @@
 
 type rate_update =  {
+    name: string;
     value: nat;
     timestamp : timestamp;
   }
 
-type storage  = rate_update option
+type storage  = (string, rate_update) map
 
 type result = (operation list) * storage
 
@@ -15,8 +16,11 @@ type entrypoint =
 
 let update
   (update: rate_update)
-  (_storage: storage) : result = 
-  let storage = Some update in
+  (storage: storage) : result =
+  let storage = match Map.find_opt update.name storage with
+                | None -> Map.add update.name update storage
+                | Some _ -> Map.update update.name (Some update) storage
+  in
   no_op storage
 
 let main
@@ -26,7 +30,7 @@ let main
 
 
 [@view]
-let getPrice (_asset, storage : string * storage) =
-  match storage with
+let getPrice (asset, storage : string * storage) =
+  match Map.find_opt asset storage with
   | None -> failwith "No rate available"
   | Some r -> (r.value, r.timestamp)
