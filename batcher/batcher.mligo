@@ -1860,8 +1860,7 @@ let cancel_order
   let ubots = storage.user_batch_ordertypes in
   let current_time = Tezos.get_now () in
   let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
-  let () = if not (Batch_Utils.is_batch_open batch) then
-             failwith cannot_cancel_orders_for_a_batch_that_is_not_open
+  let () = if not (Batch_Utils.is_batch_open batch) then failwith cannot_cancel_orders_for_a_batch_that_is_not_open in
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
   | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in

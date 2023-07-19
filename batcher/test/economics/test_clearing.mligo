@@ -1,5 +1,5 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
-#import "./common/utils.mligo" "Utils"
+#import "./../common/utils.mligo" "Utils"
 
 
 let clearing_placeholder =
@@ -7,7 +7,6 @@ let clearing_placeholder =
   "test clearing"
   "placeholder"
     (fun (level: Breath.Logger.level) ->
-      let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "placeholder" 0n 0n

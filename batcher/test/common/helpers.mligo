@@ -67,6 +67,27 @@ let originate
    eurl = eurl;
   }
 
+let originate_with_admin_and_burn
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor)
+  (admin: address)
+  (burn: address) =
+  let oracle = originate_oracle level in
+  let tzbtc = originate_tzbtc tzbtc_trader level in
+  let usdt = originate_usdt usdt_trader level in
+  let eurl = originate_eurl eurl_trader level in
+  let initial_storage = TestStorage.initial_storage_with_admin_and_burn oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin burn in
+  let batcher = TestUtils.originate initial_storage level in
+  {
+   batcher = batcher;
+   oracle = oracle;
+   tzbtc = tzbtc;
+   usdt = usdt;
+   eurl = eurl;
+  }
+
 
 
 let create_order

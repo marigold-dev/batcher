@@ -9,6 +9,9 @@
 type level = Breath.Logger.level
 type storage = Batcher.Storage.t
 
+let fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address)
+let  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address)
+
 let tzbtc_initial_storage
   (trader: Breath.Context.actor) =
   let trader_address = trader.address in
@@ -46,11 +49,13 @@ let fa2_initial_storage
   operators = (Big_map.empty : ((address * address), nat set) big_map)
 }
 
-let initial_storage
+let initial_storage_with_admin_and_burn
   (oracle_address: address)
   (tzbtc_address: address)
   (usdt_address:address)
-  (eurl_address:address) : storage = {
+  (eurl_address:address)
+  (admin: address)
+  (burn: address): storage = {
   metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
@@ -107,12 +112,22 @@ let initial_storage
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
-  fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
+  fee_recipient = burn;
+  administrator = admin;
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
   scale_factor_for_oracle_staleness = 1n
 }
+
+
+
+
+let initial_storage
+  (oracle_address: address)
+  (tzbtc_address: address)
+  (usdt_address:address)
+  (eurl_address:address) : storage = 
+  initial_storage_with_admin_and_burn oracle_address tzbtc_address usdt_address eurl_address administrator fee_recipient
 
 let oracle_initial_storage =
   Map.literal [
