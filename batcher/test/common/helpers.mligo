@@ -32,7 +32,7 @@ type context = {
   eurl_trader: Breath.Context.actor;
   admin: Breath.Context.actor;
   non_admin: Breath.Context.actor;
-  burn: address;
+  fee_recipient: address;
   contracts: test_contracts;
 }
 
@@ -78,18 +78,18 @@ let originate
    eurl = eurl;
   }
 
-let originate_with_admin_and_burn
+let originate_with_admin_and_fee_recipient
   (level: Breath.Logger.level)
   (tzbtc_trader: Breath.Context.actor)
   (usdt_trader: Breath.Context.actor)
   (eurl_trader: Breath.Context.actor)
   (admin: Breath.Context.actor)
-  (burn: address) =
+  (fee_recipient: address) =
   let oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
-  let initial_storage = TestStorage.initial_storage_with_admin_and_burn oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address burn in
+  let initial_storage = TestStorage.initial_storage_with_admin_and_fee_recipient oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address fee_recipient in
   let batcher = TestUtils.originate initial_storage level in
   {
    batcher = batcher;
@@ -102,15 +102,15 @@ let originate_with_admin_and_burn
 let test_context
     (level: Breath.Logger.level) = 
       let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
-      let burn_address = usdt_trader.address in 
-      let contracts = originate_with_admin_and_burn level btc_trader usdt_trader eurl_trader eurl_trader burn_address in
+      let fee_recipient_address = usdt_trader.address in 
+      let contracts = originate_with_admin_and_fee_recipient level btc_trader usdt_trader eurl_trader eurl_trader fee_recipient_address in
       {
         btc_trader = btc_trader;
         usdt_trader = usdt_trader;
         eurl_trader = eurl_trader;
         admin = eurl_trader;
         non_admin = btc_trader;
-        burn = burn_address;
+        fee_recipient = fee_recipient_address;
         contracts = contracts;
       }
 

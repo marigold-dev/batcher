@@ -5,6 +5,7 @@
 #import "./economics/test_clearing.mligo" "Economics_Clearing"
 #import "./endpoints/admin/test_change_fee.mligo" "Admin_Change_Fee"
 #import "./endpoints/admin/test_change_admin_address.mligo" "Admin_Change_Admin_Address"
+#import "./endpoints/admin/test_change_fee_recipient_address.mligo" "Admin_Change_Fee_Recipient_Address"
 
 
 let contract_can_be_originated =
@@ -35,6 +36,7 @@ let () =
       test_suite
     ; Admin_Change_Fee.test_suite
     ; Admin_Change_Admin_Address.test_suite
+    ; Admin_Change_Fee_Recipient_Address.test_suite
     ; User_Deposits.test_suite
 //  ; User_Redemptions.test_suite
 //  ; Economics_Clearing.test_suite

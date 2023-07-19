@@ -291,10 +291,10 @@ type valid_swaps =  (string, valid_swap_reduced) map
 type rates_current = (string, exchange_rate) big_map
 
 type fees = {
-   to_burn: tez;
+   to_send: tez;
    to_refund: tez;
    payer: address;
-   burner: address;
+   recipient: address;
 }
 
 
@@ -955,8 +955,8 @@ let collect_order_payout_from_clearing
   ((c, tam, vols, tokens, fees, fee_in_mutez), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
-                          let f = fees.to_burn + fee_in_mutez in
-                          let uf = { fees with to_burn = f; } in
+                          let f = fees.to_send + fee_in_mutez in
+                          let uf = { fees with to_send = f; } in
                           (tm, uf)
                         else
                           let ta: token_amount = TokenAmount.recover ot amt c tokens in
@@ -1174,8 +1174,8 @@ let resolve_fees
     else
       token_ops
   in
-  if fees.to_burn > 0mutez then
-    Treasury_Utils.transfer_fee fees.burner fees.to_burn :: token_ops
+  if fees.to_send > 0mutez then
+    Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
   else
     token_ops
 
@@ -1194,10 +1194,10 @@ let redeem
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
       let fees = {
-        to_burn = 0mutez;
+        to_send = 0mutez;
         to_refund = 0mutez;
         payer = redeem_address;
-        burner = storage.fee_recipient;
+        recipient = storage.fee_recipient;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
@@ -1719,6 +1719,7 @@ type entrypoint =
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
+  | Change_fee_recipient_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
   | Amend_token_and_pair_limit of nat
@@ -2063,6 +2064,16 @@ let change_admin_address
     no_op storage
 
 [@inline]
+let change_fee_recipient_address
+    (new_fee_recipient_address: address)
+    (storage: storage) : result =
+    let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in
+    let () = admin_and_fee_recipient_address_are_different new_fee_recipient_address storage.administrator in
+    let storage = { storage with fee_recipient = new_fee_recipient_address; } in
+    no_op storage
+
+[@inline]
 let add_token_swap_pair
   (valid_swap: valid_swap)
   (storage: storage) : result =
@@ -2188,6 +2199,7 @@ let main
   (* Admin endpoints *)
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | Change_fee_recipient_address new_fee_recipient_address -> change_fee_recipient_address new_fee_recipient_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
    | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage

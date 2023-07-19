@@ -49,13 +49,13 @@ let fa2_initial_storage
   operators = (Big_map.empty : ((address * address), nat set) big_map)
 }
 
-let initial_storage_with_admin_and_burn
+let initial_storage_with_admin_and_fee_recipient
   (oracle_address: address)
   (tzbtc_address: address)
   (usdt_address:address)
   (eurl_address:address)
   (admin: address)
-  (burn: address): storage = {
+  (fee_recipient: address): storage = {
   metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
@@ -112,7 +112,7 @@ let initial_storage_with_admin_and_burn
   last_order_number = 0n;
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
-  fee_recipient = burn;
+  fee_recipient = fee_recipient;
   administrator = admin;
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
@@ -127,7 +127,7 @@ let initial_storage
   (tzbtc_address: address)
   (usdt_address:address)
   (eurl_address:address) : storage = 
-  initial_storage_with_admin_and_burn oracle_address tzbtc_address usdt_address eurl_address administrator fee_recipient
+  initial_storage_with_admin_and_fee_recipient oracle_address tzbtc_address usdt_address eurl_address administrator fee_recipient
 
 let oracle_initial_storage =
   Map.literal [

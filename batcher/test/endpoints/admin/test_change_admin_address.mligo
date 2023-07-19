@@ -7,7 +7,7 @@
 
 let change_admin_address_should_succeed_if_user_is_admin =
   Breath.Model.case
-  "test change fee"
+  "test change admin address"
   "should be successful if user is admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
@@ -25,7 +25,7 @@ let change_admin_address_should_succeed_if_user_is_admin =
 
 let change_admin_address_should_fail_if_user_is_not_admin =
   Breath.Model.case
-  "test change fee"
+  "test change admin address"
   "should be fail if user is not admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
@@ -43,7 +43,7 @@ let change_admin_address_should_fail_if_user_is_not_admin =
 
 let change_admin_address_should_fail_if_tez_is_sent =
   Breath.Model.case
-  "test change fee"
+  "test change admin address"
   "should fail if tez is sent"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
@@ -61,13 +61,13 @@ let change_admin_address_should_fail_if_tez_is_sent =
 
 let change_admin_address_should_fail_if_new_address_is_the_same_as_fee_recipient =
   Breath.Model.case
-  "test change fee"
+  "test change admin address"
   "should be fail if new address is the same as fee recipient"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
       let old_storage = Breath.Contract.storage_of batcher in
-      let new_address = context.burn in
+      let new_address = context.fee_recipient in
       let act_change_admin_address = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Change_admin_address new_address) 0tez)) in
       let new_storage = Breath.Contract.storage_of batcher in
 
