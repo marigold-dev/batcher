@@ -45,6 +45,7 @@
 [@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
 [@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
 [@inline] let batch_already_removed : nat                                        = 143n
+[@inline] let admin_and_fee_recipient_address_cannot_be_the_same                 = 144n
 
 (* Constants *)
 
@@ -1746,6 +1747,11 @@ let is_administrator
   (storage : storage) : unit =
   if Tezos.get_sender () = storage.administrator then () else failwith sender_not_administrator
 
+[@inline]
+let admin_and_fee_recipient_address_are_different
+  (admin : address)
+  (fee_recipient : address ): unit =
+  if admin = fee_recipient then failwith admin_and_fee_recipient_address_cannot_be_the_same else ()
 
 
 [@inline]
@@ -2052,6 +2058,7 @@ let change_admin_address
     (storage: storage) : result =
     let () = is_administrator storage in
     let () = reject_if_tez_supplied () in
+    let () = admin_and_fee_recipient_address_are_different new_admin_address storage.fee_recipient in
     let storage = { storage with administrator = new_admin_address; } in
     no_op storage
 
