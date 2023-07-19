@@ -17,12 +17,22 @@ type storage = Batcher.Storage.t
 type tolerance = Batcher.tolerance
 type valid_tokens = Batcher.valid_tokens
 
+
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
    oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    tzbtc:  (TZBTC.parameter, TZBTC.storage) originated;
    usdt:  (USDT.parameter, USDT.storage) originated;
    eurl:  (EURL.parameter, EURL.storage) originated;
+}
+
+type context = {
+  btc_trader: Breath.Context.actor;
+  usdt_trader: Breath.Context.actor;
+  eurl_trader: Breath.Context.actor;
+  admin: address;
+  burn: address;
+  contracts: test_contracts;
 }
 
 let originate_oracle
@@ -88,7 +98,20 @@ let originate_with_admin_and_burn
    eurl = eurl;
   }
 
-
+let test_context
+    (level: Breath.Logger.level) = 
+      let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
+      let burn_address = usdt_trader.address in 
+      let admin_address = eurl_trader.address in 
+      let contracts = originate_with_admin_and_burn level btc_trader usdt_trader eurl_trader admin_address burn_address in
+      {
+        btc_trader = btc_trader;
+        usdt_trader = usdt_trader;
+        eurl_trader = eurl_trader;
+        admin = admin_address;
+        burn = burn_address;
+        contracts = contracts;
+      }
 
 let create_order
   (from: string)
