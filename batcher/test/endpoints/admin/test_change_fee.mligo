@@ -23,8 +23,8 @@ let change_fee_should_succeed_if_user_is_admin =
       let old_fee = old_storage.fee_in_mutez in
       let new_fee = 20000mutez in
      
-      let cf_ep = Change_fee new_fee in
-      let act_change_fee = Breath.Context.act_as eurl_trader (fun (_u:unit) -> (Breath.Contract.transfer_to batcher cf_ep 0tez)) in
+      let _cf_ep = Change_fee new_fee in
+      let act_change_fee = Breath.Context.act_as eurl_trader (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Change_fee new_fee) 0tez)) in
 
       let new_storage = Breath.Contract.storage_of batcher in
 
@@ -92,7 +92,7 @@ let change_fee_should_fail_if_tez_is_sent =
         ; Breath.Assert.is_equal "old fee is unchanged" old_fee new_storage.fee_in_mutez
       ])
 let test_suite =
-  Breath.Model.suite "Suite for Deposits" [
+  Breath.Model.suite "Suite for Change Fee (Admin)" [
     change_fee_should_succeed_if_user_is_admin
     ; change_fee_should_fail_if_user_is_not_admin
     ; change_fee_should_fail_if_tez_is_sent
