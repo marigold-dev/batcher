@@ -84,4 +84,3 @@ let test_suite =
     ; change_fee_recipient_address_should_fail_if_tez_is_sent
     ; change_fee_recipient_address_should_fail_if_new_address_is_the_same_as_admin
   ]
-

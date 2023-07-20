@@ -415,8 +415,6 @@ module Storage = struct
     administrator : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
-    scale_factor_for_oracle_staleness: nat
-
   }
 
 end
@@ -1729,7 +1727,6 @@ type entrypoint =
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
-  | Change_scale_factor of nat
 
 [@inline]
 let get_oracle_price
@@ -1890,11 +1887,9 @@ let cancel
 [@inline]
 let oracle_price_is_not_stale
   (deposit_time_window: nat)
-  (scale_factor_for_oracle_staleness: nat)
   (oracle_price_timestamp: timestamp) : unit =
   let dtw_i = int deposit_time_window in
-  let sffos_i = int scale_factor_for_oracle_staleness in
-  if (Tezos.get_now () - (sffos_i * dtw_i)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
+  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
 let is_oracle_price_newer_than_current
@@ -1916,7 +1911,7 @@ let confirm_oracle_price_is_available_before_deposit
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
-  oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated
+  oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
 
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
@@ -2019,7 +2014,7 @@ let tick_price
   let valid_swap_reduced = Utils.valid_swap_to_valid_swap_reduced valid_swap in
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated in
+  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
@@ -2157,17 +2152,6 @@ let change_deposit_time_window
   let storage = { storage with deposit_time_window_in_seconds = new_window; } in
   no_op storage
 
-[@inline]
-let change_scale_factor_for_oracle_staleness
-  (new_factor: nat)
-  (storage: storage) : result =
-  let () = is_administrator storage in
-  let () = reject_if_tez_supplied () in
-  if new_factor < minimum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_less_than_the_minimum else
-  if new_factor > maximum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_more_than_the_maximum else
-  let storage = { storage with scale_factor_for_oracle_staleness = new_factor; } in
-  no_op storage
-
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
@@ -2209,6 +2193,5 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
-   | Change_scale_factor f -> change_scale_factor_for_oracle_staleness f storage
 
 

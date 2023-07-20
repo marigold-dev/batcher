@@ -61,7 +61,6 @@ let f(_:unit) : Batcher.Storage.t = {
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
-  scale_factor_for_oracle_staleness = 1n
 
 }
 
