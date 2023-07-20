@@ -17,7 +17,6 @@ yarn-error.log
 /coverage
 .idea
 yarn.lock
-package-lock.json
 pnpm-lock.yaml
 *bak
 
@@ -38,3 +37,4 @@ screenshot
 .eslintcache
 
 build
+.next
