@@ -46,7 +46,7 @@ let () =
     ; Admin_Enable_Disable_Swap_Pair.test_suite
     ; Admin_Amend_Token_pair_Limit.test_suite
     ; Admin_Add_Update_Remove_Metadata.test_suite
-//    ; Admin_Change_Oracle_Source_Of_Pair.test_suite
+    ; Admin_Change_Oracle_Source_Of_Pair.test_suite
     ; User_Deposits.test_suite
 //  ; User_Redemptions.test_suite
 //  ; Economics_Clearing.test_suite

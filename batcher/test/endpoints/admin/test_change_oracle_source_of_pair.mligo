@@ -24,8 +24,8 @@ let change_oracle_source_should_succeed_if_user_is_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
-       // ; act_change_oracle_source
-        //; Breath.Assert.is_equal "new address" new_oracle_address new_test_swap.oracle_address
+        ; act_change_oracle_source
+        ; Breath.Assert.is_equal "new address" new_oracle_address new_test_swap.oracle_address
       ])
 
 
