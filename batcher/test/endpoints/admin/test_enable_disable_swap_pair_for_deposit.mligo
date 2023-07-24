@@ -4,14 +4,6 @@
 #import "./../../common/expect.mligo" "Expect"
 #import "../../../batcher.mligo" "Batcher"
 
-let get_swap_pair
-   (contract: Helpers.originated_contract) 
-   (pair: string): Batcher.valid_swap_reduced option = 
-   let storage = Breath.Contract.storage_of contract in
-   let valid_swaps = storage.valid_swaps in
-   match Map.find_opt pair valid_swaps with 
-   | Some p -> Some p
-   | None -> None 
 
 let enable_disable_swap_pair_should_succeed_if_user_is_admin =
   Breath.Model.case
@@ -21,11 +13,11 @@ let enable_disable_swap_pair_should_succeed_if_user_is_admin =
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
       let pair = "tzBTC/USDT" in 
-      let initial_pair = Option.unopt (get_swap_pair batcher pair) in
+      let initial_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_disable_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Disable_swap_pair_for_deposit pair) 0tez)) in
-      let disabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let disabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_enable_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Enable_swap_pair_for_deposit pair) 0tez)) in
-      let enabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let enabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "pair should be enabled" false initial_pair.is_disabled_for_deposits
@@ -43,11 +35,11 @@ let enable_disable_swap_pair_should_fail_if_user_is_not_admin =
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
       let pair = "tzBTC/USDT" in 
-      let initial_pair = Option.unopt (get_swap_pair batcher pair) in
+      let initial_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_disable_swap_pair = Breath.Context.act_as context.non_admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Disable_swap_pair_for_deposit pair) 0tez)) in
-      let disabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let disabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_enable_swap_pair = Breath.Context.act_as context.non_admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Enable_swap_pair_for_deposit pair) 0tez)) in
-      let enabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let enabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "pair should be enabled" false initial_pair.is_disabled_for_deposits
@@ -65,11 +57,11 @@ let enable_disable_swap_pair_should_fail_if_tez_is_supplied =
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
       let pair = "tzBTC/USDT" in 
-      let initial_pair = Option.unopt (get_swap_pair batcher pair) in
+      let initial_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_disable_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Disable_swap_pair_for_deposit pair) 5tez)) in
-      let disabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let disabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
       let act_enable_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Enable_swap_pair_for_deposit pair) 5tez)) in
-      let enabled_pair = Option.unopt (get_swap_pair batcher pair) in
+      let enabled_pair = Option.unopt (Helpers.get_swap_pair batcher pair) in
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "pair should be enabled" false initial_pair.is_disabled_for_deposits

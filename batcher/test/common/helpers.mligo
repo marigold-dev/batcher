@@ -21,6 +21,7 @@ type valid_tokens = Batcher.valid_tokens
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
    oracle:  (Oracle.entrypoint, Oracle.storage) originated;
+   additional_oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    tzbtc:  (TZBTC.parameter, TZBTC.storage) originated;
    usdt:  (USDT.parameter, USDT.storage) originated;
    eurl:  (EURL.parameter, EURL.storage) originated;
@@ -65,6 +66,7 @@ let originate
   (usdt_trader: Breath.Context.actor)
   (eurl_trader: Breath.Context.actor) =
   let oracle = originate_oracle level in
+  let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
@@ -73,6 +75,7 @@ let originate
   {
    batcher = batcher;
    oracle = oracle;
+   additional_oracle = additional_oracle;
    tzbtc = tzbtc;
    usdt = usdt;
    eurl = eurl;
@@ -86,6 +89,7 @@ let originate_with_admin_and_fee_recipient
   (admin: Breath.Context.actor)
   (fee_recipient: address) =
   let oracle = originate_oracle level in
+  let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
@@ -94,6 +98,7 @@ let originate_with_admin_and_fee_recipient
   {
    batcher = batcher;
    oracle = oracle;
+   additional_oracle = additional_oracle;
    tzbtc = tzbtc;
    usdt = usdt;
    eurl = eurl;
@@ -167,5 +172,23 @@ let expect_rate_value
   | None -> Breath.Assert.fail_with "Could not find rate in storage"
   | Some r -> Breath.Assert.is_equal "rate value" r.rate rate
 
+let get_swap_pair
+   (contract: originated_contract) 
+   (pair: string): Batcher.valid_swap_reduced option = 
+   let storage = Breath.Contract.storage_of contract in
+   let valid_swaps = storage.valid_swaps in
+   match Map.find_opt pair valid_swaps with 
+   | Some p -> Some p
+   | None -> None 
 
+let get_source_update
+  (pair: string)
+  (valid_swap: Batcher.valid_swap_reduced)
+  (new_oracle_address: address) : Batcher.oracle_source_change = 
+  {
+    pair_name = pair;
+    oracle_address = new_oracle_address;
+    oracle_asset_name = valid_swap.oracle_asset_name;
+    oracle_precision = valid_swap.oracle_precision;
+  }
 
