@@ -10,7 +10,10 @@ import Main from './pages/Main';
 import { Spin, Image } from 'antd';
 import MarigoldLogo from '../img/marigold-logo.png';
 import { TezosToolkit } from '@taquito/taquito';
+import ReactGA from "react-ga4";
 Spin.setDefaultIndicator(<Image src={MarigoldLogo} />);
+
+ReactGA.initialize(GA_TRACKING_ID);
 
 export const initialStateConfig = {
   loading: <PageLoading />,
