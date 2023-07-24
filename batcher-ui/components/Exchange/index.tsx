@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { SwapOutlined, SettingOutlined } from '@ant-design/icons';
-import { Input, Button, Space, Typography, Col, Row, message, Form } from 'antd';
-import { compose, OpKind, WalletContract } from '@taquito/taquito';
-// import './index.less';
-// import '../../src/global.less';
-import { ExchangeProps, PriceType, BatcherStatus } from '../../extra_utils/types';
+import { message, Form } from "antd";
+import { compose, OpKind, WalletContract } from "@taquito/taquito";
+import {
+  ExchangeProps,
+  PriceType,
+  BatcherStatus,
+} from "../../extra_utils/types";
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
-import { getErrorMess, scaleAmountUp } from '../../extra_utils/utils';
-import { tzip12, Tzip12Module } from '@taquito/tzip12';
-import { tzip16 } from '@taquito/tzip16';
-import { AppStateContext } from '../../contexts';
-import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
-import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
+import { getErrorMess, scaleAmountUp } from "../../extra_utils/utils";
+import { tzip12 } from "@taquito/tzip12";
+import { tzip16 } from "@taquito/tzip16";
+import { AppStateContext } from "../../contexts";
+import { BatchWalletOperation } from "@taquito/taquito/dist/types/wallet/batch-operation";
+import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
 
 const Exchange: React.FC<ExchangeProps> = ({
   userAddress,
@@ -71,7 +73,7 @@ const Exchange: React.FC<ExchangeProps> = ({
 
     const tokenContract: WalletContract = await connection.wallet.at(
       selectedToken.address,
-      compose(tzip12, tzip16),
+      compose(tzip12, tzip16)
     );
     const tokenId = inversion ? buyToken.token_id : sellToken.token_id;
 
@@ -128,10 +130,10 @@ const Exchange: React.FC<ExchangeProps> = ({
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
 
-      console.log('operations-token', selectedToken);
-      console.log('operations-side', side);
-      console.log('operations-fee-in-mutez', fee_in_mutez);
-      console.log('operations-scaled-amount', fee_in_mutez);
+      console.log("operations-token", selectedToken);
+      console.log("operations-side", side);
+      console.log("operations-fee-in-mutez", fee_in_mutez);
+      console.log("operations-scaled-amount", fee_in_mutez);
 
       const swap_params = {
         swap: {
@@ -158,20 +160,20 @@ const Exchange: React.FC<ExchangeProps> = ({
         tolerance: tolerance,
       };
 
-      console.log('test');
+      console.log("test");
 
-      if (selectedToken.standard === 'FA1.2 token') {
-        console.log('inversion', inversion);
-        console.log('buy', buyToken);
-        console.log('sell', sellToken);
+      if (selectedToken.standard === "FA1.2 token") {
+        console.log("inversion", inversion);
+        console.log("buy", buyToken);
+        console.log("sell", sellToken);
 
         if (!buyToken.address) return; //TODO: improve this
 
         const tokenfa12Contract: WalletContract = await connection.wallet.at(
           buyToken.address,
-          compose(tzip12, tzip16),
+          compose(tzip12, tzip16)
         );
-        console.log('methods', tokenfa12Contract.methods);
+        console.log("methods", tokenfa12Contract.methods);
         order_batcher_op = await connection.wallet
           .batch([
             {
@@ -182,7 +184,9 @@ const Exchange: React.FC<ExchangeProps> = ({
             },
             {
               kind: OpKind.TRANSACTION,
-              ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+              ...batcherContract.methodsObject
+                .deposit(swap_params)
+                .toTransferParams(),
               to: batcherContractHash,
               amount: fee_in_mutez,
               mutez: true,
@@ -191,16 +195,20 @@ const Exchange: React.FC<ExchangeProps> = ({
           .send();
       }
 
-      if (selectedToken.standard === 'FA2 token') {
+      if (selectedToken.standard === "FA2 token") {
         order_batcher_op = await connection.wallet
           .batch([
             {
               kind: OpKind.TRANSACTION,
-              ...tokenContract.methods.update_operators(fa2_add_operator_params).toTransferParams(),
+              ...tokenContract.methods
+                .update_operators(fa2_add_operator_params)
+                .toTransferParams(),
             },
             {
               kind: OpKind.TRANSACTION,
-              ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+              ...batcherContract.methodsObject
+                .deposit(swap_params)
+                .toTransferParams(),
               to: batcherContractHash,
               amount: fee_in_mutez,
               mutez: true,
@@ -215,37 +223,40 @@ const Exchange: React.FC<ExchangeProps> = ({
           .send();
       }
 
-      const loading = () => message.loading('Attempting to place swap order for ' + tokenName, 0);
+      const loading = () =>
+        message.loading("Attempting to place swap order for " + tokenName, 0);
 
       if (!order_batcher_op) {
-        console.error('Order Batcher Operation is not defined...');
-        throw new Error('Order Batcher Operation is not defined...');
+        console.error("Order Batcher Operation is not defined...");
+        throw new Error("Order Batcher Operation is not defined...");
       }
       const confirm = await order_batcher_op.confirmation();
 
       if (!confirm.completed) {
         console.error(confirm);
-        message.error('Failed to deposit ' + tokenName);
+        message.error("Failed to deposit " + tokenName);
         throw new Error(
-          'Failed to deposit ' + (inversion ? buyToken.name : sellToken.name) + ' token',
+          "Failed to deposit " +
+            (inversion ? buyToken.name : sellToken.name) +
+            " token"
         );
       } else {
         loading();
         form.resetFields();
-        message.success('Successfully deposited ' + tokenName);
+        message.success("Successfully deposited " + tokenName);
         triggerUpdate();
       }
     } catch (error) {
-      console.log('deposit error', error);
+      console.log("deposit error", error);
       const converted_error_message = getErrorMess(error);
       message.error(converted_error_message);
-      message.loading('Attempting to place swap order for ' + tokenName, 0);
+      message.loading("Attempting to place swap order for " + tokenName, 0);
       form.resetFields();
     }
   };
 
   const isBatchClosed = () => {
-    console.info('EXCHANGE: isBatchClosed', status);
+    console.info("EXCHANGE: isBatchClosed", status);
     if (status === BatcherStatus.CLOSED) {
       setBatchClosed(true);
     } else {
@@ -256,28 +267,48 @@ const Exchange: React.FC<ExchangeProps> = ({
   useEffect(() => {
     isBatchClosed();
   }, [status]);
+
   return (
-    <div>
-      <Form onFinish={depositToken} form={form}>
-        <Col className="base-content br-t br-b br-l br-r">
-          <Space className="batcher-price" direction="vertical">
-            <Form.Item
-              className="batcher-amount mb-0"
+    <div className="flex flex-col items-center font-custom">
+      {/* <Form onFinish={depositToken} form={form} className="bg-[green]"> */}
+      <div className="max-w-fit p-5 flex flex-col items-center border-2 border-solid">
+        <div className="p-5 gap-5 flex flex-row">
+          <label htmlFor="amount">
+            <p className="text-xl p-2">
+              From {inversion ? buyToken.name : sellToken.name}
+            </p>
+          </label>
+          <input
+            type="text"
+            id="amount"
+            name="Amount"
+            disabled={!userAddress}
+            required
+          />
+
+          {/* <Form.Item
+              className=""
               label={
-                <Typography className="batcher-title p-16">
+                <p className="text-xl p-16">
                   From {inversion ? buyToken.name : sellToken.name}
-                </Typography>
+                </p>
               }
               name="amount"
               rules={[
-                { required: true, message: 'Please input your amount' },
-                { pattern: new RegExp(/^[+-]?([0-9]*[.])?[0-9]+$/), message: 'Invalid number' },
+                { required: true, message: "Please input your amount" },
+                {
+                  pattern: new RegExp(/^[+-]?([0-9]*[.])?[0-9]+$/),
+                  message: "Invalid number",
+                },
                 () => ({
                   validator(_, value) {
                     if (inversion && Number.parseFloat(value) > buyBalance) {
-                      return Promise.reject('Greater than the balance');
-                    } else if (!inversion && Number.parseFloat(value) > sellBalance) {
-                      return Promise.reject('Greater than the balance');
+                      return Promise.reject("Greater than the balance");
+                    } else if (
+                      !inversion &&
+                      Number.parseFloat(value) > sellBalance
+                    ) {
+                      return Promise.reject("Greater than the balance");
                     }
                     return Promise.resolve();
                   },
@@ -295,76 +326,64 @@ const Exchange: React.FC<ExchangeProps> = ({
                   }
                 }}
               />
-            </Form.Item>
-            <Typography className="batcher-title p-13">
-              Select the price you want to sell
-            </Typography>
-            <Row className="text-center">
-              <Col
-                className={
-                  price === PriceType.WORSE
-                    ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-l br-r'
-                    : 'batcher-title pd-5 br-t br-b br-l br-r'
-                }
-                span={8}
-                onClick={() => setPrice(PriceType.WORSE)}
-              >
-                <Typography className="p-12">Worse price / Better fill</Typography>
-              </Col>
-              <Col
-                className={
-                  price === PriceType.EXACT
-                    ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-r'
-                    : 'batcher-title pd-5 br-t br-b br-r'
-                }
-                span={8}
-                onClick={() => setPrice(PriceType.EXACT)}
-              >
-                <Typography className="p-12">Oracle Price</Typography>
-              </Col>
-              <Col
-                className={
-                  price === PriceType.BETTER
-                    ? 'batcher-title batcher-col-focus pd-5 br-t br-b br-r'
-                    : 'batcher-title pd-5 br-t br-b br-r'
-                }
-                span={8}
-                onClick={() => setPrice(PriceType.BETTER)}
-              >
-                <Typography className="p-12">Better Price / Worse Fill</Typography>
-              </Col>
-            </Row>
-          </Space>
-        </Col>
-        <Col className="batcher-action-items" lg={24} xs={24}>
-          <Space align="center" size={100}>
-            <SwapOutlined
-              className="exchange-button grid-padding"
-              onClick={inverseTokenType}
-              rotate={90}
-            />
-            <div onClick={showDrawer}>
-              <SettingOutlined className="exchange-button" />
-            </div>
-          </Space>
-        </Col>
-        <Col className="quote-content grid-padding br-t br-b br-l br-r">
-          <Typography className="batcher-title p-16">
-            To {inversion ? sellToken.name : buyToken.name}
-          </Typography>
-        </Col>
-        {userAddress && !batchClosed ? (
-          <Form.Item>
-            <div className="tx-align">
-              <Button className="swap-btn mtb-25" type="primary" htmlType="submit" danger>
-                Try to swap
-              </Button>
-            </div>
-          </Form.Item>
-        ) : (
-          <div></div>
-        )}
-      </Form>
+            </Form.Item> */}
+        </div>
+        <p className="p-5">Select the price you want to sell</p>
+        <div className="flex">
+          <button
+            onClick={() => setPrice(PriceType.WORSE)}
+            className={
+              price === PriceType.WORSE
+                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
+                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
+            }
+          >
+            Worse price / Better fill
+          </button>
+          <button
+            className={
+              price === PriceType.EXACT
+                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
+                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
+            }
+            onClick={() => setPrice(PriceType.EXACT)}
+          >
+            Oracle Price
+          </button>
+          <button
+            className={
+              price === PriceType.BETTER
+                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
+                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
+            }
+            onClick={() => setPrice(PriceType.BETTER)}
+          >
+            Better Price / Worse Fill
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-row p-10 text-[#1C1D22]">
+        <SwapOutlined
+          className="text-[#ff4d4f]"
+          onClick={inverseTokenType}
+          size={42}
+          rotate={90}
+        />
+        <div onClick={showDrawer}>
+          <SettingOutlined className="text-[#ff4d4f]" />
+        </div>
+      </div>
+      <div className="">
+        <p className="p-4">To {inversion ? sellToken.name : buyToken.name}</p>
+      </div>
+      {userAddress && !batchClosed ? (
+        <div className="text-center">
+          <button className="text-xs" type="submit">
+            Try to swap
+          </button>
+        </div>
+      ) : null}
+      {/* </Form> */}
     </div>
   );
 };

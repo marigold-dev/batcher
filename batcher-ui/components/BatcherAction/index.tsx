@@ -1,46 +1,36 @@
 import React from 'react';
-// import '../index.less';
-// import '../../src/global.less';
-import { Button, Col, Space, Row, Typography, Drawer, Radio } from 'antd';
 import { BatcherActionProps, ContentType } from '../../extra_utils/types';
-
-const { Text } = Typography;
 
 const BatcherAction: React.FC<BatcherActionProps> = ({
   content,
   setContent,
 }: BatcherActionProps) => {
   return (
-    <div>
-      <Row>
-        <Col lg={3} />
-        <Col lg={18} xs={24}>
-          <Row className="batcher-action-outer">
-            <Col lg={3} />
-            <Col className="batcher-action-items" lg={18} xs={24}>
-              <Space align="center">
-                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)}>
-                  <Text underline>Swap</Text>
-                </Button>
-                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.VOLUME)}>
-                  <Text underline>Volume</Text>
-                </Button>
-                <Button
-                  className="batcher-nav-btn"
-                  onClick={() => setContent(ContentType.REDEEM_HOLDING)}
-                >
-                  <Text underline>Redeem Holdings</Text>
-                </Button>
-                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.ABOUT)}>
-                  <Text underline>About</Text>
-                </Button>
-              </Space>
-            </Col>
-            <Col lg={3} />
-          </Row>
-        </Col>
-        <Col lg={3} />
-      </Row>
+    <div className="font-custom flex flex-row justify-evenly border-solid border-2 border-[#7B7B7E]">
+      <div>
+        <button
+          className="border-2 border-solid border-[#ff4d4f] bg-[#1C1D22] p-2 hover:text-[#1C1D22] hover:bg-[#ff4d4f] focus:text-[#1C1D22] focus:bg-[#ff4d4f] hover:border-[#7B7B7E] focus:border-[#7B7B7E]"
+          onClick={() => setContent(ContentType.SWAP)}>
+          Swap
+        </button>
+      </div>
+      <div>
+        <button
+          className="border-2 border-solid border-[#ff4d4f] bg-[#1C1D22] p-2 hover:text-[#1C1D22] hover:bg-[#ff4d4f] focus:text-[#1C1D22] focus:bg-[#ff4d4f] hover:border-[#7B7B7E] focus:border-[#7B7B7E]"
+          onClick={() => setContent(ContentType.VOLUME)}>
+          Volume
+        </button>
+      </div>
+      <button
+        className="border-2 border-solid border-[#ff4d4f] bg-[#1C1D22] p-2 hover:text-[#1C1D22] hover:bg-[#ff4d4f] focus:text-[#1C1D22] focus:bg-[#ff4d4f] hover:border-[#7B7B7E] focus:border-[#7B7B7E]"
+        onClick={() => setContent(ContentType.REDEEM_HOLDING)}>
+        Redeem Holdings
+      </button>
+      <button
+        className="border-2 border-solid border-[#ff4d4f] bg-[#1C1D22] p-2 hover:text-[#1C1D22] hover:bg-[#ff4d4f] focus:text-[#1C1D22] focus:bg-[#ff4d4f] hover:border-[#7B7B7E] focus:border-[#7B7B7E]"
+        onClick={() => setContent(ContentType.ABOUT)}>
+        About
+      </button>
     </div>
   );
 };

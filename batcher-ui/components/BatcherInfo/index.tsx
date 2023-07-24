@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Space, Typography, Col, Row } from 'antd';
-// import './index.less';
-// import '../../src/global.less';
+import React, { useEffect } from 'react';
 import { BatcherInfoProps, BatcherStatus } from '../../extra_utils/types';
 import BatcherStepper from '../BatcherStepper';
 import { parseISO, add, differenceInMinutes } from 'date-fns';
-
-const { Text } = Typography;
 
 const BatcherInfo: React.FC<BatcherInfoProps> = ({
   userAddress,
@@ -59,70 +54,64 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   };
 
   return (
-    <div>
-      <Row className="batcher-header">
-        <Col lg={3} />
-        <Col className="batcher-time" xs={24} lg={9}>
-          <Space className="batcher-time-gap">
-            <Space className="pd-0" direction="vertical">
-              <Typography className="batcher-title p-16">Batcher Time Remaining</Typography>
-              {status === BatcherStatus.NONE ? (
-                <Typography className="batcher-title p-13">No open Batch</Typography>
-              ) : (
-                <BatcherStepper status={status} />
-              )}
-            </Space>
+    <div className="font-custom">
+      <div className="flex flex-row p-3">
+        <div className="flex flex-direction-col border-solid border-2 border-[#7B7B7E]">
+          <div className="p-3">
+            <p className="text-xl font-mono">Batcher Time Remaining</p>
+            {status === BatcherStatus.NONE ? (
+              <p className="text-l">No open Batch</p>
+            ) : (
+              <BatcherStepper status={status} />
+            )}
             {status === BatcherStatus.OPEN ? (
-              <div className="batcher-time-difference">
-                <Typography className="p-13">{get_time_difference() + ' min'}</Typography>
+              <div className="p-5 border-solid border-2 border-[#7B7B7E]">
+                <p className="p-4">{get_time_difference() + ' min'}</p>
               </div>
             ) : (
               <div />
             )}
             {batchNumber > 0 ? (
-              <div className="batcher-time-difference">
-                <Typography className="p-13">{get_batch_prefix() + '#' + batchNumber}</Typography>
+              <div className="p-5 border-solid border-2 border-[#7B7B7E]">
+                <p className="p-4">{get_batch_prefix() + '#' + batchNumber}</p>
               </div>
             ) : (
               <div></div>
             )}
-          </Space>
-        </Col>
-        <Col className="batcher-balance" xs={24} lg={9}>
-          <Col className="batcher-balance-title" span={24}>
-            <Space className="pd-0">
-              <Typography className="batcher-title p-16">Balances</Typography>
-              <Typography className="batcher-title p-13">
-                {inversion ? buyBalance + ' ' + buyTokenName : sellBalance + ' ' + sellTokenName}
-              </Typography>
-              <Typography className="batcher-title p-13">
-                {inversion ? sellBalance + ' ' + sellTokenName : buyBalance + ' ' + buyTokenName}
-              </Typography>
-            </Space>
-          </Col>
-          <Col className="batcher-balance-amount" span={24}>
-            <Space className="pd-0">
-              <Typography className="batcher-title p-16">Address</Typography>
-              {userAddress ? (
-                <Text style={{ width: 150 }} ellipsis={{ tooltip: userAddress }}>
-                  {userAddress}
-                </Text>
-              ) : (
-                <Text className="batcher-title p-13">No Wallet connected</Text>
-              )}
-            </Space>
-          </Col>
-          <Col className="batcher-price" span={24}>
-            <Space className="pd-0">
-              <Typography className="batcher-title p-16">Oracle Price</Typography>
-              <Typography className="batcher-title p-13">
-                {rate} {tokenPair}
-              </Typography>
-            </Space>
-          </Col>
-        </Col>
-        <Col lg={3} />
-      </Row>
+          </div>
+        </div>
+        <div className="border-[#7B7B7E] border-2 border-solid">
+          <div className="flex flex-col batcher-balance-title">
+            <div className="flex border-solid border-2 border-[#7B7B7E]">
+              <p className="batcher-title p-3">Balances</p>
+              <p className="batcher-title p-3">
+                {inversion
+                  ? buyBalance + ' ' + buyTokenName
+                  : sellBalance + ' ' + sellTokenName}
+              </p>
+              <p className="batcher-title p-3">
+                {inversion
+                  ? sellBalance + ' ' + sellTokenName
+                  : buyBalance + ' ' + buyTokenName}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid">
+            <p className="p-4">Address</p>
+            {userAddress ? (
+              <p>{userAddress}</p>
+            ) : (
+              <p className="p-4">No Wallet connected</p>
+            )}
+          </div>
+          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid">
+            <p className="p-4">Oracle Price</p>
+            <p className="p-4">
+              {rate} {tokenPair}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

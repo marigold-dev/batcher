@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Button, Space, Typography, Col, message, Table } from 'antd';
-// import '../Exchange/index.less';
-// import './index.less';
-// import '../../src/global.less';
-import { HoldingsProps } from '../../extra_utils/types';
-import { zeroHoldings } from '../../extra_utils/utils';
-import { AppStateContext } from '../../contexts';
-import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
+import { Button, Space, Typography, Col, message, Table } from "antd";
+import { HoldingsProps } from "../../extra_utils/types";
+import { zeroHoldings } from "../../extra_utils/utils";
+import { AppStateContext } from "../../contexts";
+import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
 const Holdings: React.FC<HoldingsProps> = ({
   contractAddress,
   openHoldings,
@@ -41,8 +38,8 @@ const Holdings: React.FC<HoldingsProps> = ({
         {data.map((h) => (
           <React.Fragment key={h.token}>
             <Typography>
-              {' '}
-              {h.holding} {h.token} |{' '}
+              {" "}
+              {h.holding} {h.token} |{" "}
             </Typography>
           </React.Fragment>
         ))}
@@ -57,51 +54,58 @@ const Holdings: React.FC<HoldingsProps> = ({
       let redeem_op = await contractWallet.methods.redeem().send();
 
       if (redeem_op) {
-        message.loading('Attempting to redeem holdings...', 0);
+        message.loading("Attempting to redeem holdings...", 0);
         const confirm = await redeem_op.confirmation();
         if (!confirm.completed) {
-          message.error('Failed to redeem holdings');
-          console.error('Failed to redeem holdings' + confirm);
+          message.error("Failed to redeem holdings");
+          console.error("Failed to redeem holdings" + confirm);
         } else {
           setOpenHoldings(new Map<string, number>());
           setClearedHoldings(new Map<string, number>());
-          message.loading('Attempting to redeem holdings...', 0);
-          message.success('Successfully redeemed holdings');
+          message.loading("Attempting to redeem holdings...", 0);
+          message.success("Successfully redeemed holdings");
           triggerUpdate();
         }
       } else {
-        throw new Error('Failed to redeem tokens');
+        throw new Error("Failed to redeem tokens");
       }
     } catch (error: any) {
       // loading();
-      message.error('Unable to redeem holdings : ' + error.message);
-      console.error('Unable to redeem holdings' + error);
+      message.error("Unable to redeem holdings : " + error.message);
+      console.error("Unable to redeem holdings" + error);
     }
   };
 
+  const mockGenerateHoldings = () => " | 0 EURL | 0 USDT |0 tzBTC | ";
   return (
-    <Col className="base-content br-t br-b br-l br-r">
-      <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Open/Closed Batches</Typography>
-        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="horizontal">
-            <Typography>Holdings =&gt; </Typography>| {generateHoldings(openHoldings)}
-          </Space>
-        </Col>
-      </Space>
-      <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Cleared Batches (Redeemable)</Typography>
-        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="horizontal">
-            <Typography>Holdings =&gt; </Typography>
-            {generateHoldings(clearedHoldings)}
-          </Space>
-        </Col>
-      </Space>
+    <div className="font-custom flex flex-col border-solid border-2 border-#7B7B7E max-w-screen-md">
+      <div className="flex flex-col p-6">
+        <p className="p-4">Open/Closed Batches</p>
+        <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-[#7B7B7E] p-6">
+          <p>Holdings =&gt; </p>
+          {/* {generateHoldings(openHoldings)} */}
+          <p>{mockGenerateHoldings()}</p>
+        </div>
+      </div>
+      <div className="flex flex-col p-6">
+        <p className="p-4">Cleared Batches (Redeemable)</p>
+        <div className="flex flex-col">
+          <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-[#7B7B7E] p-6">
+            <p>Holdings =&gt; </p>
+            {/* {generateHoldings(clearedHoldings)} */}
+            <p>{mockGenerateHoldings()}</p>
+          </div>
+        </div>
+      </div>
       <Space className="batcher-price" direction="vertical">
         <Col className="batcher-redeem-btn">
           {hasClearedHoldings ? (
-            <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
+            <Button
+              className="btn-content mtb-25"
+              type="primary"
+              onClick={redeemHoldings}
+              danger
+            >
               Redeem
             </Button>
           ) : (
@@ -109,7 +113,7 @@ const Holdings: React.FC<HoldingsProps> = ({
           )}
         </Col>
       </Space>
-    </Col>
+    </div>
   );
 };
 

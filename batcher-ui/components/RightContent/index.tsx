@@ -1,14 +1,11 @@
-import { Space, Button, Dropdown, Typography, MenuProps } from 'antd';
-import React, { useContext, useEffect, useState } from 'react';
-import { MenuOutlined } from '@ant-design/icons';
-import { TezosToolkit } from '@taquito/taquito';
-import { BeaconWallet } from '@taquito/beacon-wallet';
-import { getNetworkType } from '../../extra_utils/utils';
-// import './index.less';
-import { connection } from '../../extra_utils/webSocketUtils';
-import { AppDispatchContext, AppStateContext } from '../../contexts';
+import React, { useContext, useEffect, useState } from "react";
+import { TezosToolkit } from "@taquito/taquito";
+import { BeaconWallet } from "@taquito/beacon-wallet";
+import { getNetworkType } from "../../extra_utils/utils";
+import { connection } from "../../extra_utils/webSocketUtils";
+import { AppDispatchContext, AppStateContext } from "../../contexts";
 
-export type SiderTheme = 'light' | 'dark';
+export type SiderTheme = "light" | "dark";
 
 const GlobalHeaderRight: React.FC = () => {
   const state = useContext(AppStateContext);
@@ -23,36 +20,38 @@ const GlobalHeaderRight: React.FC = () => {
   }
 
   const { navTheme, layout } = state.settings;
-  let className = '.right';
+  let className = ".right";
 
-  if ((navTheme === 'dark' && layout === 'top') || layout === 'mix') {
+  if ((navTheme === "dark" && layout === "top") || layout === "mix") {
     className = `.right .dark`; //TODO: rewrite this
   }
 
-  const connectCaption = 'Connect Wallet';
-  const connectingCaption = 'Connecting...';
-  const disconnectCaption = 'Disconnect Wallet';
-  const disconnectingCaption = 'Disconnecting...';
+  const connectCaption = "Connect Wallet";
+  const connectingCaption = "Connecting...";
+  const disconnectCaption = "Disconnect Wallet";
+  const disconnectingCaption = "Disconnecting...";
   const [caption, setCaption] = useState<string>(connectCaption);
 
-  const items: MenuProps['items'] = [
+  const items = [
     {
-      key: '1',
-      label: <Typography className="p-12">{caption}</Typography>,
+      key: "1",
+      label: <p className="p-12">{caption}</p>,
     },
   ];
 
   const menuProps = {
     items,
-    onClick: !state.userAddress ? () => connectWallet() : () => disconnectWallet(),
+    onClick: !state.userAddress
+      ? () => connectWallet()
+      : () => disconnectWallet(),
   };
 
   const connectWallet = async () => {
-    console.info('=== STATE ===  state change check ', state);
+    console.info("=== STATE ===  state change check ", state);
     if (!state.userAddress) {
       setCaption(connectingCaption);
       const wallet = new BeaconWallet({
-        name: 'batcher',
+        name: "batcher",
         preferredNetwork: getNetworkType(),
       });
       await wallet.requestPermissions({
@@ -74,26 +73,31 @@ const GlobalHeaderRight: React.FC = () => {
 
       setCaption(disconnectCaption);
       //      localStorage.setItem("state", JSON.stringify(updatedState));
-      console.log('localstroage - after connect', localStorage);
+      console.log("localstroage - after connect", localStorage);
       dispatch(updatedState); // TODO: Work on app state
-      console.log('Setting initialState', updatedState);
+      console.log("Setting initialState", updatedState);
     }
   };
 
   const disconnectWallet = async () => {
-    console.info('Disconnecting wallet');
+    console.info("Disconnecting wallet");
     setCaption(disconnectingCaption);
     await connection.stop();
     try {
       if (!state.wallet) {
-        throw new Error('Not wallet !');
+        throw new Error("Not wallet !");
       }
       // await state.wallet.clearActiveAccount();  // TODO: find a way to fix this
     } catch (error) {
       console.error(error);
     }
-    let updatedState = { ...state, wallet: null, userAddress: null, userAccount: null };
-    localStorage.setItem('state', JSON.stringify(updatedState));
+    let updatedState = {
+      ...state,
+      wallet: null,
+      userAddress: null,
+      userAccount: null,
+    };
+    localStorage.setItem("state", JSON.stringify(updatedState));
     dispatch(updatedState); // TODO: Work on app state
     setCaption(connectCaption);
   };
@@ -104,7 +108,7 @@ const GlobalHeaderRight: React.FC = () => {
 
   const newWallet = () => {
     return new BeaconWallet({
-      name: 'batcher',
+      name: "batcher",
       preferredNetwork: getNetworkType(),
     });
   };
@@ -120,7 +124,10 @@ const GlobalHeaderRight: React.FC = () => {
         tezos.setWalletProvider(wallet);
         const activeAccount = await wallet.client.getActiveAccount();
         if (activeAccount) {
-          console.info('=== STATE ===  no dep check - active account ', activeAccount);
+          console.info(
+            "=== STATE ===  no dep check - active account ",
+            activeAccount
+          );
           const userAddress = await wallet.getPKH();
           let updatedState = {
             ...state,
@@ -142,21 +149,20 @@ const GlobalHeaderRight: React.FC = () => {
   }, []);
   return (
     <div>
-      <Space className={className}>
-        <Button
+      <div className={className}>
+        <button
           className="batcher-connect-wallet"
-          type="primary"
+          type="button"
           onClick={!state.userAddress ? connectWallet : disconnectWallet}
-          danger
         >
           {caption}
-        </Button>
+        </button>
         <div onClick={scrollToTop}>
           {/* <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
             <MenuOutlined className="batcher-menu" />
           </Dropdown> */}
         </div>
-      </Space>
+      </div>
     </div>
   );
 };

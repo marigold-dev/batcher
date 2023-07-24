@@ -70,17 +70,27 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
           </Row>
           <Space size="large" />
           <Row className="text-center">
-            <Col lg={3} />
-            <Col lg={18} xs={24}>
-              <Table
+            <table>
+              <thead>
+                {listOfBuyVolumesColumns.map((b) => (
+                  <td>{b.title}</td>
+                ))}
+              </thead>
+              <tbody>
+                {listOfBuyVolumesColumns.map((b) => {
+                  console.log("buyVolumes[b.key]", buyVolumes[b.key]);
+                  console.log("buyVolumes", buyVolumes);
+                  return <td>{buyVolumes[b.key]}</td>;
+                })}
+              </tbody>
+            </table>
+            {/* <Table
                 className="batcher-table ant-typeography center"
                 columns={listOfBuyVolumesColumns}
                 rowKey="buyMinusVolume"
                 dataSource={buyVolumes}
                 pagination={false}
-              />
-            </Col>
-            <Col lg={3} />
+              /> */}
           </Row>
           <Space size="large" />
           <Row className="text-center">
