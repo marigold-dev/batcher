@@ -14,6 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Run test
-        uses: marigold-dev/ligo-action@v0.0.7
+        uses: marigold-dev/ligo-action@v0.0.8
         with:
           command: run test ./test/test.mligo
