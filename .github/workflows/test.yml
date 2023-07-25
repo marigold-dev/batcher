@@ -4,9 +4,6 @@ on:
   workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
   push:
 
-defaults:
-  run:
-    working-directory: batcher
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,4 +13,4 @@ jobs:
       - name: Run test
         uses: marigold-dev/ligo-action@v0.0.8
         with:
-          command: run test ./test/test.mligo
+          command: run test ${{ github.workspace }}/batcher/test/test.mligo
