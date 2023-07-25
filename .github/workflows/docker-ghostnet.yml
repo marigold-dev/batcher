@@ -13,6 +13,8 @@ on:
 
 jobs:
   ui:
+    # Only run this job if it's a direct push or a *merged* pull request
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     strategy:
       matrix:
         network: [ghostnet]
@@ -38,7 +40,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push release version
+      - name: Build and push release version of ui
         uses: docker/build-push-action@v3
         with:
           file: ./batcher-ui/Dockerfile.${{ matrix.network }}
