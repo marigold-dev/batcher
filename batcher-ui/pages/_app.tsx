@@ -1,20 +1,20 @@
 import Footer from '../components/Footer';
 import React from 'react';
-// import { Spin, Image } from 'antd';
-// import MarigoldLogo from '../img/marigold-logo.png';
-// import { TezosToolkit } from '@taquito/taquito';
 import { AppProps } from 'next/app';
-import { AppProvider } from '../contexts';
 import { TezosToolkitProvider } from '../contexts/tezos-toolkit';
-import "../styles/globals.css";
+import '../styles/globals.css';
+import { Provider } from 'react-redux';
+import { store } from 'src/store';
+import RightContent from '../components/RightContent';
 
 export default ({ Component }: AppProps) => {
   return (
-    <AppProvider>
+    <Provider store={store}>
       <TezosToolkitProvider>
+        <RightContent />
         <Component />
         <Footer />
       </TezosToolkitProvider>
-    </AppProvider>
+    </Provider>
   );
 };

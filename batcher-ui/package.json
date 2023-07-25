@@ -53,17 +53,20 @@
     "not ie <= 10"
   ],
   "dependencies": {
+    "@airgap/beacon-sdk": "^4.0.6",
     "@ant-design/pro-components": "^1.1.1",
     "@microsoft/signalr": "^6.0.10",
     "@taquito/beacon-wallet": "^16.0.0",
     "@taquito/taquito": "^16.0.0",
     "@taquito/tzip12": "^16.0.0",
     "@taquito/tzip16": "^16.0.0",
+    "@types/react-redux": "^7.1.25",
     "@tzkt/sdk-api": "^2.2.0",
     "antd": "^4.20.0",
     "classnames": "^2.3.0",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
+    "fp-ts": "^2.16.0",
     "jsonpath-plus": "^7.2.0",
     "lodash": "^4.17.0",
     "moment": "^2.29.0",
@@ -75,7 +78,11 @@
     "react-ga4": "^2.1.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^1.2.0",
-    "react-hot-toast": "^2.4.0"
+    "react-hot-toast": "^2.4.0",
+    "react-redux": "^8.1.1",
+    "redux": "^4.2.1",
+    "redux-logger": "^3.0.6",
+    "redux-loop": "^6.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.17.0",

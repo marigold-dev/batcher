@@ -10,13 +10,14 @@ import {
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from "../../extra_utils/utils";
 import { tzip12 } from "@taquito/tzip12";
-import { tzip16 } from "@taquito/tzip16";
-import { AppStateContext } from "../../contexts";
-import { BatchWalletOperation } from "@taquito/taquito/dist/types/wallet/batch-operation";
-import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
+import { tzip16 } from '@taquito/tzip16';
+import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
+import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
+import { useSelector } from 'react-redux';
+import { userAddressSelector } from '../../src/reducers';
+import { isNone } from 'fp-ts/lib/Option';
 
 const Exchange: React.FC<ExchangeProps> = ({
-  userAddress,
   buyBalance,
   sellBalance,
   inversion,
@@ -34,7 +35,8 @@ const Exchange: React.FC<ExchangeProps> = ({
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
 
-  const state = useContext(AppStateContext);
+  const userAddress = useSelector(userAddressSelector);
+
   const { connection } = useContext(TezosToolkitContext);
 
   const [batchClosed, setBatchClosed] = useState(false);
@@ -56,13 +58,15 @@ const Exchange: React.FC<ExchangeProps> = ({
   };
 
   const depositToken = async () => {
+    // if (isNone(userAddress)) {
     if (!userAddress) {
       return;
     }
     const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
     if (!batcherContractHash) return;
 
-    connection.setWalletProvider(state.wallet);
+    // TODO: connect wallet
+    // connection.setWalletProvider(state.wallet);
 
     // console.info('tezos', state.tezos);
     const tokenName = inversion ? buyToken.name : sellToken.name;
@@ -130,10 +134,10 @@ const Exchange: React.FC<ExchangeProps> = ({
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
 
-      console.log("operations-token", selectedToken);
-      console.log("operations-side", side);
-      console.log("operations-fee-in-mutez", fee_in_mutez);
-      console.log("operations-scaled-amount", fee_in_mutez);
+      console.log('operations-token', selectedToken);
+      console.log('operations-side', side);
+      console.log('operations-fee-in-mutez', fee_in_mutez);
+      console.log('operations-scaled-amount', fee_in_mutez);
 
       const swap_params = {
         swap: {
@@ -160,12 +164,12 @@ const Exchange: React.FC<ExchangeProps> = ({
         tolerance: tolerance,
       };
 
-      console.log("test");
+      console.log('test');
 
-      if (selectedToken.standard === "FA1.2 token") {
-        console.log("inversion", inversion);
-        console.log("buy", buyToken);
-        console.log("sell", sellToken);
+      if (selectedToken.standard === 'FA1.2 token') {
+        console.log('inversion', inversion);
+        console.log('buy', buyToken);
+        console.log('sell', sellToken);
 
         if (!buyToken.address) return; //TODO: improve this
 
@@ -173,7 +177,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           buyToken.address,
           compose(tzip12, tzip16)
         );
-        console.log("methods", tokenfa12Contract.methods);
+        console.log('methods', tokenfa12Contract.methods);
         order_batcher_op = await connection.wallet
           .batch([
             {
@@ -195,7 +199,7 @@ const Exchange: React.FC<ExchangeProps> = ({
           .send();
       }
 
-      if (selectedToken.standard === "FA2 token") {
+      if (selectedToken.standard === 'FA2 token') {
         order_batcher_op = await connection.wallet
           .batch([
             {
@@ -224,39 +228,39 @@ const Exchange: React.FC<ExchangeProps> = ({
       }
 
       const loading = () =>
-        message.loading("Attempting to place swap order for " + tokenName, 0);
+        message.loading('Attempting to place swap order for ' + tokenName, 0);
 
       if (!order_batcher_op) {
-        console.error("Order Batcher Operation is not defined...");
-        throw new Error("Order Batcher Operation is not defined...");
+        console.error('Order Batcher Operation is not defined...');
+        throw new Error('Order Batcher Operation is not defined...');
       }
       const confirm = await order_batcher_op.confirmation();
 
       if (!confirm.completed) {
         console.error(confirm);
-        message.error("Failed to deposit " + tokenName);
+        message.error('Failed to deposit ' + tokenName);
         throw new Error(
-          "Failed to deposit " +
+          'Failed to deposit ' +
             (inversion ? buyToken.name : sellToken.name) +
-            " token"
+            ' token'
         );
       } else {
         loading();
         form.resetFields();
-        message.success("Successfully deposited " + tokenName);
+        message.success('Successfully deposited ' + tokenName);
         triggerUpdate();
       }
     } catch (error) {
-      console.log("deposit error", error);
+      console.log('deposit error', error);
       const converted_error_message = getErrorMess(error);
       message.error(converted_error_message);
-      message.loading("Attempting to place swap order for " + tokenName, 0);
+      message.loading('Attempting to place swap order for ' + tokenName, 0);
       form.resetFields();
     }
   };
 
   const isBatchClosed = () => {
-    console.info("EXCHANGE: isBatchClosed", status);
+    console.info('EXCHANGE: isBatchClosed', status);
     if (status === BatcherStatus.CLOSED) {
       setBatchClosed(true);
     } else {
@@ -334,30 +338,27 @@ const Exchange: React.FC<ExchangeProps> = ({
             onClick={() => setPrice(PriceType.WORSE)}
             className={
               price === PriceType.WORSE
-                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
-                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
-            }
-          >
+                ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
+                : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
+            }>
             Worse price / Better fill
           </button>
           <button
             className={
               price === PriceType.EXACT
-                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
-                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
+                ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
+                : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
             }
-            onClick={() => setPrice(PriceType.EXACT)}
-          >
+            onClick={() => setPrice(PriceType.EXACT)}>
             Oracle Price
           </button>
           <button
             className={
               price === PriceType.BETTER
-                ? "p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]"
-                : "p-5 text-l border-2 border-[#7B7B7E] border-solid"
+                ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
+                : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
             }
-            onClick={() => setPrice(PriceType.BETTER)}
-          >
+            onClick={() => setPrice(PriceType.BETTER)}>
             Better Price / Worse Fill
           </button>
         </div>

@@ -45,7 +45,7 @@
     "config/**/*",
     ".eslintrc.js",
     ".stylelintrc.js",
-    ".prettierrc.js",
+    ".prettierrc.json",
     "jest.config.js",
     "mock/*",
     "pages/_app.tsx"

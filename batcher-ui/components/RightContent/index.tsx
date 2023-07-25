@@ -1,168 +1,89 @@
-import React, { useContext, useEffect, useState } from "react";
-import { TezosToolkit } from "@taquito/taquito";
-import { BeaconWallet } from "@taquito/beacon-wallet";
-import { getNetworkType } from "../../extra_utils/utils";
-import { connection } from "../../extra_utils/webSocketUtils";
-import { AppDispatchContext, AppStateContext } from "../../contexts";
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  saveToLocalStorageSelector,
+  userAddressSelector,
+} from '../../src/reducers';
+// import { isSome } from 'fp-ts/Option';
+import Image from 'next/image';
+import {
+  connectWallet as connectWalletAction,
+  disconnectWallet as disconnectWalletAction,
+  hydrateBatcherState,
+  setupTezosToolkit,
+} from '../../src/actions';
+import BatcherLogo from '../../img/batcher-logo.png';
+import { getByKey, setByKey } from 'extra_utils/local-storage';
 
-export type SiderTheme = "light" | "dark";
+export type SiderTheme = 'light' | 'dark';
 
 const GlobalHeaderRight: React.FC = () => {
-  const state = useContext(AppStateContext);
-  const dispatch = useContext(AppDispatchContext);
-  const tezosNodeUri = process.env.REACT_APP_TEZOS_NODE_URI;
+  const dispatch = useDispatch();
+  const userAddress = useSelector(userAddressSelector);
+  const batcherState = useSelector(saveToLocalStorageSelector);
 
-  if (!tezosNodeUri) return; // TODO: improve this
+  // TODO: rewrite this
+  // if (!state || !state.settings) {
+  //   return null;
+  // }
 
-  const tezos = new TezosToolkit(tezosNodeUri);
-  if (!state || !state.settings) {
-    return null;
-  }
+  // const { navTheme, layout } = state.settings;
+  // let className = '.right';
 
-  const { navTheme, layout } = state.settings;
-  let className = ".right";
+  // if ((navTheme === 'dark' && layout === 'top') || layout === 'mix') {
+  //   className = `.right .dark`; //TODO: rewrite this
+  // }
 
-  if ((navTheme === "dark" && layout === "top") || layout === "mix") {
-    className = `.right .dark`; //TODO: rewrite this
-  }
+  // const menuProps = {
+  //   items,
+  //   onClick: !state.userAddress
+  //     ? () => connectWallet()
+  //     : () => disconnectWallet(),
+  // };
 
-  const connectCaption = "Connect Wallet";
-  const connectingCaption = "Connecting...";
-  const disconnectCaption = "Disconnect Wallet";
-  const disconnectingCaption = "Disconnecting...";
-  const [caption, setCaption] = useState<string>(connectCaption);
-
-  const items = [
-    {
-      key: "1",
-      label: <p className="p-12">{caption}</p>,
-    },
-  ];
-
-  const menuProps = {
-    items,
-    onClick: !state.userAddress
-      ? () => connectWallet()
-      : () => disconnectWallet(),
+  const connectWallet = () => {
+    console.info('WALLET : connecting');
+    dispatch(connectWalletAction());
   };
 
-  const connectWallet = async () => {
-    console.info("=== STATE ===  state change check ", state);
-    if (!state.userAddress) {
-      setCaption(connectingCaption);
-      const wallet = new BeaconWallet({
-        name: "batcher",
-        preferredNetwork: getNetworkType(),
-      });
-      await wallet.requestPermissions({
-        network: {
-          type: getNetworkType(),
-          rpcUrl: tezosNodeUri,
-        },
-      });
-
-      tezos.setWalletProvider(wallet);
-      const activeAccount = await wallet.client.getActiveAccount();
-      const userAddress = activeAccount ? await wallet.getPKH() : null;
-      let updatedState = {
-        ...state,
-        wallet: wallet,
-        userAddress: userAddress,
-        userAccount: activeAccount,
-      };
-
-      setCaption(disconnectCaption);
-      //      localStorage.setItem("state", JSON.stringify(updatedState));
-      console.log("localstroage - after connect", localStorage);
-      dispatch(updatedState); // TODO: Work on app state
-      console.log("Setting initialState", updatedState);
-    }
-  };
-
-  const disconnectWallet = async () => {
-    console.info("Disconnecting wallet");
-    setCaption(disconnectingCaption);
-    await connection.stop();
-    try {
-      if (!state.wallet) {
-        throw new Error("Not wallet !");
-      }
-      // await state.wallet.clearActiveAccount();  // TODO: find a way to fix this
-    } catch (error) {
-      console.error(error);
-    }
-    let updatedState = {
-      ...state,
-      wallet: null,
-      userAddress: null,
-      userAccount: null,
-    };
-    localStorage.setItem("state", JSON.stringify(updatedState));
-    dispatch(updatedState); // TODO: Work on app state
-    setCaption(connectCaption);
-  };
-
-  const scrollToTop = () => {
-    window.scrollTo(0, 0);
-  };
-
-  const newWallet = () => {
-    return new BeaconWallet({
-      name: "batcher",
-      preferredNetwork: getNetworkType(),
-    });
+  const disconnectWallet = () => {
+    console.info('WALLET : disconnecting');
+    dispatch(disconnectWalletAction());
+    // TODO: websocket connection ?
+    // await websocketConnection.stop();
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        setCaption(connectCaption);
-        //        let localstate = JSON.parse(localStorage.getItem("state"));
-        let wallet = newWallet();
-
-        setCaption(connectingCaption);
-        tezos.setWalletProvider(wallet);
-        const activeAccount = await wallet.client.getActiveAccount();
-        if (activeAccount) {
-          console.info(
-            "=== STATE ===  no dep check - active account ",
-            activeAccount
-          );
-          const userAddress = await wallet.getPKH();
-          let updatedState = {
-            ...state,
-            wallet: wallet,
-            userAddress: userAddress,
-            userAccount: activeAccount,
-          };
-          // localStorage.setItem("state", JSON.stringify(updatedState));
-          dispatch(updatedState); // TODO: Work on app state
-          setCaption(disconnectCaption);
-        } else {
-          setCaption(connectCaption);
-        }
-      } catch (error) {
-        setCaption(connectCaption);
-        console.error(error);
-      }
-    })();
+    if (process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE) {
+      dispatch(
+        hydrateBatcherState(
+          getByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE)
+        )
+      );
+    }
+    dispatch(setupTezosToolkit());
   }, []);
+
+  useEffect(() => {
+    if (!userAddress) {
+      setByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE, {});
+    } else {
+      setByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE, batcherState);
+    }
+  }, [userAddress]);
+
   return (
-    <div>
-      <div className={className}>
-        <button
-          className="batcher-connect-wallet"
-          type="button"
-          onClick={!state.userAddress ? connectWallet : disconnectWallet}
-        >
-          {caption}
-        </button>
-        <div onClick={scrollToTop}>
-          {/* <Dropdown className="batcher-menu-outer" menu={menuProps} placement="bottomLeft">
-            <MenuOutlined className="batcher-menu" />
-          </Dropdown> */}
-        </div>
+    <div className="flex flex-row justify-between font-custom border-b-2 border-[#7B7B7E] border-solid">
+      <div className="flex gap-2 p-2 items-center">
+        <Image alt="Batcher Logo" src={BatcherLogo} height={32} />
+        <p>BATCHER</p>
       </div>
+      <button
+        type="button"
+        className="text-[white] bg-[#ff4d4f] rounded py-2 px-4 m-2"
+        onClick={() => (userAddress ? disconnectWallet() : connectWallet())}>
+        {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'}
+      </button>
     </div>
   );
 };
