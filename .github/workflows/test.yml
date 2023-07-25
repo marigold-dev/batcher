@@ -4,6 +4,10 @@ on:
   workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
   push:
 
+defaults:
+  run:
+    working-directory: batcher
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,7 +17,11 @@ jobs:
       - uses: Rishabh510/Path-lister-action@master
         with:
           path: "${{ github.workspace }}"
+      - name: Install deps
+        uses: marigold-dev/ligo-action@v0.0.8
+        with:
+          command: install
       - name: Run test
         uses: marigold-dev/ligo-action@v0.0.8
         with:
-          command: run test /github/workspace/batcher/test/test.mligo
+          command: run test $batcher/test/test.mligo
