@@ -1,4 +1,3 @@
-
 type rate_update =  {
     name: string;
     value: nat;
@@ -23,6 +22,7 @@ let update
   in
   no_op storage
 
+[@entry]
 let main
   (action, storage : entrypoint * storage) : result =
   match action with
@@ -34,3 +34,4 @@ let getPrice (asset, storage : string * storage) =
   match Map.find_opt asset storage with
   | None -> failwith "No rate available"
   | Some r -> (r.value, r.timestamp)
+

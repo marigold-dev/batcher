@@ -16,7 +16,7 @@ type side = Batcher.side
 type storage = Batcher.Storage.t
 type tolerance = Batcher.tolerance
 type valid_tokens = Batcher.valid_tokens
-
+type level = Breath.Logger.level
 
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
@@ -36,6 +36,23 @@ type context = {
   fee_recipient: address;
   contracts: test_contracts;
 }
+let originate_module
+  (type a b)
+  (level: level)
+  (name: string)
+  (contract: (a, b) module_contract)
+  (storage: b)
+  (quantity: tez) : (a, b) originated =
+  let typed_address, _, _ = Test.originate_module contract storage quantity in
+  let contract = Test.to_contract typed_address in
+  let address = Tezos.address contract in
+
+  let () =
+    Breath.Logger.log level ("originated smart contract", name, address, storage, quantity)
+  in
+  { originated_typed_address = typed_address
+  ; originated_contract = contract
+  ; originated_address = address }
 
 let originate_oracle
   (level: Breath.Logger.level)  =
