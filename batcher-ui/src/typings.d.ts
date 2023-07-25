@@ -31,3 +31,4 @@ declare const REACT_APP_TZBTC_HASH;
 declare const REACT_APP_USDT_HASH;
 declare const REACT_APP_BATCHER_URI;
 declare const REACT_APP_PATH_TO_BATCHER_LOGO;
+declare const GA_TRACKING_ID;
