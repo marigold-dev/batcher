@@ -6,7 +6,7 @@ on:
 
 defaults:
   run:
-    working-directory: batcher
+    working-directory: ${{ github.workspace }}/batcher
 
 jobs:
   test:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: Rishabh510/Path-lister-action@master
         with:
-          path: "${{ github.workspace }}"
+          path: "${{ github.workspace }}/batcher"
       - name: Install deps
         uses: marigold-dev/ligo-action@v0.0.8
         with:
