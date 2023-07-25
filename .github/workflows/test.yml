@@ -13,4 +13,4 @@ jobs:
       - name: Run test
         uses: marigold-dev/ligo-action@v0.0.8
         with:
-          command: run test ${{ github.workspace }}/batcher/test/test.mligo
+          command: run test ${{ github.workspace }}/test/test.mligo
