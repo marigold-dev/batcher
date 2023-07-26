@@ -37,44 +37,29 @@ let originate
 (storage: storage)
 (level: level) =
   let () = log level storage in
-  Breath.Contract.originate
+  Breath.Contract.originate_uncurried
     level
     "batcher"
-    Batcher.main
-    (storage: Batcher.Storage.t)
+    (Batcher.main)
+    (storage)
     (0tez)
 
 let originate_oracle
 (storage: oracle_storage)
 (level: level) =
   let () = log level storage in
-  Breath.Contract.originate
+  Breath.Contract.originate_module
     level
     "oracle"
     (contract_of Oracle)
     (storage)
     (0tez)
 
-let originate_oracle
-  (storage: oracle_storage)
-  (level: level) =
-  let () = log level storage in
-  let mc = contract_of Oracle in 
-  let typed_address, _, _ = Test.originate_module mc storage 0tez in
-  let contract = Test.to_contract typed_address in
-  let address = Tezos.address contract in
-  let () =
-    log level ("originated smart contract", "oracle", address, storage, 0tez)
-  in
-  { originated_typed_address = typed_address
-  ; originated_contract = contract
-  ; originated_address = address }
-
 let originate_tzbtc
   (storage: tzbtc_storage)
   (level: level) =
   let () = log level storage in
-  Breath.Contract.originate
+  Breath.Contract.originate_uncurried
     level
     "tzbtc"
     TZBTC.main
@@ -85,18 +70,7 @@ let originate_usdt
   (storage: usdt_storage)
   (level: level) =
   let () = log level storage in
-  Breath.Contract.originate
-    level
-    "usdt"
-    USDT.main
-    (storage)
-    (0tez)
-
-let originate_usdt
-  (storage: usdt_storage)
-  (level: level) =
-  let () = log level storage in
-  Breath.Contract.originate
+  Breath.Contract.originate_uncurried
     level
     "usdt"
     USDT.main
@@ -107,7 +81,7 @@ let originate_eurl
   (storage: eurl_storage)
   (level: level) =
   let () = log level storage in
-  Breath.Contract.originate
+  Breath.Contract.originate_uncurried
     level
     "eurl"
     EURL.main

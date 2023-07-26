@@ -1703,7 +1703,7 @@ let compute_clearing_prices
 end
 
 type storage  = Storage.t
-type result = (operation list) * storage
+type result = operation list * storage
 
 [@inline]
 let no_op (s : storage) : result =  (([] : operation list), s)
@@ -2170,7 +2170,7 @@ let get_current_batches ((),storage: unit * storage) : batch list=
 
 
 let main
-  (action, storage : entrypoint * storage) : result =
+  (action, storage : entrypoint * storage) : operation list * storage =
   match action with
   (* User endpoints *)
    | Deposit order -> deposit order storage

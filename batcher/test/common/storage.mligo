@@ -130,16 +130,16 @@ let initial_storage
 
 let oracle_initial_storage =
   Map.literal [
-    (("tzBTC/USDT"),
+    (("BTC-USDT"),
     {
-      name = "tzBTC/USDT";
+      name = "BTC-USDT";
       value = 20000000000n;
       timestamp = Tezos.get_now ()
     }
     );
-    (("tzBTC/EURL"),
+    (("BTC-EUR"),
       {
-        name = "tzBTC/EURL";
+        name = "BTC-EUR";
         value = 20000000000n;
         timestamp = Tezos.get_now ()
       }

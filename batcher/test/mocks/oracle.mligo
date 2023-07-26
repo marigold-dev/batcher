@@ -33,5 +33,5 @@ let main
 let getPrice (asset, storage : string * storage) =
   match Map.find_opt asset storage with
   | None -> failwith "No rate available"
-  | Some r -> (r.value, r.timestamp)
+  | Some r -> (r.timestamp, r.value)
 
