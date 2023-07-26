@@ -45,6 +45,17 @@ let originate
     (0tez)
 
 let originate_oracle
+(storage: oracle_storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate
+    level
+    "oracle"
+    (contract_of Oracle)
+    (storage)
+    (0tez)
+
+let originate_oracle
   (storage: oracle_storage)
   (level: level) =
   let () = log level storage in
