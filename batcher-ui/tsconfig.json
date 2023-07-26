@@ -43,7 +43,7 @@
     "__test__/**/*",
     "typings/**/*",
     "config/**/*",
-    ".eslintrc.js",
+    ".eslintrc.json",
     ".stylelintrc.js",
     ".prettierrc.json",
     "jest.config.js",
