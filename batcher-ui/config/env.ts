@@ -8,6 +8,7 @@ module.exports = {
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1VsdkeG3PZZ5yraiBJTdKWhT9C8nNiLGu1',
     REACT_APP_LOCAL_STORAGE_KEY_STATE: 'batcher-state',
+    REACT_APP_GA_TRACKING_ID: 'G-2K59PEELC8',
   },
   mainnet: {
     REACT_APP_NETWORK_TARGET: 'MAINNET',
@@ -18,5 +19,6 @@ module.exports = {
     REACT_APP_TZKT_URI_API: 'https://api.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1CoTu4CXcWoVk69Ukbgwx2iDK7ZA4FMSpJ',
     REACT_APP_LOCAL_STORAGE_KEY_STATE: 'batcher-state',
+    REACT_APP_GA_TRACKING_ID: 'G-2K59PEELC8',
   },
 };
