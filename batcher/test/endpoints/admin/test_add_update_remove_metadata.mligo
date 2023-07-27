@@ -110,5 +110,6 @@ let test_suite =
   Breath.Model.suite "Suite for Change MetaData (Admin)" [
     change_metadata_should_succeed_if_user_is_admin
     ; change_metadata_should_fail_if_user_is_not_admin
+    ; change_metadata_should_fail_if_tez_is_supplied
   ]
 

@@ -91,17 +91,6 @@ let initial_storage_with_admin_and_fee_recipient
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
-    );
-    ("tzBTC/EURL", {
-        swap = {
-          from = "tzBTC";
-          to = "EURL";
-        };
-        oracle_address = oracle_address;
-        oracle_asset_name = "BTC-EUR";
-        oracle_precision = 6n;
-        is_disabled_for_deposits = false
-      }
     )
   ];
   rates_current = (Big_map.empty : Batcher.rates_current);
