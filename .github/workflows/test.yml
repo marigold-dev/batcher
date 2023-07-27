@@ -4,9 +4,6 @@ on:
   workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
   push:
 
-defaults:
-  run:
-    working-directory: ${{ github.workspace }}/batcher
 
 jobs:
   test:
@@ -18,10 +15,9 @@ jobs:
         with:
           path: "${{ github.workspace }}/batcher"
       - name: Install deps
-        uses: marigold-dev/ligo-action@v0.0.8
+        uses: marigold-dev/ligo-action@main
         with:
-          command: install
-      - name: Run test
-        uses: marigold-dev/ligo-action@v0.0.8
-        with:
-          command: run test $batcher/test/test.mligo
+          ligo_version: 0.69.0
+          command: version
+          working_directory: batcher
+
