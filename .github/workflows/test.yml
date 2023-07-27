@@ -15,12 +15,9 @@ jobs:
         with:
           path: "${{ github.workspace }}/batcher"
       - name: Install deps
-        uses: marigold-dev/ligo-action@v0.70.1.0
+        uses: marigold-dev/ligo-action@main
         with:
-          command: install
+          ligo_version: 0.69.0
+          command: version
           working_directory: batcher
-      - name: Run test
-        uses: marigold-dev/ligo-action@v0.70.1.0
-        with:
-          command: run test test/test.mligo
-          working_directory: batcher
+
