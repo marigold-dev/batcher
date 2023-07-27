@@ -15,12 +15,12 @@ jobs:
         with:
           path: "${{ github.workspace }}/batcher"
       - name: Install deps
-        uses: laucans/ligo-action@main
+        uses: marigold-dev/ligo-action@v0.70.1.0
         with:
           command: install
           working_directory: batcher
       - name: Run test
-        uses: laucans/ligo-action@main
+        uses: marigold-dev/ligo-action@v0.70.1.0
         with:
           command: run test test/test.mligo
           working_directory: batcher
