@@ -11,16 +11,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - uses: Rishabh510/Path-lister-action@master
+      - name: Ligo version
+        uses: marigold-dev/ligo-action@v1.0.0
         with:
-          path: "${{ github.workspace }}/batcher"
+          ligo_version: 0.70.1
+          command: version
+          working_directory: batcher
       - name: Install deps
-        uses: marigold-dev/ligo-action@v0.70.1.0
+        uses: marigold-dev/ligo-action@v1.0.0
         with:
+          ligo_version: 0.70.1
           command: install
           working_directory: batcher
       - name: Run test
-        uses: marigold-dev/ligo-action@v0.70.1.0
+        uses: marigold-dev/ligo-action@v1.0.0
         with:
+          ligo_version: 0.70.1
           command: run test test/test.mligo
           working_directory: batcher
