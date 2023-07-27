@@ -19,7 +19,7 @@
     "allowJs": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "strict": false,
+    "strict": true,
     // "paths": {
     //   "@/extra_utils/*": [
     //     "./extra_utils*"
@@ -48,7 +48,7 @@
     ".prettierrc.json",
     "jest.config.js",
     "mock/*",
-    "pages/_app.tsx"
+    "pages/*"
   ],
   "exclude": [
     "node_modules",

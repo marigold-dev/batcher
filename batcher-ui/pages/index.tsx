@@ -11,11 +11,11 @@ import {
   swap,
   tokens,
 } from "../extra_utils/types";
-import { contractsGetBigMapByName } from "@tzkt/sdk-api";
+// import { contractsGetBigMapByName } from "@tzkt/sdk-api";
 import { Space, Col, Row, Drawer, Radio } from "antd";
 import { DoubleRightOutlined } from "@ant-design/icons";
 
-import type { RadioChangeEvent } from "antd";
+import type { RadioChangeEvent } from 'antd';
 import {
   getEmptyVolumes,
   setTokenAmount,
@@ -37,11 +37,9 @@ import { userAddressSelector } from '../src/reducers';
 import { hydrateBatcherState, setupTezosToolkit } from '../src/actions';
 import { getByKey } from '../extra_utils/local-storage';
 
-const Welcome: React.FC = () => {
+const Welcome = () => {
   const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
   const tzktUriApi = process.env.REACT_APP_TZKT_URI_API;
-
-  if (!batcherContractHash || !tzktUriApi) return null;
 
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [tokenMap, setTokenMap] = useState<Map<string, swap>>(new Map());
@@ -925,8 +923,6 @@ const Welcome: React.FC = () => {
   //   refreshStorage().then((r) => console.log(r));
   //   init_user(userAddress).then((r) => console.log(r));
   // }, [userAddress]);
-
-
 
   return (
     <div>

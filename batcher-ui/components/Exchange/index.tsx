@@ -2,24 +2,27 @@ import React, { useState, useEffect, useContext } from 'react';
 import { SwapOutlined, SettingOutlined } from '@ant-design/icons';
 import { message, Form } from "antd";
 import { compose, OpKind, WalletContract } from "@taquito/taquito";
-import {
-  ExchangeProps,
-  PriceType,
-  BatcherStatus,
-} from "../../extra_utils/types";
+import { ExchangeProps, PriceType } from '../../extra_utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
-import { getErrorMess, scaleAmountUp } from "../../extra_utils/utils";
-import { tzip12 } from "@taquito/tzip12";
+import { getErrorMess, scaleAmountUp } from '../../extra_utils/utils';
+import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
 import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
 import { useSelector } from 'react-redux';
-import { userAddressSelector } from '../../src/reducers';
-import { isNone } from 'fp-ts/lib/Option';
+import {
+  batcherStatusSelector,
+  priceStrategySelector,
+  userAddressSelector,
+} from '../../src/reducers';
+// import { isNone } from 'fp-ts/lib/Option';
+import { BatcherStatus, PriceStrategy } from '../../src/types';
+import { useDispatch } from 'react-redux';
+import { reverseSwap, updatePriceStrategy } from 'src/actions';
 
 const Exchange: React.FC<ExchangeProps> = ({
-  buyBalance,
-  sellBalance,
+  // buyBalance,
+  // sellBalance,
   inversion,
   // setInversion,
   toggleInversion,
@@ -27,35 +30,34 @@ const Exchange: React.FC<ExchangeProps> = ({
   buyToken,
   sellToken,
   showDrawer,
-  updateAll,
-  setUpdateAll,
+  // updateAll,
+  // setUpdateAll,
   status,
 }: ExchangeProps) => {
-  const [price, setPrice] = useState(PriceType.EXACT);
+  const userAddress = useSelector(userAddressSelector);
+  const batcherStatus = useSelector(batcherStatusSelector);
+  const priceStategy = useSelector(priceStrategySelector);
+
+  const dispatch = useDispatch();
+
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
 
-  const userAddress = useSelector(userAddressSelector);
-
-  const { connection } = useContext(TezosToolkitContext);
-
-  const [batchClosed, setBatchClosed] = useState(false);
-
   const [form] = Form.useForm();
 
-  const triggerUpdate = () => {
-    setTimeout(function () {
-      const u = !updateAll;
-      setUpdateAll(u);
-    }, 5000);
-  };
+  // const triggerUpdate = () => {
+  //   setTimeout(function () {
+  //     const u = !updateAll;
+  //     setUpdateAll(u);
+  //   }, 5000);
+  // };
 
-  const inverseTokenType = () => {
-    // setInversion(!inversion);
-    toggleInversion();
-    const s = inversion ? 0 : 1;
-    setSide(s);
-  };
+  // const inverseTokenType = () => {
+  //   // setInversion(!inversion);
+  //   toggleInversion();
+  //   const s = inversion ? 0 : 1;
+  //   setSide(s);
+  // };
 
   const depositToken = async () => {
     // if (isNone(userAddress)) {
@@ -65,10 +67,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
     if (!batcherContractHash) return;
 
-    // TODO: connect wallet
-    // connection.setWalletProvider(state.wallet);
-
-    // console.info('tezos', state.tezos);
     const tokenName = inversion ? buyToken.name : sellToken.name;
     const selectedToken = inversion ? buyToken : sellToken;
     const batcherContract = await connection.wallet.at(batcherContractHash);
@@ -259,19 +257,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
   };
 
-  const isBatchClosed = () => {
-    console.info('EXCHANGE: isBatchClosed', status);
-    if (status === BatcherStatus.CLOSED) {
-      setBatchClosed(true);
-    } else {
-      setBatchClosed(false);
-    }
-  };
-
-  useEffect(() => {
-    isBatchClosed();
-  }, [status]);
-
   return (
     <div className="flex flex-col items-center font-custom">
       {/* <Form onFinish={depositToken} form={form} className="bg-[green]"> */}
@@ -335,9 +320,9 @@ const Exchange: React.FC<ExchangeProps> = ({
         <p className="p-5">Select the price you want to sell</p>
         <div className="flex">
           <button
-            onClick={() => setPrice(PriceType.WORSE)}
+            onClick={() => dispatch(updatePriceStrategy(PriceStrategy.WORSE))}
             className={
-              price === PriceType.WORSE
+              priceStategy === PriceStrategy.WORSE
                 ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
                 : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
             }>
@@ -345,20 +330,20 @@ const Exchange: React.FC<ExchangeProps> = ({
           </button>
           <button
             className={
-              price === PriceType.EXACT
+              priceStategy === PriceStrategy.EXACT
                 ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
                 : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
             }
-            onClick={() => setPrice(PriceType.EXACT)}>
+            onClick={() => dispatch(updatePriceStrategy(PriceStrategy.EXACT))}>
             Oracle Price
           </button>
           <button
             className={
-              price === PriceType.BETTER
+              priceStategy === PriceStrategy.BETTER
                 ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
                 : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
             }
-            onClick={() => setPrice(PriceType.BETTER)}>
+            onClick={() => dispatch(updatePriceStrategy(PriceStrategy.BETTER))}>
             Better Price / Worse Fill
           </button>
         </div>
@@ -366,7 +351,7 @@ const Exchange: React.FC<ExchangeProps> = ({
       <div className="flex flex-row p-10 text-[#1C1D22]">
         <SwapOutlined
           className="text-[#ff4d4f]"
-          onClick={inverseTokenType}
+          onClick={() => dispatch(reverseSwap())}
           size={42}
           rotate={90}
         />
@@ -377,9 +362,14 @@ const Exchange: React.FC<ExchangeProps> = ({
       <div className="">
         <p className="p-4">To {inversion ? sellToken.name : buyToken.name}</p>
       </div>
-      {userAddress && !batchClosed ? (
+
+      {/* Means batch is OPEN and user has connect his wallet */}
+      {userAddress && batcherStatus === BatcherStatus.STARTED ? (
         <div className="text-center">
-          <button className="text-xs" type="submit">
+          <button
+            className="text-xs"
+            type="submit"
+            onClick={() => depositToken()}>
             Try to swap
           </button>
         </div>

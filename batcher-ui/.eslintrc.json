@@ -1,15 +1,24 @@
-// module.exports = {
-//   extends: [require.resolve('@umijs/fabric/dist/eslint')],
-//   globals: {
-//     ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION: true,
-//     page: true,
-//     REACT_APP_ENV: true,
-//   },
-// };
 {
   "extends": [
     "eslint:recommended",
-    "next/core-web-vitals",
+    "next",
     "prettier"
-  ]
+  ],
+  // For more informations, see https://github.com/vercel/next.js/issues/40687#issuecomment-1378845989
+  "overrides": [
+    {
+      // Adapt to your needs (e.g. some might want to only override "next.config.js")
+      "files": [
+        "*.js"
+      ],
+      // This is the default parser of ESLint
+      "parser": "espree",
+      "parserOptions": {
+        "ecmaVersion": 2020
+      }
+    }
+  ],
+  "rules": {
+    "no-unused-vars": "off"
+  }
 }

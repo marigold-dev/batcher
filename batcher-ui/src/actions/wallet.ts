@@ -1,6 +1,7 @@
 // import { Option } from 'fp-ts/Option';
 import { AccountInfo } from '@airgap/beacon-sdk';
 import { BeaconWallet } from '@taquito/beacon-wallet';
+import { WalletState } from 'src/types';
 
 const connectWallet = () =>
   ({
@@ -14,7 +15,7 @@ const connectedWallet = ({
 }: {
   wallet: BeaconWallet;
   userAddress: string;
-  userAccount: AccountInfo;
+  userAccount?: AccountInfo;
 }) =>
   ({
     type: 'CONNECTED_WALLET',
@@ -34,10 +35,24 @@ const disconnectedWallet = () =>
   ({
     type: 'DISCONNECTED_WALLET',
   } as const);
-export { connectWallet, disconnectWallet, connectedWallet, disconnectedWallet };
+
+const hydrateBatcherState = (batcherState: WalletState) =>
+  ({
+    type: 'HYDRATE_BATCHER_STATE',
+    payload: { batcherState },
+  } as const);
+
+export {
+  connectWallet,
+  disconnectWallet,
+  connectedWallet,
+  disconnectedWallet,
+  hydrateBatcherState,
+};
 
 export type WalletActions =
   | ReturnType<typeof connectWallet>
   | ReturnType<typeof disconnectWallet>
   | ReturnType<typeof disconnectedWallet>
-  | ReturnType<typeof connectedWallet>;
+  | ReturnType<typeof connectedWallet>
+  | ReturnType<typeof hydrateBatcherState>;

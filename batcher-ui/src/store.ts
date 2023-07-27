@@ -5,12 +5,13 @@ import {
 } from 'redux';
 import { install, LoopReducer, StoreCreator } from 'redux-loop';
 import { createLogger } from 'redux-logger';
-import { Actions } from './actions';
-import reducer, { AppState } from './reducers';
+import rootReducer from './reducers';
+import { AppState, initState } from './types';
 
 const enhancedStore = createStore as StoreCreator;
 
-const loopReducer = reducer as LoopReducer<AppState, Actions>;
+const loopReducer = rootReducer as LoopReducer<AppState>;
+
 const logger = createLogger({
   collapsed: true,
   diff: true,

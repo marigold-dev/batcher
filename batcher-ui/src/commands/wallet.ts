@@ -1,15 +1,11 @@
 import { Cmd } from 'redux-loop';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { getNetworkType } from '../../extra_utils/utils';
-import {
-  saveToLocalStorageSelector,
-  tezosSelector,
-  walletSelector,
-} from 'src/reducers';
+import { tezosSelector, walletSelector } from 'src/reducers';
 // import * as O from 'fp-ts/Option';
 // import { pipe } from 'fp-ts/function';
 import { connectedWallet, disconnectedWallet } from 'src/actions';
-import { setByKey } from '../../extra_utils/local-storage';
+import { AccountInfo } from '@airgap/beacon-sdk';
 
 const connectWalletCmd = () => {
   return Cmd.run(
@@ -45,7 +41,15 @@ const connectWalletCmd = () => {
     {
       args: [Cmd.getState],
       //TODO: manage errors
-      successActionCreator: ({ wallet, userAddress, userAccount }) => {
+      successActionCreator: ({
+        wallet,
+        userAddress,
+        userAccount,
+      }: {
+        wallet: BeaconWallet;
+        userAddress: string;
+        userAccount?: AccountInfo;
+      }) => {
         console.log(wallet, userAddress);
         return connectedWallet({ wallet, userAddress, userAccount });
       },
@@ -58,7 +62,6 @@ const connectedWalletCmd = () => {
     getState => {
       const tezos = tezosSelector(getState());
       const wallet = walletSelector(getState());
-      const localStorageState = saveToLocalStorageSelector(getState());
 
       //TODO: manage errors
       if (!wallet || !tezos)
@@ -70,13 +73,11 @@ const connectedWalletCmd = () => {
   );
 };
 
-const disconnectWalletCmd = (wallet: BeaconWallet) => {
+const disconnectWalletCmd = (wallet?: BeaconWallet) => {
   return Cmd.run(
-    async dispatch => {
+    async () => {
       if (!wallet) return Promise.reject('No Wallet ! ');
       await wallet.clearActiveAccount();
-
-      setByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE, {});
 
       return Promise.resolve();
     },
