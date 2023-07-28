@@ -12,7 +12,9 @@ import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
 import { useSelector } from 'react-redux';
 import {
   batcherStatusSelector,
+  currentSwapSelector,
   priceStrategySelector,
+  tezosSelector,
   userAddressSelector,
 } from '../../src/reducers';
 // import { isNone } from 'fp-ts/lib/Option';
@@ -24,8 +26,6 @@ const Exchange: React.FC<ExchangeProps> = ({
   // buyBalance,
   // sellBalance,
   inversion,
-  // setInversion,
-  toggleInversion,
   fee_in_mutez,
   buyToken,
   sellToken,
@@ -35,8 +35,12 @@ const Exchange: React.FC<ExchangeProps> = ({
   status,
 }: ExchangeProps) => {
   const userAddress = useSelector(userAddressSelector);
+  const tezos = useSelector(tezosSelector);
   const batcherStatus = useSelector(batcherStatusSelector);
   const priceStategy = useSelector(priceStrategySelector);
+  const currentSwap = useSelector(currentSwapSelector);
+
+  const { isReverse } = currentSwap;
 
   const dispatch = useDispatch();
 
@@ -45,6 +49,7 @@ const Exchange: React.FC<ExchangeProps> = ({
 
   const [form] = Form.useForm();
 
+  if (!tezos) return null;
   // const triggerUpdate = () => {
   //   setTimeout(function () {
   //     const u = !updateAll;
@@ -59,6 +64,17 @@ const Exchange: React.FC<ExchangeProps> = ({
   //   setSide(s);
   // };
 
+  const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
+    switch (priceStategy) {
+      case PriceStrategy.EXACT:
+        return 1;
+      case PriceStrategy.BETTER:
+        return isReverse ? 2 : 0;
+      case PriceStrategy.WORSE:
+        return isReverse ? 0 : 2;
+    }
+  };
+
   const depositToken = async () => {
     // if (isNone(userAddress)) {
     if (!userAddress) {
@@ -69,11 +85,11 @@ const Exchange: React.FC<ExchangeProps> = ({
 
     const tokenName = inversion ? buyToken.name : sellToken.name;
     const selectedToken = inversion ? buyToken : sellToken;
-    const batcherContract = await connection.wallet.at(batcherContractHash);
+    const batcherContract = await tezos.wallet.at(batcherContractHash);
 
     if (!selectedToken.address) return; //TODO:improve this
 
-    const tokenContract: WalletContract = await connection.wallet.at(
+    const tokenContract: WalletContract = await tezos.wallet.at(
       selectedToken.address,
       compose(tzip12, tzip16)
     );
@@ -83,26 +99,27 @@ const Exchange: React.FC<ExchangeProps> = ({
       ? scaleAmountUp(amount, buyToken.decimals)
       : scaleAmountUp(amount, sellToken.decimals);
 
-    const selected_side = inversion ? 0 : 1;
-    let tolerance = 0;
+    // const selected_side = inversion ? 0 : 1;
 
-    if (selected_side == 0) {
-      if (price === PriceType.WORSE) {
-        tolerance = 0;
-      } else if (price === PriceType.EXACT) {
-        tolerance = 1;
-      } else {
-        tolerance = 2;
-      }
-    } else {
-      if (price === PriceType.WORSE) {
-        tolerance = 2;
-      } else if (price === PriceType.EXACT) {
-        tolerance = 1;
-      } else {
-        tolerance = 0;
-      }
-    }
+    const tolerance = toTolerance(isReverse, priceStategy);
+
+    // if (selected_side == 0) {
+    //   if (price === PriceType.WORSE) {
+    //     tolerance = 0;
+    //   } else if (price === PriceType.EXACT) {
+    //     tolerance = 1;
+    //   } else {
+    //     tolerance = 2;
+    //   }
+    // } else {
+    //   if (price === PriceType.WORSE) {
+    //     tolerance = 2;
+    //   } else if (price === PriceType.EXACT) {
+    //     tolerance = 1;
+    //   } else {
+    //     tolerance = 0;
+    //   }
+    // }
 
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
@@ -138,45 +155,43 @@ const Exchange: React.FC<ExchangeProps> = ({
       console.log('operations-scaled-amount', fee_in_mutez);
 
       const swap_params = {
-        swap: {
-          from: {
-            token: {
-              token_id: inversion ? buyToken.token_id : sellToken.token_id,
-              name: inversion ? buyToken.name : sellToken.name,
-              address: inversion ? buyToken.address : sellToken.address,
-              decimals: inversion ? buyToken.decimals : sellToken.decimals,
-              standard: inversion ? buyToken.standard : sellToken.standard,
+        swap: isReverse
+          ? {
+              from: {
+                token: {
+                  ...currentSwap.swap.to,
+                },
+                amount: scaleAmountUp(amount, currentSwap.swap.to.decimals),
+              },
+              to: {
+                ...currentSwap.swap.from.token,
+              },
+            }
+          : {
+              from: {
+                token: { ...currentSwap.swap.from.token },
+                amount: scaleAmountUp(
+                  amount,
+                  currentSwap.swap.from.token.decimals
+                ),
+              },
+              to: {
+                ...currentSwap.swap.to,
+              },
             },
-            amount: scaled_amount,
-          },
-          to: {
-            token_id: inversion ? sellToken.token_id : buyToken.token_id,
-            name: inversion ? sellToken.name : buyToken.name,
-            address: inversion ? sellToken.address : buyToken.address,
-            decimals: inversion ? sellToken.decimals : buyToken.decimals,
-            standard: inversion ? sellToken.standard : buyToken.standard,
-          },
-        },
         created_at: new Date(),
-        side: selected_side,
-        tolerance: tolerance,
+        side: isReverse ? 0 : 1,
+        tolerance,
       };
 
-      console.log('test');
-
       if (selectedToken.standard === 'FA1.2 token') {
-        console.log('inversion', inversion);
-        console.log('buy', buyToken);
-        console.log('sell', sellToken);
-
         if (!buyToken.address) return; //TODO: improve this
 
-        const tokenfa12Contract: WalletContract = await connection.wallet.at(
+        const tokenfa12Contract: WalletContract = await tezos?.wallet.at(
           buyToken.address,
           compose(tzip12, tzip16)
         );
-        console.log('methods', tokenfa12Contract.methods);
-        order_batcher_op = await connection.wallet
+        order_batcher_op = await tezos.wallet
           .batch([
             {
               kind: OpKind.TRANSACTION,
@@ -198,7 +213,7 @@ const Exchange: React.FC<ExchangeProps> = ({
       }
 
       if (selectedToken.standard === 'FA2 token') {
-        order_batcher_op = await connection.wallet
+        order_batcher_op = await tezos?.wallet
           .batch([
             {
               kind: OpKind.TRANSACTION,
@@ -225,29 +240,31 @@ const Exchange: React.FC<ExchangeProps> = ({
           .send();
       }
 
-      const loading = () =>
-        message.loading('Attempting to place swap order for ' + tokenName, 0);
+      // const loading = () =>
+      //   message.loading('Attempting to place swap order for ' + tokenName, 0);
 
-      if (!order_batcher_op) {
-        console.error('Order Batcher Operation is not defined...');
-        throw new Error('Order Batcher Operation is not defined...');
-      }
-      const confirm = await order_batcher_op.confirmation();
+      // if (!order_batcher_op) {
+      //   console.error('Order Batcher Operation is not defined...');
+      //   throw new Error('Order Batcher Operation is not defined...');
+      // }
+      const confirm = await order_batcher_op?.confirmation();
 
-      if (!confirm.completed) {
-        console.error(confirm);
-        message.error('Failed to deposit ' + tokenName);
-        throw new Error(
-          'Failed to deposit ' +
-            (inversion ? buyToken.name : sellToken.name) +
-            ' token'
-        );
-      } else {
-        loading();
-        form.resetFields();
-        message.success('Successfully deposited ' + tokenName);
-        triggerUpdate();
-      }
+      confirm?.completed ? console.log('Successfully deposited !!!!!!') : null;
+
+      // if (!confirm.completed) {
+      //   console.error(confirm);
+      //   message.error('Failed to deposit ' + tokenName);
+      //   throw new Error(
+      //     'Failed to deposit ' +
+      //       (inversion ? buyToken.name : sellToken.name) +
+      //       ' token'
+      //   );
+      // } else {
+      //   loading();
+      //   form.resetFields();
+      //   message.success('Successfully deposited ' + tokenName);
+      //   triggerUpdate();
+      // }
     } catch (error) {
       console.log('deposit error', error);
       const converted_error_message = getErrorMess(error);
@@ -264,7 +281,10 @@ const Exchange: React.FC<ExchangeProps> = ({
         <div className="p-5 gap-5 flex flex-row">
           <label htmlFor="amount">
             <p className="text-xl p-2">
-              From {inversion ? buyToken.name : sellToken.name}
+              {'From '}
+              {isReverse
+                ? currentSwap.swap.to.name
+                : currentSwap.swap.from.token.name}
             </p>
           </label>
           <input
@@ -360,7 +380,12 @@ const Exchange: React.FC<ExchangeProps> = ({
         </div>
       </div>
       <div className="">
-        <p className="p-4">To {inversion ? sellToken.name : buyToken.name}</p>
+        <p className="p-4">
+          {'To '}
+          {isReverse
+            ? currentSwap.swap.from.token.name
+            : currentSwap.swap.to.name}
+        </p>
       </div>
 
       {/* Means batch is OPEN and user has connect his wallet */}

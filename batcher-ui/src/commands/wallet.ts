@@ -1,11 +1,12 @@
 import { Cmd } from 'redux-loop';
 import { BeaconWallet } from '@taquito/beacon-wallet';
-import { getNetworkType } from '../../extra_utils/utils';
+import { getNetworkType, toUserBalances } from '../../extra_utils/utils';
 import { tezosSelector, walletSelector } from 'src/reducers';
 // import * as O from 'fp-ts/Option';
 // import { pipe } from 'fp-ts/function';
 import { connectedWallet, disconnectedWallet } from 'src/actions';
 import { AccountInfo } from '@airgap/beacon-sdk';
+import * as api from '@tzkt/sdk-api';
 
 const connectWalletCmd = () => {
   return Cmd.run(
@@ -87,4 +88,22 @@ const disconnectWalletCmd = (wallet?: BeaconWallet) => {
   );
 };
 
-export { connectWalletCmd, connectedWalletCmd, disconnectWalletCmd };
+const getUserBalancesCmd = (userAddress?: string) => {
+  return Cmd.run(() => {
+    () => {
+      if (!userAddress) return Promise.reject('No address !');
+      const rawBalances = api
+        .tokensGetTokenBalances({
+          account: { eq: userAddress },
+        })
+        .then(console.warn);
+    };
+  });
+};
+
+export {
+  connectWalletCmd,
+  connectedWalletCmd,
+  disconnectWalletCmd,
+  getUserBalancesCmd,
+};

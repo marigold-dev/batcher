@@ -19,7 +19,7 @@ const initialSwap: CurrentSwap = {
       name: 'USDT',
       address: undefined,
       decimals: 0,
-      standard: 'FA1.2 token',
+      standard: 'FA2 token',
     },
   },
   isReverse: false,

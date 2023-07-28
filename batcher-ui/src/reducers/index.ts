@@ -27,6 +27,11 @@ export const batcherStatusSelector = (state: AppState) =>
 export const priceStrategySelector = (state: AppState) =>
   state.exchange.priceStrategy;
 
+export const currentSwapSelector = (state: AppState) =>
+  state.exchange.currentSwap;
+
+
+
 export default combineReducers({
   misc: miscReducer as LoopReducer<MiscState>,
   exchange: exchangeReducer as LoopReducer<ExchangeState>,

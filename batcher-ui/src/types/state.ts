@@ -38,37 +38,37 @@ export type AppState = {
   wallet: WalletState;
 };
 
-export const initState: AppState = {
-  wallet: { wallet: undefined, userAddress: undefined, userAccount: undefined },
-  misc: {
-    settings: null,
-    tezos: undefined,
-    batcherStatus: BatcherStatus.STARTED,
-  },
-  exchange: {
-    priceStrategy: PriceStrategy.EXACT,
-    currentSwap: {
-      swapPairName: 'tzBTC/USDT',
-      swap: {
-        from: {
-          token: {
-            token_id: 0,
-            name: 'tzBTC',
-            address: undefined,
-            decimals: 0,
-            standard: 'FA1.2 token',
-          },
-          amount: 0,
-        },
-        to: {
-          token_id: 0,
-          name: 'USDT',
-          address: undefined,
-          decimals: 0,
-          standard: 'FA1.2 token',
-        },
-      },
-      isReverse: false,
-    },
-  },
-};
+// export const initState: AppState = {
+//   wallet: { wallet: undefined, userAddress: undefined, userAccount: undefined },
+//   misc: {
+//     settings: null,
+//     tezos: undefined,
+//     batcherStatus: BatcherStatus.STARTED,
+//   },
+//   exchange: {
+//     priceStrategy: PriceStrategy.EXACT,
+//     currentSwap: {
+//       swapPairName: 'tzBTC/USDT',
+//       swap: {
+//         from: {
+//           token: {
+//             token_id: 0,
+//             name: 'tzBTC',
+//             address: undefined,
+//             decimals: 0,
+//             standard: 'FA1.2 token',
+//           },
+//           amount: 0,
+//         },
+//         to: {
+//           token_id: 0,
+//           name: 'USDT',
+//           address: undefined,
+//           decimals: 0,
+//           standard: 'FA1.2 token',
+//         },
+//       },
+//       isReverse: false,
+//     },
+//   },
+// };

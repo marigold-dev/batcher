@@ -1,6 +1,10 @@
 import { WalletActions } from 'src/actions';
 import { Loop, liftState, loop } from 'redux-loop';
-import { connectWalletCmd, disconnectWalletCmd } from 'src/commands/wallet';
+import {
+  connectWalletCmd,
+  disconnectWalletCmd,
+  getUserBalancesCmd,
+} from 'src/commands/wallet';
 import { WalletState } from 'src/types';
 
 // TODO: fp-ts
@@ -17,6 +21,8 @@ const walletReducer = (
 ): Loop<WalletState> | WalletState => {
   if (!state) return liftState(initialState);
   switch (action.type) {
+    case 'GET_USER_BALANCES':
+      return loop(state, getUserBalancesCmd(state.userAddress));
     case 'HYDRATE_BATCHER_STATE':
       return { ...state, ...action.payload.batcherState };
     case 'CONNECT_WALLET':

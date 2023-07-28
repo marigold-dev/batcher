@@ -33,9 +33,19 @@ import { TezosToolkit } from '@taquito/taquito';
 import { TezosToolkitContext } from '../contexts/tezos-toolkit';
 import About from '../components/About';
 import { useSelector, useDispatch } from 'react-redux';
-import { userAddressSelector } from '../src/reducers';
-import { hydrateBatcherState, setupTezosToolkit } from '../src/actions';
+import {
+  tezosSelector,
+  userAddressSelector,
+  walletSelector,
+} from '../src/reducers';
+import {
+  getUserBalances,
+  hydrateBatcherState,
+  setupTezosToolkit,
+} from '../src/actions';
 import { getByKey } from '../extra_utils/local-storage';
+
+import * as api from '@tzkt/sdk-api';
 
 const Welcome = () => {
   const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
@@ -56,7 +66,12 @@ const Welcome = () => {
   const [inversion, setInversion] = useState(true);
 
   const userAddress = useSelector(userAddressSelector);
+  const userAccount = useSelector(state => state.wallet.userAccount);
   const dispatch = useDispatch();
+
+  dispatch(getUserBalances());
+
+  const tezos = useSelector(tezosSelector);
 
   const [buyToken, setBuyToken] = useState<token>({
     token_id: 0,

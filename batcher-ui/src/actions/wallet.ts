@@ -42,12 +42,19 @@ const hydrateBatcherState = (batcherState: WalletState) =>
     payload: { batcherState },
   } as const);
 
+const getUserBalances = (fetchh?: any) =>
+  ({
+    type: 'GET_USER_BALANCES',
+    fetchh,
+  } as const);
+
 export {
   connectWallet,
   disconnectWallet,
   connectedWallet,
   disconnectedWallet,
   hydrateBatcherState,
+  getUserBalances,
 };
 
 export type WalletActions =
@@ -55,4 +62,5 @@ export type WalletActions =
   | ReturnType<typeof disconnectWallet>
   | ReturnType<typeof disconnectedWallet>
   | ReturnType<typeof connectedWallet>
-  | ReturnType<typeof hydrateBatcherState>;
+  | ReturnType<typeof hydrateBatcherState>
+  | ReturnType<typeof getUserBalances>;

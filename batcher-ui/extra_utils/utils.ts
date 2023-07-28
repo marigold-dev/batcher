@@ -156,3 +156,14 @@ export const zeroHoldings = (
     setOpenHoldings(ot);
   }
 };
+
+
+/**
+ * Use to convert balances raw JSON from TZKT API to smooth Object
+ */
+export const toUserBalances = (rawBalances: any[]) => {
+  return rawBalances.map(rawB => ({
+    name: rawB.token.metadata.symbol,
+    balance: rawB.account.balance
+  }))
+}
