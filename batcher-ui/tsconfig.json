@@ -20,14 +20,6 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "strict": true,
-    // "paths": {
-    //   "@/extra_utils/*": [
-    //     "./extra_utils*"
-    //   ],
-    //   "@@/*": [
-    //     "./src/.umi/*"
-    //   ]
-    // },
     "noEmit": true,
     "incremental": true,
     "esModuleInterop": true,
@@ -35,6 +27,7 @@
     "module": "esnext"
   },
   "include": [
+    "utils/**/*",
     "mock/**/*",
     "src/**/*",
     "playwright.config.ts",

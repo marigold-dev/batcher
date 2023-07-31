@@ -3,7 +3,7 @@ import { Space, Typography, Col, Row, Table } from 'antd';
 // import '../Exchange/index.less';
 // import './index.less';
 // import '../../src/global.less';
-import { VolumeProps } from '../../extra_utils/types';
+import { VolumeProps } from '../../utils/types';
 
 const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
   console.log(555, volumes);

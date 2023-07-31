@@ -2,9 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { SwapOutlined, SettingOutlined } from '@ant-design/icons';
 import { message, Form } from "antd";
 import { compose, OpKind, WalletContract } from "@taquito/taquito";
-import { ExchangeProps, PriceType } from '../../extra_utils/types';
+import { ExchangeProps, PriceType } from '../../utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
-import { getErrorMess, scaleAmountUp } from '../../extra_utils/utils';
+import { getErrorMess, scaleAmountUp } from '../../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
@@ -17,7 +17,6 @@ import {
   batcherStatusSelector,
   currentSwapSelector,
   priceStrategySelector,
-  tezosSelector,
   userAddressSelector,
 } from '../../src/reducers';
 // import { isNone } from 'fp-ts/lib/Option';
@@ -32,7 +31,6 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
   buyToken,
   sellToken,
-  showDrawer,
   // updateAll,
   // setUpdateAll,
   status,
@@ -387,9 +385,6 @@ const Exchange: React.FC<ExchangeProps> = ({
           size={42}
           rotate={90}
         />
-        <div onClick={showDrawer}>
-          <SettingOutlined className="text-[#ff4d4f]" />
-        </div>
       </div>
       <div className="">
         <p className="p-4">

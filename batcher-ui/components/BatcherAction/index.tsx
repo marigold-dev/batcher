@@ -1,5 +1,5 @@
 import React from 'react';
-import { BatcherActionProps, ContentType } from '../../extra_utils/types';
+import { BatcherActionProps, ContentType } from '../../utils/types';
 
 const BatcherAction: React.FC<BatcherActionProps> = ({
   content,

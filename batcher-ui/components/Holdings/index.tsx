@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Button, Space, Typography, Col, message, Table } from "antd";
-import { HoldingsProps } from "../../extra_utils/types";
-import { zeroHoldings } from '../../extra_utils/utils';
+import { HoldingsProps } from '../../utils/types';
+import { zeroHoldings } from '../../utils/utils';
 import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
 const Holdings: React.FC<HoldingsProps> = ({
   openHoldings,

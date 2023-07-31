@@ -9,14 +9,10 @@ export const userAddressSelector = (state: AppState) => {
   return state.wallet.userAddress;
 };
 
-export const walletSelector = (state: AppState) => state.wallet.wallet;
-
 export const userBalancesSelector = (state: AppState) =>
   state.wallet.userBalances;
 
 // Misc selectors
-export const tezosSelector = (state: AppState) => state.misc.tezos;
-
 export const batcherStatusSelector = (state: AppState) =>
   state.misc.batcherStatus;
 

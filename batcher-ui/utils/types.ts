@@ -180,7 +180,6 @@ export type ExchangeProps = {
   fee_in_mutez: number;
   buyToken: token;
   sellToken: token;
-  showDrawer(): void;
   updateAll: boolean;
   setUpdateAll: (_: boolean) => void;
   status: string;

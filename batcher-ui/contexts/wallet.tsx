@@ -3,7 +3,7 @@ import React, { createContext, useEffect, useReducer } from 'react';
 import { BeaconWallet } from '@taquito/beacon-wallet';
 import { AccountInfo, NetworkType } from '@airgap/beacon-sdk';
 import { useTezosToolkit } from './tezos-toolkit';
-import { getByKey, setByKey } from 'extra_utils/local-storage';
+import { getByKey, setByKey } from 'utils/local-storage';
 
 type WalletState = {
   wallet: BeaconWallet | undefined;

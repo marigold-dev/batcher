@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BatcherInfoProps, BatcherStatus } from '../../extra_utils/types';
+import { BatcherInfoProps, BatcherStatus } from '../../utils/types';
 import BatcherStepper from '../BatcherStepper';
 import { parseISO, add, differenceInMinutes } from 'date-fns';
 import { useSelector } from 'react-redux';
@@ -36,13 +36,6 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
     triggerUpdate();
   }, [status]);
 
-  const get_batch_prefix = () => {
-    if (status == BatcherStatus.CLEARED) {
-      return 'Last Batch ';
-    }
-    return 'Current Batch ';
-  };
-
   const get_time_difference = () => {
     if (status === BatcherStatus.OPEN && openTime) {
       const now = new Date();
@@ -78,7 +71,13 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             )}
             {batchNumber > 0 ? (
               <div className="p-5 border-solid border-2 border-[#7B7B7E]">
-                <p className="p-4">{get_batch_prefix() + '#' + batchNumber}</p>
+                <p className="p-4">
+                  {`${
+                    status === BatcherStatus.CLEARED
+                      ? 'LastBatch'
+                      : 'Current batch'
+                  } ${batchNumber}`}
+                </p>
               </div>
             ) : (
               <div></div>

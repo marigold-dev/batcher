@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Space, Typography } from 'antd';
 // import './index.less';
-import { BatcherStatus, BatcherStepperProps } from '../../extra_utils/types';
+import { BatcherStatus, BatcherStepperProps } from '../../utils/types';
 
 const BatcherStepper: React.FC<BatcherStepperProps> = ({ status }: BatcherStepperProps) => {
   return (

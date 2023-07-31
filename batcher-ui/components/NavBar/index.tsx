@@ -8,7 +8,7 @@ import { useWallet } from '../../contexts/wallet';
 
 export type SiderTheme = 'light' | 'dark';
 
-const GlobalHeaderRight: React.FC = () => {
+const NavBar: React.FC = () => {
   const dispatch = useDispatch();
 
   const walletCtx = useWallet();
@@ -56,4 +56,4 @@ const GlobalHeaderRight: React.FC = () => {
     </div>
   );
 };
-export default GlobalHeaderRight;
+export default NavBar;

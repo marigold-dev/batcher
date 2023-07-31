@@ -1,7 +1,4 @@
-import { BeaconWallet } from '@taquito/beacon-wallet';
 import { BatcherStatus, PriceStrategy, Token } from './contract';
-import { TezosToolkit } from '@taquito/taquito';
-import { AccountInfo } from '@airgap/beacon-sdk';
 
 export type CurrentSwap = {
   swapPairName: 'tzBTC/USDT' | 'tzBTC/EURL';
@@ -17,7 +14,6 @@ export type CurrentSwap = {
 
 export type MiscState = {
   settings: null;
-  tezos: TezosToolkit | undefined;
   batcherStatus: BatcherStatus;
 };
 
@@ -26,11 +22,8 @@ export type ExchangeState = {
   currentSwap: CurrentSwap;
 };
 
-
 export type WalletState = {
-  wallet: BeaconWallet | undefined;
   userAddress: string | undefined;
-  userAccount: AccountInfo | undefined;
   userBalances: Record<string, number>;
   // userBalances: { name: string; balance: number }[];
 };

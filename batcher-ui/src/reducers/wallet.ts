@@ -2,14 +2,12 @@ import { WalletActions } from 'src/actions';
 import { Loop, liftState, loop } from 'redux-loop';
 import { fetchUserBalancesCmd } from '../commands/wallet';
 import { WalletState } from 'src/types';
-import { TOKENS } from 'extra_utils/utils';
+import { TOKENS } from 'utils/utils';
 
 // TODO: fp-ts
 
 const initialState: WalletState = {
-  wallet: undefined,
   userAddress: undefined,
-  userAccount: undefined,
   userBalances: TOKENS.reduce((acc, current) => ({ ...acc, [current]: 0 }), {}),
 };
 
@@ -41,6 +39,10 @@ const walletReducer = (
       return {
         ...state,
         userAddress: undefined,
+        userBalances: TOKENS.reduce(
+          (acc, current) => ({ ...acc, [current]: 0 }),
+          {}
+        ),
       };
     default:
       return state;

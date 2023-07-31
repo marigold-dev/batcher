@@ -6,7 +6,7 @@ import { WalletProvider } from '../contexts/wallet';
 import '../styles/globals.css';
 import { Provider } from 'react-redux';
 import { store } from '../src/store';
-import RightContent from '../components/RightContent';
+import NavBar from '../components/NavBar';
 import ReactGA from 'react-ga4';
 import * as api from '@tzkt/sdk-api';
 
@@ -27,7 +27,7 @@ const App = ({ Component }: AppProps) => {
       <TezosToolkitProvider>
         <WalletProvider>
           <div className="flex flex-col justify-between h-screen">
-            <RightContent />
+            <NavBar />
             <Component />
             <Footer />
           </div>

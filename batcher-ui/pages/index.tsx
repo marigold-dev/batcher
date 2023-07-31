@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
-import Exchange from "../components/Exchange";
-import Volume from "../components/Volume";
-import BatcherInfo from "../components/BatcherInfo";
-import BatcherAction from "../components/BatcherAction";
+import React, { useState, useEffect } from 'react';
+import Exchange from '../components/Exchange';
+import Volume from '../components/Volume';
+import BatcherInfo from '../components/BatcherInfo';
+import BatcherAction from '../components/BatcherAction';
 import {
   ContentType,
   token,
@@ -10,26 +10,24 @@ import {
   Volumes,
   swap,
   tokens,
-} from "../extra_utils/types";
+} from '../utils/types';
 // import { contractsGetBigMapByName } from "@tzkt/sdk-api";
-import { Space, Col, Row, Drawer, Radio } from "antd";
-import { DoubleRightOutlined } from "@ant-design/icons";
+import { Space, Col, Row, Drawer, Radio } from 'antd';
+import { DoubleRightOutlined } from '@ant-design/icons';
 
-import type { RadioChangeEvent } from 'antd';
 import {
   getEmptyVolumes,
   setTokenAmount,
   setSocketTokenAmount,
   scaleStringAmountDown,
-} from "../extra_utils/utils";
+} from '../utils/utils';
 import {
   connection as socket,
   init_contract,
   init_user,
-} from "../extra_utils/webSocketUtils";
-import { scaleAmountUp, zeroHoldings } from "../extra_utils/utils";
-import Holdings from "../components/Holdings";
-import { TezosToolkit } from '@taquito/taquito';
+} from '../utils/webSocketUtils';
+import { scaleAmountUp, zeroHoldings } from '../utils/utils';
+import Holdings from '../components/Holdings';
 import {
   TezosToolkitContext,
   useTezosToolkit,
@@ -37,16 +35,8 @@ import {
 import About from '../components/About';
 import ChoosePairs from '../components/ChoosePairs';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  currentSwapSelector,
-  tezosSelector,
-  userAddressSelector,
-  walletSelector,
-} from '../src/reducers';
+import { currentSwapSelector, userAddressSelector } from '../src/reducers';
 import { fetchUserBalances } from '../src/actions';
-import { getByKey } from '../extra_utils/local-storage';
-
-import * as api from '@tzkt/sdk-api';
 
 const Welcome = () => {
   const tzktUriApi = process.env.REACT_APP_TZKT_URI_API;
@@ -189,7 +179,6 @@ const Welcome = () => {
           const jsonData = await data.json();
           const sts = Object.keys(jsonData.value.status)[0];
           setStatusFromBatch(sts, jsonData);
-          // eslint-disable-next-line @typescript-eslint/no-shadow
           const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
           setVolumes(scaledVolumes);
         } else {
@@ -201,7 +190,6 @@ const Welcome = () => {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const setFee = async (storage: any) => {
     try {
       const fee = storage.fee_in_mutez;
@@ -651,26 +639,14 @@ const Welcome = () => {
   };
 
   const getOraclePrice = async () => {
-    const storage: any = await connection?.contract.getStorage(
-      batcherContractHash
-    );
-    if (storage) {
-      console.log(storage['rates_current'].schema);
-      const x = await connection.contract.getBigMapKeyByID(
-        '321389',
-        'rates_current',
-        storage['rates_current'].schema
-      );
-      console.log('storage', storage, storage['rates_current']);
-      // console.log('xxxx', x);
-    }
-    const rates = storage?.rates_current;
-    console.log('rates ', rates);
-    setOraclePrice(rates?.valueType);
+    //TODO: find a way to get pretty storage
+    // const storage = await tezos?.contract.getStorage(batcherContractHash);
+    // const rates = storage?.rates_current;
+    // console.log('rates ', rates);
+    // setOraclePrice(rates?.valueType);
   };
 
   const [open, setOpen] = useState(false);
-  const [swaps, setSwaps] = useState<string[]>([]);
   const showDrawer = () => {
     setOpen(true);
   };
@@ -678,50 +654,6 @@ const Welcome = () => {
   const onClose = () => {
     setOpen(false);
   };
-
-  const getPairs = () => {
-    const swps: string[] = [];
-    for (const keyvalue of tokenMap) {
-      console.log(keyvalue);
-      swps.push(keyvalue[0]);
-    }
-    setSwaps(swps);
-  };
-
-  const changeTokenPair = (e: RadioChangeEvent) => {
-    const pair = e.target.value;
-    console.log('pair changed', pair);
-    setTokenPair(pair);
-    const swp = tokenMap.get(pair);
-    if (!swp) return; // TODO : improve this
-    console.log('pair changed to ', swap);
-    // Set Buy Token Details
-    setBuyToken(swp.from.token);
-
-    // Set Sell Token Details
-    setSellToken(swp.to);
-  };
-
-  const generatePairs = () => {
-    return (
-      <>
-        {swaps.map(swp => (
-          <React.Fragment key={swp}>
-            <Radio.Button
-              className="batcher-nav-btn"
-              value={swp}
-              onChange={changeTokenPair}>
-              {swp}
-            </Radio.Button>
-          </React.Fragment>
-        ))}
-      </>
-    );
-  };
-
-  useEffect(() => {
-    getPairs();
-  }, [tokenMap]);
 
   const renderRightContent = (content: ContentType) => {
     console.log('rendering content');
@@ -767,11 +699,9 @@ const Welcome = () => {
             buyBalance={buyBalance}
             sellBalance={sellBalance}
             inversion={inversion}
-            // setInversion={setInversion}
             fee_in_mutez={feeInMutez}
             buyToken={buyToken}
             sellToken={sellToken}
-            showDrawer={showDrawer}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
             status={status}
@@ -968,24 +898,6 @@ const Welcome = () => {
           <Col lg={3} />
           <Col className="batcher-content-outer" xs={24} lg={18}>
             <Row>
-              <Drawer
-                title="Pairs"
-                placement="right"
-                closable={true}
-                onClose={onClose}
-                // open={open}
-                getContainer={false}
-                style={{ position: 'absolute', display: 'none' }}
-                width={180}
-                closeIcon={<DoubleRightOutlined />}>
-                <Radio.Group
-                  defaultValue={tokenPair}
-                  buttonStyle="solid"
-                  size="large">
-                  <Space direction="vertical">{generatePairs()}</Space>
-                </Radio.Group>
-              </Drawer>
-              <Col lg={3} />
               <Col xs={24} lg={18} className="pd-25">
                 {renderRightContent(content)}
               </Col>
