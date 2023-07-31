@@ -4,7 +4,6 @@ import { HoldingsProps } from "../../extra_utils/types";
 import { zeroHoldings } from '../../extra_utils/utils';
 import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
 const Holdings: React.FC<HoldingsProps> = ({
-  contractAddress,
   openHoldings,
   clearedHoldings,
   setOpenHoldings,
@@ -13,7 +12,9 @@ const Holdings: React.FC<HoldingsProps> = ({
   setUpdateAll,
   hasClearedHoldings,
 }: HoldingsProps) => {
-  const { connection } = useContext(TezosToolkitContext);
+  const { tezos } = useContext(TezosToolkitContext);
+
+  const contractAddress = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
 
   const triggerUpdate = () => {
     setTimeout(function () {
@@ -47,9 +48,12 @@ const Holdings: React.FC<HoldingsProps> = ({
 
   const redeemHoldings = async (): Promise<void> => {
     try {
+      if (!tezos || !contractAddress) {
+        throw new Error('Failed to initialize communication with contract.');
+      }
       // TODO: connect wallet
       // connection.setWalletProvider(state.wallet);
-      const contractWallet = await connection.wallet.at(contractAddress);
+      const contractWallet = await tezos.wallet.at(contractAddress);
       let redeem_op = await contractWallet.methods.redeem().send();
 
       if (redeem_op) {

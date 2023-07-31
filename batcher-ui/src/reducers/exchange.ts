@@ -10,7 +10,7 @@ const initialSwap: CurrentSwap = {
         name: 'tzBTC',
         address: undefined,
         decimals: 0,
-        standard: 'FA1.2 token',
+        standard: undefined,
       },
       amount: 0,
     },
@@ -19,7 +19,7 @@ const initialSwap: CurrentSwap = {
       name: 'USDT',
       address: undefined,
       decimals: 0,
-      standard: 'FA2 token',
+      standard: undefined,
     },
   },
   isReverse: false,
@@ -36,6 +36,34 @@ const exchangeReducer = (
 ) => {
   if (!state) return initialState;
   switch (action.type) {
+    case 'CHANGE_PAIR': {
+      const pairSplitted = action.payload.pair.split('/');
+      return {
+        ...state,
+        currentSwap: {
+          isReversed: false,
+          swap: {
+            from: {
+              token: {
+                token_id: 0,
+                name: pairSplitted[0],
+                address: undefined,
+                decimals: 0,
+                standard: undefined,
+              },
+              amount: 0,
+            },
+            to: {
+              token_id: 0,
+              name: pairSplitted[1],
+              address: undefined,
+              decimals: 0,
+              standard: undefined,
+            },
+          },
+        },
+      };
+    }
     case 'UDPATE_PRICE_STATEGY':
       return {
         ...state,

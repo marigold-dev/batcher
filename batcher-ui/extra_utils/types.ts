@@ -230,7 +230,6 @@ export type BatcherStepperProps = {
 
 export type HoldingsProps = {
   userAddress: string | undefined;
-  contractAddress: string;
   openHoldings: Map<string, number>;
   clearedHoldings: Map<string, number>;
   setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>;

@@ -92,12 +92,12 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
               <p className="batcher-title p-3">
                 {currentSwap.isReverse
                   ? `${currentSwap.swap.to.name} ${
-                      userBalances[currentSwap.swap.to.name.toUpperCase()]
+                      userBalances[currentSwap.swap.to.name.toUpperCase()] || 0
                     }`
                   : `${currentSwap.swap.from.token.name} ${
                       userBalances[
                         currentSwap.swap.from.token.name.toUpperCase()
-                      ]
+                      ] || 0
                     }`}
               </p>
               <p className="batcher-title p-3">
@@ -105,10 +105,10 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
                   ? `${currentSwap.swap.from.token.name} ${
                       userBalances[
                         currentSwap.swap.from.token.name.toUpperCase()
-                      ]
+                      ] || 0
                     }`
                   : `${currentSwap.swap.to.name} ${
-                      userBalances[currentSwap.swap.to.name.toUpperCase()]
+                      userBalances[currentSwap.swap.to.name.toUpperCase()] || 0
                     }`}
               </p>
             </div>

@@ -30,10 +30,15 @@ import {
 import { scaleAmountUp, zeroHoldings } from "../extra_utils/utils";
 import Holdings from "../components/Holdings";
 import { TezosToolkit } from '@taquito/taquito';
-import { TezosToolkitContext } from '../contexts/tezos-toolkit';
+import {
+  TezosToolkitContext,
+  useTezosToolkit,
+} from '../contexts/tezos-toolkit';
 import About from '../components/About';
+import ChoosePairs from '../components/ChoosePairs';
 import { useSelector, useDispatch } from 'react-redux';
 import {
+  currentSwapSelector,
   tezosSelector,
   userAddressSelector,
   walletSelector,
@@ -44,8 +49,8 @@ import { getByKey } from '../extra_utils/local-storage';
 import * as api from '@tzkt/sdk-api';
 
 const Welcome = () => {
-  const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
   const tzktUriApi = process.env.REACT_APP_TZKT_URI_API;
+  const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
 
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
   const [tokenMap, setTokenMap] = useState<Map<string, swap>>(new Map());
@@ -53,7 +58,6 @@ const Welcome = () => {
   const [userBatchOrderTypesBigMapId, setUserBatchOrderTypesBigMapId] =
     useState<number>(0);
   const [batchesBigMapId, setBatchesBigMapId] = useState<number>(0);
-  const [contractAddress] = useState<string>(batcherContractHash);
   const chain_api_url = tzktUriApi;
 
   const [bigMapsByIdUri] = useState<string>(
@@ -62,10 +66,11 @@ const Welcome = () => {
   const [inversion, setInversion] = useState(true);
 
   const userAddress = useSelector(userAddressSelector);
-  const userAccount = useSelector(state => state.wallet.userAccount);
+  const currentSwap = useSelector(currentSwapSelector);
+
   const dispatch = useDispatch();
 
-  const tezos = useSelector(tezosSelector);
+  const { tezos } = useTezosToolkit();
 
   const [buyToken, setBuyToken] = useState<token>({
     token_id: 0,
@@ -105,9 +110,11 @@ const Welcome = () => {
   const toggleInversion = () => setInversion(!inversion);
 
   // TODO: typing contract storage
-  const pullStorage = async () =>
-    connection?.contract.getStorage(batcherContractHash);
-
+  const pullStorage = async () => {
+    if (batcherContractHash)
+      return tezos?.contract.getStorage(batcherContractHash);
+    return Promise.reject('No contract address');
+  };
   const scaleVolumeDown = (vols: Volumes) => {
     return {
       buy_minus_volume: scaleStringAmountDown(
@@ -716,7 +723,6 @@ const Welcome = () => {
     getPairs();
   }, [tokenMap]);
 
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const renderRightContent = (content: ContentType) => {
     console.log('rendering content');
     switch (content) {
@@ -743,7 +749,6 @@ const Welcome = () => {
         return (
           <Holdings
             userAddress={userAddress}
-            contractAddress={contractAddress}
             openHoldings={openHoldings}
             clearedHoldings={clearedHoldings}
             setOpenHoldings={setOpenHoldings}
@@ -934,7 +939,7 @@ const Welcome = () => {
   // }, [userAddress]);
 
   useEffect(() => {
-    dispatch(fetchUserBalances());
+    if (userAddress) dispatch(fetchUserBalances());
   }, [userAddress, dispatch]);
 
   return (
@@ -955,6 +960,9 @@ const Welcome = () => {
         batchNumber={batchNumber}
       />
       <BatcherAction content={content} setContent={setContent} />
+
+      <ChoosePairs />
+
       <div>
         <Row className="batcher-content">
           <Col lg={3} />
