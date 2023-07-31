@@ -87,7 +87,6 @@ let change_oracle_source_should_fail_if_not_a_valid_oracle =
       let new_oracle_address = context.btc_trader.address in
       let source_update = Helpers.get_source_update pair test_swap new_oracle_address in 
       let act_change_oracle_source = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Change_oracle_source_of_pair source_update) 0tez)) in
-      let new_test_swap = Option.unopt (Helpers.get_swap_pair batcher pair) in 
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address

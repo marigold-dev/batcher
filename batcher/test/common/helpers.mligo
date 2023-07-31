@@ -5,6 +5,7 @@
 #import "../mocks/oracle.mligo" "Oracle"
 #import "./storage.mligo" "TestStorage"
 #import "./utils.mligo" "TestUtils"
+#import "./batch.mligo" "TestBatch"
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
@@ -121,11 +122,59 @@ let originate_with_admin_and_fee_recipient
    eurl = eurl;
   }
 
+let originate_with_batch_for_clearing
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor)
+  (batch: Batcher.batch)
+  (pair: string) =
+  let oracle = originate_oracle level in
+  let additional_oracle = originate_oracle level in
+  let tzbtc = originate_tzbtc tzbtc_trader level in
+  let usdt = originate_usdt usdt_trader level in
+  let eurl = originate_eurl eurl_trader level in
+  let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
+  let batch_set = initial_storage.batch_set in
+  let cbi = Map.add pair 1n batch_set.current_batch_indices in
+  let batches = Big_map.add 1n batch batch_set.batches in
+  let batch_set = { batch_set with 
+    current_batch_indices = cbi;
+    batches = batches
+  } in
+  let initial_storage = { initial_storage with batch_set = batch_set; } in
+  let batcher = TestUtils.originate initial_storage level in
+  {
+   batcher = batcher;
+   oracle = oracle;
+   additional_oracle = additional_oracle;
+   tzbtc = tzbtc;
+   usdt = usdt;
+   eurl = eurl;
+  }
+
 let test_context
     (level: Breath.Logger.level) = 
       let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
       let fee_recipient_address = usdt_trader.address in 
       let contracts = originate_with_admin_and_fee_recipient level btc_trader usdt_trader eurl_trader eurl_trader fee_recipient_address in
+      {
+        btc_trader = btc_trader;
+        usdt_trader = usdt_trader;
+        eurl_trader = eurl_trader;
+        admin = eurl_trader;
+        non_admin = btc_trader;
+        fee_recipient = fee_recipient_address;
+        contracts = contracts;
+      }
+
+let test_context_with_batch
+    (pair: string)
+    (batch: Batcher.batch)
+    (level: Breath.Logger.level) = 
+      let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
+      let fee_recipient_address = usdt_trader.address in 
+      let contracts = originate_with_batch_for_clearing level btc_trader usdt_trader eurl_trader batch pair in
       {
         btc_trader = btc_trader;
         usdt_trader = usdt_trader;

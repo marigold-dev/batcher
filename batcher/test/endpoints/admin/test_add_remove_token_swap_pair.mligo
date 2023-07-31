@@ -194,7 +194,7 @@ let remove_swap_pair_should_fail_if_swap_does_not_exist =
       let batcher = context.contracts.batcher in
       let bstorage = Breath.Contract.storage_of batcher in
       let swap_pair_does_not_already_exist = Map.find_opt "tzBTC/EURL" bstorage.valid_swaps in
-      let (swap_pair, swap_pair_reduced) = get_tzbtc_eurl_swap_pair true context.contracts.oracle.originated_address bstorage in
+      let (swap_pair, _swap_pair_reduced) = get_tzbtc_eurl_swap_pair true context.contracts.oracle.originated_address bstorage in
 
       let act_remove_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Remove_token_swap_pair swap_pair) 0tez)) in
       
@@ -215,7 +215,7 @@ let remove_swap_pair_should_fail_if_swap_is_not_disabled =
       let batcher = context.contracts.batcher in
       let bstorage = Breath.Contract.storage_of batcher in
       let swap_pair_does_not_already_exist = Map.find_opt "tzBTC/EURL" bstorage.valid_swaps in
-      let (swap_pair, swap_pair_reduced) = get_tzbtc_eurl_swap_pair false context.contracts.oracle.originated_address bstorage in
+      let (swap_pair, _swap_pair_reduced) = get_tzbtc_eurl_swap_pair false context.contracts.oracle.originated_address bstorage in
 
       let act_remove_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Remove_token_swap_pair swap_pair) 0tez)) in
       
