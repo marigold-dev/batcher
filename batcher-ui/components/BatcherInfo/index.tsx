@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { BatcherInfoProps, BatcherStatus } from '../../extra_utils/types';
 import BatcherStepper from '../BatcherStepper';
 import { parseISO, add, differenceInMinutes } from 'date-fns';
+import { useSelector } from 'react-redux';
+import { currentSwapSelector, userBalancesSelector } from '../../src/reducers';
 
 const BatcherInfo: React.FC<BatcherInfoProps> = ({
   userAddress,
@@ -18,6 +20,9 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   setUpdateAll,
   batchNumber,
 }: BatcherInfoProps) => {
+  const userBalances = useSelector(userBalancesSelector);
+  const currentSwap = useSelector(currentSwapSelector);
+
   const triggerUpdate = () => {
     if (status === BatcherStatus.OPEN && openTime) {
       setTimeout(function () {
@@ -85,14 +90,26 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             <div className="flex border-solid border-2 border-[#7B7B7E]">
               <p className="batcher-title p-3">Balances</p>
               <p className="batcher-title p-3">
-                {inversion
-                  ? buyBalance + ' ' + buyTokenName
-                  : sellBalance + ' ' + sellTokenName}
+                {currentSwap.isReverse
+                  ? `${currentSwap.swap.to.name} ${
+                      userBalances[currentSwap.swap.to.name.toUpperCase()]
+                    }`
+                  : `${currentSwap.swap.from.token.name} ${
+                      userBalances[
+                        currentSwap.swap.from.token.name.toUpperCase()
+                      ]
+                    }`}
               </p>
               <p className="batcher-title p-3">
-                {inversion
-                  ? sellBalance + ' ' + sellTokenName
-                  : buyBalance + ' ' + buyTokenName}
+                {currentSwap.isReverse
+                  ? `${currentSwap.swap.from.token.name} ${
+                      userBalances[
+                        currentSwap.swap.from.token.name.toUpperCase()
+                      ]
+                    }`
+                  : `${currentSwap.swap.to.name} ${
+                      userBalances[currentSwap.swap.to.name.toUpperCase()]
+                    }`}
               </p>
             </div>
           </div>

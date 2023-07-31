@@ -38,11 +38,7 @@ import {
   userAddressSelector,
   walletSelector,
 } from '../src/reducers';
-import {
-  getUserBalances,
-  hydrateBatcherState,
-  setupTezosToolkit,
-} from '../src/actions';
+import { fetchUserBalances } from '../src/actions';
 import { getByKey } from '../extra_utils/local-storage';
 
 import * as api from '@tzkt/sdk-api';
@@ -68,8 +64,6 @@ const Welcome = () => {
   const userAddress = useSelector(userAddressSelector);
   const userAccount = useSelector(state => state.wallet.userAccount);
   const dispatch = useDispatch();
-
-  dispatch(getUserBalances());
 
   const tezos = useSelector(tezosSelector);
 
@@ -939,8 +933,12 @@ const Welcome = () => {
   //   init_user(userAddress).then((r) => console.log(r));
   // }, [userAddress]);
 
+  useEffect(() => {
+    dispatch(fetchUserBalances());
+  }, [userAddress, dispatch]);
+
   return (
-    <div>
+    <div className="mb-auto">
       <BatcherInfo
         userAddress={userAddress}
         tokenPair={tokenPair}

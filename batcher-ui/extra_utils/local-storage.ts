@@ -1,4 +1,5 @@
-const setByKey = (key: string, content: unknown) => {
+const setByKey = (key: string, content?: unknown) => {
+  if (!content) return localStorage.removeItem(key);
   const serializedContent = JSON.stringify(content);
   return localStorage.setItem(key, serializedContent);
 };

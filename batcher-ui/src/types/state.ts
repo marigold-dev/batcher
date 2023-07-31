@@ -26,10 +26,13 @@ export type ExchangeState = {
   currentSwap: CurrentSwap;
 };
 
+
 export type WalletState = {
   wallet: BeaconWallet | undefined;
   userAddress: string | undefined;
   userAccount: AccountInfo | undefined;
+  userBalances: Record<string, number>;
+  // userBalances: { name: string; balance: number }[];
 };
 
 export type AppState = {

@@ -1,4 +1,3 @@
-import { StringIterator } from 'lodash';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -7,11 +6,10 @@ export const setTokenAmount = (
   standardBalance: number,
   tokenAddress: string,
   tokenDecimals: number,
-  setBalance: Dispatch<SetStateAction<number>>,
+  setBalance: Dispatch<SetStateAction<number>>
 ) => {
   const item = balances.find(
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    (item) => item.token.contract.address === tokenAddress,
+    item => item.token.contract.address === tokenAddress
   );
   const tokAmount = item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
   setBalance(tokAmount);
@@ -30,11 +28,12 @@ export const setSocketTokenAmount = (
   balances: any[],
   userAddress: string | undefined,
   token: types.token,
-  setBalance: Dispatch<SetStateAction<number>>,
+  setBalance: Dispatch<SetStateAction<number>>
 ) => {
   const item = balances.find(
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    (item) => item.account.address === userAddress && item.token.contract.address === token.address,
+    item =>
+      item.account.address === userAddress &&
+      item.token.contract.address === token.address
   );
   const tokAmount = item ? parseInt(item.balance) / 10 ** token.decimals : 0;
   setBalance(tokAmount);
@@ -142,7 +141,7 @@ export const scaleStringAmountDown = (amount: string, decimals: number) => {
 export const zeroHoldings = (
   storage: any,
   setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>,
-  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>,
+  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>
 ) => {
   const valid_pairs = storage?.valid_tokens;
   const ot = new Map<string, number>();
@@ -157,13 +156,31 @@ export const zeroHoldings = (
   }
 };
 
+// ----- BALANCES ------
+
+export type Balances = {
+  name: string;
+  balance: number;
+  decimals: number;
+}[];
+
+// TODO: need to configure token available in Batcher
+export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
 /**
  * Use to convert balances raw JSON from TZKT API to smooth Object
  */
-export const toUserBalances = (rawBalances: any[]) => {
+export const toUserBalances = (rawBalances: any[]): Balances => {
   return rawBalances.map(rawB => ({
     name: rawB.token.metadata.symbol,
-    balance: rawB.account.balance
-  }))
-}
+    balance: rawB.balance,
+    decimals: rawB.token.metadata.decimals,
+  }));
+};
+
+export const filterBalances = (balances: Balances): Balances => {
+  return balances.filter(b => TOKENS.includes(b.name.toUpperCase()));
+};
+
+export const storeBalances = (balances: any[]) =>
+  filterBalances(toUserBalances(balances));

@@ -8,7 +8,10 @@ import { getErrorMess, scaleAmountUp } from '../../extra_utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
-import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
+import {
+  TezosToolkitContext,
+  useTezosToolkit,
+} from '../../contexts/tezos-toolkit';
 import { useSelector } from 'react-redux';
 import {
   batcherStatusSelector,
@@ -35,10 +38,10 @@ const Exchange: React.FC<ExchangeProps> = ({
   status,
 }: ExchangeProps) => {
   const userAddress = useSelector(userAddressSelector);
-  const tezos = useSelector(tezosSelector);
   const batcherStatus = useSelector(batcherStatusSelector);
   const priceStategy = useSelector(priceStrategySelector);
   const currentSwap = useSelector(currentSwapSelector);
+  const { tezos } = useTezosToolkit();
 
   const { isReverse } = currentSwap;
 
@@ -49,7 +52,16 @@ const Exchange: React.FC<ExchangeProps> = ({
 
   const [form] = Form.useForm();
 
-  if (!tezos) return null;
+  //TODO: rewrite error management
+  if (!tezos)
+    return (
+      <div>
+        <p className="text-xxl">
+          {"There is an error with Tezos Tool Kit, can't swap !"}
+        </p>
+      </div>
+    );
+
   // const triggerUpdate = () => {
   //   setTimeout(function () {
   //     const u = !updateAll;

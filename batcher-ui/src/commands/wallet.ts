@@ -1,109 +1,35 @@
 import { Cmd } from 'redux-loop';
-import { BeaconWallet } from '@taquito/beacon-wallet';
-import { getNetworkType, toUserBalances } from '../../extra_utils/utils';
-import { tezosSelector, walletSelector } from 'src/reducers';
-// import * as O from 'fp-ts/Option';
-// import { pipe } from 'fp-ts/function';
-import { connectedWallet, disconnectedWallet } from 'src/actions';
-import { AccountInfo } from '@airgap/beacon-sdk';
+import { scaleAmountDown, storeBalances } from '../../extra_utils/utils';
+import { gotUserBalances } from '../actions';
 import * as api from '@tzkt/sdk-api';
 
-const connectWalletCmd = () => {
-  return Cmd.run(
-    getState => {
-      const wallet = new BeaconWallet({
-        name: 'batcher',
-        preferredNetwork: getNetworkType(),
-      });
-
-      const tezos = tezosSelector(getState());
-
-      if (!wallet || !tezos) {
-        return Promise.reject('TODO Manage error : no wallet');
-      }
-
-      return wallet
-        .requestPermissions({
-          network: {
-            type: getNetworkType(),
-            rpcUrl: process.env.REACT_APP_TEZOS_NODE_URI,
-          },
-        })
-        .then(() => {
-          tezos.setWalletProvider(wallet);
-        })
-        .then(() => wallet.client.getActiveAccount())
-        .then(async userAccount => {
-          const userAddress = await wallet.getPKH();
-
-          return { wallet, userAddress, userAccount };
-        });
-    },
-    {
-      args: [Cmd.getState],
-      //TODO: manage errors
-      successActionCreator: ({
-        wallet,
-        userAddress,
-        userAccount,
-      }: {
-        wallet: BeaconWallet;
-        userAddress: string;
-        userAccount?: AccountInfo;
-      }) => {
-        console.log(wallet, userAddress);
-        return connectedWallet({ wallet, userAddress, userAccount });
-      },
-    }
-  );
-};
-
-const connectedWalletCmd = () => {
-  return Cmd.run(
-    getState => {
-      const tezos = tezosSelector(getState());
-      const wallet = walletSelector(getState());
-
-      //TODO: manage errors
-      if (!wallet || !tezos)
-        return console.error('TODO Manage error : no wallet');
-
-      tezos.setWalletProvider(wallet);
-    },
-    { args: [Cmd.getState] }
-  );
-};
-
-const disconnectWalletCmd = (wallet?: BeaconWallet) => {
+const fetchUserBalancesCmd = (userAddress?: string) => {
   return Cmd.run(
     async () => {
-      if (!wallet) return Promise.reject('No Wallet ! ');
-      await wallet.clearActiveAccount();
+      if (!userAddress) return Promise.reject('No address !');
+      const rawBalances = await api.tokensGetTokenBalances({
+        account: {
+          eq: userAddress,
+        },
+      });
+      console.log(
+        '🚀 ~ file: wallet.ts:138 ~ returnCmd.run ~ rawBalances:',
+        rawBalances
+      );
+      console.log(
+        '🚀 ~ file: wallet.ts:134 ~ returnCmd.run ~ rawBalances:',
+        storeBalances(rawBalances)
+      );
 
-      return Promise.resolve();
+      return storeBalances(rawBalances).map(b => ({
+        ...b,
+        balance: scaleAmountDown(b.balance, b.decimals),
+      }));
     },
     {
-      successActionCreator: disconnectedWallet,
+      successActionCreator: gotUserBalances,
     }
   );
 };
 
-const getUserBalancesCmd = (userAddress?: string) => {
-  return Cmd.run(() => {
-    () => {
-      if (!userAddress) return Promise.reject('No address !');
-      const rawBalances = api
-        .tokensGetTokenBalances({
-          account: { eq: userAddress },
-        })
-        .then(console.warn);
-    };
-  });
-};
-
-export {
-  connectWalletCmd,
-  connectedWalletCmd,
-  disconnectWalletCmd,
-  getUserBalancesCmd,
-};
+export { fetchUserBalancesCmd };

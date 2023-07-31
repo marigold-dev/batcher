@@ -11,11 +11,8 @@ export const userAddressSelector = (state: AppState) => {
 
 export const walletSelector = (state: AppState) => state.wallet.wallet;
 
-export const saveToLocalStorageSelector = (state: AppState) => ({
-  wallet: state.wallet.wallet,
-  userAccount: state.wallet.userAccount,
-  userAddress: state.wallet.userAddress,
-});
+export const userBalancesSelector = (state: AppState) =>
+  state.wallet.userBalances;
 
 // Misc selectors
 export const tezosSelector = (state: AppState) => state.misc.tezos;

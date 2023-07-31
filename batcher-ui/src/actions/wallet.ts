@@ -1,34 +1,12 @@
 // import { Option } from 'fp-ts/Option';
-import { AccountInfo } from '@airgap/beacon-sdk';
-import { BeaconWallet } from '@taquito/beacon-wallet';
-import { WalletState } from 'src/types';
+import { Balances } from 'extra_utils/utils';
 
-const connectWallet = () =>
-  ({
-    type: 'CONNECT_WALLET',
-  } as const);
-
-const connectedWallet = ({
-  wallet,
-  userAddress,
-  userAccount,
-}: {
-  wallet: BeaconWallet;
-  userAddress: string;
-  userAccount?: AccountInfo;
-}) =>
+const connectedWallet = ({ userAddress }: { userAddress: string }) =>
   ({
     type: 'CONNECTED_WALLET',
     payload: {
-      wallet,
       userAddress,
-      userAccount,
     },
-  } as const);
-
-const disconnectWallet = () =>
-  ({
-    type: 'DISCONNECT_WALLET',
   } as const);
 
 const disconnectedWallet = () =>
@@ -36,31 +14,26 @@ const disconnectedWallet = () =>
     type: 'DISCONNECTED_WALLET',
   } as const);
 
-const hydrateBatcherState = (batcherState: WalletState) =>
+const fetchUserBalances = () =>
   ({
-    type: 'HYDRATE_BATCHER_STATE',
-    payload: { batcherState },
+    type: 'FETCH_USER_BALANCES',
   } as const);
 
-const getUserBalances = (fetchh?: any) =>
+const gotUserBalances = (balances: Balances) =>
   ({
-    type: 'GET_USER_BALANCES',
-    fetchh,
+    type: 'GOT_USER_BALANCES',
+    balances,
   } as const);
 
 export {
-  connectWallet,
-  disconnectWallet,
   connectedWallet,
   disconnectedWallet,
-  hydrateBatcherState,
-  getUserBalances,
+  fetchUserBalances,
+  gotUserBalances,
 };
 
 export type WalletActions =
-  | ReturnType<typeof connectWallet>
-  | ReturnType<typeof disconnectWallet>
   | ReturnType<typeof disconnectedWallet>
   | ReturnType<typeof connectedWallet>
-  | ReturnType<typeof hydrateBatcherState>
-  | ReturnType<typeof getUserBalances>;
+  | ReturnType<typeof fetchUserBalances>
+  | ReturnType<typeof gotUserBalances>;

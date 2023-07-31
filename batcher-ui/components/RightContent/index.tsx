@@ -1,26 +1,18 @@
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  saveToLocalStorageSelector,
-  userAddressSelector,
-} from '../../src/reducers';
+import { useDispatch } from 'react-redux';
 // import { isSome } from 'fp-ts/Option';
 import Image from 'next/image';
-import {
-  connectWallet as connectWalletAction,
-  disconnectWallet as disconnectWalletAction,
-  hydrateBatcherState,
-  setupTezosToolkit,
-} from '../../src/actions';
+import { connectedWallet, disconnectedWallet } from '../../src/actions';
 import BatcherLogo from '../../img/batcher-logo.png';
-import { getByKey, setByKey } from 'extra_utils/local-storage';
+import { useWallet } from '../../contexts/wallet';
 
 export type SiderTheme = 'light' | 'dark';
 
 const GlobalHeaderRight: React.FC = () => {
   const dispatch = useDispatch();
-  const userAddress = useSelector(userAddressSelector);
-  const batcherState = useSelector(saveToLocalStorageSelector);
+
+  const walletCtx = useWallet();
+  const userAddress = walletCtx.state.userAddress;
 
   // TODO: rewrite this
   // if (!state || !state.settings) {
@@ -41,36 +33,11 @@ const GlobalHeaderRight: React.FC = () => {
   //     : () => disconnectWallet(),
   // };
 
-  const connectWallet = () => {
-    console.info('WALLET : connecting');
-    dispatch(connectWalletAction());
-  };
-
-  const disconnectWallet = () => {
-    console.info('WALLET : disconnecting');
-    dispatch(disconnectWalletAction());
-    // TODO: websocket connection ?
-    // await websocketConnection.stop();
-  };
-
   useEffect(() => {
-    if (process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE) {
-      dispatch(
-        hydrateBatcherState(
-          getByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE)
-        )
-      );
-    }
-    dispatch(setupTezosToolkit());
-  }, []);
-
-  useEffect(() => {
-    if (!userAddress) {
-      setByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE, {});
-    } else {
-      setByKey(process.env.REACT_APP_LOCAL_STORAGE_KEY_STATE, batcherState);
-    }
-  }, [userAddress]);
+    userAddress
+      ? dispatch(connectedWallet({ userAddress }))
+      : dispatch(disconnectedWallet());
+  }, [userAddress, dispatch]);
 
   return (
     <div className="flex flex-row justify-between font-custom border-b-2 border-[#7B7B7E] border-solid">
@@ -81,7 +48,9 @@ const GlobalHeaderRight: React.FC = () => {
       <button
         type="button"
         className="text-[white] bg-[#ff4d4f] rounded py-2 px-4 m-2"
-        onClick={() => (userAddress ? disconnectWallet() : connectWallet())}>
+        onClick={() =>
+          userAddress ? walletCtx.disconnectWallet() : walletCtx.connectWallet()
+        }>
         {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'}
       </button>
     </div>

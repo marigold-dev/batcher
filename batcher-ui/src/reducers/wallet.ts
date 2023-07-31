@@ -1,11 +1,8 @@
 import { WalletActions } from 'src/actions';
 import { Loop, liftState, loop } from 'redux-loop';
-import {
-  connectWalletCmd,
-  disconnectWalletCmd,
-  getUserBalancesCmd,
-} from 'src/commands/wallet';
+import { fetchUserBalancesCmd } from '../commands/wallet';
 import { WalletState } from 'src/types';
+import { TOKENS } from 'extra_utils/utils';
 
 // TODO: fp-ts
 
@@ -13,6 +10,7 @@ const initialState: WalletState = {
   wallet: undefined,
   userAddress: undefined,
   userAccount: undefined,
+  userBalances: TOKENS.reduce((acc, current) => ({ ...acc, [current]: 0 }), {}),
 };
 
 const walletReducer = (
@@ -21,26 +19,27 @@ const walletReducer = (
 ): Loop<WalletState> | WalletState => {
   if (!state) return liftState(initialState);
   switch (action.type) {
-    case 'GET_USER_BALANCES':
-      return loop(state, getUserBalancesCmd(state.userAddress));
-    case 'HYDRATE_BATCHER_STATE':
-      return { ...state, ...action.payload.batcherState };
-    case 'CONNECT_WALLET':
-      return loop(state, connectWalletCmd());
+    case 'GOT_USER_BALANCES':
+      return {
+        ...state,
+        userBalances: action.balances.reduce(
+          (acc, current) => ({
+            ...acc,
+            [current.name.toUpperCase()]: current.balance,
+          }),
+          {}
+        ),
+      };
+    case 'FETCH_USER_BALANCES':
+      return loop(state, fetchUserBalancesCmd(state.userAddress));
     case 'CONNECTED_WALLET':
       return {
         ...state,
         userAddress: action.payload.userAddress,
-        wallet: action.payload.wallet,
-        userAccount: action.payload.userAccount,
       };
-    case 'DISCONNECT_WALLET':
-      return loop(state, disconnectWalletCmd(state.wallet));
     case 'DISCONNECTED_WALLET':
       return {
         ...state,
-        userAccount: undefined,
-        wallet: undefined,
         userAddress: undefined,
       };
     default:
