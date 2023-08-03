@@ -1,6 +1,5 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/expect.mligo" "Expect"
 #import "./../../common/batch.mligo" "Batch"
 #import "../../../batcher.mligo" "Batcher"
 
@@ -36,8 +35,8 @@ let deposit_fail_if_batch_is_closed =
     (fun (level: Breath.Logger.level) ->
      let pair = ("tzBTC","USDT") in
      let tick_pair = "tzBTC/USDT" in 
-     let (_, batch) = Batch.prepare_batch pair Buy Balanced in
-     let context = Helpers.test_context_with_batch tick_pair batch level in 
+     let (_expected_tolerance, batch) = Batch.prepare_batch pair Buy Balanced in
+     let context = Helpers.test_context_with_batch tick_pair batch None level in 
      let batcher = context.contracts.batcher in 
      let btc_trader = context.btc_trader in 
 
@@ -56,7 +55,7 @@ let deposit_fail_if_batch_is_closed =
 
       Breath.Result.reduce [
         act_allow_transfer
-        ; Expect.fail_with_value Batcher.no_open_batch act_deposit
+        ; Breath.Expect.fail_with_value Batcher.no_open_batch act_deposit
         ; Breath.Assert.is_equal "balance" bbalance 0tez
         ; Helpers.expect_last_order_number bstorage 0n
       ])

@@ -128,7 +128,8 @@ let originate_with_batch_for_clearing
   (usdt_trader: Breath.Context.actor)
   (eurl_trader: Breath.Context.actor)
   (batch: Batcher.batch)
-  (pair: string) =
+  (pair: string)
+  (ubots_opt: Batcher.user_batch_ordertypes option )  =
   let oracle = originate_oracle level in
   let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader level in
@@ -142,7 +143,10 @@ let originate_with_batch_for_clearing
     current_batch_indices = cbi;
     batches = batches
   } in
-  let initial_storage = { initial_storage with batch_set = batch_set; } in
+  let initial_storage =  match ubots_opt with
+                         | None -> { initial_storage with batch_set = batch_set; }
+                         | Some ubots -> { initial_storage with batch_set = batch_set; user_batch_ordertypes = ubots; }
+  in
   let batcher = TestUtils.originate initial_storage level in
   {
    batcher = batcher;
@@ -171,10 +175,11 @@ let test_context
 let test_context_with_batch
     (pair: string)
     (batch: Batcher.batch)
+    (ubots_opt: Batcher.user_batch_ordertypes option)
     (level: Breath.Logger.level) = 
       let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
       let fee_recipient_address = usdt_trader.address in 
-      let contracts = originate_with_batch_for_clearing level btc_trader usdt_trader eurl_trader batch pair in
+      let contracts = originate_with_batch_for_clearing level btc_trader usdt_trader eurl_trader batch pair ubots_opt in
       {
         btc_trader = btc_trader;
         usdt_trader = usdt_trader;

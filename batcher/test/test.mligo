@@ -42,7 +42,7 @@ let () =
   Breath.Model.run_suites Void
   [
       test_suite
-    (* ; Admin_Change_Fee.test_suite
+    ; Admin_Change_Fee.test_suite
     ; Admin_Change_Admin_Address.test_suite
     ; Admin_Change_Fee_Recipient_Address.test_suite
     ; Admin_Change_Deposit_Time_Window.test_suite
@@ -52,9 +52,8 @@ let () =
     ; Admin_Change_Oracle_Source_Of_Pair.test_suite
     ; Admin_Add_Remove_Token_Swap_Pair.test_suite
     ; Maintenance_Tick.test_suite
-    ; Economics_Clearing.test_suite *)
+    ; Economics_Clearing.test_suite
     ; User_Deposits.test_suite
 //  ; User_Redemptions.test_suite
-//  ; Economics_Clearing.test_suite
   ]
 

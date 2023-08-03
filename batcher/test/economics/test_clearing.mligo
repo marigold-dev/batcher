@@ -3,7 +3,6 @@
 #import "./../common/batch.mligo" "Batch"
 #import "../../batcher.mligo" "Batcher"
 #import "./../common/helpers.mligo" "Helpers"
-#import "./../common/expect.mligo" "Expect"
 
 
 type batch = Batcher.batch
@@ -23,7 +22,7 @@ let clearing_test
      let pair = ("tzBTC","USDT") in
      let tick_pair = "tzBTC/USDT" in 
      let (expected_tolerance, batch) = Batch.prepare_batch pair pressure skew in
-     let context = Helpers.test_context_with_batch tick_pair batch level in 
+     let context = Helpers.test_context_with_batch tick_pair batch None level in 
      let batcher = context.contracts.batcher in 
 
      let act_tick = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Tick tick_pair) 0tez)) in

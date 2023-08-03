@@ -1,7 +1,6 @@
 
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/expect.mligo" "Expect"
 #import "../../../batcher.mligo" "Batcher"
 
 
@@ -43,9 +42,9 @@ let enable_disable_swap_pair_should_fail_if_user_is_not_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "pair should be enabled" false initial_pair.is_disabled_for_deposits
-        ; Expect.fail_with_value Batcher.sender_not_administrator act_disable_swap_pair
+        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_disable_swap_pair
         ; Breath.Assert.is_equal "pair should still be enabled" false disabled_pair.is_disabled_for_deposits
-        ; Expect.fail_with_value Batcher.sender_not_administrator act_enable_swap_pair
+        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_enable_swap_pair
         ; Breath.Assert.is_equal "pair should still be enabled" false enabled_pair.is_disabled_for_deposits
       ])
 
@@ -65,9 +64,9 @@ let enable_disable_swap_pair_should_fail_if_tez_is_supplied =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "pair should be enabled" false initial_pair.is_disabled_for_deposits
-        ; Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_disable_swap_pair
+        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_disable_swap_pair
         ; Breath.Assert.is_equal "pair should still be enabled" false disabled_pair.is_disabled_for_deposits
-        ; Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_enable_swap_pair
+        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_enable_swap_pair
         ; Breath.Assert.is_equal "pair should still be enabled" false enabled_pair.is_disabled_for_deposits
       ])
 

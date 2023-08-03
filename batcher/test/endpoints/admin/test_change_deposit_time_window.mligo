@@ -1,7 +1,5 @@
-
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/expect.mligo" "Expect"
 #import "../../../batcher.mligo" "Batcher"
 
 
@@ -26,7 +24,7 @@ let change_deposit_time_window_should_succeed_if_user_is_admin =
 let change_deposit_time_window_should_fail_if_user_is_not_admin =
   Breath.Model.case
   "test change deposit time window"
-  "should be fail if user is not admin"
+  "should fail if user is not admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -37,7 +35,7 @@ let change_deposit_time_window_should_fail_if_user_is_not_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "time window" 600n old_storage.deposit_time_window_in_seconds
-        ; Expect.fail_with_value Batcher.sender_not_administrator act_change_deposit_time_window
+        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_change_deposit_time_window
         ; Breath.Assert.is_equal "time window unchanged" 600n new_storage.deposit_time_window_in_seconds
       ])
 
@@ -55,7 +53,7 @@ let change_deposit_time_window_should_fail_if_tez_is_sent =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "time window" 600n old_storage.deposit_time_window_in_seconds
-        ; Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_deposit_time_window
+        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_deposit_time_window
         ; Breath.Assert.is_equal "time window unchanged" 600n new_storage.deposit_time_window_in_seconds
       ])
 
@@ -73,7 +71,7 @@ let change_deposit_time_window_should_fail_if_below_minimum_window =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "time window" 600n old_storage.deposit_time_window_in_seconds
-        ; Expect.fail_with_value Batcher.cannot_update_deposit_window_to_less_than_the_minimum act_change_deposit_time_window
+        ; Breath.Expect.fail_with_value Batcher.cannot_update_deposit_window_to_less_than_the_minimum act_change_deposit_time_window
         ; Breath.Assert.is_equal "time window unchanged" 600n new_storage.deposit_time_window_in_seconds
       ])
 
@@ -91,7 +89,7 @@ let change_deposit_time_window_should_fail_if_above_maximum_window =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "time window" 600n old_storage.deposit_time_window_in_seconds
-        ; Expect.fail_with_value Batcher.cannot_update_deposit_window_to_more_than_the_maximum act_change_deposit_time_window
+        ; Breath.Expect.fail_with_value Batcher.cannot_update_deposit_window_to_more_than_the_maximum act_change_deposit_time_window
         ; Breath.Assert.is_equal "time window unchanged" 600n new_storage.deposit_time_window_in_seconds
       ])
 

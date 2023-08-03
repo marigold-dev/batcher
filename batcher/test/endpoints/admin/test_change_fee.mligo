@@ -1,7 +1,6 @@
 
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/expect.mligo" "Expect"
 #import "../../../batcher.mligo" "Batcher"
 
 
@@ -42,7 +41,7 @@ let change_fee_should_fail_if_user_is_not_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old fee" old_fee old_storage.fee_in_mutez
-        ; Expect.fail_with_value Batcher.sender_not_administrator act_change_fee
+        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_change_fee
         ; Breath.Assert.is_equal "old fee is unchanged" old_fee new_storage.fee_in_mutez
       ])
 
@@ -61,7 +60,7 @@ let change_fee_should_fail_if_tez_is_sent =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old fee" old_fee old_storage.fee_in_mutez
-        ; Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_fee
+        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_fee
         ; Breath.Assert.is_equal "old fee is unchanged" old_fee new_storage.fee_in_mutez
       ])
 let test_suite =

@@ -236,25 +236,3 @@ let prepare_batch
   (test_case.expected, batch)
   
 
-let prepare_all_batches_for_clearing
-  (pair: string * string) : (tolerance * batch) list = 
-  [
-   prepare_batch pair Buy NoSkew;
-   prepare_batch pair Buy Balanced;
-   prepare_batch pair Buy Negative;
-   prepare_batch pair Buy Positive;
-   prepare_batch pair Buy LargePositive;
-   prepare_batch pair Buy LargeNegative;
-   prepare_batch pair Buy NegativeAllBetter;
-   prepare_batch pair Buy NegativeAllWorse;
-   prepare_batch pair Sell NoSkew;
-   prepare_batch pair Sell Balanced;
-   prepare_batch pair Sell Negative;
-   prepare_batch pair Sell Positive;
-   prepare_batch pair Sell LargePositive;
-   prepare_batch pair Sell LargeNegative;
-   prepare_batch pair Sell PositiveAllBetter;
-   prepare_batch pair Sell NegativeAllBetter;
-   prepare_batch pair Sell PositiveAllWorse;
-   prepare_batch pair Sell NegativeAllWorse; 
-  ]

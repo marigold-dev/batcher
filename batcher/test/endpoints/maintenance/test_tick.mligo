@@ -1,7 +1,6 @@
 
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/expect.mligo" "Expect"
 #import "../../../batcher.mligo" "Batcher"
 
 let pair = "tzBTC/USDT"
