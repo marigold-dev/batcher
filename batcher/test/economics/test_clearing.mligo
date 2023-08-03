@@ -23,7 +23,7 @@ let clearing_test
      let pair = ("tzBTC","USDT") in
      let tick_pair = "tzBTC/USDT" in 
      let (expected_tolerance, batch) = Batch.prepare_batch pair pressure skew in
-     let context = Helpers.test_context_with_batch "tzBTC/USDT" batch level in 
+     let context = Helpers.test_context_with_batch tick_pair batch level in 
      let batcher = context.contracts.batcher in 
 
      let act_tick = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Tick tick_pair) 0tez)) in
@@ -41,7 +41,22 @@ let clearing_test
 
 let test_suite =
   Breath.Model.suite "Suite for Clearing" [
-     clearing_test "Buy NoSkew" Buy NoSkew
+     clearing_test "Buy Pressure - No Skew" Buy NoSkew
+     ; clearing_test "Buy Pressure -  No Skew" Sell NoSkew
+     ; clearing_test "Buy Pressure - Balanced" Buy Balanced
+     ; clearing_test "Sell Pressure -  Balanced" Sell Balanced
+     ; clearing_test "Buy Pressure - Positive Skew" Buy Positive
+     ; clearing_test "Buy Pressure - Negative Skew " Buy Negative
+     ; clearing_test "Sell Pressure - Positive Skew" Sell Positive
+     ; clearing_test "Sell Pressure - Negative Skew" Sell Negative
+     ; clearing_test "Buy Pressure - Large Positive Skew" Buy LargePositive
+     ; clearing_test "Buy Pressure - Large Negative Skew " Buy LargeNegative
+     ; clearing_test "Sell Pressure - Large Negative Skew " Sell LargeNegative
+     ; clearing_test "Sell Pressure - Large Positive Skew" Sell LargePositive
+     ; clearing_test "Buy Pressure - Negative Skew - All Worse Prices" Buy NegativeAllWorse
+     ; clearing_test "Buy Pressure - Negative Skew - All Better Prices" Buy NegativeAllBetter
+     ; clearing_test "Sell Pressure - Positive Skew - All Worse Prices" Sell PositiveAllWorse
+     ; clearing_test "Sell Pressure - Positive Skew - All Better Prices" Sell PositiveAllBetter
   ]
 
 

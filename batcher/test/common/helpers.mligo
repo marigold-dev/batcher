@@ -223,7 +223,7 @@ let place_order
   (tolerance: Batcher.tolerance)
   (valid_tokens: valid_tokens) =
   let order = create_order from to amount side tolerance valid_tokens in
-  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_with_entrypoint_to contract "deposit" order fee))
+  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (Deposit order) fee))
 
 
 let expect_last_order_number

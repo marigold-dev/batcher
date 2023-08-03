@@ -5,6 +5,7 @@
 
 let pair = "tzBTC/USDT"
 let oraclepair = "BTC-USDT"
+let old_price = 30000000000n
 
 let change_oracle_source_should_succeed_if_user_is_admin =
   Breath.Model.case
@@ -23,7 +24,7 @@ let change_oracle_source_should_succeed_if_user_is_admin =
       let new_test_swap = Option.unopt (Helpers.get_swap_pair batcher pair) in 
 
       Breath.Result.reduce [
-        Breath.Assert.is_equal "new price" new_oracle_price 20000000000n
+        Breath.Assert.is_equal "new price" new_oracle_price old_price
         ; Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
         ; act_change_oracle_source
         ; Breath.Assert.is_equal "new address" new_oracle_address new_test_swap.oracle_address
@@ -46,7 +47,7 @@ let change_oracle_source_should_fail_if_the_user_is_non_admin =
       let new_test_swap = Option.unopt (Helpers.get_swap_pair batcher pair) in 
 
       Breath.Result.reduce [
-        Breath.Assert.is_equal "new price" new_oracle_price 20000000000n
+        Breath.Assert.is_equal "new price" new_oracle_price old_price
         ; Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
         ; Expect.fail_with_value Batcher.sender_not_administrator act_change_oracle_source
         ; Breath.Assert.is_equal "old address unchanged" oracle.originated_address new_test_swap.oracle_address
@@ -69,7 +70,7 @@ let change_oracle_source_should_fail_if_tez_is_sent =
       let new_test_swap = Option.unopt (Helpers.get_swap_pair batcher pair) in 
 
       Breath.Result.reduce [
-        Breath.Assert.is_equal "new price" new_oracle_price 20000000000n
+        Breath.Assert.is_equal "new price" new_oracle_price old_price
         ; Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
         ; Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_oracle_source
         ; Breath.Assert.is_equal "old address unchanged" oracle.originated_address new_test_swap.oracle_address

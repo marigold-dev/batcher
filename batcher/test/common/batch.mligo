@@ -4,12 +4,12 @@ type skew =
 NoSkew
 | Balanced
 | Negative
-| Postitive
+| Positive
 | LargePositive
 | LargeNegative
 | PositiveAllBetter
 | NegativeAllBetter
-| PostitiveAllWorse
+| PositiveAllWorse
 | NegativeAllWorse
 
 type tolerance = Batcher.tolerance
@@ -41,7 +41,71 @@ let buy_pressure_cases: (skew,clearing_test_case) map =  Map.literal [
      sell_exact = 0n;
      sell_plus = 0n;
      expected = Minus;
- })]
+ });
+(Balanced, {
+     buy_minus = 1000000n;
+     buy_exact = 1000000n;
+     buy_plus = 1000000n;
+     sell_minus = 200000000n;
+     sell_exact = 200000000n;
+     sell_plus = 200000000n;
+     expected = Exact;
+ });
+(Negative, {
+     buy_minus = 3000000n;
+     buy_exact = 2000000n;
+     buy_plus = 1000000n;
+     sell_minus = 200000000n;
+     sell_exact = 400000000n;
+     sell_plus = 600000000n;
+     expected = Exact;
+ });
+(Positive, {
+     buy_minus = 1000000n;
+     buy_exact = 2000000n;
+     buy_plus = 3000000n;
+     sell_minus = 200000000n;
+     sell_exact = 400000000n;
+     sell_plus = 600000000n;
+     expected = Exact;
+ });
+(LargeNegative, {
+     buy_minus = 5000000n;
+     buy_exact = 2000000n;
+     buy_plus = 1000000n;
+     sell_minus = 200000000n;
+     sell_exact = 400000000n;
+     sell_plus = 1000000000n;
+     expected = Exact;
+ });
+(LargePositive, {
+     buy_minus = 1000000n;
+     buy_exact = 2000000n;
+     buy_plus = 5000000n;
+     sell_minus = 1000000000n;
+     sell_exact = 400000000n;
+     sell_plus = 200000000n;
+     expected = Exact;
+ });
+(NegativeAllWorse, {
+     buy_minus = 1000000n;
+     buy_exact = 0n;
+     buy_plus = 0n;
+     sell_minus = 200000000n;
+     sell_exact = 0n;
+     sell_plus = 0n;
+     expected = Minus;
+ });
+(NegativeAllBetter, {
+     buy_minus = 0n;
+     buy_exact = 0n;
+     buy_plus = 1000000n;
+     sell_minus = 0n;
+     sell_exact = 0n;
+     sell_plus = 1000000000n;
+     expected = Plus;
+ })
+ ]
 
 let sell_pressure_cases: (skew,clearing_test_case) map =  Map.literal [
 (NoSkew,{
@@ -52,7 +116,71 @@ let sell_pressure_cases: (skew,clearing_test_case) map =  Map.literal [
      sell_exact = 400000000n;
      sell_plus = 600000000n;
    expected = Minus;
- })]
+ });
+(Balanced, {
+     buy_minus = 1000000n;
+     buy_exact = 1000000n;
+     buy_plus = 1000000n;
+     sell_minus = 500000000n;
+     sell_exact = 500000000n;
+     sell_plus = 500000000n;
+     expected = Exact;
+ });
+(Negative, {
+     buy_minus = 3000000n;
+     buy_exact = 2000000n;
+     buy_plus = 1000000n;
+     sell_minus = 500000000n;
+     sell_exact = 1000000000n;
+     sell_plus = 1500000000n;
+     expected = Exact;
+ });
+(Positive, {
+     buy_minus = 1000000n;
+     buy_exact = 2000000n;
+     buy_plus = 3000000n;
+     sell_minus = 1500000000n;
+     sell_exact = 1000000000n;
+     sell_plus = 500000000n;
+     expected = Exact;
+ });
+(LargeNegative, {
+     buy_minus =  5000000n;
+     buy_exact =  2000000n;
+     buy_plus =   1000000n;
+     sell_minus =  500000000n;
+     sell_exact = 1000000000n;
+     sell_plus =  3000000000n;
+     expected = Plus;
+ });
+(LargePositive, {
+     buy_minus =  1000000n;
+     buy_exact =  2000000n;
+     buy_plus =  5000000n;
+     sell_minus =  500000000n;
+     sell_exact = 1000000000n;
+     sell_plus =  3000000000n;
+     expected = Plus;
+ });
+(PositiveAllWorse, {
+     buy_minus = 1000000n;
+     buy_exact = 0n;
+     buy_plus = 0n;
+     sell_minus = 1000000000n;
+     sell_exact = 0n;
+     sell_plus = 0n;
+     expected = Minus;
+ });
+(PositiveAllBetter, {
+     buy_minus = 0n;
+     buy_exact = 0n;
+     buy_plus = 5000000n;
+     sell_minus = 0n;
+     sell_exact = 0n;
+     sell_plus = 1000000000n;
+     expected = Plus;
+ })
+ ]
 
 let empty_volumes: Batcher.volumes = {
       buy_minus_volume = 0n;
@@ -112,17 +240,15 @@ let prepare_all_batches_for_clearing
   (pair: string * string) : (tolerance * batch) list = 
   [
    prepare_batch pair Buy NoSkew;
-   (* prepare_batch pair Buy Balanced;
+   prepare_batch pair Buy Balanced;
    prepare_batch pair Buy Negative;
    prepare_batch pair Buy Positive;
    prepare_batch pair Buy LargePositive;
    prepare_batch pair Buy LargeNegative;
-   prepare_batch pair Buy PositiveAllBetter;
    prepare_batch pair Buy NegativeAllBetter;
-   prepare_batch pair Buy PositiveAllWorse;
-   prepare_batch pair Buy NegativeAllWorse; *)
+   prepare_batch pair Buy NegativeAllWorse;
    prepare_batch pair Sell NoSkew;
-   (* prepare_batch pair Sell Balanced;
+   prepare_batch pair Sell Balanced;
    prepare_batch pair Sell Negative;
    prepare_batch pair Sell Positive;
    prepare_batch pair Sell LargePositive;
@@ -130,5 +256,5 @@ let prepare_all_batches_for_clearing
    prepare_batch pair Sell PositiveAllBetter;
    prepare_batch pair Sell NegativeAllBetter;
    prepare_batch pair Sell PositiveAllWorse;
-   prepare_batch pair Sell NegativeAllWorse; *)
+   prepare_batch pair Sell NegativeAllWorse; 
   ]

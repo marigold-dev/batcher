@@ -122,14 +122,14 @@ let oracle_initial_storage =
     (("BTC-USDT"),
     {
       name = "BTC-USDT";
-      value = 20000000000n;
+      value = 30000000000n;
       timestamp = Tezos.get_now ()
     }
     );
     (("BTC-EUR"),
       {
         name = "BTC-EUR";
-        value = 20000000000n;
+        value = 30000000000n;
         timestamp = Tezos.get_now ()
       }
     )]
