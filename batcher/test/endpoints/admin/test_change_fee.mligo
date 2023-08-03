@@ -27,7 +27,7 @@ let change_fee_should_succeed_if_user_is_admin =
 let change_fee_should_fail_if_user_is_not_admin =
   Breath.Model.case
   "test change fee"
-  "should be fail if user is not admin"
+  "should fail if user is not admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in

@@ -25,7 +25,7 @@ let amend_token_pair_limit_should_succeed_if_user_is_admin =
 let amend_token_pair_limit_should_fail_if_user_is_not_admin =
   Breath.Model.case
   "test change token pair limit"
-  "should be fail if user is not an admin"
+  "should fail if user is not an admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -43,7 +43,7 @@ let amend_token_pair_limit_should_fail_if_user_is_not_admin =
 let amend_token_pair_limit_should_fail_if_tez_is_sent =
   Breath.Model.case
   "test change token pair limit"
-  "should be fail if tez is sent"
+  "should fail if tez is sent"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -61,7 +61,7 @@ let amend_token_pair_limit_should_fail_if_tez_is_sent =
 let amend_token_pair_limit_should_fail_if_limit_is_less_than_current_tokens =
   Breath.Model.case
   "test change token pair limit"
-  "should be fail if limit is less than current tokens"
+  "should fail if limit is less than current tokens"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in

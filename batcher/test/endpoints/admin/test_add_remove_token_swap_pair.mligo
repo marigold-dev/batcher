@@ -63,7 +63,7 @@ let add_swap_pair_should_succeed_if_user_is_admin =
 let add_swap_pair_should_fail_if_user_is_non_admin =
   Breath.Model.case
   "test add swap pair"
-  "should be fail if user is non admin"
+  "should fail if user is non admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -84,7 +84,7 @@ let add_swap_pair_should_fail_if_user_is_non_admin =
 let add_swap_pair_should_fail_if_tez_is_supplied =
   Breath.Model.case
   "test add swap pair"
-  "should be fail if tez is supplied"
+  "should fail if tez is supplied"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -132,7 +132,7 @@ let remove_swap_pair_should_succeed_if_user_is_admin =
 let remove_swap_pair_should_fail_if_user_is_non_admin =
   Breath.Model.case
   "test remove swap pair"
-  "should be fail if user is non admin"
+  "should fail if user is non admin"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -160,7 +160,7 @@ let remove_swap_pair_should_fail_if_user_is_non_admin =
 let remove_swap_pair_should_fail_if_tez_is_supplied =
   Breath.Model.case
   "test remove swap pair"
-  "should be fail if tez supplied"
+  "should fail if tez supplied"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -188,7 +188,7 @@ let remove_swap_pair_should_fail_if_tez_is_supplied =
 let remove_swap_pair_should_fail_if_swap_does_not_exist =
   Breath.Model.case
   "test remove swap pair"
-  "should be fail if swap does not exist"
+  "should fail if swap does not exist"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
@@ -209,7 +209,7 @@ let remove_swap_pair_should_fail_if_swap_does_not_exist =
 let remove_swap_pair_should_fail_if_swap_is_not_disabled =
   Breath.Model.case
   "test remove swap pair"
-  "should be fail if swap is not disabled"
+  "should fail if swap is not disabled"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
