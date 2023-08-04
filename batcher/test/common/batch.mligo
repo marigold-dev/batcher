@@ -14,6 +14,7 @@ NoSkew
 
 type tolerance = Batcher.tolerance
 type batch = Batcher.batch
+type status = Batcher.batch_status
 
 
 type side_test_volumes = {
@@ -213,12 +214,12 @@ let add_volumes_to_batch
   } in 
   { batch with volumes = volumes; }
 
- 
-let prepare_batch
+
+let prepare_batch_with_status
   (pair: string * string)
   (pressure:pressure)
-  (skew:skew) : (tolerance * batch) = 
-  let status = Closed  { start_time = Tezos.get_now () - 1000 ; closing_time = Tezos.get_now () - 200 } in
+  (skew:skew)
+  (status: status): (tolerance * batch) = 
   let batch = {
   batch_number = 1n;
   status = status;
@@ -234,5 +235,17 @@ let prepare_batch
   let test_case = Option.unopt (Map.find_opt skew test_cases) in
   let batch = add_volumes_to_batch test_case.buy_minus test_case.buy_exact test_case.buy_plus test_case.sell_minus test_case.sell_exact test_case.sell_plus batch in
   (test_case.expected, batch)
-  
 
+let prepare_open_batch
+  (pair: string * string)
+  (pressure:pressure)
+  (skew:skew) : (tolerance * batch) = 
+  let status = Open  { start_time = Tezos.get_now () - 1000 } in
+  prepare_batch_with_status pair pressure skew status
+
+let prepare_closed_batch
+  (pair: string * string)
+  (pressure:pressure)
+  (skew:skew) : (tolerance * batch) = 
+  let status = Closed  { start_time = Tezos.get_now () - 1000 ; closing_time = Tezos.get_now () - 200 } in
+  prepare_batch_with_status pair pressure skew status

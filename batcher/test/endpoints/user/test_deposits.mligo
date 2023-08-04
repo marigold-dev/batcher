@@ -35,8 +35,8 @@ let deposit_fail_if_batch_is_closed =
     (fun (level: Breath.Logger.level) ->
      let pair = ("tzBTC","USDT") in
      let tick_pair = "tzBTC/USDT" in 
-     let (_expected_tolerance, batch) = Batch.prepare_batch pair Buy Balanced in
-     let context = Helpers.test_context_with_batch tick_pair batch None level in 
+     let (_expected_tolerance, batch) = Batch.prepare_closed_batch pair Buy Balanced in
+     let context = Helpers.test_context_with_batch tick_pair batch level in 
      let batcher = context.contracts.batcher in 
      let btc_trader = context.btc_trader in 
 
