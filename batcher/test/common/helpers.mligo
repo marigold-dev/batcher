@@ -263,3 +263,11 @@ let get_source_update
     oracle_precision = valid_swap.oracle_precision;
   }
 
+
+let get_current_batch
+  (pair: string)
+  (storage: Batcher.Storage.t): Batcher.batch option = 
+  let batch_set = storage.batch_set in 
+  match Map.find_opt pair batch_set.current_batch_indices with
+  | Some i -> Big_map.find_opt i batch_set.batches
+  | None -> None

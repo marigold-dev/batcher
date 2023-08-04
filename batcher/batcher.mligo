@@ -1800,7 +1800,8 @@ let remove_orders_from_batch
   (ots: ordertypes)
   (batch: batch): batch =
   let volumes = Batch_Utils.reduce_volumes ots batch.volumes in
-  { batch with volumes = volumes}
+  let holdings = abs (batch.holdings - 1n) in
+  { batch with volumes = volumes; holdings= holdings; }
 
 [@inline]
 let remove_orders
