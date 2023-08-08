@@ -45,6 +45,7 @@
 [@inline] let cannot_decrease_holdings_of_removed_batch : nat                    = 141n
 [@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
 [@inline] let batch_already_removed : nat                                        = 143n
+[@inline] let admin_and_fee_recipient_address_cannot_be_the_same                 = 144n
 
 (* Constants *)
 
@@ -290,10 +291,10 @@ type valid_swaps =  (string, valid_swap_reduced) map
 type rates_current = (string, exchange_rate) big_map
 
 type fees = {
-   to_burn: tez;
+   to_send: tez;
    to_refund: tez;
    payer: address;
-   burner: address;
+   recipient: address;
 }
 
 
@@ -414,8 +415,6 @@ module Storage = struct
     administrator : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
-    scale_factor_for_oracle_staleness: nat
-
   }
 
 end
@@ -954,8 +953,8 @@ let collect_order_payout_from_clearing
   ((c, tam, vols, tokens, fees, fee_in_mutez), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
-                          let f = fees.to_burn + fee_in_mutez in
-                          let uf = { fees with to_burn = f; } in
+                          let f = fees.to_send + fee_in_mutez in
+                          let uf = { fees with to_send = f; } in
                           (tm, uf)
                         else
                           let ta: token_amount = TokenAmount.recover ot amt c tokens in
@@ -1173,8 +1172,8 @@ let resolve_fees
     else
       token_ops
   in
-  if fees.to_burn > 0mutez then
-    Treasury_Utils.transfer_fee fees.burner fees.to_burn :: token_ops
+  if fees.to_send > 0mutez then
+    Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
   else
     token_ops
 
@@ -1193,10 +1192,10 @@ let redeem
     (storage : storage) : operation list * storage =
       let treasury_vault = get_treasury_vault () in
       let fees = {
-        to_burn = 0mutez;
+        to_send = 0mutez;
         to_refund = 0mutez;
         payer = redeem_address;
-        burner = storage.fee_recipient;
+        recipient = storage.fee_recipient;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
@@ -1628,11 +1627,9 @@ let get_clearing_rate
   (exchange_rate: exchange_rate) : exchange_rate =
   match clearing.clearing_tolerance with
   | Exact -> exchange_rate
-  | Plus -> let val : Rational.t = exchange_rate.rate in
-            let rate =  (Rational.mul val ten_bips_constant) in
+  | Plus -> let rate = Rational.mul (exchange_rate.rate) ten_bips_constant in
             { exchange_rate with rate = rate}
-  | Minus -> let val = exchange_rate.rate in
-             let rate = (Rational.div val ten_bips_constant) in
+  | Minus -> let rate = Rational.div (exchange_rate.rate) ten_bips_constant in
              { exchange_rate with rate = rate}
 
 [@inline]
@@ -1706,7 +1703,7 @@ let compute_clearing_prices
 end
 
 type storage  = Storage.t
-type result = (operation list) * storage
+type result = operation list * storage
 
 [@inline]
 let no_op (s : storage) : result =  (([] : operation list), s)
@@ -1718,6 +1715,7 @@ type entrypoint =
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
+  | Change_fee_recipient_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
   | Amend_token_and_pair_limit of nat
@@ -1727,7 +1725,6 @@ type entrypoint =
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
-  | Change_scale_factor of nat
 
 [@inline]
 let get_oracle_price
@@ -1746,6 +1743,11 @@ let is_administrator
   (storage : storage) : unit =
   if Tezos.get_sender () = storage.administrator then () else failwith sender_not_administrator
 
+[@inline]
+let admin_and_fee_recipient_address_are_different
+  (admin : address)
+  (fee_recipient : address ): unit =
+  if admin = fee_recipient then failwith admin_and_fee_recipient_address_cannot_be_the_same else ()
 
 
 [@inline]
@@ -1798,7 +1800,8 @@ let remove_orders_from_batch
   (ots: ordertypes)
   (batch: batch): batch =
   let volumes = Batch_Utils.reduce_volumes ots batch.volumes in
-  { batch with volumes = volumes}
+  let holdings = abs (batch.holdings - 1n) in
+  { batch with volumes = volumes; holdings= holdings; }
 
 [@inline]
 let remove_orders
@@ -1860,8 +1863,7 @@ let cancel_order
   let ubots = storage.user_batch_ordertypes in
   let current_time = Tezos.get_now () in
   let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
-  let () = if not (Batch_Utils.is_batch_open batch) then
-             failwith cannot_cancel_orders_for_a_batch_that_is_not_open
+  let () = if not (Batch_Utils.is_batch_open batch) then failwith cannot_cancel_orders_for_a_batch_that_is_not_open in
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
   | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
@@ -1884,11 +1886,9 @@ let cancel
 [@inline]
 let oracle_price_is_not_stale
   (deposit_time_window: nat)
-  (scale_factor_for_oracle_staleness: nat)
   (oracle_price_timestamp: timestamp) : unit =
   let dtw_i = int deposit_time_window in
-  let sffos_i = int scale_factor_for_oracle_staleness in
-  if (Tezos.get_now () - (sffos_i * dtw_i)) < oracle_price_timestamp then () else failwith oracle_price_is_stale
+  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
 let is_oracle_price_newer_than_current
@@ -1910,7 +1910,7 @@ let confirm_oracle_price_is_available_before_deposit
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
   let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
-  oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated
+  oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
 
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
@@ -2013,7 +2013,7 @@ let tick_price
   let valid_swap_reduced = Utils.valid_swap_to_valid_swap_reduced valid_swap in
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds storage.scale_factor_for_oracle_staleness lastupdated in
+  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
   let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
   let storage = Utils.update_current_rate (rate_name) (oracle_rate) (storage) in
   let pair = Utils.pair_of_rate oracle_rate in
@@ -2053,7 +2053,18 @@ let change_admin_address
     (storage: storage) : result =
     let () = is_administrator storage in
     let () = reject_if_tez_supplied () in
+    let () = admin_and_fee_recipient_address_are_different new_admin_address storage.fee_recipient in
     let storage = { storage with administrator = new_admin_address; } in
+    no_op storage
+
+[@inline]
+let change_fee_recipient_address
+    (new_fee_recipient_address: address)
+    (storage: storage) : result =
+    let () = is_administrator storage in
+    let () = reject_if_tez_supplied () in
+    let () = admin_and_fee_recipient_address_are_different new_fee_recipient_address storage.administrator in
+    let storage = { storage with fee_recipient = new_fee_recipient_address; } in
     no_op storage
 
 [@inline]
@@ -2140,17 +2151,6 @@ let change_deposit_time_window
   let storage = { storage with deposit_time_window_in_seconds = new_window; } in
   no_op storage
 
-[@inline]
-let change_scale_factor_for_oracle_staleness
-  (new_factor: nat)
-  (storage: storage) : result =
-  let () = is_administrator storage in
-  let () = reject_if_tez_supplied () in
-  if new_factor < minimum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_less_than_the_minimum else
-  if new_factor > maximum_scale_factor_for_oracle_staleness then failwith cannot_update_scale_factor_to_more_than_the_maximum else
-  let storage = { storage with scale_factor_for_oracle_staleness = new_factor; } in
-  no_op storage
-
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
@@ -2171,7 +2171,7 @@ let get_current_batches ((),storage: unit * storage) : batch list=
 
 
 let main
-  (action, storage : entrypoint * storage) : result =
+  (action, storage : entrypoint * storage) : operation list * storage =
   match action with
   (* User endpoints *)
    | Deposit order -> deposit order storage
@@ -2182,6 +2182,7 @@ let main
   (* Admin endpoints *)
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | Change_fee_recipient_address new_fee_recipient_address -> change_fee_recipient_address new_fee_recipient_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
    | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage
@@ -2191,6 +2192,5 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
-   | Change_scale_factor f -> change_scale_factor_for_oracle_staleness f storage
 
 
