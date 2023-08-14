@@ -1495,11 +1495,11 @@ let get_clearing_rate
   (exchange_rate: exchange_rate) : exchange_rate =
   match clearing.clearing_tolerance with
   | Exact -> exchange_rate
-  | Plus -> let val : Rational.t = exchange_rate.rate in
-            let rate =  (Rational.mul val ten_bips_constant) in
+  | Plus -> let v : Rational.t = exchange_rate.rate in
+            let rate =  (Rational.mul v ten_bips_constant) in
             { exchange_rate with rate = rate}
-  | Minus -> let val = exchange_rate.rate in
-             let rate = (Rational.div val ten_bips_constant) in
+  | Minus -> let v = exchange_rate.rate in
+             let rate = (Rational.div v ten_bips_constant) in
              { exchange_rate with rate = rate}
 
 [@inline]
