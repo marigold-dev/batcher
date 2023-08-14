@@ -2,7 +2,7 @@
             (Pair "tz1burnburnburnburnburnburnburjAYjjX" 0)
             10
             {})
-      (Pair {} {})
+      (Pair (Pair {} {}) {} {})
       { Elt "tzBTC/EURL"
             (Pair (Pair "tzBTC" "EURL") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-EUR" 6 False) ;
         Elt "tzBTC/USDT"

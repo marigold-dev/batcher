@@ -1,4 +1,5 @@
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
+#import "shared.mligo" "Shared"
 
 (* Errors  *)
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
@@ -80,15 +81,6 @@
 
 
 
-(* Associate alias to token address *)
-type token = [@layout:comb] {
-  token_id: nat;
-  name : string;
-  address : address option;
-  decimals : nat;
-  standard : string option;
-}
-
 (* Side of an order, either BUY side or SELL side  *)
 type side =
   Buy
@@ -97,6 +89,8 @@ type side =
 (* Tolerance of the order against the oracle price  *)
 type tolerance =
   Plus | Exact | Minus
+
+type token = Shared.token
 
 (* A token value ascribes an amount to token metadata *)
 type token_amount = [@layout:comb] {
@@ -250,6 +244,7 @@ type batch = [@layout:comb] {
   volumes : volumes;
   pair : pair;
   holdings : nat;
+  market_vault_used : bool;
 }
 
 type batch_indices = (string,  nat) map
@@ -270,7 +265,6 @@ type metadata_update = {
   key: string;
   value: bytes;
 }
-
 
 type orace_price_update = timestamp * nat
 
@@ -296,6 +290,26 @@ type fees = {
    payer: address;
    recipient: address;
 }
+
+type foreign_tokens = (string, token_amount) map
+
+type market_maker_vault = {
+  total_shares: nat;
+  native_token: token_amount;
+  foreign_tokens: foreign_tokens;
+}
+
+type market_vaults = (string,market_maker_vault) big_map
+
+type market_vault_holding = {
+   name: string;
+   shares: nat;
+}
+
+type market_vault_holdings =  (string, market_vault_holding) map
+
+type user_market_vault_holdings = (address, market_vault_holdings) big_map
+
 
 
 [@inline]
@@ -415,6 +429,8 @@ module Storage = struct
     administrator : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
+    market_vaults: market_vaults;
+    user_market_vault_holdings: user_market_vault_holdings;
   }
 
 end
@@ -1469,6 +1485,7 @@ let make
     pair = pair;
     volumes = volumes;
     holdings = 0n;
+    market_vault_used = false;
   }
 
 [@inline]
@@ -1702,6 +1719,65 @@ let compute_clearing_prices
 
 end
 
+module MarketVaultUtils = struct
+
+type market_vault_holding = {
+   name: string;
+   shares: nat;
+}
+
+type market_vault_holdings =  (string, market_vault_holding) map
+
+type user_market_vault_holdings = (address, market_vault_holdings) big_map
+
+let add_to_vault
+   (ta: token_amount)
+   (mvhs: market_vault_holdings) : market_vault_holdings = 
+   match Map.find_opt ta.token.name mvhs with
+   | None -> let mvh = {
+               name = ta.token.name;
+                shares = ta.amount;
+             } in   
+             Map.add ta.token.name mvh mvhs
+   | Some mvh -> let uh = { mvh with shares = mvh.shares + ta.amount; } in
+                 Map.update ta.token.name (Some uh) mvhs
+
+let add_shares
+   (holder: address)
+   (ta: token_amount)
+   (umvhs: user_market_vault_holdings) : user_market_vault_holdings = 
+   match  Big_map.find_opt holder umvhs with
+   | None -> let vh = {
+                      name = ta.token.name;
+                      shares = ta.amount;
+                     } in
+              let mvh = Map.literal [
+                (ta.token.name, vh)
+              ] in
+              Big_map.add holder mvh umvhs
+   | Some mvhs ->  let  mvhs = add_to_vault ta mvhs in
+                    Big_map.update holder (Some mvhs) umvhs
+
+
+let mint_shares
+   (holder: address)
+   (token_amount: token_amount)
+   (storage: Storage.t) : Storage.t =
+   let vault = match Big_map.find_opt token_amount.token.name storage.market_vaults with 
+               | None -> {
+                           total_shares = token_amount.amount;
+                           native_token = token_amount;
+                           foreign_tokens = (Map.empty: foreign_tokens); 
+                         } 
+               | Some v -> { v with total_shares = v.total_shares + token_amount.amount; }
+    in
+    let vaults =  Big_map.add token_amount.token.name vault storage.market_vaults in
+    let shares =  add_shares holder token_amount storage.user_market_vault_holdings in
+    { storage with market_vaults = vaults; user_market_vault_holdings  = shares;}
+                
+end
+
+
 type storage  = Storage.t
 type result = operation list * storage
 
@@ -1725,6 +1801,8 @@ type entrypoint =
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
+  | AddLiquidity of token_amount
+
 
 [@inline]
 let get_oracle_price
@@ -1916,6 +1994,19 @@ let confirm_oracle_price_is_available_before_deposit
 let confirm_swap_pair_is_disabled_prior_to_removal
   (valid_swap:valid_swap) : unit =
   if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
+
+
+(* Deposit Liquidity into a market vault *)
+[@inline]
+let add_liquidity
+  (token_amount: token_amount)
+  (storage: storage) : result = 
+  let () = reject_if_tez_supplied () in
+  let holder = Tezos.get_sender () in
+  let treasury_ops = Treasury.deposit holder token_amount in
+  let storage = MarketVaultUtils.mint_shares holder token_amount storage in
+  (treasury_ops, storage)
+
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -2192,5 +2283,7 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
+  (* Market  Liquidity endpoint *)
+   | AddLiquidity t ->  add_liquidity t storage
 
 
