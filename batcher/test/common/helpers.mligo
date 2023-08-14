@@ -226,6 +226,18 @@ let place_order
   let order = create_order from to amount side tolerance valid_tokens in
   Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (Deposit order) fee))
 
+let add_liquidity
+  (actor: Breath.Context.actor)
+  (contract: originated_contract)
+  (token_name: string)
+  (amount: nat)
+  (valid_tokens: valid_tokens) =
+  let token = Option.unopt (Map.find_opt token_name valid_tokens) in 
+  let token_amount = {
+     token = token;
+     amount = amount;
+  } in
+  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (AddLiquidity token_amount) 0tez))
 
 let expect_last_order_number
   (storage: storage)

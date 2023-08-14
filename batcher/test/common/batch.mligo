@@ -226,6 +226,7 @@ let prepare_batch_with_status
   volumes = empty_volumes;
   pair = pair;
   holdings = 0n;
+  market_vault_used = false;
   } in
   let test_cases = if pressure = Buy then
                      buy_pressure_cases

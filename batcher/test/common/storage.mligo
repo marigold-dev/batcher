@@ -105,6 +105,8 @@ let initial_storage_with_admin_and_fee_recipient
   administrator = admin;
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
+  market_vaults = (Big_map.empty: Batcher.market_vaults);
+  user_market_vault_holdings = (Big_map.empty: Batcher.user_market_vault_holdings);
 }
 
 
