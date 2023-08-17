@@ -23,7 +23,6 @@ import { reverseSwap, updatePriceStrategy } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
 
 const Exchange: React.FC<ExchangeProps> = ({
-  fee_in_mutez,
   buyToken,
   sellToken,
   // updateAll,
@@ -62,20 +61,6 @@ const Exchange: React.FC<ExchangeProps> = ({
       </div>
     );
 
-  // const triggerUpdate = () => {
-  //   setTimeout(function () {
-  //     const u = !updateAll;
-  //     setUpdateAll(u);
-  //   }, 5000);
-  // };
-
-  // const inverseTokenType = () => {
-  //   // setInversion(!inversion);
-  //   toggleInversion();
-  //   const s = inversion ? 0 : 1;
-  //   setSide(s);
-  // };
-
   const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
     switch (priceStategy) {
       case PriceStrategy.EXACT:
@@ -88,7 +73,6 @@ const Exchange: React.FC<ExchangeProps> = ({
   };
 
   const depositToken = async () => {
-    console.warn('fees', fees);
     if (!userAddress) {
       return;
     }
@@ -98,10 +82,6 @@ const Exchange: React.FC<ExchangeProps> = ({
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;
 
     const selectedToken = isReverse ? swap.to : swap.from.token;
-    console.log(
-      '🚀 ~ file: index.tsx:92 ~ depositToken ~ selectedToken:',
-      selectedToken
-    );
 
     const batcherContract = await tezos.wallet.at(batcherContractHash);
 
@@ -117,27 +97,7 @@ const Exchange: React.FC<ExchangeProps> = ({
       ? scaleAmountUp(amount, swap.to.decimals)
       : scaleAmountUp(amount, swap.from.token.decimals);
 
-    // const selected_side = inversion ? 0 : 1;
-
     const tolerance = toTolerance(isReverse, priceStategy);
-
-    // if (selected_side == 0) {
-    //   if (price === PriceType.WORSE) {
-    //     tolerance = 0;
-    //   } else if (price === PriceType.EXACT) {
-    //     tolerance = 1;
-    //   } else {
-    //     tolerance = 2;
-    //   }
-    // } else {
-    //   if (price === PriceType.WORSE) {
-    //     tolerance = 2;
-    //   } else if (price === PriceType.EXACT) {
-    //     tolerance = 1;
-    //   } else {
-    //     tolerance = 0;
-    //   }
-    // }
 
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
@@ -159,10 +119,6 @@ const Exchange: React.FC<ExchangeProps> = ({
         },
       },
     ];
-
-    // let loading = function () {
-    //   return undefined;
-    // };
 
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
@@ -198,14 +154,11 @@ const Exchange: React.FC<ExchangeProps> = ({
       };
 
       if (selectedToken.standard === 'FA1.2 token') {
-        console.info(swap.from.token.address);
         if (!swap.from.token.address) return; //TODO: improve this
         const tokenfa12Contract = await tezos?.wallet.at(
           swap.from.token.address,
           compose(tzip12, tzip16)
         );
-        console.log('scaled_amount', scaled_amount);
-        console.log('swap_params', swap_params);
 
         order_batcher_op = await tezos.wallet
           .batch([
@@ -221,7 +174,6 @@ const Exchange: React.FC<ExchangeProps> = ({
                 .deposit(swap_params)
                 .toTransferParams(),
               to: batcherContractHash,
-              // amount: fee_in_mutez,
               amount: fees,
               mutez: true,
             },
@@ -244,7 +196,6 @@ const Exchange: React.FC<ExchangeProps> = ({
                 .deposit(swap_params)
                 .toTransferParams(),
               to: batcherContractHash,
-              // amount: fee_in_mutez,
               amount: fees,
               mutez: true,
             },
@@ -257,37 +208,28 @@ const Exchange: React.FC<ExchangeProps> = ({
           ])
           .send();
       }
-      console.log(
-        '🚀 ~ file: index.tsx:250 ~ depositToken ~ order_batcher_op:',
-        order_batcher_op
-      );
 
-      // const loading = () =>
-      //   message.loading('Attempting to place swap order for ' + tokenName, 0);
+      if (!order_batcher_op) {
+        console.error('Order Batcher Operation is not defined...');
+        throw new Error('Order Batcher Operation is not defined...');
+      }
 
-      // if (!order_batcher_op) {
-      //   console.error('Order Batcher Operation is not defined...');
-      //   throw new Error('Order Batcher Operation is not defined...');
-      // }
-      console.log('ici');
       const confirm = await order_batcher_op?.confirmation();
 
       confirm?.completed ? console.log('Successfully deposited !!!!!!') : null;
 
-      // if (!confirm.completed) {
-      //   console.error(confirm);
-      //   message.error('Failed to deposit ' + tokenName);
-      //   throw new Error(
-      //     'Failed to deposit ' +
-      //       (inversion ? buyToken.name : sellToken.name) +
-      //       ' token'
-      //   );
-      // } else {
-      //   loading();
-      //   form.resetFields();
-      //   message.success('Successfully deposited ' + tokenName);
-      //   triggerUpdate();
-      // }
+      if (!confirm.completed) {
+        console.error(confirm);
+        throw new Error(
+          `Failed to deposit ${
+            isReverse ? swap.to.name : swap.from.token.name
+          } token.`
+        );
+      } else {
+        console.info(`Successfully deposited ${tokenName}`);
+        //   form.resetFields();
+        //   message.success('Successfully deposited ' + tokenName);
+      }
     } catch (error) {
       console.log('deposit error', error);
       const converted_error_message = getErrorMess(error);
@@ -399,16 +341,17 @@ const Exchange: React.FC<ExchangeProps> = ({
           </div>
           <div className="">
             <p className="p-4">
-              {'To '}
-              {isReverse
-                ? currentSwap.swap.from.token.name
-                : currentSwap.swap.to.name}
+              {`To ${
+                isReverse
+                  ? currentSwap.swap.from.token.name
+                  : currentSwap.swap.to.name
+              }`}
             </p>
           </div>
 
           <Form.Submit asChild>
             <button
-              disabled={!userAddress || batcherStatus !== BatcherStatus.STARTED}
+              disabled={!userAddress || batcherStatus !== BatcherStatus.OPEN}
               className="box-border text-black inline-flex h-[35px] items-center justify-center rounded-[4px] bg-white px-[15px] font-medium leading-none mt-[10px] text-xl">
               Swap
             </button>

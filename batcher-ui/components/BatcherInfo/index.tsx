@@ -1,9 +1,14 @@
-import React, { useEffect } from 'react';
-import { BatcherInfoProps, BatcherStatus } from '../../utils/types';
+import React from 'react';
+import { BatcherInfoProps } from '../../utils/types';
 import BatcherStepper from '../BatcherStepper';
-import { parseISO, add, differenceInMinutes } from 'date-fns';
 import { useSelector } from 'react-redux';
-import { currentSwapSelector, userBalancesSelector } from '../../src/reducers';
+import {
+  batcherStatusSelector,
+  currentSwapSelector,
+  remainingTimeSelector,
+  userBalancesSelector,
+} from '../../src/reducers';
+import { BatcherStatus } from '../../src/types';
 
 const BatcherInfo: React.FC<BatcherInfoProps> = ({
   userAddress,
@@ -12,9 +17,8 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   sellBalance,
   buyTokenName,
   sellTokenName,
-  inversion,
   rate,
-  status,
+  // status,
   openTime,
   updateAll,
   setUpdateAll,
@@ -23,33 +27,8 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   const userBalances = useSelector(userBalancesSelector);
   const currentSwap = useSelector(currentSwapSelector);
 
-  const triggerUpdate = () => {
-    if (status === BatcherStatus.OPEN && openTime) {
-      setTimeout(function () {
-        const u = !updateAll;
-        setUpdateAll(u);
-      }, 600000);
-    }
-  };
-
-  useEffect(() => {
-    triggerUpdate();
-  }, [status]);
-
-  const get_time_difference = () => {
-    if (status === BatcherStatus.OPEN && openTime) {
-      const now = new Date();
-      const open = parseISO(openTime);
-      const batcherClose = add(open, { minutes: 10 });
-      const diff = differenceInMinutes(batcherClose, now);
-      if (diff < 0) {
-        return 0;
-      } else {
-        return diff;
-      }
-    }
-    return 0;
-  };
+  const status = useSelector(batcherStatusSelector);
+  const remainingTime = useSelector(remainingTimeSelector);
 
   return (
     <div className="font-custom">
@@ -60,11 +39,11 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             {status === BatcherStatus.NONE ? (
               <p className="text-l">No open Batch</p>
             ) : (
-              <BatcherStepper status={status} />
+              <BatcherStepper />
             )}
             {status === BatcherStatus.OPEN ? (
               <div className="p-5 border-solid border-2 border-[#7B7B7E]">
-                <p className="p-4">{get_time_difference() + ' min'}</p>
+                <p className="p-4">{remainingTime + ' min'}</p>
               </div>
             ) : (
               <div />

@@ -12,14 +12,6 @@ const fetchUserBalancesCmd = (userAddress?: string) => {
           eq: userAddress,
         },
       });
-      console.log(
-        '🚀 ~ file: wallet.ts:138 ~ returnCmd.run ~ rawBalances:',
-        rawBalances
-      );
-      console.log(
-        '🚀 ~ file: wallet.ts:134 ~ returnCmd.run ~ rawBalances:',
-        storeBalances(rawBalances)
-      );
 
       return storeBalances(rawBalances).map(b => ({
         ...b,

@@ -1,8 +1,7 @@
 import { LoopReducer, combineReducers } from 'redux-loop';
 import exchangeReducer from './exchange';
-import miscReducer from './misc';
 import walletReducer from './wallet';
-import { AppState, ExchangeState, MiscState, WalletState } from 'src/types';
+import { AppState, ExchangeState, WalletState } from 'src/types';
 
 // Wallet selectors
 export const userAddressSelector = (state: AppState) => {
@@ -12,10 +11,6 @@ export const userAddressSelector = (state: AppState) => {
 export const userBalancesSelector = (state: AppState) =>
   state.wallet.userBalances;
 
-// Misc selectors
-export const batcherStatusSelector = (state: AppState) =>
-  state.misc.batcherStatus;
-
 // Exchange selectors
 export const priceStrategySelector = (state: AppState) =>
   state.exchange.priceStrategy;
@@ -23,10 +18,25 @@ export const priceStrategySelector = (state: AppState) =>
 export const currentSwapSelector = (state: AppState) =>
   state.exchange.currentSwap;
 
+export const currentPairSelector = (state: AppState) =>
+  state.exchange.swapPairName;
 
+export const batcherStatusSelector = (state: AppState) =>
+  state.exchange.batcherStatus.status;
+
+export const batcherStatusTimeSelector = (state: AppState) =>
+  state.exchange.batcherStatus.at;
+
+export const batchStartTimeSelector = (state: AppState) =>
+  state.exchange.batcherStatus.startTime;
+
+export const remainingTimeSelector = (state: AppState) =>
+  state.exchange.batcherStatus.remainingTime;
+
+export const batchNumberSelector = (state: AppState) =>
+  state.exchange.batchNumber;
 
 export default combineReducers({
-  misc: miscReducer as LoopReducer<MiscState>,
   exchange: exchangeReducer as LoopReducer<ExchangeState>,
   wallet: walletReducer as LoopReducer<WalletState>,
 });

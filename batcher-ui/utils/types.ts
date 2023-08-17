@@ -176,14 +176,11 @@ export type ExchangeProps = {
   userAddress: string | undefined;
   buyBalance: number;
   sellBalance: number;
-  inversion: boolean;
-  fee_in_mutez: number;
   buyToken: token;
   sellToken: token;
   updateAll: boolean;
   setUpdateAll: (_: boolean) => void;
   status: string;
-  toggleInversion(): void;
 };
 
 export type BatcherInfoProps = {
@@ -193,7 +190,6 @@ export type BatcherInfoProps = {
   sellBalance: number;
   buyTokenName: string;
   sellTokenName: string;
-  inversion: boolean;
   rate: number;
   status: string;
   openTime: string | null;
@@ -223,9 +219,6 @@ export enum BatcherStatus {
   CLEARED = 'cleared',
 }
 
-export type BatcherStepperProps = {
-  status: string;
-};
 
 export type HoldingsProps = {
   userAddress: string | undefined;

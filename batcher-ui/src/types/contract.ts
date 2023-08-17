@@ -1,7 +1,8 @@
 export enum BatcherStatus {
-  STARTED = 'STARTED',
+  OPEN = 'OPEN',
   CLOSED = 'CLOSED',
   CLEARED = 'CLEARED',
+  NONE = 'NONE',
 }
 
 export enum PriceStrategy {

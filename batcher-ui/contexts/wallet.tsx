@@ -96,7 +96,6 @@ const reducer = (
     case 'DISCONNECT_WALLET':
       return initialState;
     case 'HYDRATE_WALLET': {
-      console.info('hydrate');
       const { userAddress, userAccount, wallet } = action;
       return { ...state, userAddress, userAccount, wallet };
     }

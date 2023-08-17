@@ -11,8 +11,7 @@ import {
   swap,
   tokens,
 } from '../utils/types';
-// import { contractsGetBigMapByName } from "@tzkt/sdk-api";
-import { Space, Col, Row, Drawer, Radio } from 'antd';
+import { Col, Row } from 'antd';
 import { DoubleRightOutlined } from '@ant-design/icons';
 
 import {
@@ -29,21 +28,21 @@ import {
 } from '../utils/webSocketUtils';
 import { scaleAmountUp, zeroHoldings } from '../utils/utils';
 import Holdings from '../components/Holdings';
-import {
-  TezosToolkitContext,
-  useTezosToolkit,
-} from '../contexts/tezos-toolkit';
+import { useTezosToolkit } from '../contexts/tezos-toolkit';
 import About from '../components/About';
 import ChoosePairs from '../components/ChoosePairs';
 import { useSelector, useDispatch } from 'react-redux';
-import { currentSwapSelector, userAddressSelector } from '../src/reducers';
-import { fetchUserBalances, getPairsInfos } from '../src/actions';
 import {
-  bigMapsGetBigMapById,
-  bigMapsGetKeys,
-  contractsGetBigMapByName,
-  contractsGetStorage,
-} from '@tzkt/sdk-api';
+  currentPairSelector,
+  currentSwapSelector,
+  userAddressSelector,
+} from '../src/reducers';
+import {
+  fetchUserBalances,
+  getPairsInfos,
+  batcherSetup,
+  getCurrentBatchNumber,
+} from '../src/actions';
 
 const Welcome = () => {
   const tzktUriApi = process.env.REACT_APP_TZKT_URI_API;
@@ -60,10 +59,10 @@ const Welcome = () => {
   const [bigMapsByIdUri] = useState<string>(
     '' + chain_api_url + '/v1/bigmaps/'
   );
-  const [inversion, setInversion] = useState(true);
 
   const userAddress = useSelector(userAddressSelector);
   const currentSwap = useSelector(currentSwapSelector);
+  const currentPair = useSelector(currentPairSelector);
 
   const dispatch = useDispatch();
 
@@ -98,13 +97,10 @@ const Welcome = () => {
   const [openHoldings, setOpenHoldings] = useState<Map<string, number>>(
     new Map<string, number>()
   );
-  const [feeInMutez, setFeeInMutez] = useState<number>(0);
   const [volumes, setVolumes] = useState<Volumes>(getEmptyVolumes());
   const [updateAll, setUpdateAll] = useState<boolean>(false);
   const [batchNumber, setBatchNumber] = useState<number>(0);
   const [hasClearedHoldings, setHasClearedHoldings] = useState<boolean>(false);
-
-  const toggleInversion = () => setInversion(!inversion);
 
   // TODO: typing contract storage
   const pullStorage = async () => {
@@ -197,15 +193,6 @@ const Welcome = () => {
     }
   };
 
-  const setFee = async (storage: any) => {
-    try {
-      const fee = storage.fee_in_mutez;
-      setFeeInMutez(fee);
-    } catch (error) {
-      console.error('Unable to set fee', error);
-    }
-  };
-
   const updateSwapMap = async (storage: any) => {
     try {
       const valid_swaps = storage.valid_swaps;
@@ -220,6 +207,7 @@ const Welcome = () => {
       console.error('Unable to update swap map', error);
     }
   };
+
   const getOriginalDepositAmounts = (
     side: any,
     initialBuySideAmount: number,
@@ -653,17 +641,7 @@ const Welcome = () => {
     // setOraclePrice(rates?.valueType);
   };
 
-  const [open, setOpen] = useState(false);
-  const showDrawer = () => {
-    setOpen(true);
-  };
-
-  const onClose = () => {
-    setOpen(false);
-  };
-
   const renderRightContent = (content: ContentType) => {
-    console.log('rendering content');
     switch (content) {
       case ContentType.SWAP:
         return (
@@ -671,15 +649,11 @@ const Welcome = () => {
             userAddress={userAddress}
             buyBalance={buyBalance}
             sellBalance={sellBalance}
-            inversion={inversion}
-            fee_in_mutez={feeInMutez}
             buyToken={buyToken}
             sellToken={sellToken}
-            showDrawer={showDrawer}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
             status={status}
-            toggleInversion={toggleInversion}
           />
         );
       case ContentType.VOLUME:
@@ -705,14 +679,11 @@ const Welcome = () => {
             userAddress={userAddress}
             buyBalance={buyBalance}
             sellBalance={sellBalance}
-            inversion={inversion}
-            fee_in_mutez={feeInMutez}
             buyToken={buyToken}
             sellToken={sellToken}
             updateAll={updateAll}
             setUpdateAll={setUpdateAll}
             status={status}
-            toggleInversion={toggleInversion}
           />
         );
     }
@@ -881,18 +852,21 @@ const Welcome = () => {
 
   // TODO: improve this
   useEffect(() => {
-    dispatch(getPairsInfos(currentSwap.swapPairName));
-  }, [dispatch, currentSwap.swapPairName]);
+    dispatch(getPairsInfos(currentPair));
+  }, [dispatch, currentPair]);
+
+  useEffect(() => {
+    dispatch(getCurrentBatchNumber());
+    dispatch(batcherSetup());
+  }, [dispatch]);
 
   useEffect(() => {
     if (batcherContractHash) {
       // tezos?.contract.getStorage(batcherContractHash).then(b => {
       //   console.warn(b);
       // })
-
       // CA MARCHE
       //fetch('https://api.ghostnet.tzkt.io/v1/bigmaps/321389/keys').then(r => r.json()).then(console.warn)
-
       // CA MARCHE
       // contractsGetBigMapByName(batcherContractHash, 'rates_current').then(
       //   bm => {
@@ -900,16 +874,14 @@ const Welcome = () => {
       //     if (bm.ptr) bigMapsGetKeys(bm.ptr).then(console.warn);
       //   }
       // );
-
       // tezos?.contract.at(batcherContractHash).then(x => {
       //   x.storage().then(console.info);
       // });
-
       // contractsGetStorage(batcherContractHash, { path: 'valid_tokens' }).then(
       //   console.warn
       // );
-
-      getStorageByAddress(batcherContractHash).then(console.info);
+      // getStorageByAddress(batcherContractHash).then(console.info);
+      // getBatcherStatus(1516, batcherContractHash);
     }
   }, [batcherContractHash, tezos]);
 
@@ -922,7 +894,6 @@ const Welcome = () => {
         sellBalance={sellBalance}
         buyTokenName={buyToken.name}
         sellTokenName={sellToken.name}
-        inversion={inversion}
         rate={rate}
         status={status}
         openTime={openTime}

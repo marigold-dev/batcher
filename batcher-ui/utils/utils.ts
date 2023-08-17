@@ -1,4 +1,5 @@
-import { CurrentSwap } from '../src/types';
+import { add, differenceInMinutes, parseISO } from 'date-fns';
+import { BatcherStatus, CurrentSwap } from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -196,21 +197,23 @@ export const getStorageByAddress = (address: string): Promise<any> =>
 export const getPairsInformations = async (
   pair: string,
   address: string
-): Promise<CurrentSwap> => {
+): Promise<{ currentSwap: CurrentSwap; pair: string }> => {
   const storage = await getStorageByAddress(address);
   const validTokens = storage['valid_tokens'];
   const pairs = pair.split('/');
 
   return {
-    swapPairName: pair,
-    swap: {
-      from: {
-        token: validTokens[pairs[0]],
-        amount: 0,
+    currentSwap: {
+      swap: {
+        from: {
+          token: validTokens[pairs[0]],
+          amount: 0,
+        },
+        to: validTokens[pairs[1]],
       },
-      to: validTokens[pairs[1]],
+      isReverse: false,
     },
-    isReverse: false,
+    pair,
   };
 };
 
@@ -218,4 +221,87 @@ export const getFees = async (address: string) => {
   const storage = await getStorageByAddress(address);
   const feeInMutez: number = storage['fee_in_mutez'];
   return feeInMutez;
+};
+
+export const getCurrentBatchNumber = async (
+  address: string,
+  pair: string
+): Promise<number> => {
+  const storage = await getStorageByAddress(address);
+  const currentBatchIndices = storage['batch_set']['current_batch_indices'];
+  return currentBatchIndices[pair];
+};
+
+export const getBatch = (bigMapId: number, batchNumber: number) =>
+  fetch(
+    `${process.env.REACT_APP_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+  )
+    .then(r => r.json())
+    .then(r => r.value);
+
+const toBatcherStatus = (rawStatus: string): BatcherStatus => {
+  switch (rawStatus) {
+    case 'cleared':
+      return BatcherStatus.CLEARED;
+    case 'closed':
+      return BatcherStatus.CLOSED;
+    case 'open':
+      return BatcherStatus.OPEN;
+    default:
+      return BatcherStatus.NONE;
+  }
+};
+
+const getStatusTime = (status: string, batch: any) => {
+  switch (status) {
+    case 'open':
+      return batch.status[status];
+    case 'closed':
+      return batch.status[status].closing_time;
+    case 'cleared':
+      return batch.status[status].at;
+    default:
+      return null;
+  }
+};
+
+const getStartTime = (status: string, batch: any) => {
+  switch (status) {
+    case 'open':
+      return batch.status[status];
+    case 'closed':
+      return batch.status[status].start_time;
+    default:
+      return null;
+  }
+};
+
+export const getBatcherStatus = async (
+  batchNumber: number,
+  address: string
+): Promise<{ status: BatcherStatus; at: string; startTime: string | null }> => {
+  const storage = await getStorageByAddress(address);
+  const batch = await getBatch(storage['batch_set']['batches'], batchNumber);
+  const status = Object.keys(batch.status)[0];
+  return {
+    status: toBatcherStatus(status),
+    at: new Date(getStatusTime(status, batch)).toISOString(),
+    startTime: getStartTime(status, batch)
+      ? new Date(getStartTime(status, batch)).toISOString()
+      : null,
+  };
+};
+
+export const getTimeDifference = (
+  status: BatcherStatus,
+  startTime: string | null
+) => {
+  if (status === BatcherStatus.OPEN && startTime) {
+    const now = new Date();
+    const open = parseISO(startTime);
+    const batcherClose = add(open, { minutes: 10 });
+    const diff = differenceInMinutes(batcherClose, now);
+    return diff < 0 ? 0 : diff;
+  }
+  return 0;
 };

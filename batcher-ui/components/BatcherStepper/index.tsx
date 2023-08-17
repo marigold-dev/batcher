@@ -1,49 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { Space, Typography } from 'antd';
-// import './index.less';
-import { BatcherStatus, BatcherStepperProps } from '../../utils/types';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { batcherStatusSelector } from '../../src/reducers';
+import { BatcherStatus } from '../../src/types';
 
-const BatcherStepper: React.FC<BatcherStepperProps> = ({ status }: BatcherStepperProps) => {
+const Square = ({ isActive }: { isActive: boolean }) => (
+  <div className={`w-8 h-8 ${isActive ? 'bg-[#6FE17A]' : 'bg-[#CECCCC]'}`} />
+);
+
+const Dot = ({ isActive }: { isActive: boolean }) => (
+  <div className={`text-3xl ${isActive ? 'text-[#6FE17A]' : 'text-[#CECCCC]'}`}>
+    -
+  </div>
+);
+
+const BatcherStepper = () => {
+  const status = useSelector(batcherStatusSelector);
+
   return (
-    <div>
-      <Space className="pd-5-10">
-        <Space className="batcher-started pd-0">
-          <div className={status !== BatcherStatus.NONE ? 'green-color' : 'gray-color'}>null</div>
-          <Space className={status !== BatcherStatus.NONE ? 'pd-0 green-dot' : 'pd-0 gray-dot'}>
-            <div className="batcher-dot">-</div>
-            <div className="batcher-dot">-</div>
-            <div className="batcher-dot">-</div>
-          </Space>
-        </Space>
-        <Space className="batcher-closed pd-0">
-          <div
-            className={
-              status === BatcherStatus.CLOSED || status === BatcherStatus.CLEARED
-                ? 'green-color'
-                : 'gray-color'
+    <div className="flex flex-col">
+      <div className="flex gap-3 px-1 py-3">
+        <div className="flex flex-col items-center gap-5">
+          <Square isActive={status !== BatcherStatus.NONE} />
+          <p>Started</p>
+        </div>
+
+        <Dot isActive={status !== BatcherStatus.NONE} />
+        <Dot isActive={status !== BatcherStatus.NONE} />
+        <Dot isActive={status !== BatcherStatus.NONE} />
+
+        <div className="flex flex-col items-center gap-5">
+          <Square
+            isActive={
+              status === BatcherStatus.CLOSED ||
+              status === BatcherStatus.CLEARED
             }
-          >
-            null
-          </div>
-          <Space className={status === BatcherStatus.CLEARED ? 'pd-0 green-dot' : 'pd-0 gray-dot'}>
-            <div className="batcher-dot">-</div>
-            <div className="batcher-dot">-</div>
-            <div className="batcher-dot">-</div>
-          </Space>
-        </Space>
-        <Space className="batcher-cleared pd-0">
-          <div
-            className={status === BatcherStatus.CLEARED ? 'pd-0 green-color' : 'pd-0 gray-color'}
-          >
-            null
-          </div>
-        </Space>
-      </Space>
-      <Space className="batcher-stepper-gap pd-0">
-        <Typography>Started</Typography>
-        <Typography>Closed</Typography>
-        <Typography>Cleared</Typography>
-      </Space>
+          />
+          <p>Closed</p>
+        </div>
+
+        <Dot isActive={status === BatcherStatus.CLEARED} />
+        <Dot isActive={status === BatcherStatus.CLEARED} />
+        <Dot isActive={status === BatcherStatus.CLEARED} />
+
+        <div className="flex flex-col items-center gap-5">
+          <Square isActive={status === BatcherStatus.CLEARED} />
+          <p>Cleared</p>
+        </div>
+      </div>
     </div>
   );
 };
