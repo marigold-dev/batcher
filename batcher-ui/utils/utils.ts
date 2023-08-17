@@ -1,3 +1,4 @@
+import { CurrentSwap } from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -184,3 +185,37 @@ export const filterBalances = (balances: Balances): Balances => {
 
 export const storeBalances = (balances: any[]) =>
   filterBalances(toUserBalances(balances));
+
+// ----- STORAGE ------
+
+export const getStorageByAddress = (address: string): Promise<any> =>
+  fetch(
+    `${process.env.REACT_APP_TZKT_URI_API}/v1/contracts/${address}/storage`
+  ).then(r => r.json());
+
+export const getPairsInformations = async (
+  pair: string,
+  address: string
+): Promise<CurrentSwap> => {
+  const storage = await getStorageByAddress(address);
+  const validTokens = storage['valid_tokens'];
+  const pairs = pair.split('/');
+
+  return {
+    swapPairName: pair,
+    swap: {
+      from: {
+        token: validTokens[pairs[0]],
+        amount: 0,
+      },
+      to: validTokens[pairs[1]],
+    },
+    isReverse: false,
+  };
+};
+
+export const getFees = async (address: string) => {
+  const storage = await getStorageByAddress(address);
+  const feeInMutez: number = storage['fee_in_mutez'];
+  return feeInMutez;
+};

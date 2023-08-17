@@ -112,6 +112,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const userAddress = getByKey('userAddress');
+
     if (userAddress) {
       const wallet = new BeaconWallet({
         name: 'batcher',
@@ -120,8 +121,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       wallet.client.getActiveAccount().then(userAccount => {
         dispatch({ type: 'HYDRATE_WALLET', userAddress, userAccount, wallet });
       });
+
+      tezos?.setWalletProvider(wallet);
     }
-  }, []);
+  }, [tezos]);
 
   return (
     <WalletContext.Provider

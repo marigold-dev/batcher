@@ -1,5 +1,7 @@
-import { ExchangeActions } from 'src/actions';
-import { CurrentSwap, ExchangeState, PriceStrategy } from 'src/types';
+import { Cmd, loop } from 'redux-loop';
+import { ExchangeActions, getPairsInfos } from '../../src/actions';
+import { CurrentSwap, ExchangeState, PriceStrategy } from '../../src/types';
+import { fetchPairInfosCmd } from '../../src/commands/exchange';
 
 const initialSwap: CurrentSwap = {
   swapPairName: 'tzBTC/USDT',
@@ -36,31 +38,15 @@ const exchangeReducer = (
 ) => {
   if (!state) return initialState;
   switch (action.type) {
-    case 'CHANGE_PAIR': {
-      const pairSplitted = action.payload.pair.split('/');
+    case 'CHANGE_PAIR':
+      return loop(state, Cmd.action(getPairsInfos(action.payload.pair)));
+    case 'GET_PAIR_INFOS':
+      return loop(state, fetchPairInfosCmd(action.payload.pair));
+    case 'UPDATE_PAIR_INFOS': {
       return {
         ...state,
         currentSwap: {
-          isReversed: false,
-          swap: {
-            from: {
-              token: {
-                token_id: 0,
-                name: pairSplitted[0],
-                address: undefined,
-                decimals: 0,
-                standard: undefined,
-              },
-              amount: 0,
-            },
-            to: {
-              token_id: 0,
-              name: pairSplitted[1],
-              address: undefined,
-              decimals: 0,
-              standard: undefined,
-            },
-          },
+          ...action.payload.currentSwap,
         },
       };
     }

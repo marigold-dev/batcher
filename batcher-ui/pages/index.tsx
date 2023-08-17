@@ -20,6 +20,7 @@ import {
   setTokenAmount,
   setSocketTokenAmount,
   scaleStringAmountDown,
+  getStorageByAddress,
 } from '../utils/utils';
 import {
   connection as socket,
@@ -36,7 +37,13 @@ import About from '../components/About';
 import ChoosePairs from '../components/ChoosePairs';
 import { useSelector, useDispatch } from 'react-redux';
 import { currentSwapSelector, userAddressSelector } from '../src/reducers';
-import { fetchUserBalances } from '../src/actions';
+import { fetchUserBalances, getPairsInfos } from '../src/actions';
+import {
+  bigMapsGetBigMapById,
+  bigMapsGetKeys,
+  contractsGetBigMapByName,
+  contractsGetStorage,
+} from '@tzkt/sdk-api';
 
 const Welcome = () => {
   const tzktUriApi = process.env.REACT_APP_TZKT_URI_API;
@@ -871,6 +878,40 @@ const Welcome = () => {
   useEffect(() => {
     if (userAddress) dispatch(fetchUserBalances());
   }, [userAddress, dispatch]);
+
+  // TODO: improve this
+  useEffect(() => {
+    dispatch(getPairsInfos(currentSwap.swapPairName));
+  }, [dispatch, currentSwap.swapPairName]);
+
+  useEffect(() => {
+    if (batcherContractHash) {
+      // tezos?.contract.getStorage(batcherContractHash).then(b => {
+      //   console.warn(b);
+      // })
+
+      // CA MARCHE
+      //fetch('https://api.ghostnet.tzkt.io/v1/bigmaps/321389/keys').then(r => r.json()).then(console.warn)
+
+      // CA MARCHE
+      // contractsGetBigMapByName(batcherContractHash, 'rates_current').then(
+      //   bm => {
+      //     console.warn(bm);
+      //     if (bm.ptr) bigMapsGetKeys(bm.ptr).then(console.warn);
+      //   }
+      // );
+
+      // tezos?.contract.at(batcherContractHash).then(x => {
+      //   x.storage().then(console.info);
+      // });
+
+      // contractsGetStorage(batcherContractHash, { path: 'valid_tokens' }).then(
+      //   console.warn
+      // );
+
+      getStorageByAddress(batcherContractHash).then(console.info);
+    }
+  }, [batcherContractHash, tezos]);
 
   return (
     <div className="mb-auto">

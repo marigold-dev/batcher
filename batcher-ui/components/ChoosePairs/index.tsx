@@ -4,6 +4,7 @@ import * as RadioGroup from '@radix-ui/react-radio-group';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { useDispatch } from 'react-redux';
 import { changePair } from '../../src/actions';
+import { getPairsInformations } from 'utils/utils';
 
 const ChoosePairs = () => {
   const dispatch = useDispatch();
@@ -63,7 +64,13 @@ const ChoosePairs = () => {
             <Dialog.Close asChild>
               <button
                 className="bg-[white] border-[#7B7B7E] border-2 border-solid text-[black] inline-flex h-[35px] items-center justify-center rounded-[4px] px-[15px] font-custom hover:bg-[#7B7B7E] hover:text-[white]"
-                onClick={() => dispatch(changePair(pair))}>
+                onClick={() => {
+                  getPairsInformations(
+                    pair,
+                    process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+                  ).then(console.warn);
+                  dispatch(changePair(pair));
+                }}>
                 Save
               </button>
             </Dialog.Close>

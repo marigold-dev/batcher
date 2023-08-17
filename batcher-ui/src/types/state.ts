@@ -1,7 +1,7 @@
 import { BatcherStatus, PriceStrategy, Token } from './contract';
 
 export type CurrentSwap = {
-  swapPairName: 'tzBTC/USDT' | 'tzBTC/EURL';
+  swapPairName: string;
   swap: {
     from: {
       token: Token;
