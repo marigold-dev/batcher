@@ -70,6 +70,17 @@ export const batcherSetup = () =>
     type: 'BATCHER_SETUP',
   } as const);
 
+export const getOraclePrice = () =>
+  ({
+    type: 'GET_ORACLE_PRICE',
+  } as const);
+
+export const updateOraclePrice = (oraclePrice: number) =>
+  ({
+    type: 'UPDATE_ORACLE_PRICE',
+    payload: { oraclePrice },
+  } as const);
+
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
   | ReturnType<typeof reverseSwap>
@@ -80,4 +91,6 @@ export type ExchangeActions =
   | ReturnType<typeof updateBatcherStatus>
   | ReturnType<typeof getCurrentBatchNumber>
   | ReturnType<typeof updateBatchNumber>
-  | ReturnType<typeof batcherSetup>;
+  | ReturnType<typeof batcherSetup>
+  | ReturnType<typeof getOraclePrice>
+  | ReturnType<typeof updateOraclePrice>;

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import {
   batcherStatusSelector,
   currentSwapSelector,
+  oraclePriceSelector,
   remainingTimeSelector,
   userBalancesSelector,
 } from '../../src/reducers';
@@ -17,8 +18,6 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
   sellBalance,
   buyTokenName,
   sellTokenName,
-  rate,
-  // status,
   openTime,
   updateAll,
   setUpdateAll,
@@ -29,6 +28,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
 
   const status = useSelector(batcherStatusSelector);
   const remainingTime = useSelector(remainingTimeSelector);
+  const oraclePrice = useSelector(oraclePriceSelector);
 
   return (
     <div className="font-custom">
@@ -102,7 +102,7 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
           <div className="flex flex-row border-[#7B7B7E] border-2 border-solid">
             <p className="p-4">Oracle Price</p>
             <p className="p-4">
-              {rate} {tokenPair}
+              {oraclePrice} {tokenPair}
             </p>
           </div>
         </div>

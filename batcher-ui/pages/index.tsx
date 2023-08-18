@@ -42,6 +42,7 @@ import {
   getPairsInfos,
   batcherSetup,
   getCurrentBatchNumber,
+  getOraclePrice as getOraclePriceAction,
 } from '../src/actions';
 
 const Welcome = () => {
@@ -850,13 +851,7 @@ const Welcome = () => {
     if (userAddress) dispatch(fetchUserBalances());
   }, [userAddress, dispatch]);
 
-  // TODO: improve this
   useEffect(() => {
-    dispatch(getPairsInfos(currentPair));
-  }, [dispatch, currentPair]);
-
-  useEffect(() => {
-    dispatch(getCurrentBatchNumber());
     dispatch(batcherSetup());
   }, [dispatch]);
 
@@ -894,16 +889,12 @@ const Welcome = () => {
         sellBalance={sellBalance}
         buyTokenName={buyToken.name}
         sellTokenName={sellToken.name}
-        rate={rate}
-        status={status}
         openTime={openTime}
         updateAll={updateAll}
         setUpdateAll={setUpdateAll}
         batchNumber={batchNumber}
       />
       <BatcherAction content={content} setContent={setContent} />
-
-      <ChoosePairs />
 
       <div>
         <Row className="batcher-content">

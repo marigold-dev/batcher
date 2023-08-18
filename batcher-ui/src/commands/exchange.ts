@@ -1,7 +1,9 @@
 import { Cmd } from 'redux-loop';
 import {
+  computeOraclePrice,
   getBatcherStatus,
   getCurrentBatchNumber,
+  getCurrentRates,
   getPairsInformations,
 } from '../../utils/utils';
 import {
@@ -9,7 +11,10 @@ import {
   updateBatcherStatus,
   updatePairsInfos,
   getCurrentBatchNumber as getCurrentBatchNumberAction,
+  getPairsInfos,
+  updateOraclePrice,
 } from '../actions';
+import { CurrentSwap } from 'src/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
@@ -51,7 +56,25 @@ const fetchBatcherStatusCmd = (batchNumber: number) =>
   );
 
 const setupBatcherCmd = (pair: string) => {
-  return Cmd.setInterval(Cmd.action(getCurrentBatchNumberAction()), 30000);
+  return Cmd.list([
+    Cmd.action(getCurrentBatchNumberAction()),
+    Cmd.action(getPairsInfos(pair)),
+    Cmd.setInterval(Cmd.action(getCurrentBatchNumberAction()), 50000),
+  ]);
+};
+
+const getOraclePriceCmd = (tokenPair: string, currentSwap: CurrentSwap) => {
+  return Cmd.run(
+    () => {
+      return getCurrentRates(
+        tokenPair,
+        process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+      ).then(rates => computeOraclePrice(rates[0], currentSwap));
+    },
+    {
+      successActionCreator: updateOraclePrice,
+    }
+  );
 };
 
 export {
@@ -59,4 +82,5 @@ export {
   fetchCurrentBatchNumberCmd,
   fetchBatcherStatusCmd,
   setupBatcherCmd,
+  getOraclePriceCmd,
 };

@@ -190,8 +190,6 @@ export type BatcherInfoProps = {
   sellBalance: number;
   buyTokenName: string;
   sellTokenName: string;
-  rate: number;
-  status: string;
   openTime: string | null;
   updateAll: boolean;
   setUpdateAll: Dispatch<SetStateAction<boolean>>;

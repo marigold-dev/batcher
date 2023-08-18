@@ -36,6 +36,9 @@ export const remainingTimeSelector = (state: AppState) =>
 export const batchNumberSelector = (state: AppState) =>
   state.exchange.batchNumber;
 
+  export const oraclePriceSelector = (state: AppState) =>
+    state.exchange.oraclePrice;
+
 export default combineReducers({
   exchange: exchangeReducer as LoopReducer<ExchangeState>,
   wallet: walletReducer as LoopReducer<WalletState>,

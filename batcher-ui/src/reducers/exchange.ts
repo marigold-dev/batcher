@@ -2,6 +2,7 @@ import { Cmd, loop } from 'redux-loop';
 import {
   ExchangeActions,
   getBatcherStatus,
+  getOraclePrice,
   getPairsInfos,
 } from '../../src/actions';
 import {
@@ -14,6 +15,7 @@ import {
   fetchBatcherStatusCmd,
   fetchCurrentBatchNumberCmd,
   fetchPairInfosCmd,
+  getOraclePriceCmd,
   setupBatcherCmd,
 } from '../../src/commands/exchange';
 import { getTimeDifference } from 'utils/utils';
@@ -52,6 +54,7 @@ const initialState: ExchangeState = {
   },
   swapPairName: 'tzBTC/USDT',
   batchNumber: 0,
+  oraclePrice: 0,
 };
 
 const exchangeReducer = (
@@ -67,13 +70,16 @@ const exchangeReducer = (
     case 'GET_PAIR_INFOS':
       return loop(state, fetchPairInfosCmd(action.payload.pair));
     case 'UPDATE_PAIR_INFOS': {
-      return {
-        ...state,
-        swapPairName: action.payload.pair,
-        currentSwap: {
-          ...action.payload.currentSwap,
+      return loop(
+        {
+          ...state,
+          swapPairName: action.payload.pair,
+          currentSwap: {
+            ...action.payload.currentSwap,
+          },
         },
-      };
+        Cmd.action(getOraclePrice())
+      );
     }
     case 'UDPATE_PRICE_STATEGY':
       return {
@@ -109,6 +115,13 @@ const exchangeReducer = (
         { ...state, batchNumber: action.payload.batchNumber },
         Cmd.action(getBatcherStatus())
       );
+    case 'GET_ORACLE_PRICE':
+      return loop(
+        state,
+        getOraclePriceCmd(state.swapPairName, state.currentSwap)
+      );
+    case 'UPDATE_ORACLE_PRICE':
+      return { ...state, oraclePrice: action.payload.oraclePrice };
     default:
       return state;
   }

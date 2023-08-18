@@ -22,6 +22,7 @@ export type ExchangeState = {
   };
   swapPairName: string;
   batchNumber: number;
+  oraclePrice: number;
 };
 
 export type WalletState = {

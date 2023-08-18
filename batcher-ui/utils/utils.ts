@@ -232,12 +232,25 @@ export const getCurrentBatchNumber = async (
   return currentBatchIndices[pair];
 };
 
-export const getBatch = (bigMapId: number, batchNumber: number) =>
+export const getBigMapByIdAndBatchNumber = (
+  bigMapId: number,
+  batchNumber: number
+) =>
   fetch(
     `${process.env.REACT_APP_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
   )
     .then(r => r.json())
     .then(r => r.value);
+
+export const getBigMapByIdAndTokenPair = (
+  bigMapId: number,
+  tokenPair: string
+) =>
+  fetch(`${process.env.REACT_APP_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`)
+    .then(r => r.json())
+    .then(response =>
+      response.filter(r => r.key === tokenPair).map(r => r.value)
+    );
 
 const toBatcherStatus = (rawStatus: string): BatcherStatus => {
   switch (rawStatus) {
@@ -281,7 +294,10 @@ export const getBatcherStatus = async (
   address: string
 ): Promise<{ status: BatcherStatus; at: string; startTime: string | null }> => {
   const storage = await getStorageByAddress(address);
-  const batch = await getBatch(storage['batch_set']['batches'], batchNumber);
+  const batch = await getBigMapByIdAndBatchNumber(
+    storage['batch_set']['batches'],
+    batchNumber
+  );
   const status = Object.keys(batch.status)[0];
   return {
     status: toBatcherStatus(status),
@@ -304,4 +320,24 @@ export const getTimeDifference = (
     return diff < 0 ? 0 : diff;
   }
   return 0;
+};
+
+export const getCurrentRates = async (tokenPair: string, address: string) => {
+  const storage = await getStorageByAddress(address);
+  const ratesCurrent = await getBigMapByIdAndTokenPair(
+    storage['rates_current'],
+    tokenPair
+  );
+
+  return ratesCurrent;
+};
+
+// TODO: make types
+export const computeOraclePrice = (rates: any, currentSwap: CurrentSwap) => {
+  const numerator = rates.rate.p;
+  const denominator = rates.rate.q;
+  const { swap } = currentSwap;
+  const scaledPow = swap.from.token.decimals - swap.to.decimals;
+  const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
+  return scaledRate;
 };

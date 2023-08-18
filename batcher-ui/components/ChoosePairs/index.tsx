@@ -14,7 +14,7 @@ const ChoosePairs = () => {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="text-[black] shadow-[black] inline-flex h-[35px] items-center justify-center rounded-[4px] bg-white px-[15px] font-custom">
+        <button className="text-[black] rounded bg-white px-4 m-2 py-2 font-custom">
           Choose Pairs
         </button>
       </Dialog.Trigger>
@@ -34,7 +34,7 @@ const ChoosePairs = () => {
             aria-label="View density">
             <div className="flex items-center">
               <RadioGroup.Item
-                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[violet] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
+                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[#7B7B7E] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
                 value="tzBTC/USDT"
                 id="r1">
                 <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
@@ -47,7 +47,7 @@ const ChoosePairs = () => {
             </div>
             <div className="flex items-center">
               <RadioGroup.Item
-                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[violet] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
+                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[#7B7B7E] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
                 value="tzBTC/EURL"
                 id="r2">
                 <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />

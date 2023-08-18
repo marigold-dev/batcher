@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-// import { isSome } from 'fp-ts/Option';
 import Image from 'next/image';
 import { connectedWallet, disconnectedWallet } from '../../src/actions';
 import BatcherLogo from '../../img/batcher-logo.png';
 import { useWallet } from '../../contexts/wallet';
+import ChoosePairs from '../ChoosePairs';
 
 export type SiderTheme = 'light' | 'dark';
 
-const NavBar: React.FC = () => {
+const NavBar = () => {
   const dispatch = useDispatch();
 
   const walletCtx = useWallet();
@@ -45,14 +45,21 @@ const NavBar: React.FC = () => {
         <Image alt="Batcher Logo" src={BatcherLogo} height={32} />
         <p>BATCHER</p>
       </div>
-      <button
-        type="button"
-        className="text-[white] bg-[#ff4d4f] rounded py-2 px-4 m-2"
-        onClick={() =>
-          userAddress ? walletCtx.disconnectWallet() : walletCtx.connectWallet()
-        }>
-        {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'}
-      </button>
+
+      <div>
+        <ChoosePairs />
+
+        <button
+          type="button"
+          className="text-[white] bg-[#ff4d4f] rounded py-2 px-4 m-2"
+          onClick={() =>
+            userAddress
+              ? walletCtx.disconnectWallet()
+              : walletCtx.connectWallet()
+          }>
+          {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'}
+        </button>
+      </div>
     </div>
   );
 };
