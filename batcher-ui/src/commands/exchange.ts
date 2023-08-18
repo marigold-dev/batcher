@@ -21,7 +21,7 @@ const fetchPairInfosCmd = (pair: string) =>
     () => {
       return getPairsInformations(
         pair,
-        process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
       );
     },
     {
@@ -33,7 +33,7 @@ const fetchCurrentBatchNumberCmd = (pair: string) =>
   Cmd.run(
     () => {
       return getCurrentBatchNumber(
-        process.env.REACT_APP_BATCHER_CONTRACT_HASH || '',
+        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '',
         pair
       );
     },
@@ -47,7 +47,7 @@ const fetchBatcherStatusCmd = (batchNumber: number) =>
     () => {
       return getBatcherStatus(
         batchNumber,
-        process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
       );
     },
     {
@@ -68,7 +68,7 @@ const getOraclePriceCmd = (tokenPair: string, currentSwap: CurrentSwap) => {
     () => {
       return getCurrentRates(
         tokenPair,
-        process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
       ).then(rates => computeOraclePrice(rates[0], currentSwap));
     },
     {

@@ -2,7 +2,7 @@
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { now } from 'moment';
 export const connection = new HubConnectionBuilder()
-  .withUrl(process.env.REACT_APP_TZKT_URI_API + '/v1/ws')
+  .withUrl(process.env.NEXT_PUBLIC_TZKT_URI_API + '/v1/ws')
   .build();
 
 function isReady() {
@@ -15,13 +15,16 @@ function isNotReady() {
 
 function sleep(ms: number) {
   console.info(`Sleeping (${ms} ms)`, now());
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 const assure_connection = async () => {
   try {
     if (connection.state === HubConnectionState.Disconnected) {
-      console.log('SOCKET CONNECTION:  was disconnected - starting', connection.state);
+      console.log(
+        'SOCKET CONNECTION:  was disconnected - starting',
+        connection.state
+      );
       await connection.start();
     }
     let retries = 10;
@@ -29,7 +32,7 @@ const assure_connection = async () => {
       if (retries > 0) {
         console.log(
           'SOCKET CONNECTION: connection not ready retrying ' + retries,
-          connection.state,
+          connection.state
         );
         retries = retries - 1;
         await sleep(2000);
@@ -43,7 +46,7 @@ const assure_connection = async () => {
 };
 
 export const init_contract = async () => {
-  const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
+  const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
 
   await assure_connection()
     .then(() => {
@@ -56,7 +59,10 @@ export const init_contract = async () => {
       }
     })
     .then(() => {
-      console.log('SOCKET CONNECTION:  connecting operations', connection.state);
+      console.log(
+        'SOCKET CONNECTION:  connecting operations',
+        connection.state
+      );
       if (isReady()) {
         // Subscription to Batcher operations
         connection.invoke('SubscribeToOperations', {

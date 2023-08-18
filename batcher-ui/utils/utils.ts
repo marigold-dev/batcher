@@ -111,7 +111,7 @@ export const getEmptyOrderBook = () => {
 };
 
 export const getNetworkType = () => {
-  const network = process.env.REACT_APP_NETWORK_TARGET;
+  const network = process.env.NEXT_PUBLIC_NETWORK_TARGET;
   if (network?.includes('GHOSTNET')) {
     return types.NetworkType.GHOSTNET;
   } else {
@@ -191,7 +191,7 @@ export const storeBalances = (balances: any[]) =>
 
 export const getStorageByAddress = (address: string): Promise<any> =>
   fetch(
-    `${process.env.REACT_APP_TZKT_URI_API}/v1/contracts/${address}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${address}/storage`
   ).then(r => r.json());
 
 export const getPairsInformations = async (
@@ -232,12 +232,9 @@ export const getCurrentBatchNumber = async (
   return currentBatchIndices[pair];
 };
 
-export const getBigMapByIdAndBatchNumber = (
-  bigMapId: number,
-  batchNumber: number
-) =>
+export const getBigMapByIdAndBatchNumber = (bigMapId: number, batchNumber: number) =>
   fetch(
-    `${process.env.REACT_APP_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
   )
     .then(r => r.json())
     .then(r => r.value);
@@ -246,10 +243,11 @@ export const getBigMapByIdAndTokenPair = (
   bigMapId: number,
   tokenPair: string
 ) =>
-  fetch(`${process.env.REACT_APP_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`)
+  //TODO: type response
+  fetch(`${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`)
     .then(r => r.json())
     .then(response =>
-      response.filter(r => r.key === tokenPair).map(r => r.value)
+      response.filter((r: any) => r.key === tokenPair).map((r: any) => r.value)
     );
 
 const toBatcherStatus = (rawStatus: string): BatcherStatus => {

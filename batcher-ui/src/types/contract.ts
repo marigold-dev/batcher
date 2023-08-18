@@ -12,9 +12,9 @@ export enum PriceStrategy {
 }
 
 // From Smart contract
-type Tolerance = 0 | 1 | 2;
+// type Tolerance = 0 | 1 | 2;
 
-type Side = 0 | 1;
+// type Side = 0 | 1;
 
 // Used to send params on smart contract. Tolerance must be nat (number)
 //TODO: export const priceStrategyToTolerance = (
@@ -34,10 +34,10 @@ type Swap = {
   to: Token;
 };
 
-type SwapReduded = {
-  from: 'tzBTC';
-  to: 'USDT' | 'EURL';
-};
+// type SwapReduded = {
+//   from: 'tzBTC';
+//   to: 'USDT' | 'EURL';
+// };
 
 export type Token = {
   token_id: number;

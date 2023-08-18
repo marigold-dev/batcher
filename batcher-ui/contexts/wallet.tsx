@@ -41,7 +41,7 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
   await wallet.requestPermissions({
     network: {
       type: NetworkType.GHOSTNET,
-      rpcUrl: process.env.REACT_APP_TEZOS_NODE_URI,
+      rpcUrl: process.env.NEXT_PUBLIC_TEZOS_NODE_URI,
     },
   });
 

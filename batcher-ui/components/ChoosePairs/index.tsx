@@ -67,7 +67,7 @@ const ChoosePairs = () => {
                 onClick={() => {
                   getPairsInformations(
                     pair,
-                    process.env.REACT_APP_BATCHER_CONTRACT_HASH || ''
+                    process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
                   ).then(console.warn);
                   dispatch(changePair(pair));
                 }}>

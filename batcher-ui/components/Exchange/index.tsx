@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { SwapOutlined, SettingOutlined } from '@ant-design/icons';
+import { SwapOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
-import { ExchangeProps, PriceType } from '../../utils/types';
+import { ExchangeProps } from '../../utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, getFees, scaleAmountUp } from '../../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
@@ -25,10 +25,9 @@ import * as Form from '@radix-ui/react-form';
 const Exchange: React.FC<ExchangeProps> = ({
   buyToken,
   sellToken,
-  // updateAll,
-  // setUpdateAll,
-  status,
-}: ExchangeProps) => {
+}: // updateAll,
+// setUpdateAll,
+ExchangeProps) => {
   const userAddress = useSelector(userAddressSelector);
   const batcherStatus = useSelector(batcherStatusSelector);
   const priceStategy = useSelector(priceStrategySelector);
@@ -46,7 +45,7 @@ const Exchange: React.FC<ExchangeProps> = ({
 
   //TODO: rewrite with redux-loop
   useEffect(() => {
-    getFees(process.env.REACT_APP_BATCHER_CONTRACT_HASH || '').then(f =>
+    getFees(process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '').then(f =>
       setFees(f)
     );
   }, []);
@@ -76,7 +75,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     if (!userAddress) {
       return;
     }
-    const batcherContractHash = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
+    const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
     if (!batcherContractHash) return;
 
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;

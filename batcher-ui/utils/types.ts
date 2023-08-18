@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { TezosToolkit, WalletContract, MichelsonMap } from '@taquito/taquito';
-import { StringNullableChain } from 'lodash';
+import { MichelsonMap } from '@taquito/taquito';
 
 export enum NetworkType {
   MAINNET = 'mainnet',
@@ -180,7 +179,6 @@ export type ExchangeProps = {
   sellToken: token;
   updateAll: boolean;
   setUpdateAll: (_: boolean) => void;
-  status: string;
 };
 
 export type BatcherInfoProps = {

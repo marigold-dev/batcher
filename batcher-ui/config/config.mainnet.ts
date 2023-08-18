@@ -49,12 +49,12 @@ export default defineConfig({
   favicon:
     'https://uploads-ssl.webflow.com/616ab4741d375d1642c19027/617952f8510cfc45cbf09312_Favicon(3)(1).png',
   define: {
-    REACT_APP_NETWORK_TARGET: 'MAINNET',
-    REACT_APP_BATCHER_URI: 'https://batcher.marigold.dev',
-    REACT_APP_PATH_TO_BATCHER_LOGO: BATCHER_LOGO,
-    REACT_APP_TEZOS_NODE_URI: 'https://mainnet.tezos.marigold.dev',
-    REACT_APP_TZKT_URI_API: 'https://api.tzkt.io',
-    REACT_APP_BATCHER_CONTRACT_HASH: 'KT1CoTu4CXcWoVk69Ukbgwx2iDK7ZA4FMSpJ',
+    NEXT_PUBLIC_NETWORK_TARGET: 'MAINNET',
+    NEXT_PUBLIC_BATCHER_URI: 'https://batcher.marigold.dev',
+    NEXT_PUBLIC_PATH_TO_BATCHER_LOGO: BATCHER_LOGO,
+    NEXT_PUBLIC_TEZOS_NODE_URI: 'https://mainnet.tezos.marigold.dev',
+    NEXT_PUBLIC_TZKT_URI_API: 'https://api.tzkt.io',
+    NEXT_PUBLIC_BATCHER_CONTRACT_HASH: 'KT1CoTu4CXcWoVk69Ukbgwx2iDK7ZA4FMSpJ',
     GA_TRACKING_ID: 'G-VS1FBNXJ7N',
   },
   metas: [

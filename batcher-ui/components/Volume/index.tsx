@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Space, Typography, Col, Row, Table } from 'antd';
+import React from 'react';
+import { Space, Col, Row, Table } from 'antd';
 // import '../Exchange/index.less';
 // import './index.less';
 // import '../../src/global.less';
@@ -15,13 +15,11 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
       sellPlusVolume: volumes.sell_plus_volume,
     },
   ];
-  const buyVolumes = [
-    {
-      buyMinusVolume: volumes.buy_minus_volume,
-      buyExactVolume: volumes.buy_exact_volume,
-      buyPlusVolume: volumes.buy_plus_volume,
-    },
-  ];
+  // const buyVolumes = {
+  //   buyMinusVolume: volumes.buy_minus_volume,
+  //   buyExactVolume: volumes.buy_exact_volume,
+  //   buyPlusVolume: volumes.buy_plus_volume,
+  // };
 
   const listOfBuyVolumesColumns = [
     {
@@ -58,7 +56,7 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
       dataIndex: 'sellPlusVolume',
     },
   ];
-
+  //TODO: solve type issue with buyVolumes[b.key]
   return (
     <div>
       <Col className="base-content br-t br-b br-l br-r">
@@ -72,16 +70,16 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
           <Row className="text-center">
             <table>
               <thead>
-                {listOfBuyVolumesColumns.map((b) => (
-                  <td>{b.title}</td>
+                {listOfBuyVolumesColumns.map((b, i) => (
+                  <td key={i}>{b.title}</td>
                 ))}
               </thead>
               <tbody>
-                {listOfBuyVolumesColumns.map((b) => {
-                  console.log("buyVolumes[b.key]", buyVolumes[b.key]);
-                  console.log("buyVolumes", buyVolumes);
-                  return <td>{buyVolumes[b.key]}</td>;
-                })}
+                {/* {listOfBuyVolumesColumns.map((b, i) => {
+                  console.log('buyVolumes[b.key]', buyVolumes[b.key]);
+                  console.log('buyVolumes', buyVolumes);
+                  return <td key={i}>{buyVolumes[b.key]}</td>;
+                })} */}
               </tbody>
             </table>
             {/* <Table

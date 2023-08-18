@@ -4,16 +4,29 @@ WORKDIR /app
 
 COPY ./package.json ./
 
+ENV ENV ghostnet
+
 RUN npm install
 
 COPY ./tsconfig.json ./jsconfig.json ./
+COPY ./components ./components
+COPY ./pages ./pages
+COPY ./contexts ./contexts
+COPY ./utils ./utils
 COPY ./src ./src
+COPY ./styles ./styles
 COPY ./public ./public
 COPY ./img ./img
 COPY ./config ./config
 
-RUN npm run build:ghostnet-ci
+COPY .env.dev.sample .env.production
 
-FROM nginx:latest
+RUN npm run build:next:ghostnet
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+
+CMD ["npm", "run", "start:next:ghostnet"]
+
+# FROM nginx:latest
+
+# COPY --from=builder /app/dist /usr/share/nginx/html

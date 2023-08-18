@@ -6,7 +6,8 @@ import proxy from './proxy';
 
 const { REACT_APP_ENV } = process.env;
 
-const BATCHER_LOGO = 'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png';
+const BATCHER_LOGO =
+  'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png';
 
 export default defineConfig({
   hash: true,
@@ -56,7 +57,6 @@ export default defineConfig({
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1UPMR3WkoFRJYmBBbvv4Z9bBhKYuhCx7Cq',
     GA_TRACKING_ID: 'G-2K59PEELC8',
-
   },
   metas: [
     {

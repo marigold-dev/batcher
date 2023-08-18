@@ -16,8 +16,8 @@ export const TezosToolkitProvider = ({
 }) => {
   const [tezos, setConnection] = useState<TezosToolkit>();
   useEffect(() => {
-    if (process.env.REACT_APP_TEZOS_NODE_URI) {
-      setConnection(new TezosToolkit(process.env.REACT_APP_TEZOS_NODE_URI));
+    if (process.env.NEXT_PUBLIC_TEZOS_NODE_URI) {
+      setConnection(new TezosToolkit(process.env.NEXT_PUBLIC_TEZOS_NODE_URI));
     }
   }, []);
 

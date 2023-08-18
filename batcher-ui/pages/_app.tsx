@@ -10,13 +10,14 @@ import NavBar from '../components/NavBar';
 import ReactGA from 'react-ga4';
 import * as api from '@tzkt/sdk-api';
 
-process.env.REACT_APP_GA_TRACKING_ID &&
-  ReactGA.initialize(process.env.REACT_APP_GA_TRACKING_ID);
+process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
+  ReactGA.initialize(process.env.NEXT_PUBLIC_GA_TRACKING_ID);
 
 const App = ({ Component }: AppProps) => {
   // Override TZKT base url if we are in ghostnet
   useEffect(() => {
-    if (process.env.REACT_APP_NETWORK_TARGET === 'GHOSTNET') {
+    console.warn(process.env.NEXT_PUBLIC_NETWORK_TARGET);
+    if (process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET') {
       console.log('GHOSTNET !!');
       api.defaults.baseUrl = 'https://api.ghostnet.tzkt.io/';
     }

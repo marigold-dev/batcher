@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Button, Space, Typography, Col, message, Table } from "antd";
+import React, { useContext } from 'react';
+import { Button, Space, Col, message } from 'antd';
 import { HoldingsProps } from '../../utils/types';
-import { zeroHoldings } from '../../utils/utils';
-import { TezosToolkitContext } from "../../contexts/tezos-toolkit";
+import { TezosToolkitContext } from '../../contexts/tezos-toolkit';
 const Holdings: React.FC<HoldingsProps> = ({
   openHoldings,
   clearedHoldings,
@@ -14,7 +13,7 @@ const Holdings: React.FC<HoldingsProps> = ({
 }: HoldingsProps) => {
   const { tezos } = useContext(TezosToolkitContext);
 
-  const contractAddress = process.env.REACT_APP_BATCHER_CONTRACT_HASH;
+  const contractAddress = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
 
   const triggerUpdate = () => {
     setTimeout(function () {
@@ -23,28 +22,28 @@ const Holdings: React.FC<HoldingsProps> = ({
     }, 5000);
   };
 
-  const generateHoldings = (dict: Map<string, number>) => {
-    const data: { token: string; holding: number }[] = [];
+  // const generateHoldings = (dict: Map<string, number>) => {
+  //   const data: { token: string; holding: number }[] = [];
 
-    for (const key of dict) {
-      data.push({
-        token: key[0],
-        holding: key[1],
-      });
-    }
-    return (
-      <>
-        {data.map(h => (
-          <React.Fragment key={h.token}>
-            <Typography>
-              {' '}
-              {h.holding} {h.token} |{' '}
-            </Typography>
-          </React.Fragment>
-        ))}
-      </>
-    );
-  };
+  //   for (const key of dict) {
+  //     data.push({
+  //       token: key[0],
+  //       holding: key[1],
+  //     });
+  //   }
+  //   return (
+  //     <>
+  //       {data.map(h => (
+  //         <React.Fragment key={h.token}>
+  //           <Typography>
+  //             {' '}
+  //             {h.holding} {h.token} |{' '}
+  //           </Typography>
+  //         </React.Fragment>
+  //       ))}
+  //     </>
+  //   );
+  // };
 
   const redeemHoldings = async (): Promise<void> => {
     try {
