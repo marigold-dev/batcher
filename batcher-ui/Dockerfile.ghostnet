@@ -25,10 +25,7 @@ COPY ./tailwind.config.js ./tailwind.config.js
 
 RUN npm run build:next:ghostnet
 
-EXPOSE 3000
+EXPOSE 80
 
 CMD ["npm", "run", "start:next:ghostnet"]
 
-# FROM nginx:latest
-
-# COPY --from=builder /app /usr/share/nginx/html
