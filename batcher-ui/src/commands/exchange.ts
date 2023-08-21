@@ -15,6 +15,7 @@ import {
   getPairsInfos,
   updateOraclePrice,
   updateVolumes,
+  batcherTimerId,
 } from '../actions';
 import { CurrentSwap } from 'src/types';
 
@@ -61,7 +62,9 @@ const setupBatcherCmd = (pair: string) => {
   return Cmd.list([
     Cmd.action(getCurrentBatchNumberAction()),
     Cmd.action(getPairsInfos(pair)),
-    Cmd.setInterval(Cmd.action(getCurrentBatchNumberAction()), 50000),
+    Cmd.setInterval(Cmd.action(getCurrentBatchNumberAction()), 50000, {
+      scheduledActionCreator: timerId => batcherTimerId(timerId),
+    }),
   ]);
 };
 

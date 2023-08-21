@@ -25,6 +25,7 @@ export type ExchangeState = {
     startTime: string | null;
     remainingTime: number;
   };
+  batcherTimerId: number;
   swapPairName: string;
   batchNumber: number;
   oraclePrice: number;

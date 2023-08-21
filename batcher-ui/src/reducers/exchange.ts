@@ -48,6 +48,7 @@ const initialSwap: CurrentSwap = {
 const initialState: ExchangeState = {
   priceStrategy: PriceStrategy.EXACT,
   currentSwap: initialSwap,
+  batcherTimerId: 0,
   batcherStatus: {
     status: BatcherStatus.NONE,
     at: null,
@@ -77,6 +78,10 @@ const exchangeReducer = (
   switch (action.type) {
     case 'BATCHER_SETUP':
       return loop(state, setupBatcherCmd(state.swapPairName));
+    case 'BATCHER_TIMER_ID':
+      return { ...state, batcherTimerId: action.payload.timerId };
+    case 'BATCHER_UNSETUP':
+      return loop(state, Cmd.clearInterval(state.batcherTimerId));
     case 'CHANGE_PAIR':
       return loop(state, Cmd.action(getPairsInfos(action.payload.pair)));
     case 'GET_PAIR_INFOS':

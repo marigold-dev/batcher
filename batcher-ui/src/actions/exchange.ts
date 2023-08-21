@@ -70,6 +70,17 @@ export const batcherSetup = () =>
     type: 'BATCHER_SETUP',
   } as const);
 
+export const batcherTimerId = (timerId: number) =>
+  ({
+    type: 'BATCHER_TIMER_ID',
+    payload: { timerId },
+  } as const);
+
+export const batcherUnsetup = () =>
+  ({
+    type: 'BATCHER_UNSETUP',
+  } as const);
+
 export const getOraclePrice = () =>
   ({
     type: 'GET_ORACLE_PRICE',
@@ -92,18 +103,20 @@ export const updateVolumes = (volumes: unknown) =>
     payload: { volumes },
   } as const);
 
-  export type ExchangeActions =
-    | ReturnType<typeof updatePriceStrategy>
-    | ReturnType<typeof reverseSwap>
-    | ReturnType<typeof changePair>
-    | ReturnType<typeof getPairsInfos>
-    | ReturnType<typeof updatePairsInfos>
-    | ReturnType<typeof getBatcherStatus>
-    | ReturnType<typeof updateBatcherStatus>
-    | ReturnType<typeof getCurrentBatchNumber>
-    | ReturnType<typeof updateBatchNumber>
-    | ReturnType<typeof batcherSetup>
-    | ReturnType<typeof getOraclePrice>
-    | ReturnType<typeof updateOraclePrice>
-    | ReturnType<typeof getVolumes>
-    | ReturnType<typeof updateVolumes>;
+export type ExchangeActions =
+  | ReturnType<typeof updatePriceStrategy>
+  | ReturnType<typeof reverseSwap>
+  | ReturnType<typeof changePair>
+  | ReturnType<typeof getPairsInfos>
+  | ReturnType<typeof updatePairsInfos>
+  | ReturnType<typeof getBatcherStatus>
+  | ReturnType<typeof updateBatcherStatus>
+  | ReturnType<typeof getCurrentBatchNumber>
+  | ReturnType<typeof updateBatchNumber>
+  | ReturnType<typeof batcherSetup>
+  | ReturnType<typeof batcherUnsetup>
+  | ReturnType<typeof batcherTimerId>
+  | ReturnType<typeof getOraclePrice>
+  | ReturnType<typeof updateOraclePrice>
+  | ReturnType<typeof getVolumes>
+  | ReturnType<typeof updateVolumes>;

@@ -171,29 +171,6 @@ export type OrderBookProps = {
   sellToken: token;
 };
 
-export type ExchangeProps = {
-  userAddress: string | undefined;
-  buyBalance: number;
-  sellBalance: number;
-  buyToken: token;
-  sellToken: token;
-  updateAll: boolean;
-  setUpdateAll: (_: boolean) => void;
-};
-
-export type BatcherInfoProps = {
-  userAddress: string | undefined;
-  tokenPair: string;
-  buyBalance: number;
-  sellBalance: number;
-  buyTokenName: string;
-  sellTokenName: string;
-  openTime: string | null;
-  updateAll: boolean;
-  setUpdateAll: Dispatch<SetStateAction<boolean>>;
-  batchNumber: number;
-};
-
 export type BatcherActionProps = {
   content: ContentType;
   setContent: Dispatch<SetStateAction<ContentType>>;

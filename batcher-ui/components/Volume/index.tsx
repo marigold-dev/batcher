@@ -1,5 +1,4 @@
 import React from 'react';
-import { Space, Col, Row, Table } from 'antd';
 import { PriceStrategy } from 'src/types';
 import { volumesSelector } from 'src/reducers';
 import { useSelector } from 'react-redux';
@@ -10,19 +9,6 @@ import { useSelector } from 'react-redux';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);
-  console.log('🚀 ~ file: index.tsx:13 ~ Volume ~ sell, buy:', sell, buy);
-  // const sellVolumes = [
-  //   {
-  //     sellMinusVolume: volumes.sell_minus_volume,
-  //     sellExactVolume: volumes.sell_exact_volume,
-  //     sellPlusVolume: volumes.sell_plus_volume,
-  //   },
-  // ];
-  // const buyVolumes = {
-  //   buyMinusVolume: volumes.buy_minus_volume,
-  //   buyExactVolume: volumes.buy_exact_volume,
-  //   buyPlusVolume: volumes.buy_plus_volume,
-  // };
 
   const listOfBuyVolumesColumns = [
     {

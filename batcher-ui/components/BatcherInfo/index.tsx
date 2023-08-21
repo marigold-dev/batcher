@@ -1,30 +1,24 @@
 import React from 'react';
-import { BatcherInfoProps } from '../../utils/types';
 import BatcherStepper from '../BatcherStepper';
 import { useSelector } from 'react-redux';
 import {
+  batchNumberSelector,
   batcherStatusSelector,
+  currentPairSelector,
   currentSwapSelector,
   oraclePriceSelector,
   remainingTimeSelector,
+  userAddressSelector,
   userBalancesSelector,
 } from '../../src/reducers';
 import { BatcherStatus } from '../../src/types';
 
-const BatcherInfo: React.FC<BatcherInfoProps> = ({
-  userAddress,
-  tokenPair,
-  buyBalance,
-  sellBalance,
-  buyTokenName,
-  sellTokenName,
-  openTime,
-  updateAll,
-  setUpdateAll,
-  batchNumber,
-}: BatcherInfoProps) => {
+const BatcherInfo = () => {
   const userBalances = useSelector(userBalancesSelector);
   const currentSwap = useSelector(currentSwapSelector);
+  const tokenPair = useSelector(currentPairSelector);
+  const batchNumber = useSelector(batchNumberSelector);
+  const userAddress = useSelector(userAddressSelector);
 
   const status = useSelector(batcherStatusSelector);
   const remainingTime = useSelector(remainingTimeSelector);
@@ -43,18 +37,18 @@ const BatcherInfo: React.FC<BatcherInfoProps> = ({
             )}
             {status === BatcherStatus.OPEN ? (
               <div className="p-5 border-solid border-2 border-[#7B7B7E]">
-                <p className="p-4">{remainingTime + ' min'}</p>
+                <p>{`Remaining time : ${remainingTime} min`}</p>
               </div>
             ) : (
               <div />
             )}
             {batchNumber > 0 ? (
               <div className="p-5 border-solid border-2 border-[#7B7B7E]">
-                <p className="p-4">
+                <p>
                   {`${
                     status === BatcherStatus.CLEARED
                       ? 'LastBatch'
-                      : 'Current batch'
+                      : 'Current batch : '
                   } ${batchNumber}`}
                 </p>
               </div>

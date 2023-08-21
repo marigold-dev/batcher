@@ -3,22 +3,9 @@ import Exchange from '../components/Exchange';
 import Volume from '../components/Volume';
 import BatcherInfo from '../components/BatcherInfo';
 import BatcherAction from '../components/BatcherAction';
-import {
-  ContentType,
-  token,
-  // BatcherStatus,
-  Volumes,
-  // swap,
-  // tokens,
-} from '../utils/types';
+import { ContentType } from '../utils/types';
 import { Col, Row } from 'antd';
 
-import {
-  getEmptyVolumes,
-  // setTokenAmount,
-  // setSocketTokenAmount,
-  // scaleStringAmountDownToString,
-} from '../utils/utils';
 // import {
 //   connection as socket,
 //   init_contract,
@@ -26,174 +13,31 @@ import {
 // } from '../utils/webSocketUtils';
 // import { scaleAmountUp } from '../utils/utils';
 import Holdings from '../components/Holdings';
-import { useTezosToolkit } from '../contexts/tezos-toolkit';
 import About from '../components/About';
 import { useSelector, useDispatch } from 'react-redux';
 import { userAddressSelector } from '../src/reducers';
-import { fetchUserBalances, batcherSetup } from '../src/actions';
+import {
+  fetchUserBalances,
+  batcherSetup,
+  batcherUnsetup,
+} from '../src/actions';
 
 const Welcome = () => {
-  // const tzktUriApi = process.env.NEXT_PUBLIC_TZKT_URI_API;
-  const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
-
   const [content, setContent] = useState<ContentType>(ContentType.SWAP);
-  // const [ tokenMap, setTokenMap] = useState<Map<string, swap>>(new Map());
-  // const [ ratesBigMapId , setRatesBigMapId] = useState<number>(0);
-  // const [userBatchOrderTypesBigMapId, setUserBatchOrderTypesBigMapId] =
-  // useState<number>(0);
-  // const [batchesBigMapId, setBatchesBigMapId] = useState<number>(0);
-  // const chain_api_url = tzktUriApi;
-
-  // const [bigMapsByIdUri] = useState<string>(
-  //   '' + chain_api_url + '/v1/bigmaps/'
-  // );
 
   const userAddress = useSelector(userAddressSelector);
 
   const dispatch = useDispatch();
 
-  const { tezos } = useTezosToolkit();
-
-  const [buyToken /* setBuyToken */] = useState<token>({
-    token_id: 0,
-    name: 'tzBTC',
-    address: undefined,
-    decimals: 8,
-    standard: 'FA1.2 token',
-  });
-  const [sellToken /* setSellToken */] = useState<token>({
-    token_id: 0,
-    name: 'USDT',
-    address: undefined,
-    decimals: 6,
-    standard: 'FA2 token',
-  });
-  const [tokenPair /* setTokenPair */] = useState<string>(
-    buyToken.name + '/' + sellToken.name
-  );
-  const [buyBalance /* setBuyBalance */] = useState(0);
-  const [sellBalance /* setSellBalance */] = useState(0);
-
-  // const [rate, setRate] = useState(0);
-  // const [status, setStatus] = useState<string>(BatcherStatus.NONE);
-  const [openTime /* setOpenTime */] = useState<string | null>(null);
   const [clearedHoldings, setClearedHoldings] = useState<Map<string, number>>(
     new Map<string, number>()
   );
   const [openHoldings, setOpenHoldings] = useState<Map<string, number>>(
     new Map<string, number>()
   );
-  const [volumes /* setVolumes */] = useState<Volumes>(getEmptyVolumes());
   const [updateAll, setUpdateAll] = useState<boolean>(false);
-  const [batchNumber /* setBatchNumber */] = useState<number>(0);
   const [hasClearedHoldings /* setHasClearedHoldings */] =
     useState<boolean>(false);
-
-  // TODO: typing contract storage
-  // const pullStorage = async () => {
-  //   if (batcherContractHash)
-  //     return tezos?.contract.getStorage(batcherContractHash);
-  //   return Promise.reject('No contract address');
-  // };
-  // const scaleVolumeDown = (vols: Volumes) => {
-  //   return {
-  //     buy_minus_volume: scaleStringAmountDownToString(
-  //       vols.buy_minus_volume,
-  //       buyToken.decimals
-  //     ),
-  //     buy_exact_volume: scaleStringAmountDownToString(
-  //       vols.buy_exact_volume,
-  //       buyToken.decimals
-  //     ),
-  //     buy_plus_volume: scaleStringAmountDownToString(
-  //       vols.buy_plus_volume,
-  //       buyToken.decimals
-  //     ),
-  //     sell_minus_volume: scaleStringAmountDownToString(
-  //       vols.sell_minus_volume,
-  //       sellToken.decimals
-  //     ),
-  //     sell_exact_volume: scaleStringAmountDownToString(
-  //       vols.sell_exact_volume,
-  //       sellToken.decimals
-  //     ),
-  //     sell_plus_volume: scaleStringAmountDownToString(
-  //       vols.sell_plus_volume,
-  //       sellToken.decimals
-  //     ),
-  //   };
-  // };
-
-  // const setStatusFromBatch = (sts: string, jsonData: any) => {
-  //   try {
-  //     if (sts === BatcherStatus.OPEN) {
-  //       setOpenTime(jsonData.value.status.open);
-  //       setStatus(BatcherStatus.OPEN);
-  //     } else if (sts === BatcherStatus.CLOSED) {
-  //       setStatus(BatcherStatus.CLOSED);
-  //     } else if (sts === BatcherStatus.CLEARED) {
-  //       setStatus(BatcherStatus.CLEARED);
-  //     } else {
-  //       console.error('Unable to set status', sts);
-  //     }
-  //   } catch (error) {
-  //     console.error('Unable to set status', error);
-  //   }
-  // };
-  // const getCurrentVolume = async (storage: any) => {
-  //   try {
-  //     const currentBatchIndices = storage.batch_set.current_batch_indices;
-  //     const index_map = new Map(
-  //       Object.keys(currentBatchIndices).map(k => [
-  //         k,
-  //         currentBatchIndices[k] as number,
-  //       ])
-  //     );
-  //     const currentBatchNumber = index_map.get(tokenPair) || 0; // TODO: default to 0 ?
-  //     console.log('current_batch_number', currentBatchNumber);
-
-  //     if (currentBatchNumber === 0) {
-  //       setBatchNumber(0);
-  //       setStatus(BatcherStatus.NONE);
-  //       const vols: Volumes = getEmptyVolumes();
-  //       setVolumes(vols);
-  //     } else {
-  //       setBatchNumber(currentBatchNumber);
-  //       const currentBatchURI =
-  //         bigMapsByIdUri + batchesBigMapId + '/keys/' + currentBatchNumber;
-  //       console.log('######Volumes - URI', currentBatchURI);
-  //       const data = await fetch(currentBatchURI, {
-  //         method: 'GET',
-  //       });
-  //       if (data.ok && data.status !== 204) {
-  //         const jsonData = await data.json();
-  //         const sts = Object.keys(jsonData.value.status)[0];
-  //         setStatusFromBatch(sts, jsonData);
-  //         const scaledVolumes = scaleVolumeDown(jsonData.value.volumes);
-  //         setVolumes(scaledVolumes);
-  //       } else {
-  //         console.info('Response from current batch api was no ok', data);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Unable to get current volume', error);
-  //   }
-  // };
-
-  // const updateSwapMap = async (storage: any) => {
-  //   try {
-  //     const valid_swaps = storage.valid_swaps;
-  //     console.info('Valid Swaps', valid_swaps);
-  //     const swap_map = new Map(
-  //       Object.keys(valid_swaps)
-  //         .filter(k => !valid_swaps[k].is_disabled_for_desposits)
-  //         .map(k => [k, valid_swaps[k]])
-  //     );
-  //     setTokenMap(swap_map);
-  //   } catch (error) {
-  //     console.error('Unable to update swap map', error);
-  //   }
-  // };
 
   // const getOriginalDepositAmounts = (
   //   side: any,
@@ -533,10 +377,6 @@ const Welcome = () => {
   //   setHasClearedHoldings(sum_of_holdings > 0);
   // };
 
-  // const getBatches = async (storage: any) => {
-  //   await getCurrentVolume(storage);
-  // };
-
   // const updateTokenBalances = (tokenBalances: any) => {
   //   try {
   //     console.log('tokenbalances', tokenBalances);
@@ -555,94 +395,12 @@ const Welcome = () => {
   //   }
   // };
 
-  // const updateRate = (bigmaps: any) => {
-  //   try {
-  //     console.log('bigmaps', bigmaps);
-  //     const numerator = bigmaps.content.value.rate.p;
-  //     const denominator = bigmaps.content.value.rate.q;
-
-  //     const scaledPow = buyToken.decimals - sellToken.decimals;
-  //     const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
-  //     setRate(scaledRate);
-  //   } catch (error) {
-  //     console.error('Unable to update rate', error);
-  //   }
-  // };
-
-  // const updateTokenDetails = async (storage: any) => {
-  //   try {
-  //     setTokenPair(buyToken.name + '/' + sellToken.name);
-
-  //     const valid_tokens = storage.valid_tokens;
-  //     const token_map = new Map(
-  //       Object.keys(valid_tokens).map(k => [k, valid_tokens[k]])
-  //     );
-  //     const buyTokenData = token_map.get(buyToken.name);
-  //     console.log('buyTokenAddress', buyToken.address);
-  //     const sellTokenData = token_map.get(sellToken.name);
-  //     console.log('sellTokenAddress', sellToken.address);
-
-  //     const bToken: token = {
-  //       token_id: buyTokenData.token_id,
-  //       name: buyTokenData.name,
-  //       address: buyTokenData.address,
-  //       decimals: buyTokenData.decimals,
-  //       standard: buyTokenData.standard,
-  //     };
-  //     const sToken: token = {
-  //       token_id: sellTokenData.token_id,
-  //       name: sellTokenData.name,
-  //       address: sellTokenData.address,
-  //       decimals: sellTokenData.decimals,
-  //       standard: sellTokenData.standard,
-  //     };
-
-  //     if (buyToken != bToken) setBuyToken(bToken);
-
-  //     if (sellToken != sToken) setSellToken(sToken);
-  //   } catch (error) {
-  //     console.error('Unable to update token details', error);
-  //   }
-  // };
-
-  // const setOraclePrice = async (rates: any[]) => {
-  //   if (rates && rates.length != 0) {
-  //     console.info('rates', rates);
-  //     console.info('tokenPair', tokenPair);
-  //     const rt = rates.filter(r => r.key == tokenPair)[0].value;
-  //     const numerator = rt.rate.p;
-  //     const denominator = rt.rate.q;
-
-  //     const scaledPow = buyToken.decimals - sellToken.decimals;
-  //     const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
-  //     setRate(scaledRate);
-  //   }
-  // };
-
-  // const getOraclePrice = async () => {
-  //   //TODO: find a way to get pretty storage
-  //   // const storage = await tezos?.contract.getStorage(batcherContractHash);
-  //   // const rates = storage?.rates_current;
-  //   // console.log('rates ', rates);
-  //   // setOraclePrice(rates?.valueType);
-  // };
-
   const renderRightContent = (content: ContentType) => {
     switch (content) {
       case ContentType.SWAP:
-        return (
-          <Exchange
-            userAddress={userAddress}
-            buyBalance={buyBalance}
-            sellBalance={sellBalance}
-            buyToken={buyToken}
-            sellToken={sellToken}
-            updateAll={updateAll}
-            setUpdateAll={setUpdateAll}
-          />
-        );
+        return <Exchange />;
       case ContentType.VOLUME:
-        return <Volume volumes={volumes} />;
+        return <Volume />;
       case ContentType.REDEEM_HOLDING:
         return (
           <Holdings
@@ -659,104 +417,9 @@ const Welcome = () => {
       case ContentType.ABOUT:
         return <About />;
       default:
-        return (
-          <Exchange
-            userAddress={userAddress}
-            buyBalance={buyBalance}
-            sellBalance={sellBalance}
-            buyToken={buyToken}
-            sellToken={sellToken}
-            updateAll={updateAll}
-            setUpdateAll={setUpdateAll}
-          />
-        );
+        return <Exchange />;
     }
   };
-
-  // const updateBigMapIds = (storage: any) => {
-  //   console.log(storage);
-  //   try {
-  //     setRatesBigMapId(storage.rates_current);
-  //     setUserBatchOrderTypesBigMapId(storage.user_batch_ordertypes);
-  //     setBatchesBigMapId(storage.batch_set.batches);
-  //   } catch (error) {
-  //     console.error('Unable to update bigmap ids', error);
-  //   }
-  // };
-
-  // const getTokenBalance = async () => {
-  //   try {
-  //     let usrAddr = userAddress;
-  //     if (userAddress === null) {
-  //       if (userAddress !== null) {
-  //         usrAddr = userAddress;
-  //       }
-  //     }
-
-  //     if (usrAddr === null) {
-  //       setBuyBalance(0);
-  //       setSellBalance(0);
-  //     } else {
-  //       console.log('getTokenBalance-userAddress', usrAddr);
-  //       const balanceURI =
-  //         tzktUriApi + '/v1/tokens/balances?account=' + usrAddr;
-  //       console.log('getTokenBalance-balanceURI', balanceURI);
-
-  //       const buyTokenData = await fetch(
-  //         balanceURI + '&token.contract=' + buyToken.address,
-  //         {
-  //           method: 'GET',
-  //         }
-  //       );
-  //       const sellTokenData = await fetch(
-  //         balanceURI + '&token.contract=' + sellToken.address,
-  //         {
-  //           method: 'GET',
-  //         }
-  //       );
-
-  //       try {
-  //         await buyTokenData.json().then(balance => {
-  //           if (!buyToken.address)
-  //             throw new Error('address for buyToken is undefined');
-  //           if (Array.isArray(balance)) {
-  //             setTokenAmount(
-  //               balance,
-  //               buyBalance,
-  //               buyToken.address,
-  //               buyToken.decimals,
-  //               setBuyBalance
-  //             );
-  //           }
-  //         });
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //       await sellTokenData.json().then(balance => {
-  //         if (!sellToken.address)
-  //           throw new Error('address for sellToken is undefined');
-  //         if (Array.isArray(balance)) {
-  //           setTokenAmount(
-  //             balance,
-  //             sellBalance,
-  //             sellToken.address,
-  //             sellToken.decimals,
-  //             setSellBalance
-  //           );
-  //         }
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error('getTokenBalance-error', error);
-  //     if (!userAddress) {
-  //       setBuyBalance(0);
-  //       setSellBalance(0);
-  //     } else {
-  //       setBuyBalance(-1);
-  //       setSellBalance(-1);
-  //     }
-  //   }
-  // };
 
   // const updateFromStorage = async (storage: any) => {
   //   updateBigMapIds(storage);
@@ -808,11 +471,6 @@ const Welcome = () => {
   //   });
   // };
 
-  // const refreshStorage = async () => {
-  //   console.log('🚀 ~ file: index.tsx:805 ~ refreshStorage ~ refreshStorage:', refreshStorage);
-  //   pullStorage().then((s) => updateFromStorage(s));
-  // };
-
   // useEffect(() => {
   //   console.log('connection', connection);
   //   refreshStorage().then((r) => console.log(r));
@@ -820,63 +478,20 @@ const Welcome = () => {
   //   handleWebsocket();
   // }, [connection]);
 
-  // useEffect(() => {
-  //   refreshStorage().then((r) => console.log(r));
-  // }, [buyToken.address, sellToken.address, updateAll]);
-
-  // useEffect(() => {
-  //   console.log('User address changed - refreshing from storage');
-  //   refreshStorage().then((r) => console.log(r));
-  //   init_user(userAddress).then((r) => console.log(r));
-  // }, [userAddress]);
-
   useEffect(() => {
     if (userAddress) dispatch(fetchUserBalances());
   }, [userAddress, dispatch]);
 
   useEffect(() => {
     dispatch(batcherSetup());
+    return () => {
+      dispatch(batcherUnsetup());
+    };
   }, [dispatch]);
-
-  useEffect(() => {
-    if (batcherContractHash) {
-      // tezos?.contract.getStorage(batcherContractHash).then(b => {
-      //   console.warn(b);
-      // })
-      // CA MARCHE
-      //fetch('https://api.ghostnet.tzkt.io/v1/bigmaps/321389/keys').then(r => r.json()).then(console.warn)
-      // CA MARCHE
-      // contractsGetBigMapByName(batcherContractHash, 'rates_current').then(
-      //   bm => {
-      //     console.warn(bm);
-      //     if (bm.ptr) bigMapsGetKeys(bm.ptr).then(console.warn);
-      //   }
-      // );
-      // tezos?.contract.at(batcherContractHash).then(x => {
-      //   x.storage().then(console.info);
-      // });
-      // contractsGetStorage(batcherContractHash, { path: 'valid_tokens' }).then(
-      //   console.warn
-      // );
-      // getStorageByAddress(batcherContractHash).then(console.info);
-      // getBatcherStatus(1516, batcherContractHash);
-    }
-  }, [batcherContractHash, tezos]);
 
   return (
     <div className="mb-auto">
-      <BatcherInfo
-        userAddress={userAddress}
-        tokenPair={tokenPair}
-        buyBalance={buyBalance}
-        sellBalance={sellBalance}
-        buyTokenName={buyToken.name}
-        sellTokenName={sellToken.name}
-        openTime={openTime}
-        updateAll={updateAll}
-        setUpdateAll={setUpdateAll}
-        batchNumber={batchNumber}
-      />
+      <BatcherInfo />
       <BatcherAction content={content} setContent={setContent} />
 
       <div>

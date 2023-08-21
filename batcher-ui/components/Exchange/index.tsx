@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { SwapOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
-import { ExchangeProps } from '../../utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, getFees, scaleAmountUp } from '../../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
@@ -22,12 +21,7 @@ import { useDispatch } from 'react-redux';
 import { reverseSwap, updatePriceStrategy } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
 
-const Exchange: React.FC<ExchangeProps> = ({
-  buyToken,
-  sellToken,
-}: // updateAll,
-// setUpdateAll,
-ExchangeProps) => {
+const Exchange = () => {
   const userAddress = useSelector(userAddressSelector);
   const batcherStatus = useSelector(batcherStatusSelector);
   const priceStategy = useSelector(priceStrategySelector);
