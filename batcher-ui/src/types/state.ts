@@ -11,6 +11,11 @@ export type CurrentSwap = {
   isReverse: boolean;
 };
 
+export type VolumesState = {
+  buy: Record<PriceStrategy, number>;
+  sell: Record<PriceStrategy, number>;
+};
+
 export type ExchangeState = {
   priceStrategy: PriceStrategy;
   currentSwap: CurrentSwap;
@@ -23,6 +28,7 @@ export type ExchangeState = {
   swapPairName: string;
   batchNumber: number;
   oraclePrice: number;
+  volumes: VolumesState;
 };
 
 export type WalletState = {
@@ -33,4 +39,5 @@ export type WalletState = {
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
+  volumes: VolumesState;
 };

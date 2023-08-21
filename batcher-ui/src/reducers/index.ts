@@ -1,7 +1,7 @@
 import { LoopReducer, combineReducers } from 'redux-loop';
 import exchangeReducer from './exchange';
 import walletReducer from './wallet';
-import { AppState, ExchangeState, WalletState } from 'src/types';
+import { AppState, ExchangeState, WalletState } from '../types';
 
 // Wallet selectors
 export const userAddressSelector = (state: AppState) => {
@@ -36,8 +36,10 @@ export const remainingTimeSelector = (state: AppState) =>
 export const batchNumberSelector = (state: AppState) =>
   state.exchange.batchNumber;
 
-  export const oraclePriceSelector = (state: AppState) =>
-    state.exchange.oraclePrice;
+export const oraclePriceSelector = (state: AppState) =>
+  state.exchange.oraclePrice;
+
+export const volumesSelector = (state: AppState) => state.exchange.volumes;
 
 export default combineReducers({
   exchange: exchangeReducer as LoopReducer<ExchangeState>,

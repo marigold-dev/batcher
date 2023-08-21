@@ -81,16 +81,29 @@ export const updateOraclePrice = (oraclePrice: number) =>
     payload: { oraclePrice },
   } as const);
 
-export type ExchangeActions =
-  | ReturnType<typeof updatePriceStrategy>
-  | ReturnType<typeof reverseSwap>
-  | ReturnType<typeof changePair>
-  | ReturnType<typeof getPairsInfos>
-  | ReturnType<typeof updatePairsInfos>
-  | ReturnType<typeof getBatcherStatus>
-  | ReturnType<typeof updateBatcherStatus>
-  | ReturnType<typeof getCurrentBatchNumber>
-  | ReturnType<typeof updateBatchNumber>
-  | ReturnType<typeof batcherSetup>
-  | ReturnType<typeof getOraclePrice>
-  | ReturnType<typeof updateOraclePrice>;
+export const getVolumes = () =>
+  ({
+    type: 'GET_VOLUMES',
+  } as const);
+
+export const updateVolumes = (volumes: unknown) =>
+  ({
+    type: 'UPDATE_VOLUMES',
+    payload: { volumes },
+  } as const);
+
+  export type ExchangeActions =
+    | ReturnType<typeof updatePriceStrategy>
+    | ReturnType<typeof reverseSwap>
+    | ReturnType<typeof changePair>
+    | ReturnType<typeof getPairsInfos>
+    | ReturnType<typeof updatePairsInfos>
+    | ReturnType<typeof getBatcherStatus>
+    | ReturnType<typeof updateBatcherStatus>
+    | ReturnType<typeof getCurrentBatchNumber>
+    | ReturnType<typeof updateBatchNumber>
+    | ReturnType<typeof batcherSetup>
+    | ReturnType<typeof getOraclePrice>
+    | ReturnType<typeof updateOraclePrice>
+    | ReturnType<typeof getVolumes>
+    | ReturnType<typeof updateVolumes>;

@@ -17,7 +17,7 @@ import {
   getEmptyVolumes,
   // setTokenAmount,
   // setSocketTokenAmount,
-  // scaleStringAmountDown,
+  // scaleStringAmountDownToString,
 } from '../utils/utils';
 // import {
 //   connection as socket,
@@ -97,27 +97,27 @@ const Welcome = () => {
   // };
   // const scaleVolumeDown = (vols: Volumes) => {
   //   return {
-  //     buy_minus_volume: scaleStringAmountDown(
+  //     buy_minus_volume: scaleStringAmountDownToString(
   //       vols.buy_minus_volume,
   //       buyToken.decimals
   //     ),
-  //     buy_exact_volume: scaleStringAmountDown(
+  //     buy_exact_volume: scaleStringAmountDownToString(
   //       vols.buy_exact_volume,
   //       buyToken.decimals
   //     ),
-  //     buy_plus_volume: scaleStringAmountDown(
+  //     buy_plus_volume: scaleStringAmountDownToString(
   //       vols.buy_plus_volume,
   //       buyToken.decimals
   //     ),
-  //     sell_minus_volume: scaleStringAmountDown(
+  //     sell_minus_volume: scaleStringAmountDownToString(
   //       vols.sell_minus_volume,
   //       sellToken.decimals
   //     ),
-  //     sell_exact_volume: scaleStringAmountDown(
+  //     sell_exact_volume: scaleStringAmountDownToString(
   //       vols.sell_exact_volume,
   //       sellToken.decimals
   //     ),
-  //     sell_plus_volume: scaleStringAmountDown(
+  //     sell_plus_volume: scaleStringAmountDownToString(
   //       vols.sell_plus_volume,
   //       sellToken.decimals
   //     ),

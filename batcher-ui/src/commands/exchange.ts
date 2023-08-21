@@ -5,6 +5,7 @@ import {
   getCurrentBatchNumber,
   getCurrentRates,
   getPairsInformations,
+  getVolumes,
 } from '../../utils/utils';
 import {
   updateBatchNumber,
@@ -13,6 +14,7 @@ import {
   getCurrentBatchNumber as getCurrentBatchNumberAction,
   getPairsInfos,
   updateOraclePrice,
+  updateVolumes,
 } from '../actions';
 import { CurrentSwap } from 'src/types';
 
@@ -77,10 +79,26 @@ const getOraclePriceCmd = (tokenPair: string, currentSwap: CurrentSwap) => {
   );
 };
 
+const fetchVolumesCmd = (batchNumber: number, currentSwap: CurrentSwap) => {
+  return Cmd.run(
+    () => {
+      return getVolumes(
+        batchNumber,
+        currentSwap,
+        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
+      );
+    },
+    {
+      successActionCreator: updateVolumes,
+    }
+  );
+};
+
 export {
   fetchPairInfosCmd,
   fetchCurrentBatchNumberCmd,
   fetchBatcherStatusCmd,
   setupBatcherCmd,
   getOraclePriceCmd,
+  fetchVolumesCmd,
 };

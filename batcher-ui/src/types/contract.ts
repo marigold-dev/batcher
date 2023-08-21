@@ -64,3 +64,14 @@ export type BatcherStorage = {
   >;
   rates_current: Map<SwapNames, ExchangeRate>;
 };
+
+
+
+export type VolumesStorage = {
+  buy_minus_volume: string;
+  buy_exact_volume: string;
+  buy_plus_volume: string;
+  sell_minus_volume: string;
+  sell_exact_volume: string;
+  sell_plus_volume: string;
+};

@@ -4,6 +4,7 @@ import {
   getBatcherStatus,
   getOraclePrice,
   getPairsInfos,
+  getVolumes,
 } from '../../src/actions';
 import {
   BatcherStatus,
@@ -15,6 +16,7 @@ import {
   fetchBatcherStatusCmd,
   fetchCurrentBatchNumberCmd,
   fetchPairInfosCmd,
+  fetchVolumesCmd,
   getOraclePriceCmd,
   setupBatcherCmd,
 } from '../../src/commands/exchange';
@@ -55,6 +57,16 @@ const initialState: ExchangeState = {
   swapPairName: 'tzBTC/USDT',
   batchNumber: 0,
   oraclePrice: 0,
+  volumes: {
+    sell: Object.keys(PriceStrategy).reduce(
+      (acc, k) => ({ ...acc, [k]: 0 }),
+      {}
+    ) as Record<PriceStrategy, number>,
+    buy: Object.keys(PriceStrategy).reduce(
+      (acc, k) => ({ ...acc, [k]: 0 }),
+      {}
+    ) as Record<PriceStrategy, number>,
+  },
 };
 
 const exchangeReducer = (
@@ -113,7 +125,7 @@ const exchangeReducer = (
     case 'UDPATE_BATCH_NUMBER':
       return loop(
         { ...state, batchNumber: action.payload.batchNumber },
-        Cmd.action(getBatcherStatus())
+        Cmd.list([Cmd.action(getBatcherStatus()), Cmd.action(getVolumes())])
       );
     case 'GET_ORACLE_PRICE':
       return loop(
@@ -122,6 +134,8 @@ const exchangeReducer = (
       );
     case 'UPDATE_ORACLE_PRICE':
       return { ...state, oraclePrice: action.payload.oraclePrice };
+    case 'GET_VOLUMES':
+      return loop(state, fetchVolumesCmd(state.batchNumber, state.currentSwap));
     default:
       return state;
   }

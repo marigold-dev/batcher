@@ -1,20 +1,23 @@
 import React from 'react';
 import { Space, Col, Row, Table } from 'antd';
+import { PriceStrategy } from 'src/types';
+import { volumesSelector } from 'src/reducers';
+import { useSelector } from 'react-redux';
 // import '../Exchange/index.less';
 // import './index.less';
 // import '../../src/global.less';
-import { VolumeProps } from '../../utils/types';
+// import { VolumeProps } from '../../utils/types';
 
-const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
-  console.log(555, volumes);
-
-  const sellVolumes = [
-    {
-      sellMinusVolume: volumes.sell_minus_volume,
-      sellExactVolume: volumes.sell_exact_volume,
-      sellPlusVolume: volumes.sell_plus_volume,
-    },
-  ];
+const Volume = () => {
+  const { sell, buy } = useSelector(volumesSelector);
+  console.log('🚀 ~ file: index.tsx:13 ~ Volume ~ sell, buy:', sell, buy);
+  // const sellVolumes = [
+  //   {
+  //     sellMinusVolume: volumes.sell_minus_volume,
+  //     sellExactVolume: volumes.sell_exact_volume,
+  //     sellPlusVolume: volumes.sell_plus_volume,
+  //   },
+  // ];
   // const buyVolumes = {
   //   buyMinusVolume: volumes.buy_minus_volume,
   //   buyExactVolume: volumes.buy_exact_volume,
@@ -24,17 +27,17 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
   const listOfBuyVolumesColumns = [
     {
       title: 'Buy Minus Volume',
-      key: 'buyMinusVolume',
+      key: PriceStrategy.WORSE,
       dataIndex: 'buyMinusVolume',
     },
     {
       title: 'Buy Exact Volume',
-      key: 'buyExactVolume',
+      key: PriceStrategy.EXACT,
       dataIndex: 'buyExactVolume',
     },
     {
       title: 'Buy Plus Volume',
-      key: 'buyPlusVolume',
+      key: PriceStrategy.BETTER,
       dataIndex: 'buyPlusVolume',
     },
   ];
@@ -42,70 +45,73 @@ const Volume: React.FC<VolumeProps> = ({ volumes }: VolumeProps) => {
   const listOfSellVolumesColumns = [
     {
       title: 'Sell Minus Volume',
-      key: 'sellMinusVolume',
+      key: PriceStrategy.WORSE,
       dataIndex: 'sellMinusVolume',
     },
     {
       title: 'Sell Exact Volume',
-      key: 'sellExactVolume',
+      key: PriceStrategy.EXACT,
       dataIndex: 'sellExactVolume',
     },
     {
       title: 'Sell Plus Volume',
-      key: 'sellPlusVolume',
+      key: PriceStrategy.BETTER,
       dataIndex: 'sellPlusVolume',
     },
   ];
-  //TODO: solve type issue with buyVolumes[b.key]
   return (
-    <div>
-      <Col className="base-content br-t br-b br-l br-r">
-        <Space className="batcher-price" direction="vertical">
-          <Row>
-            <Col className="mr-c" span={12}>
-              <p className="font-mono p-16">Volumes</p>
-            </Col>
-          </Row>
-          <Space size="large" />
-          <Row className="text-center">
-            <table>
-              <thead>
-                {listOfBuyVolumesColumns.map((b, i) => (
-                  <td key={i}>{b.title}</td>
-                ))}
-              </thead>
-              <tbody>
-                {/* {listOfBuyVolumesColumns.map((b, i) => {
-                  console.log('buyVolumes[b.key]', buyVolumes[b.key]);
-                  console.log('buyVolumes', buyVolumes);
-                  return <td key={i}>{buyVolumes[b.key]}</td>;
-                })} */}
-              </tbody>
-            </table>
-            {/* <Table
-                className="batcher-table ant-typeography center"
-                columns={listOfBuyVolumesColumns}
-                rowKey="buyMinusVolume"
-                dataSource={buyVolumes}
-                pagination={false}
-              /> */}
-          </Row>
-          <Space size="large" />
-          <Row className="text-center">
-            <Col lg={3} />
-            <Col lg={18} xs={24}>
-              <Table
-                className="batcher-table ant-typeography center"
-                columns={listOfSellVolumesColumns}
-                rowKey="sellMinusVolume"
-                dataSource={sellVolumes}
-                pagination={false}
-              />
-            </Col>
-            <Col lg={3} />
-          </Row>
-        </Space>
-      </Col>
+    <div className="flex flex-col items-center">
+      <p className="my-8">VOLUMES</p>
+      <table className="border-collapse border border-slate-500">
+        <thead>
+          <tr>
+            {listOfBuyVolumesColumns.map((b, i) => (
+              <th
+                className="border border-slate-500 p-2 text-center bg-slate-900"
+                key={i}>
+                {b.title}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {listOfBuyVolumesColumns.map((b, i) => {
+              return (
+                <td
+                  className="border border-slate-700 p-2 text-center bg-slate-400"
+                  key={i}>
+                  {buy[b.key]}
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+        <thead>
+          <tr>
+            {listOfSellVolumesColumns.map((b, i) => (
+              <th
+                className="border border-slate-500 p-2 text-center bg-slate-900"
+                key={i}>
+                {b.title}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {listOfSellVolumesColumns.map((b, i) => {
+              return (
+                <td
+                  className="border border-slate-700 p-2 text-center bg-slate-400"
+                  key={i}>
+                  {sell[b.key]}
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 };

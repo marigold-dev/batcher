@@ -1,5 +1,10 @@
 import { add, differenceInMinutes, parseISO } from 'date-fns';
-import { BatcherStatus, CurrentSwap } from '../src/types';
+import {
+  BatcherStatus,
+  CurrentSwap,
+  VolumesState,
+  VolumesStorage,
+} from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -130,9 +135,15 @@ export const getEmptyVolumes = () => {
   };
 };
 
-export const scaleStringAmountDown = (amount: string, decimals: number) => {
+export const scaleStringAmountDownToString = (
+  amount: string,
+  decimals: number
+) => {
   if (!amount) {
-    console.error('scaleStringAmountDown - amount is undefined', amount);
+    console.error(
+      'scaleStringAmountDownToString - amount is undefined',
+      amount
+    );
     return '0';
   } else {
     const scale = 10 ** -decimals;
@@ -232,7 +243,10 @@ export const getCurrentBatchNumber = async (
   return currentBatchIndices[pair];
 };
 
-export const getBigMapByIdAndBatchNumber = (bigMapId: number, batchNumber: number) =>
+export const getBigMapByIdAndBatchNumber = (
+  bigMapId: number,
+  batchNumber: number
+) =>
   fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
   )
@@ -338,4 +352,50 @@ export const computeOraclePrice = (rates: any, currentSwap: CurrentSwap) => {
   const scaledPow = swap.from.token.decimals - swap.to.decimals;
   const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
   return scaledRate;
+};
+
+// ---- VOLUMES ----
+
+export const scaleStringAmountDown = (amount: string, decimals: number) => {
+  if (!amount) {
+    console.error('scaleStringAmountDown - amount is undefined', amount);
+    return 0;
+  } else {
+    const scale = 10 ** -decimals;
+    return Number.parseInt(amount) * scale;
+  }
+};
+
+const toVolumes = (
+  rawVolumes: VolumesStorage,
+  { buyDecimals, sellDecimals }: { buyDecimals: number; sellDecimals: number }
+): VolumesState => {
+  return {
+    sell: {
+      BETTER: scaleStringAmountDown(rawVolumes.sell_plus_volume, sellDecimals),
+      EXACT: scaleStringAmountDown(rawVolumes.sell_exact_volume, sellDecimals),
+      WORSE: scaleStringAmountDown(rawVolumes.sell_minus_volume, sellDecimals),
+    },
+    buy: {
+      BETTER: scaleStringAmountDown(rawVolumes.buy_plus_volume, buyDecimals),
+      EXACT: scaleStringAmountDown(rawVolumes.buy_exact_volume, buyDecimals),
+      WORSE: scaleStringAmountDown(rawVolumes.buy_minus_volume, buyDecimals),
+    },
+  };
+};
+
+export const getVolumes = async (
+  batchNumber: number,
+  currentSwap: CurrentSwap,
+  address: string
+) => {
+  const storage = await getStorageByAddress(address);
+  const batch = await getBigMapByIdAndBatchNumber(
+    storage['batch_set']['batches'],
+    batchNumber
+  );
+  return toVolumes(batch['volumes'], {
+    buyDecimals: currentSwap.swap.to.decimals,
+    sellDecimals: currentSwap.swap.from.token.decimals,
+  });
 };
