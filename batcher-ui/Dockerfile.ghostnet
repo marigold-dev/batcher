@@ -2,9 +2,9 @@ FROM node:latest as builder
 
 WORKDIR /app
 
-COPY ./package.json ./
-
 ENV ENV ghostnet
+
+COPY ./package.json ./
 
 RUN npm install
 
@@ -18,15 +18,17 @@ COPY ./styles ./styles
 COPY ./public ./public
 COPY ./img ./img
 COPY ./config ./config
+COPY ./postcss.config.js ./postcss.config.js
+COPY ./next.config.js ./next.config.js
+COPY ./tailwind.config.js ./tailwind.config.js
 
-COPY .env.dev.sample .env.production
 
 RUN npm run build:next:ghostnet
 
-EXPOSE 80
+EXPOSE 3000
 
 CMD ["npm", "run", "start:next:ghostnet"]
 
 # FROM nginx:latest
 
-# COPY --from=builder /app/dist /usr/share/nginx/html
+# COPY --from=builder /app /usr/share/nginx/html
