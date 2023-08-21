@@ -2,7 +2,7 @@ FROM node:latest as builder
 
 WORKDIR /app
 
-ENV ENV ghostnet
+# ENV ENV=ghostnet
 
 COPY ./package.json ./
 

@@ -36,7 +36,7 @@
     "tsc": "tsc --noEmit",
     "dev:next": "ENV=ghostnet next dev",
     "build:next": "next build",
-    "start:next:ghostnet": "ENV=ghostnet next start",
+    "start:next:ghostnet": "ENV=ghostnet next start -p 80",
     "build:next:ghostnet": "ENV=ghostnet next build",
     "lint:next": "next lint"
   },
