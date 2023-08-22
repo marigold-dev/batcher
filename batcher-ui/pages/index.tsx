@@ -6,12 +6,6 @@ import BatcherAction from '../components/BatcherAction';
 import { ContentType } from '../utils/types';
 import { Col, Row } from 'antd';
 
-// import {
-//   connection as socket,
-//   init_contract,
-//   init_user,
-// } from '../utils/webSocketUtils';
-// import { scaleAmountUp } from '../utils/utils';
 import Holdings from '../components/Holdings';
 import About from '../components/About';
 import { useSelector, useDispatch } from 'react-redux';
@@ -377,24 +371,6 @@ const Welcome = () => {
   //   setHasClearedHoldings(sum_of_holdings > 0);
   // };
 
-  // const updateTokenBalances = (tokenBalances: any) => {
-  //   try {
-  //     console.log('tokenbalances', tokenBalances);
-  //     setSocketTokenAmount(tokenBalances, userAddress, buyToken, setBuyBalance);
-  //     console.log('updateBuyBalance', buyBalance);
-
-  //     setSocketTokenAmount(
-  //       tokenBalances,
-  //       userAddress,
-  //       sellToken,
-  //       setSellBalance
-  //     );
-  //     console.log('updateSellBalance', sellBalance);
-  //   } catch (error) {
-  //     console.error('Unable to update token balances', error);
-  //   }
-  // };
-
   const renderRightContent = (content: ContentType) => {
     switch (content) {
       case ContentType.SWAP:
@@ -433,50 +409,6 @@ const Welcome = () => {
   //   await updateHoldings(storage);
   //   await getCurrentVolume(storage);
   // };
-
-  // const handleWebsocket = () => {
-  //   socket.on('token_balances', (msg: any) => {
-  //     if (!msg.data) return;
-  //     updateTokenBalances(msg.data);
-  //   });
-
-  //   // This is the place handling operations and storages
-  //   socket.on('operations', (msg) => {
-  //     if (!msg.data) return;
-  //     if (!msg.data[0].storage) return;
-  //     console.info('#######WS###### - operations', msg.data[0].storage);
-  //     updateFromStorage(msg.data[0].storage).then((r) => console.log(r));
-  //   });
-
-  //   socket.on('bigmaps', (msg: any) => {
-  //     if (!msg.data) return;
-  //     console.info('#######WS###### - bigmap', msg);
-  //     for (let i = 0; i < Object.keys(msg.data).length; i++) {
-  //       try {
-  //         const m = msg.data[i];
-  //         if (m.path == 'batch_set.batches') {
-  //           const val = m.content.value;
-  //           const batch_number = val.batch_number;
-  //           const sts = Object.keys(val.status)[0];
-  //           setStatusFromBatch(sts, m.content);
-  //         }
-
-  //         if (m.path == 'rates_current') {
-  //           updateRate(m);
-  //         }
-  //       } catch (error: any) {
-  //         console.error(error);
-  //       }
-  //     }
-  //   });
-  // };
-
-  // useEffect(() => {
-  //   console.log('connection', connection);
-  //   refreshStorage().then((r) => console.log(r));
-  //   init_contract().then((r) => console.log(r));
-  //   handleWebsocket();
-  // }, [connection]);
 
   useEffect(() => {
     if (userAddress) dispatch(fetchUserBalances());

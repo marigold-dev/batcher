@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { AppProps } from 'next/app';
 import { TezosToolkitProvider } from '../contexts/tezos-toolkit';
 import { WalletProvider } from '../contexts/wallet';
+import { EventsProvider } from '../contexts/events';
 import '../styles/globals.css';
 import { Provider } from 'react-redux';
 import { store } from '../src/store';
@@ -33,11 +34,13 @@ const App = ({ Component }: AppProps) => {
       <Provider store={store}>
         <TezosToolkitProvider>
           <WalletProvider>
-            <div className="flex flex-col justify-between h-screen">
-              <NavBar />
-              <Component />
-              <Footer />
-            </div>
+            <EventsProvider>
+              <div className="flex flex-col justify-between h-screen">
+                <NavBar />
+                <Component />
+                <Footer />
+              </div>
+            </EventsProvider>
           </WalletProvider>
         </TezosToolkitProvider>
       </Provider>

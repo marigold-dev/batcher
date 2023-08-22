@@ -40,5 +40,5 @@ export type WalletState = {
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
-  volumes: VolumesState;
+  event: {};
 };

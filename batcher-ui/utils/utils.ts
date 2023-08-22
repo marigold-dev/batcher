@@ -7,6 +7,7 @@ import {
 } from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
+import { BatcherStatusStorage } from 'src/types/events';
 
 export const setTokenAmount = (
   balances: any[],
@@ -217,10 +218,16 @@ export const getPairsInformations = async (
     currentSwap: {
       swap: {
         from: {
-          token: validTokens[pairs[0]],
+          token: {
+            ...validTokens[pairs[0]],
+            decimals: parseInt(validTokens[pairs[0]].decimals, 10),
+          },
           amount: 0,
         },
-        to: validTokens[pairs[1]],
+        to: {
+          ...validTokens[pairs[1]],
+          decimals: parseInt(validTokens[pairs[1]].decimals, 10),
+        },
       },
       isReverse: false,
     },
@@ -301,6 +308,17 @@ const getStartTime = (status: string, batch: any) => {
   }
 };
 
+// export const parseStatus = (rawStatus: BatcherStatusStorage) => {
+//   const status = Object.keys(rawStatus)[0];
+//   return {
+//     status: toBatcherStatus(status),
+//     at: new Date(getStatusTime(status, batch)).toISOString(),
+//     startTime: getStartTime(status, batch)
+//       ? new Date(getStartTime(status, batch)).toISOString()
+//       : null,
+//   };
+// };
+
 export const getBatcherStatus = async (
   batchNumber: number,
   address: string
@@ -344,14 +362,14 @@ export const getCurrentRates = async (tokenPair: string, address: string) => {
   return ratesCurrent;
 };
 
-// TODO: make types
-export const computeOraclePrice = (rates: any, currentSwap: CurrentSwap) => {
-  const numerator = rates.rate.p;
-  const denominator = rates.rate.q;
-  const { swap } = currentSwap;
-  const scaledPow = swap.from.token.decimals - swap.to.decimals;
-  const scaledRate = scaleAmountUp(numerator / denominator, scaledPow);
-  return scaledRate;
+export const computeOraclePrice = (
+  rate: { p: number; q: number },
+  { buyDecimals, sellDecimals }: { buyDecimals: number; sellDecimals: number }
+) => {
+  const numerator = rate.p;
+  const denominator = rate.q;
+  const scaledPow = sellDecimals - buyDecimals;
+  return scaleAmountUp(numerator / denominator, scaledPow);
 };
 
 // ---- VOLUMES ----
@@ -366,7 +384,7 @@ export const scaleStringAmountDown = (amount: string, decimals: number) => {
   }
 };
 
-const toVolumes = (
+export const toVolumes = (
   rawVolumes: VolumesStorage,
   { buyDecimals, sellDecimals }: { buyDecimals: number; sellDecimals: number }
 ): VolumesState => {

@@ -16,6 +16,7 @@ import {
   updateOraclePrice,
   updateVolumes,
   batcherTimerId,
+  getBatcherStatus as getBatcherStatusAction,
 } from '../actions';
 import { CurrentSwap } from 'src/types';
 
@@ -62,19 +63,24 @@ const setupBatcherCmd = (pair: string) => {
   return Cmd.list([
     Cmd.action(getCurrentBatchNumberAction()),
     Cmd.action(getPairsInfos(pair)),
-    Cmd.setInterval(Cmd.action(getCurrentBatchNumberAction()), 50000, {
+    Cmd.setInterval(Cmd.action(getBatcherStatusAction()), 50000, {
       scheduledActionCreator: timerId => batcherTimerId(timerId),
     }),
   ]);
 };
 
-const getOraclePriceCmd = (tokenPair: string, currentSwap: CurrentSwap) => {
+const getOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   return Cmd.run(
     () => {
       return getCurrentRates(
         tokenPair,
         process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
-      ).then(rates => computeOraclePrice(rates[0], currentSwap));
+      ).then(rates =>
+        computeOraclePrice(rates[0].rate, {
+          buyDecimals: swap.to.decimals,
+          sellDecimals: swap.from.token.decimals,
+        })
+      );
     },
     {
       successActionCreator: updateOraclePrice,
