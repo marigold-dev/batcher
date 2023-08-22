@@ -26,7 +26,7 @@ const BatcherInfo = () => {
 
   return (
     <div className="font-custom">
-      <div className="flex flex-row p-3">
+      <div className="flex flex-col md:flex-row p-3">
         <div className="flex flex-direction-col border-solid border-2 border-[#7B7B7E]">
           <div className="p-3">
             <p className="text-xl font-mono">Batcher Time Remaining</p>
@@ -47,7 +47,7 @@ const BatcherInfo = () => {
                 <p>
                   {`${
                     status === BatcherStatus.CLEARED
-                      ? 'LastBatch'
+                      ? 'Last batch : '
                       : 'Current batch : '
                   } ${batchNumber}`}
                 </p>
@@ -59,7 +59,7 @@ const BatcherInfo = () => {
         </div>
         <div className="border-[#7B7B7E] border-2 border-solid">
           <div className="flex flex-col batcher-balance-title">
-            <div className="flex border-solid border-2 border-[#7B7B7E]">
+            <div className="flex flex-row border-solid border-2 border-[#7B7B7E] justify-between">
               <p className="batcher-title p-3">Balances</p>
               <p className="batcher-title p-3">
                 {currentSwap.isReverse
@@ -85,15 +85,18 @@ const BatcherInfo = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid">
+          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid justify-between">
             <p className="p-4">Address</p>
             {userAddress ? (
-              <p>{userAddress}</p>
+              <p className="p-4">{`${userAddress.substring(
+                0,
+                3
+              )}...${userAddress.substring(userAddress.length - 3)}`}</p>
             ) : (
               <p className="p-4">No Wallet connected</p>
             )}
           </div>
-          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid">
+          <div className="flex flex-row border-[#7B7B7E] border-2 border-solid justify-between">
             <p className="p-4">Oracle Price</p>
             <p className="p-4">
               {oraclePrice} {tokenPair}

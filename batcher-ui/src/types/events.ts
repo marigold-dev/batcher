@@ -21,31 +21,31 @@ type BigMapEventDataContent = {
   value: unknown;
 };
 
-type OperationEvent = {
-  data: Array<unknown>;
-  state: number;
-  type: number;
-};
+// type OperationEvent = {
+//   data: Array<unknown>;
+//   state: number;
+//   type: number;
+// };
 
-type OperationEventData = {
-  type: 'transaction';
-  diffs: Array<unknown>;
-  storage: unknown;
-  timestamp: string;
-};
+// type OperationEventData = {
+//   type: 'transaction';
+//   diffs: Array<unknown>;
+//   storage: unknown;
+//   timestamp: string;
+// };
 
-type OperationEventDataDiffs = {
-  bigmap: number;
-  path: 'batch_set.batches' | 'rates_current'; // path dans la bigmap
-  action: 'update_key' | 'add_key' | 'remove_key' | 'remove';
-  content: OperationEventDataContent;
-};
+// type OperationEventDataDiffs = {
+//   bigmap: number;
+//   path: 'batch_set.batches' | 'rates_current'; // path dans la bigmap
+//   action: 'update_key' | 'add_key' | 'remove_key' | 'remove';
+//   content: OperationEventDataContent;
+// };
 
-type OperationEventDataContent = {
-  hash: string;
-  key: string;
-  value: unknown;
-};
+// type OperationEventDataContent = {
+//   hash: string;
+//   key: string;
+//   value: unknown;
+// };
 
 // rates current update_key
 

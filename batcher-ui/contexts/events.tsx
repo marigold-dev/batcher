@@ -1,24 +1,24 @@
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
-import React, { createContext, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { /* HubConnection */ HubConnectionBuilder } from '@microsoft/signalr';
+import React, { createContext, useEffect } from 'react';
+// import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { newEvent } from 'src/actions/events';
-import { userAddressSelector } from 'src/reducers';
-import { setup, subscribeTokenBalances } from 'utils/webSocketUtils';
+// import { userAddressSelector } from 'src/reducers';
+import { setup /* subscribeTokenBalances */ } from 'utils/webSocketUtils';
 
 export const EventsContext = createContext<{}>({});
 
 export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [socket, setSocket] = useState<HubConnection | undefined>(undefined);
+  // const [socket, setSocket] = useState<HubConnection | undefined>(undefined);
   const dispatch = useDispatch();
-  const userAddress = useSelector(userAddressSelector);
+  // const userAddress = useSelector(userAddressSelector);
 
   useEffect(() => {
     const socket = new HubConnectionBuilder()
       .withUrl(process.env.NEXT_PUBLIC_TZKT_URI_API + '/v1/ws')
       .build();
     setup(socket);
-    setSocket(socket);
+    // setSocket(socket);
     socket.on('bigmaps', e => {
       if (e.data) dispatch(newEvent(e));
     });
