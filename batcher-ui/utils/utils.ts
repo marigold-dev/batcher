@@ -7,7 +7,6 @@ import {
 } from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
-import { BatcherStatusStorage } from 'src/types/events';
 
 export const setTokenAmount = (
   balances: any[],

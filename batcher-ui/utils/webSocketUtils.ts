@@ -26,14 +26,14 @@ export const subscribeTokenBalances = (
   return Promise.reject('No address');
 };
 
-const subscribeOperations = (socket: HubConnection) => {
-  const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
+// const subscribeOperations = (socket: HubConnection) => {
+//   const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
 
-  return socket.invoke('SubscribeToOperations', {
-    address: batcherContractHash,
-    types: 'transaction',
-  });
-};
+//   return socket.invoke('SubscribeToOperations', {
+//     address: batcherContractHash,
+//     types: 'transaction',
+//   });
+// };
 
 export const setup = async (socket: HubConnection) => {
   if (socket.state === HubConnectionState.Disconnected) {

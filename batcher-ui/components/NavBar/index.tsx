@@ -14,25 +14,6 @@ const NavBar = () => {
   const walletCtx = useWallet();
   const userAddress = walletCtx.state.userAddress;
 
-  // TODO: rewrite this
-  // if (!state || !state.settings) {
-  //   return null;
-  // }
-
-  // const { navTheme, layout } = state.settings;
-  // let className = '.right';
-
-  // if ((navTheme === 'dark' && layout === 'top') || layout === 'mix') {
-  //   className = `.right .dark`; //TODO: rewrite this
-  // }
-
-  // const menuProps = {
-  //   items,
-  //   onClick: !state.userAddress
-  //     ? () => connectWallet()
-  //     : () => disconnectWallet(),
-  // };
-
   useEffect(() => {
     userAddress
       ? dispatch(connectedWallet({ userAddress }))

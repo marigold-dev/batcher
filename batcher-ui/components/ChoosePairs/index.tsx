@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import React, { useState } from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
-import { Cross1Icon } from '@radix-ui/react-icons';
+import { Cross1Icon, GearIcon } from '@radix-ui/react-icons';
 import { useDispatch } from 'react-redux';
 import { changePair } from '../../src/actions';
 import { getPairsInformations } from 'utils/utils';
@@ -15,7 +15,7 @@ const ChoosePairs = () => {
     <Dialog.Root>
       <Dialog.Trigger asChild>
         <button className="text-[black] rounded bg-white px-4 m-2 py-2 font-custom">
-          Choose Pairs
+          <GearIcon />
         </button>
       </Dialog.Trigger>
 
