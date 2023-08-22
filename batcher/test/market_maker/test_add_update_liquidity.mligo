@@ -27,19 +27,26 @@ let add_liquidity_should_succeed =
 
       let bstorage = Breath.Contract.storage_of batcher in
       
-      let vaults = bstorage.market_vaults in
+      let market_maker = bstorage.market_maker in
+      let h_key: Batcher.user_holding_key = (btc_trader.address, token_name) in
+      let vault = Option.unopt (Big_map.find_opt token_name market_maker.vaults) in
+      let user_holding = Option.unopt (Big_map.find_opt h_key market_maker.user_holdings) in
+      let vault_holding = Option.unopt (Big_map.find_opt user_holding market_maker.vault_holdings) in
 
-      let btc_vault = Option.unopt (Big_map.find_opt token_name vaults) in
 
       Breath.Result.reduce [
         act_allow_transfer
         ; act_add_liquidity
-        ; Breath.Assert.is_equal "total shares should be same" deposit_amount btc_vault.total_shares
+        ; Breath.Assert.is_equal "total shares should be same" deposit_amount vault.total_shares
+        ; Breath.Assert.is_equal "holder should be the one that supplied liquidity" btc_trader.address vault_holding.holder
+        ; Breath.Assert.is_equal "for the first liquidity , total shares hould be equal to holding shares" vault_holding.shares vault.total_shares
+        ; Breath.Assert.is_equal "for the first liquidity , shares should be equal to amount" vault.native_token.amount vault.total_shares
+        ; Breath.Assert.is_equal "for the first liquidity , shares should be equal to deposit amount" deposit_amount vault.total_shares
       ])
 
 
 let test_suite =
-  Breath.Model.suite "Suite for Add Liquidity" [
+  Breath.Model.suite "Suite for Add / Update Liquidity" [
     add_liquidity_should_succeed
   ]
 

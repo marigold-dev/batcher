@@ -61,8 +61,11 @@ let f(_:unit) : Batcher.Storage.t = {
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
-  market_vaults = (Big_map.empty: Batcher.market_vaults);
-  user_market_vault_holdings = (Big_map.empty: Batcher.user_market_vault_holdings);
-
+  market_maker = {
+    vaults = (Big_map.empty: Batcher.market_vaults);
+    last_holding_id = 0n;
+    user_holdings = (Big_map.empty: Batcher.user_holdings);
+    vault_holdings = (Big_map.empty: Batcher.vault_holdings);
+  };
 }
 

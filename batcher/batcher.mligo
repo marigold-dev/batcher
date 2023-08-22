@@ -47,6 +47,12 @@
 [@inline] let cannot_increase_holdings_of_batch_that_does_not_exist : nat        = 142n
 [@inline] let batch_already_removed : nat                                        = 143n
 [@inline] let admin_and_fee_recipient_address_cannot_be_the_same                 = 144n
+[@inline] let incorrect_market_vault_holder                                      = 145n
+[@inline] let incorrect_market_vault_id                                          = 146n
+[@inline] let market_vault_tokens_are_different                                  = 147n
+[@inline] let unable_to_find_user_holding_for_id                                 = 148n
+[@inline] let unable_to_find_vault_holding_for_id                                = 149n
+[@inline] let user_in_holding_is_incorrect                                       = 150n
 
 (* Constants *)
 
@@ -244,7 +250,7 @@ type batch = [@layout:comb] {
   volumes : volumes;
   pair : pair;
   holdings : nat;
-  market_vault_used : bool;
+  market_vault_used : side option;
 }
 
 type batch_indices = (string,  nat) map
@@ -295,22 +301,33 @@ type foreign_tokens = (string, token_amount) map
 
 type market_maker_vault = {
   total_shares: nat;
+  holdings: nat set;
   native_token: token_amount;
   foreign_tokens: foreign_tokens;
 }
 
-type market_vaults = (string,market_maker_vault) big_map
+type market_vaults = (string, market_maker_vault) big_map
 
-type market_vault_holding = {
-   name: string;
+type market_vault_holding = {   
+   id: nat;
+   token: string;
+   holder: address;
    shares: nat;
+   unclaimed: tez;
 }
 
-type market_vault_holdings =  (string, market_vault_holding) map
+type user_holding_key = address * string
 
-type user_market_vault_holdings = (address, market_vault_holdings) big_map
+type user_holdings =  (user_holding_key, nat) big_map
 
+type vault_holdings = (nat, market_vault_holding) big_map
 
+type market_maker = {
+  vaults: market_vaults; 
+  last_holding_id: nat;
+  user_holdings: user_holdings; 
+  vault_holdings: vault_holdings;
+}
 
 [@inline]
 let get_token
@@ -429,8 +446,7 @@ module Storage = struct
     administrator : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
-    market_vaults: market_vaults;
-    user_market_vault_holdings: user_market_vault_holdings;
+    market_maker: market_maker;
   }
 
 end
@@ -1485,7 +1501,7 @@ let make
     pair = pair;
     volumes = volumes;
     holdings = 0n;
-    market_vault_used = false;
+    market_vault_used = None;
   }
 
 [@inline]
@@ -1721,59 +1737,110 @@ end
 
 module MarketVaultUtils = struct
 
-type market_vault_holding = {
-   name: string;
-   shares: nat;
-}
 
-type market_vault_holdings =  (string, market_vault_holding) map
+let create_or_update_market_vault_holding
+  (id: nat)
+  (token_amount: token_amount)
+  (holder:address)
+  (previous_holding: market_vault_holding option) : market_vault_holding =
+  match previous_holding with 
+  | None -> {
+              id = id;
+              token = token_amount.token.name;
+              holder = holder;
+              shares = token_amount.amount;
+              unclaimed = 0mutez;
+             }
+  | Some ph ->  if not (ph.holder = holder) then failwith incorrect_market_vault_holder else
+                if not (ph.id = id) then failwith incorrect_market_vault_id else
+                { ph with shares = ph.shares + token_amount.amount; }
 
-type user_market_vault_holdings = (address, market_vault_holdings) big_map
+let create_or_update_market_maker_vault
+  (id: nat)
+  (token_amount: token_amount)
+  (mmv_opt: market_maker_vault option) : market_maker_vault = 
+  match mmv_opt with
+  | None  -> { 
+               total_shares = token_amount.amount;
+               holdings = Set.literal [ id ];
+               native_token = token_amount;
+               foreign_tokens = (Map.empty : foreign_tokens);
+             }
+  | Some mmv -> let nt = mmv.native_token in 
+                if not Token_Utils.are_equivalent_tokens token_amount.token nt.token then failwith token_already_exists_but_details_are_different else
+                let shares = mmv.total_shares + token_amount.amount in
+                let native_token = { nt with amount =  nt.amount + token_amount.amount; } in
+                let hldgs =  if Set.mem id mmv.holdings then mmv.holdings else Set.add id mmv.holdings in  
+                {
+                mmv with holdings = hldgs; total_shares = shares; native_token = native_token;
+                }             
 
-let add_to_vault
-   (ta: token_amount)
-   (mvhs: market_vault_holdings) : market_vault_holdings = 
-   match Map.find_opt ta.token.name mvhs with
-   | None -> let mvh = {
-               name = ta.token.name;
-                shares = ta.amount;
-             } in   
-             Map.add ta.token.name mvh mvhs
-   | Some mvh -> let uh = { mvh with shares = mvh.shares + ta.amount; } in
-                 Map.update ta.token.name (Some uh) mvhs
+let add_liquidity
+    (h_key: user_holding_key)
+    (uh_opt: nat option)
+    (new_holding_id: nat)
+    (holder: address)
+    (token_amount: token_amount)
+    (market_maker: market_maker): market_maker = 
+    let max_hid = market_maker.last_holding_id in
+    let token_name = token_amount.token.name in
+    let vault_opt = Big_map.find_opt token_name market_maker.vaults in
+    let new_holding = {
+      id = new_holding_id;
+      token = token_amount.token.name;
+      holder = holder;
+      shares = token_amount.amount;
+      unclaimed = 0mutez;
+    } in
+    let (vts,vhs,uhs, mid) =     match uh_opt with
+                            | None  -> let vault = create_or_update_market_maker_vault new_holding_id token_amount vault_opt in
+                                       let vts = Big_map.update token_name (Some vault) market_maker.vaults in
+                                       let uhs = Big_map.add h_key new_holding_id market_maker.user_holdings in
+                                       let vhs = Big_map.add new_holding_id new_holding market_maker.vault_holdings in
+                                       (vts,vhs,uhs, new_holding_id)
+                            | Some id -> let vault = create_or_update_market_maker_vault id token_amount vault_opt in
+                                         let vts = Big_map.update token_name (Some vault) market_maker.vaults in
+                                         let vh_opt = Big_map.find_opt id market_maker.vault_holdings in
+                                         if vh_opt = (None: market_vault_holding option) then failwith unable_to_find_vault_holding_for_id else
+                                         let vh = Option.unopt  vh_opt in
+                                         let () = Shared.assert_or_fail (vh.holder = holder) user_in_holding_is_incorrect in 
+                                         let vh = {vh with shares = vh.shares + token_amount.amount; } in 
+                                         let vhs = Big_map.update id (Some vh) market_maker.vault_holdings in
+                                         (vts,vhs,market_maker.user_holdings, max_hid)
+     in
+     { market_maker with
+        vaults = vts;
+        vault_holdings = vhs;
+        user_holdings = uhs;
+        last_holding_id = mid;
+     }
 
-let add_shares
-   (holder: address)
-   (ta: token_amount)
-   (umvhs: user_market_vault_holdings) : user_market_vault_holdings = 
-   match  Big_map.find_opt holder umvhs with
-   | None -> let vh = {
-                      name = ta.token.name;
-                      shares = ta.amount;
-                     } in
-              let mvh = Map.literal [
-                (ta.token.name, vh)
-              ] in
-              Big_map.add holder mvh umvhs
-   | Some mvhs ->  let  mvhs = add_to_vault ta mvhs in
-                    Big_map.update holder (Some mvhs) umvhs
 
+let update_liquidity
+    (_h_key: user_holding_key)
+    (_uh_opt: nat option)
+    (_current_holding_id: nat)
+    (_holder: address)
+    (_token_amount: token_amount)
+    (market_maker: market_maker): market_maker = market_maker
 
-let mint_shares
+let add_liquidity_to_market_maker
    (holder: address)
    (token_amount: token_amount)
-   (storage: Storage.t) : Storage.t =
-   let vault = match Big_map.find_opt token_amount.token.name storage.market_vaults with 
-               | None -> {
-                           total_shares = token_amount.amount;
-                           native_token = token_amount;
-                           foreign_tokens = (Map.empty: foreign_tokens); 
-                         } 
-               | Some v -> { v with total_shares = v.total_shares + token_amount.amount; }
-    in
-    let vaults =  Big_map.add token_amount.token.name vault storage.market_vaults in
-    let shares =  add_shares holder token_amount storage.user_market_vault_holdings in
-    { storage with market_vaults = vaults; user_market_vault_holdings  = shares;}
+   (storage: Storage.t): ( operation list * Storage.t) =
+   let ops = Treasury.deposit holder token_amount in
+   let market_maker = storage.market_maker in 
+   let last_holding_id = market_maker.last_holding_id in 
+   let next_holding_id = last_holding_id + 1n in
+   let h_key = (holder, token_amount.token.name) in
+   let uh_opt = Big_map.find_opt h_key market_maker.user_holdings in  
+   let mm = match uh_opt with
+            | None  -> add_liquidity h_key uh_opt next_holding_id holder token_amount market_maker 
+            | Some uh_id -> update_liquidity h_key uh_opt uh_id holder token_amount market_maker
+   in
+   let storage ={ storage with market_maker = mm; } in
+   (ops, storage)
+
                 
 end
 
@@ -1802,6 +1869,8 @@ type entrypoint =
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
   | AddLiquidity of token_amount
+  | RemoveLiquidity of string
+  | Claim
 
 
 [@inline]
@@ -1996,17 +2065,36 @@ let confirm_swap_pair_is_disabled_prior_to_removal
   if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
 
 
-(* Deposit Liquidity into a market vault *)
+(* Add Liquidity into a market vault *)
 [@inline]
 let add_liquidity
   (token_amount: token_amount)
   (storage: storage) : result = 
   let () = reject_if_tez_supplied () in
   let holder = Tezos.get_sender () in
-  let treasury_ops = Treasury.deposit holder token_amount in
-  let storage = MarketVaultUtils.mint_shares holder token_amount storage in
-  (treasury_ops, storage)
+  MarketVaultUtils.add_liquidity_to_market_maker holder token_amount storage
 
+(* Add Liquidity into a market vault *)
+[@inline]
+let claim
+  (storage: storage) : result = 
+  let () = reject_if_tez_supplied () in
+  let _holder = Tezos.get_sender () in
+  no_op (storage)
+  (* MarketVaultUtils.claim_rewards holder vault_name storage in
+  (treasury_ops, storage) *)
+
+(* Remove Liquidity into a market vault *)
+[@inline]
+let remove_liquidity
+  (_token_name: string)
+  (storage: storage) : result = 
+  let () = reject_if_tez_supplied () in
+  let _holder = Tezos.get_sender () in
+  no_op (storage)
+  (* let treasury_ops = Treasury.deposit holder token_amount in
+  let storage = MarketVaultUtils.mint_shares holder token_amount storage in
+  (treasury_ops, storage) *)
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -2285,5 +2373,7 @@ let main
    | Change_deposit_time_window t -> change_deposit_time_window t storage
   (* Market  Liquidity endpoint *)
    | AddLiquidity t ->  add_liquidity t storage
+   | RemoveLiquidity n ->  remove_liquidity n storage
+   | Claim -> claim storage
 
 
