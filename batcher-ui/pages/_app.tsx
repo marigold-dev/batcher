@@ -1,5 +1,5 @@
 import Footer from '../components/Footer';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProps } from 'next/app';
 import { TezosToolkitProvider } from '../contexts/tezos-toolkit';
 import { WalletProvider } from '../contexts/wallet';
@@ -25,6 +25,8 @@ const App = ({ Component }: AppProps) => {
     }
   }, []);
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div>
       <Head>
@@ -36,8 +38,13 @@ const App = ({ Component }: AppProps) => {
           <WalletProvider>
             <EventsProvider>
               <div className="flex flex-col justify-between h-screen">
-                <NavBar />
-                <Component />
+                <div>
+                  <NavBar
+                    isMenuOpen={isMenuOpen}
+                    setIsMenuOpen={setIsMenuOpen}
+                  />
+                  {!isMenuOpen && <Component />}
+                </div>
                 <Footer />
               </div>
             </EventsProvider>

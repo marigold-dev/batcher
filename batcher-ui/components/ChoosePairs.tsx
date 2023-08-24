@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { Cross1Icon, GearIcon } from '@radix-ui/react-icons';
 import { useDispatch } from 'react-redux';
-import { changePair } from '../../src/actions';
-import { getPairsInformations } from 'utils/utils';
+import { changePair } from '../src/actions';
+import { getPairsInformations } from '../utils/utils';
 
 const ChoosePairs = () => {
   const dispatch = useDispatch();
@@ -14,8 +14,8 @@ const ChoosePairs = () => {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="text-[black] rounded bg-white px-4 m-2 py-2 font-custom">
-          <GearIcon />
+        <button className="text-[black] rounded bg-white px-4 m-2 py-2">
+          <GearIcon className="w-6 h-6" />
         </button>
       </Dialog.Trigger>
 
@@ -34,7 +34,7 @@ const ChoosePairs = () => {
             aria-label="View density">
             <div className="flex items-center">
               <RadioGroup.Item
-                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[#7B7B7E] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
+                className="bg-white w-6 h-6 rounded-full shadow-[0_0_0_2px] shadow-[black] hover:bg-gray-200 outline-none cursor-pointer"
                 value="tzBTC/USDT"
                 id="r1">
                 <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
@@ -47,7 +47,7 @@ const ChoosePairs = () => {
             </div>
             <div className="flex items-center">
               <RadioGroup.Item
-                className="bg-white w-[25px] h-[25px] rounded-full shadow-[0_2px_10px] shadow-[black] hover:bg-[#7B7B7E] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none cursor-default"
+                className="bg-white w-6 h-6 rounded-full shadow-[0_0_0_2px] shadow-[black] hover:bg-gray-200 outline-none cursor-pointer"
                 value="tzBTC/EURL"
                 id="r2">
                 <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
@@ -63,7 +63,7 @@ const ChoosePairs = () => {
           <div className="mt-[25px] flex justify-end font-custom">
             <Dialog.Close asChild>
               <button
-                className="bg-[white] border-[#7B7B7E] border-2 border-solid text-[black] inline-flex h-[35px] items-center justify-center rounded-[4px] px-[15px] font-custom hover:bg-[#7B7B7E] hover:text-[white]"
+                className="bg-primary text-white inline-flex h-[35px] items-center justify-center rounded-[4px] px-[15px] hover:bg-red-500"
                 onClick={() => {
                   getPairsInformations(
                     pair,
@@ -79,7 +79,7 @@ const ChoosePairs = () => {
             <button
               className="text-[black] absolute top-[10px] right-[10px] inline-flex h-[25px] w-[25px] items-center justify-center"
               aria-label="Close">
-              <Cross1Icon />
+              <Cross1Icon className="w-4 h-4" />
             </button>
           </Dialog.Close>
         </Dialog.Content>

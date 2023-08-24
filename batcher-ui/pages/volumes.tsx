@@ -2,10 +2,6 @@ import React from 'react';
 import { PriceStrategy } from 'src/types';
 import { volumesSelector } from 'src/reducers';
 import { useSelector } from 'react-redux';
-// import '../Exchange/index.less';
-// import './index.less';
-// import '../../src/global.less';
-// import { VolumeProps } from '../../utils/types';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);

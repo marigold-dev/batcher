@@ -1,13 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Exchange from '../components/Exchange';
-import Volume from '../components/Volume';
 import BatcherInfo from '../components/BatcherInfo';
-import BatcherAction from '../components/BatcherAction';
-import { ContentType } from '../utils/types';
-import { Col, Row } from 'antd';
 
-import Holdings from '../components/Holdings';
-import About from '../components/About';
 import { useSelector, useDispatch } from 'react-redux';
 import { userAddressSelector } from '../src/reducers';
 import {
@@ -17,21 +11,19 @@ import {
 } from '../src/actions';
 
 const Welcome = () => {
-  const [content, setContent] = useState<ContentType>(ContentType.SWAP);
-
   const userAddress = useSelector(userAddressSelector);
 
   const dispatch = useDispatch();
 
-  const [clearedHoldings, setClearedHoldings] = useState<Map<string, number>>(
-    new Map<string, number>()
-  );
-  const [openHoldings, setOpenHoldings] = useState<Map<string, number>>(
-    new Map<string, number>()
-  );
-  const [updateAll, setUpdateAll] = useState<boolean>(false);
-  const [hasClearedHoldings /* setHasClearedHoldings */] =
-    useState<boolean>(false);
+  // const [clearedHoldings, setClearedHoldings] = useState<Map<string, number>>(
+  //   new Map<string, number>()
+  // );
+  // const [openHoldings, setOpenHoldings] = useState<Map<string, number>>(
+  //   new Map<string, number>()
+  // );
+  // const [updateAll, setUpdateAll] = useState<boolean>(false);
+  // const [hasClearedHoldings /* setHasClearedHoldings */] =
+  //   useState<boolean>(false);
 
   // const getOriginalDepositAmounts = (
   //   side: any,
@@ -371,32 +363,6 @@ const Welcome = () => {
   //   setHasClearedHoldings(sum_of_holdings > 0);
   // };
 
-  const renderRightContent = (content: ContentType) => {
-    switch (content) {
-      case ContentType.SWAP:
-        return <Exchange />;
-      case ContentType.VOLUME:
-        return <Volume />;
-      case ContentType.REDEEM_HOLDING:
-        return (
-          <Holdings
-            userAddress={userAddress}
-            openHoldings={openHoldings}
-            clearedHoldings={clearedHoldings}
-            setOpenHoldings={setOpenHoldings}
-            setClearedHoldings={setClearedHoldings}
-            updateAll={updateAll}
-            setUpdateAll={setUpdateAll}
-            hasClearedHoldings={hasClearedHoldings}
-          />
-        );
-      case ContentType.ABOUT:
-        return <About />;
-      default:
-        return <Exchange />;
-    }
-  };
-
   // const updateFromStorage = async (storage: any) => {
   //   updateBigMapIds(storage);
   //   zeroHoldings(storage, setOpenHoldings, setClearedHoldings);
@@ -422,23 +388,10 @@ const Welcome = () => {
   }, [dispatch]);
 
   return (
-    <div className="mb-auto">
+    <>
       <BatcherInfo />
-      <BatcherAction content={content} setContent={setContent} />
-
-      <div>
-        <Row className="batcher-content">
-          <Col lg={3} />
-          <Col className="batcher-content-outer" xs={24} lg={18}>
-            <Row>
-              <Col xs={24} lg={18} className="pd-25">
-                {renderRightContent(content)}
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </div>
-    </div>
+      <Exchange />
+    </>
   );
 };
 

@@ -10,11 +10,21 @@ module.exports = {
       colors: {
         dark: '#1C1D22',
         primary: '#D8464E',
-        graybg: '#2B2A2E',
+        darkgray: '#2B2A2E',
+        lightgray: '#7B7B7E',
       },
     },
     fontFamily: {
-      custom: ['roboto-mono', 'sans-serif'],
+      custom: ['Roboto Mono'],
+    },
+    keyframes: {
+      rotate: {
+        from: { transform: 'rotate(0deg)' },
+        to: { transform: 'rotate(180deg)' },
+      },
+    },
+    animation: {
+      rotate: 'rotate 750ms ease',
     },
   },
   plugins: [],

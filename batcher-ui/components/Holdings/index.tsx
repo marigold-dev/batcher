@@ -83,7 +83,7 @@ const Holdings: React.FC<HoldingsProps> = ({
     <div className="font-custom flex flex-col border-solid border-2 border-#7B7B7E max-w-screen-md">
       <div className="flex flex-col p-6">
         <p className="p-4">Open/Closed Batches</p>
-        <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-[#7B7B7E] p-6">
+        <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-lightgray p-6">
           <p>Holdings =&gt; </p>
           {/* {generateHoldings(openHoldings)} */}
           <p>{mockGenerateHoldings()}</p>
@@ -92,7 +92,7 @@ const Holdings: React.FC<HoldingsProps> = ({
       <div className="flex flex-col p-6">
         <p className="p-4">Cleared Batches (Redeemable)</p>
         <div className="flex flex-col">
-          <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-[#7B7B7E] p-6">
+          <div className="bg-[#2B2A2E] flex flex-row border-2 border-solid border-lightgray p-6">
             <p>Holdings =&gt; </p>
             {/* {generateHoldings(clearedHoldings)} */}
             <p>{mockGenerateHoldings()}</p>

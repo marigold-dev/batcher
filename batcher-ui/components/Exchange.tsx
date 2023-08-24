@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { SwapOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
-import { getErrorMess, getFees, scaleAmountUp } from '../../utils/utils';
+import { getErrorMess, getFees, scaleAmountUp } from '../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
-import { useTezosToolkit } from '../../contexts/tezos-toolkit';
+import { useTezosToolkit } from '../contexts/tezos-toolkit';
 import { useSelector } from 'react-redux';
 import {
   batcherStatusSelector,
@@ -15,11 +14,12 @@ import {
   priceStrategySelector,
   userAddressSelector,
   userBalancesSelector,
-} from '../../src/reducers';
-import { BatcherStatus, PriceStrategy } from '../../src/types';
+} from '../src/reducers';
+import { BatcherStatus, PriceStrategy } from '../src/types';
 import { useDispatch } from 'react-redux';
 import { reverseSwap, updatePriceStrategy } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
+import { UpdateIcon } from '@radix-ui/react-icons';
 
 const Exchange = () => {
   const userAddress = useSelector(userAddressSelector);
@@ -36,6 +36,7 @@ const Exchange = () => {
 
   const [amount, setAmount] = useState(0);
   const [fees, setFees] = useState(0);
+  const [animate, setAnimate] = useState(false);
 
   //TODO: rewrite with redux-loop
   useEffect(() => {
@@ -232,15 +233,57 @@ const Exchange = () => {
   };
 
   return (
-    <div className="flex flex-col items-center font-custom">
-      <div className="max-w-fit p-5 flex flex-col items-center border-2 border-solid">
+    <div className="flex flex-col md:flex-row justify-center p-3">
+      <div className="max-w-fit p-5 flex flex-col md:flex-row border-2 border-solid border-lightgray">
         <Form.Root
           className="flex flex-col items-center"
           onSubmit={event => {
             event.preventDefault();
             depositToken();
           }}>
-          <Form.Field className="grid mb-[10px]" name="amount">
+          <div className="flex flex-col items-center mb-8">
+            <p className="p-5">Select the price you want to sell</p>
+            <div className="flex">
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch(updatePriceStrategy(PriceStrategy.WORSE))
+                }
+                className={
+                  priceStategy === PriceStrategy.WORSE
+                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
+                    : 'p-5 text-l border-2 border-lightgray border-solid'
+                }>
+                Worse price / Better fill
+              </button>
+              <button
+                type="button"
+                className={
+                  priceStategy === PriceStrategy.EXACT
+                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
+                    : 'p-5 text-l border-2 border-lightgray border-solid'
+                }
+                onClick={() =>
+                  dispatch(updatePriceStrategy(PriceStrategy.EXACT))
+                }>
+                Oracle Price
+              </button>
+              <button
+                type="button"
+                className={
+                  priceStategy === PriceStrategy.BETTER
+                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
+                    : 'p-5 text-l border-2 border-lightgray border-solid'
+                }
+                onClick={() =>
+                  dispatch(updatePriceStrategy(PriceStrategy.BETTER))
+                }>
+                Better Price / Worse Fill
+              </button>
+            </div>
+          </div>
+
+          <Form.Field name="amount">
             <div className="flex items-baseline justify-between">
               <Form.Label className="text-xl font-medium leading-[35px] text-white">
                 {`From ${
@@ -248,12 +291,22 @@ const Exchange = () => {
                     ? currentSwap.swap.to.name
                     : currentSwap.swap.from.token.name
                 }`}
+                <p className="text-sm mb-2">
+                  {`Balance : ${
+                    isReverse
+                      ? userBalances[currentSwap.swap.to.name.toUpperCase()] ||
+                        0
+                      : userBalances[
+                          currentSwap.swap.from.token.name.toUpperCase()
+                        ]
+                  }`}
+                </p>
               </Form.Label>
             </div>
 
             <Form.Control asChild>
               <input
-                className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none"
+                className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 onChange={event => setAmount(parseFloat(event.target.value))}
                 type="number"
                 min={0}
@@ -286,66 +339,53 @@ const Exchange = () => {
             </Form.Message>
           </Form.Field>
 
-          <p className="p-5">Select the price you want to sell</p>
-          <div className="flex">
-            <button
-              type="button"
-              onClick={() => dispatch(updatePriceStrategy(PriceStrategy.WORSE))}
-              className={
-                priceStategy === PriceStrategy.WORSE
-                  ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
-                  : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
-              }>
-              Worse price / Better fill
-            </button>
-            <button
-              type="button"
-              className={
-                priceStategy === PriceStrategy.EXACT
-                  ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
-                  : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
-              }
-              onClick={() =>
-                dispatch(updatePriceStrategy(PriceStrategy.EXACT))
-              }>
-              Oracle Price
-            </button>
-            <button
-              type="button"
-              className={
-                priceStategy === PriceStrategy.BETTER
-                  ? 'p-5 text-l border-2 border-[#7B7B7E] border-solid bg-[white] text-[#1C1D22]'
-                  : 'p-5 text-l border-2 border-[#7B7B7E] border-solid'
-              }
-              onClick={() =>
-                dispatch(updatePriceStrategy(PriceStrategy.BETTER))
-              }>
-              Better Price / Worse Fill
-            </button>
+          <div
+            className={`${
+              animate && 'animate-rotate'
+            } duration-100 rounded my-8 text-primary flex justify-center items-center hover:cursor-pointer`}
+            onClick={() => {
+              setAnimate(true);
+              dispatch(reverseSwap());
+            }}
+            onAnimationEnd={() => setAnimate(false)}>
+            <UpdateIcon className="w-8 h-8" />
           </div>
 
-          <div className="flex flex-row p-10 text-[#1C1D22]">
-            <SwapOutlined
-              className="text-[#ff4d4f]"
-              onClick={() => dispatch(reverseSwap())}
-              size={42}
-              rotate={90}
-            />
-          </div>
-          <div className="">
-            <p className="p-4">
-              {`To ${
-                isReverse
-                  ? currentSwap.swap.from.token.name
-                  : currentSwap.swap.to.name
-              }`}
-            </p>
-          </div>
+          <Form.Field name="amount">
+            <div className="flex items-baseline justify-between">
+              <Form.Label className="text-xl font-medium leading-[35px] text-white">
+                {`To ${
+                  isReverse
+                    ? currentSwap.swap.from.token.name
+                    : currentSwap.swap.to.name
+                }`}
+                <p className="text-sm mb-2">
+                  {`Balance : ${
+                    isReverse
+                      ? userBalances[
+                          currentSwap.swap.from.token.name.toUpperCase()
+                        ] || 0
+                      : userBalances[currentSwap.swap.to.name.toUpperCase()]
+                  }`}
+                </p>
+              </Form.Label>
+            </div>
+            <Form.Control asChild>
+              <input
+                className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={event => setAmount(parseFloat(event.target.value))}
+                type="number"
+                min={0}
+                disabled
+                required
+              />
+            </Form.Control>
+          </Form.Field>
 
           <Form.Submit asChild>
             <button
               disabled={!userAddress || batcherStatus !== BatcherStatus.OPEN}
-              className="box-border text-black inline-flex h-[35px] items-center justify-center rounded-[4px] bg-white px-[15px] font-medium leading-none mt-[10px] text-xl">
+              className="text-white h-10 disabled:invisible items-center justify-center rounded bg-primary px-4 mt-8 text-xl">
               Swap
             </button>
           </Form.Submit>
