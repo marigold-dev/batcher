@@ -6,8 +6,9 @@ import BatcherLogo from '../img/batcher-logo.png';
 import { useWallet } from '.././contexts/wallet';
 import ChoosePairs from './ChoosePairs';
 import Menu from './Menu';
-import { Cross1Icon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import LinkComponent from './Link';
+import { faXmark, faBars } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface NavBarProps {
   isMenuOpen: boolean;
@@ -41,7 +42,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
             </p>
           </div>
           <button onClick={() => setIsOpen(false)}>
-            <Cross1Icon className="h-full" />
+            <FontAwesomeIcon icon={faXmark} color="white" size="xl" />
           </button>
         </div>
       )}
@@ -72,14 +73,8 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
           <button
             type="button"
             className="text-white bg-primary rounded py-2 px-4 m-2 md:hidden"
-            // onClick={() =>
-            //   userAddress
-            //     ? walletCtx.disconnectWallet()
-            //     : walletCtx.connectWallet()
-            // }
             onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {/* {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'} */}
-            <HamburgerMenuIcon />
+            <FontAwesomeIcon icon={faBars} size="xl" />
           </button>
           <button
             type="button"

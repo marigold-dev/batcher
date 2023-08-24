@@ -11,6 +11,11 @@ import NavBar from '../components/NavBar';
 import ReactGA from 'react-ga4';
 import * as api from '@tzkt/sdk-api';
 import Head from 'next/head';
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+config.autoAddCss = false;
+
 
 process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
   ReactGA.initialize(process.env.NEXT_PUBLIC_GA_TRACKING_ID);

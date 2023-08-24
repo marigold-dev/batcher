@@ -17,9 +17,10 @@ import {
 } from '../src/reducers';
 import { BatcherStatus, PriceStrategy } from '../src/types';
 import { useDispatch } from 'react-redux';
-import { reverseSwap, updatePriceStrategy } from 'src/actions';
+import { reverseSwap } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
-import { UpdateIcon } from '@radix-ui/react-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const Exchange = () => {
   const userAddress = useSelector(userAddressSelector);
@@ -233,59 +234,17 @@ const Exchange = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-center p-3">
-      <div className="max-w-fit p-5 flex flex-col md:flex-row border-2 border-solid border-lightgray">
+    <div className="flex flex-col grow my-4">
+      <div className="p-5 flex flex-col md:flex-row justify-center border-2 border-solid border-lightgray">
         <Form.Root
           className="flex flex-col items-center"
           onSubmit={event => {
             event.preventDefault();
             depositToken();
           }}>
-          <div className="flex flex-col items-center mb-8">
-            <p className="p-5">Select the price you want to sell</p>
-            <div className="flex">
-              <button
-                type="button"
-                onClick={() =>
-                  dispatch(updatePriceStrategy(PriceStrategy.WORSE))
-                }
-                className={
-                  priceStategy === PriceStrategy.WORSE
-                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
-                    : 'p-5 text-l border-2 border-lightgray border-solid'
-                }>
-                Worse price / Better fill
-              </button>
-              <button
-                type="button"
-                className={
-                  priceStategy === PriceStrategy.EXACT
-                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
-                    : 'p-5 text-l border-2 border-lightgray border-solid'
-                }
-                onClick={() =>
-                  dispatch(updatePriceStrategy(PriceStrategy.EXACT))
-                }>
-                Oracle Price
-              </button>
-              <button
-                type="button"
-                className={
-                  priceStategy === PriceStrategy.BETTER
-                    ? 'p-5 text-l border-2 border-lightgray border-solid bg-white text-dark'
-                    : 'p-5 text-l border-2 border-lightgray border-solid'
-                }
-                onClick={() =>
-                  dispatch(updatePriceStrategy(PriceStrategy.BETTER))
-                }>
-                Better Price / Worse Fill
-              </button>
-            </div>
-          </div>
-
           <Form.Field name="amount">
             <div className="flex items-baseline justify-between">
-              <Form.Label className="text-xl font-medium leading-[35px] text-white">
+              <Form.Label className="text-xl font-medium text-white">
                 {`From ${
                   isReverse
                     ? currentSwap.swap.to.name
@@ -348,7 +307,11 @@ const Exchange = () => {
               dispatch(reverseSwap());
             }}
             onAnimationEnd={() => setAnimate(false)}>
-            <UpdateIcon className="w-8 h-8" />
+            <FontAwesomeIcon
+              size="2xl"
+              icon={faArrowRightArrowLeft}
+              rotation={90}
+            />
           </div>
 
           <Form.Field name="amount">
@@ -385,7 +348,7 @@ const Exchange = () => {
           <Form.Submit asChild>
             <button
               disabled={!userAddress || batcherStatus !== BatcherStatus.OPEN}
-              className="text-white h-10 disabled:invisible items-center justify-center rounded bg-primary px-4 mt-8 text-xl">
+              className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl">
               Swap
             </button>
           </Form.Submit>

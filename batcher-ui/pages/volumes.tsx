@@ -42,14 +42,14 @@ const Volume = () => {
     },
   ];
   return (
-    <div className="flex flex-col items-center">
-      <p className="my-8">VOLUMES</p>
-      <table className="border-collapse border border-slate-500">
+    <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 mt-4">
+      <p className="mb-4 text-xl">Volumes</p>
+      <table className="border-collapse text-sm md:m-0 mx-4">
         <thead>
           <tr>
             {listOfBuyVolumesColumns.map((b, i) => (
               <th
-                className="border border-slate-500 p-2 text-center bg-slate-900"
+                className="border border-white p-2 text-center bg-darkgray"
                 key={i}>
                 {b.title}
               </th>
@@ -61,7 +61,7 @@ const Volume = () => {
             {listOfBuyVolumesColumns.map((b, i) => {
               return (
                 <td
-                  className="border border-slate-700 p-2 text-center bg-slate-400"
+                  className="border border-white p-2 text-center bg-lightgray"
                   key={i}>
                   {buy[b.key]}
                 </td>
@@ -73,7 +73,7 @@ const Volume = () => {
           <tr>
             {listOfSellVolumesColumns.map((b, i) => (
               <th
-                className="border border-slate-500 p-2 text-center bg-slate-900"
+                className="border border-white p-2 text-center bg-darkgray"
                 key={i}>
                 {b.title}
               </th>
@@ -85,7 +85,7 @@ const Volume = () => {
             {listOfSellVolumesColumns.map((b, i) => {
               return (
                 <td
-                  className="border border-slate-700 p-2 text-center bg-slate-400"
+                  className="border border-white p-2 text-center bg-lightgray"
                   key={i}>
                   {sell[b.key]}
                 </td>

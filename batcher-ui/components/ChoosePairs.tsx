@@ -1,10 +1,11 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import React, { useState } from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
-import { Cross1Icon, GearIcon } from '@radix-ui/react-icons';
 import { useDispatch } from 'react-redux';
 import { changePair } from '../src/actions';
 import { getPairsInformations } from '../utils/utils';
+import { faXmark, faGear } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const ChoosePairs = () => {
   const dispatch = useDispatch();
@@ -14,8 +15,13 @@ const ChoosePairs = () => {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="text-[black] rounded bg-white px-4 m-2 py-2">
-          <GearIcon className="w-6 h-6" />
+        <button className="md:mx-4 mx-0">
+          <FontAwesomeIcon
+            icon={faGear}
+            color="white"
+            className="hover:text-lightgray"
+            size="2xl"
+          />
         </button>
       </Dialog.Trigger>
 
@@ -27,7 +33,7 @@ const ChoosePairs = () => {
           </Dialog.Title>
 
           <RadioGroup.Root
-            className="flex flex-col gap-5 font-custom"
+            className="flex flex-col gap-5"
             defaultValue={'tzBTC/USDT'}
             value={pair}
             onValueChange={setPair}
@@ -79,7 +85,7 @@ const ChoosePairs = () => {
             <button
               className="text-[black] absolute top-[10px] right-[10px] inline-flex h-[25px] w-[25px] items-center justify-center"
               aria-label="Close">
-              <Cross1Icon className="w-4 h-4" />
+              <FontAwesomeIcon icon={faXmark} />
             </button>
           </Dialog.Close>
         </Dialog.Content>
