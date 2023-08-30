@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { message } from 'antd';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
-// import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
-import { getErrorMess, getFees, scaleAmountUp } from '../utils/utils';
+import { getFees, scaleAmountUp } from '../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
@@ -17,7 +15,7 @@ import {
 } from '../src/reducers';
 import { BatcherStatus, PriceStrategy } from '../src/types';
 import { useDispatch } from 'react-redux';
-import { reverseSwap } from 'src/actions';
+import { fetchUserBalances, reverseSwap } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -61,9 +59,9 @@ const Exchange = () => {
       case PriceStrategy.EXACT:
         return 1;
       case PriceStrategy.BETTER:
-        return isReverse ? 2 : 0;
+        return 2;
       case PriceStrategy.WORSE:
-        return isReverse ? 0 : 2;
+        return 0;
     }
   };
 
@@ -144,7 +142,9 @@ const Exchange = () => {
               },
             },
         created_at: new Date(),
-        side: isReverse ? 0 : 1,
+        //! side is reverse in relation to contract.
+        //! UI : from = sell / to = buy | contract : from = buy (0) / to = sell (1)
+        side: isReverse ? 1 : 0,
         tolerance,
       };
 
@@ -222,14 +222,18 @@ const Exchange = () => {
         );
       } else {
         console.info(`Successfully deposited ${tokenName}`);
+
+        dispatch(fetchUserBalances());
+        setAmount(0);
+
         //   form.resetFields();
         //   message.success('Successfully deposited ' + tokenName);
       }
     } catch (error) {
       console.log('deposit error', error);
-      const converted_error_message = getErrorMess(error);
-      message.error(converted_error_message);
-      message.loading('Attempting to place swap order for ' + tokenName, 0);
+      // const converted_error_message = getErrorMess(error);
+      // message.error(converted_error_message);
+      // message.loading('Attempting to place swap order for ' + tokenName, 0);
     }
   };
 
@@ -268,6 +272,7 @@ const Exchange = () => {
                 className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 onChange={event => setAmount(parseFloat(event.target.value))}
                 type="number"
+                value={amount}
                 min={0}
                 required
               />

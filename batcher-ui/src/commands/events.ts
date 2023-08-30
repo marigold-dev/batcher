@@ -5,8 +5,9 @@ import {
   updateVolumes,
   updateOraclePrice,
 } from 'src/actions';
-import { currentSwapSelector } from 'src/reducers';
-import { AddBatchEvent, BigMapEvent, UpdateRateEvent } from 'src/types/events';
+import { getHoldings } from 'src/actions/holdings';
+import { currentSwapSelector, userAddressSelector } from 'src/reducers';
+import { Batch, BigMapEvent, UpdateRateEvent } from 'src/types/events';
 import { computeOraclePrice, toVolumes } from 'utils/utils';
 
 export const newEventCmd = (event: BigMapEvent) => {
@@ -16,7 +17,7 @@ export const newEventCmd = (event: BigMapEvent) => {
         switch (eventData.action) {
           case 'add_key': {
             if (eventData.path === 'batch_set.batches') {
-              const data = eventData.content.value as AddBatchEvent;
+              const data = eventData.content.value as Batch;
               // new batch
               dispatch(updateBatchNumber(data.batch_number));
               dispatch(getBatcherStatus());
@@ -51,6 +52,12 @@ export const newEventCmd = (event: BigMapEvent) => {
             if (eventData.path === 'batch_set.batches') {
               console.log('🚀 ~ file: events.ts:67 ~ eventData:', eventData);
               dispatch(getBatcherStatus());
+              return Promise.resolve();
+            }
+            if (eventData.path === 'user_batch_ordertypes') {
+              console.log('🚀 ~ file: events.ts:67 ~ eventData:', eventData);
+              const userAddress = userAddressSelector(getState());
+              dispatch(getHoldings(userAddress));
               return Promise.resolve();
             }
             return Promise.reject('Unknown event');

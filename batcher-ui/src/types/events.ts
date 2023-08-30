@@ -55,31 +55,35 @@ export type UpdateRateEvent = {
   when: number; // timestamp
 };
 
-export type BatcherStatusStorage =
-  | {
-      open: string; // timestamp
-    }
-  | { closed: { closing_time: string; start_time: string } }
-  | {
-      cleared: {
-        at: string;
-        clearing: {
-          clearing_rate: UpdateRateEvent;
-          clearing_tolerance: unknown;
-          clearing_volumes: { exact: string; minus: string; plus: string };
-          total_cleared_volumes: {
-            buy_side_total_cleared_volume: string;
-            buy_side_volume_subject_to_clearing: string;
-            sell_side_total_cleared_volume: string;
-            sell_side_volume_subject_to_clearing: string;
-          };
-        };
-        rate: UpdateRateEvent;
+export type BatchStatusOpen = { open: string };
+export type BatchStatusClosed = {
+  closed: { closing_time: string; start_time: string };
+};
+export type BatchStatusCleared = {
+  cleared: {
+    at: string;
+    clearing: {
+      clearing_rate: UpdateRateEvent;
+      clearing_tolerance: {};
+      clearing_volumes: { exact: string; minus: string; plus: string };
+      total_cleared_volumes: {
+        buy_side_total_cleared_volume: string;
+        buy_side_volume_subject_to_clearing: string;
+        sell_side_total_cleared_volume: string;
+        sell_side_volume_subject_to_clearing: string;
       };
     };
+    rate: UpdateRateEvent;
+  };
+};
+
+export type BatcherStatusStorage =
+  | BatchStatusOpen
+  | BatchStatusClosed
+  | BatchStatusCleared;
 
 // Batch_set.batches add_key
-export type AddBatchEvent = {
+export type Batch = {
   batch_number: number;
   pair: {
     address_0: string;

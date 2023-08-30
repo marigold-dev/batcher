@@ -37,8 +37,14 @@ export type WalletState = {
   userBalances: Record<string, number>;
 };
 
+export type HoldingsState = {
+  open: Record<string, number>;
+  cleared: Record<string, number>;
+};
+
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
   event: {};
+  holdings: HoldingsState;
 };

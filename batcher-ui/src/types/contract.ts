@@ -1,3 +1,5 @@
+import { UpdateRateEvent } from './events';
+
 export enum BatcherStatus {
   OPEN = 'OPEN',
   CLOSED = 'CLOSED',
@@ -65,8 +67,6 @@ export type BatcherStorage = {
   rates_current: Map<SwapNames, ExchangeRate>;
 };
 
-
-
 export type VolumesStorage = {
   buy_minus_volume: string;
   buy_exact_volume: string;
@@ -74,4 +74,49 @@ export type VolumesStorage = {
   sell_minus_volume: string;
   sell_exact_volume: string;
   sell_plus_volume: string;
+};
+
+type P<K extends string> = {
+  [key in K]: {};
+};
+
+export type Deposit = {
+  key: {
+    side: P<'buy'> | P<'sell'>;
+    tolerance: P<'exact'> | P<'minus'> | P<'plus'>;
+  };
+  value: string;
+};
+
+export type BatchStatusOpen = { open: string };
+export type BatchStatusClosed = {
+  closed: { closing_time: string; start_time: string };
+};
+export type BatchStatusCleared = {
+  cleared: {
+    at: string;
+    clearing: {
+      clearing_rate: UpdateRateEvent;
+      clearing_tolerance: unknown;
+      clearing_volumes: { exact: string; minus: string; plus: string };
+      total_cleared_volumes: {
+        buy_side_total_cleared_volume: string;
+        buy_side_volume_subject_to_clearing: string;
+        sell_side_total_cleared_volume: string;
+        sell_side_volume_subject_to_clearing: string;
+      };
+    };
+    rate: UpdateRateEvent;
+  };
+};
+
+export type BatcherStatusStorage =
+  | BatchStatusOpen
+  | BatchStatusClosed
+  | BatchStatusCleared;
+
+export const batchIsCleared = (
+  status: BatcherStatusStorage
+): status is BatchStatusCleared => {
+  return Object.keys(status)[0] === 'cleared';
 };

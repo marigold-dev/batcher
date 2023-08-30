@@ -2,11 +2,15 @@ import { add, differenceInMinutes, parseISO } from 'date-fns';
 import {
   BatcherStatus,
   CurrentSwap,
+  Deposit,
+  HoldingsState,
   VolumesState,
   VolumesStorage,
+  batchIsCleared,
 } from '../src/types';
 import * as types from './types';
 import { Dispatch, SetStateAction } from 'react';
+import { Batch } from 'src/types/events';
 
 export const setTokenAmount = (
   balances: any[],
@@ -249,6 +253,21 @@ export const getCurrentBatchNumber = async (
   return currentBatchIndices[pair];
 };
 
+export const getBigMapByIdAndUserAddress = (
+  bigMapId: number,
+  userAddress?: string
+) => {
+  if (!userAddress) return [];
+  return (
+    fetch(
+      `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
+    )
+      // TODO: fix that
+      .then(r => (r.status === 204 ? { value: [] } : r.json()))
+      .then(r => r.value)
+  );
+};
+
 export const getBigMapByIdAndBatchNumber = (
   bigMapId: number,
   batchNumber: number
@@ -412,7 +431,271 @@ export const getVolumes = async (
     batchNumber
   );
   return toVolumes(batch['volumes'], {
-    buyDecimals: currentSwap.swap.to.decimals,
-    sellDecimals: currentSwap.swap.from.token.decimals,
+    buyDecimals: batch.pair.decimals_0,
+    sellDecimals: batch.pair.decimals_1,
   });
 };
+
+// ---- HOLDINGS ----
+
+const convertHoldingToPayout = (
+  fromAmount: number, //! nb total que le user a deposé dans le batch
+  fromVolumeSubjectToClearing: number, //! nb total que le user a deposé (que l'on pourrait clear)
+  fromClearedVolume: number, //! nb total de tokens 'buy' qui a honoré l'ordre
+  toClearedVolume: number, //! nb total de tokens 'sell' qui a honoré l'ordre
+  fromDecimals: number,
+  toDecimals: number
+) => {
+  const prorata = fromAmount / fromVolumeSubjectToClearing;
+  const payout = toClearedVolume * prorata;
+  const payoutInFromTokens = fromClearedVolume * prorata;
+  const remainder = fromAmount - payoutInFromTokens;
+  const scaled_payout = Math.floor(payout) / 10 ** toDecimals;
+  const scaled_remainder = Math.floor(remainder) / 10 ** fromDecimals;
+
+  return [scaled_payout, scaled_remainder];
+};
+
+const findTokensForBatch = (batch: Batch) => {
+  const pair = batch.pair;
+  const tkns = {
+    // buy_token_name: pair.name_0,
+    // sell_token_name: pair.name_1,
+    to: { name: pair.name_0, decimals: parseInt(pair.decimals_0, 10) },
+    from: { name: pair.name_1, decimals: parseInt(pair.decimals_1, 10) },
+  };
+  return tkns;
+};
+
+const wasInClearingForBatch = (
+  side: 'sell' | 'buy',
+  tolerance: 'minus' | 'exact' | 'plus',
+  clearingTolerance: 'minus' | 'exact' | 'plus'
+) => {
+  const toNumber = (x: 'minus' | 'exact' | 'plus'): -1 | 0 | 1 =>
+    x === 'minus' ? -1 : x === 'exact' ? 0 : 1;
+
+  const clearingToleranceNumber = toNumber(
+    clearingTolerance as 'minus' | 'exact' | 'plus'
+  );
+  const toleranceNumber = toNumber(tolerance as 'minus' | 'exact' | 'plus');
+
+  if (side === 'buy') {
+    return clearingToleranceNumber >= toleranceNumber;
+  }
+  return clearingToleranceNumber <= toleranceNumber;
+};
+
+const getSideFromDeposit = (deposit: Deposit) => {
+  const rawSide = Object.keys(deposit.key.side)[0];
+  if (rawSide !== 'buy' && rawSide !== 'sell')
+    throw new Error('Unable to parse side.');
+  return rawSide;
+};
+
+const getTolerance = (obj: {}) => {
+  const rawTolerance = Object.keys(obj)[0];
+  if (
+    rawTolerance !== 'minus' &&
+    rawTolerance !== 'exact' &&
+    rawTolerance !== 'plus'
+  )
+    throw new Error('Unable to parse tolerance.');
+
+  return rawTolerance;
+};
+
+const computeHoldingsByBatchAndDeposit = (
+  deposit: Deposit,
+  batch: Batch,
+  currentHoldings: HoldingsState
+) => {
+  const side = getSideFromDeposit(deposit);
+
+  const tokens = findTokensForBatch(batch);
+  if (batchIsCleared(batch.status)) {
+    const clearing = batch.status['cleared'].clearing;
+    const clearedVolumes = {
+      cleared: {
+        from: parseInt(
+          clearing.total_cleared_volumes.sell_side_total_cleared_volume,
+          10
+        ),
+        to: parseInt(
+          clearing.total_cleared_volumes.buy_side_total_cleared_volume,
+          10
+        ),
+      },
+      subjectToClearing: {
+        from: parseInt(
+          clearing.total_cleared_volumes.sell_side_volume_subject_to_clearing,
+          10
+        ),
+        to: parseInt(
+          clearing.total_cleared_volumes.buy_side_volume_subject_to_clearing,
+          10
+        ),
+      },
+    };
+
+    if (
+      !wasInClearingForBatch(
+        side,
+        getTolerance(deposit.key.tolerance),
+        getTolerance(clearing.clearing_tolerance)
+      ) ||
+      clearedVolumes.cleared.to === 0 ||
+      clearedVolumes.cleared.from === 0
+    ) {
+      return {
+        ...currentHoldings,
+        cleared: {
+          ...currentHoldings.cleared,
+          [tokens.to.name]:
+            currentHoldings.cleared[tokens.to.name] +
+            (side === 'buy'
+              ? getDepositAmount(
+                  parseInt(deposit.value, 10),
+                  tokens.to.decimals
+                )
+              : 0),
+          [tokens.from.name]:
+            currentHoldings.cleared[tokens.from.name] +
+            (side === 'sell'
+              ? getDepositAmount(
+                  parseInt(deposit.value, 10),
+                  tokens.from.decimals
+                )
+              : 0),
+        },
+      };
+    } else {
+      if (side === 'sell') {
+        const payout = convertHoldingToPayout(
+          parseInt(deposit.value, 10),
+          clearedVolumes.subjectToClearing.from,
+          clearedVolumes.cleared.from,
+          clearedVolumes.cleared.to,
+          tokens.from.decimals,
+          tokens.to.decimals
+        );
+        return {
+          ...currentHoldings,
+          cleared: {
+            ...currentHoldings.cleared,
+            [tokens.to.name]:
+              currentHoldings.cleared[tokens.to.name] + payout[0],
+            [tokens.from.name]:
+              currentHoldings.cleared[tokens.from.name] + payout[1],
+          },
+        };
+      }
+      const payout = convertHoldingToPayout(
+        parseInt(deposit.value, 10),
+        clearedVolumes.subjectToClearing.to,
+        clearedVolumes.cleared.to,
+        clearedVolumes.cleared.from,
+        tokens.to.decimals,
+        tokens.from.decimals
+      );
+      return {
+        ...currentHoldings,
+        cleared: {
+          ...currentHoldings.cleared,
+          [tokens.to.name]: currentHoldings.cleared[tokens.to.name] + payout[1],
+          [tokens.from.name]:
+            currentHoldings.cleared[tokens.from.name] + payout[0],
+        },
+      };
+    }
+  } else {
+    return {
+      ...currentHoldings,
+      open: {
+        ...currentHoldings.open,
+        [tokens.to.name]:
+          currentHoldings.open[tokens.to.name] +
+          (side === 'buy'
+            ? getDepositAmount(parseInt(deposit.value, 10), tokens.to.decimals)
+            : 0),
+        [tokens.from.name]:
+          currentHoldings.open[tokens.from.name] +
+          (side === 'sell'
+            ? getDepositAmount(
+                parseInt(deposit.value, 10),
+                tokens.from.decimals
+              )
+            : 0),
+      },
+    };
+  }
+};
+
+//TODO type o1: { tzBTC: number, USDT: number }, o2:{ tzBTC: number, USDT: number }
+const addObj = (o1: any, o2: any) => {
+  return Object.keys(o1).reduce(
+    (acc, c) => {
+      return {
+        ...acc,
+        [c]: o1[c] + o2[c],
+      };
+    },
+    { tzBTC: 0, USDT: 0 }
+  );
+};
+
+const computeHoldingsByBatch = (
+  deposits: Deposit[], //! depots dans un batch
+  batch: Batch,
+  currentHoldings: HoldingsState
+) => {
+  return deposits.reduce(
+    (acc, d) => {
+      return {
+        open: addObj(
+          acc.open,
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).open
+        ),
+        cleared: addObj(
+          acc.cleared,
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).cleared
+        ),
+      };
+    },
+    { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }
+  );
+};
+
+//TODO
+export const getOrdersBook = async (address: string, userAddress: string) => {
+  const storage = await getStorageByAddress(address);
+  const b: { [key: number]: Deposit[] } = await getBigMapByIdAndUserAddress(
+    321390,
+    userAddress
+  );
+  return Promise.all(
+    Object.entries(b).map(async ([batchNumber, deposits]) => {
+      const batch = await getBigMapByIdAndBatchNumber(
+        storage['batch_set']['batches'],
+        parseInt(batchNumber, 10)
+      );
+      return computeHoldingsByBatch(deposits, batch, {
+        open: { tzBTC: 0, USDT: 0 },
+        cleared: { tzBTC: 0, USDT: 0 },
+      });
+    })
+  ).then(x =>
+    x.reduce(
+      (acc, v) => {
+        return {
+          open: addObj(acc.open, v.open),
+          cleared: addObj(acc.cleared, v.cleared),
+        };
+      },
+      { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }
+    )
+  );
+};
+
+const getDepositAmount = (depositAmount: number, decimals: number) =>
+  Math.floor(depositAmount) / 10 ** decimals;

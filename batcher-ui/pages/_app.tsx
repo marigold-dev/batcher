@@ -16,11 +16,12 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 
 config.autoAddCss = false;
 
-
 process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
   ReactGA.initialize(process.env.NEXT_PUBLIC_GA_TRACKING_ID);
 
 const App = ({ Component }: AppProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   // Override TZKT base url if we are in ghostnet
   useEffect(() => {
     console.warn(process.env.NEXT_PUBLIC_NETWORK_TARGET);
@@ -29,8 +30,6 @@ const App = ({ Component }: AppProps) => {
       api.defaults.baseUrl = 'https://api.ghostnet.tzkt.io/';
     }
   }, []);
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div>

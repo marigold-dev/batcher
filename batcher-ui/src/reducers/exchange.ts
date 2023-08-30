@@ -141,6 +141,8 @@ const exchangeReducer = (
       return { ...state, oraclePrice: action.payload.oraclePrice };
     case 'GET_VOLUMES':
       return loop(state, fetchVolumesCmd(state.batchNumber, state.currentSwap));
+    case 'UPDATE_VOLUMES':
+      return { ...state, volumes: action.payload.volumes };
     default:
       return state;
   }

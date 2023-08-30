@@ -3,6 +3,7 @@ import exchangeReducer from './exchange';
 import walletReducer from './wallet';
 import { AppState, ExchangeState, WalletState } from '../types';
 import { eventReducer } from './events';
+import { holdingsReducer } from './holdings';
 
 // Wallet selectors
 export const userAddressSelector = (state: AppState) => {
@@ -42,8 +43,12 @@ export const oraclePriceSelector = (state: AppState) =>
 
 export const volumesSelector = (state: AppState) => state.exchange.volumes;
 
+// Holdings selectors
+export const getHoldings = (state: AppState) => state.holdings;
+
 export default combineReducers({
   exchange: exchangeReducer as LoopReducer<ExchangeState>,
   wallet: walletReducer as LoopReducer<WalletState>,
   event: eventReducer as LoopReducer<{}>,
+  holdings: holdingsReducer as LoopReducer<{}>,
 });
