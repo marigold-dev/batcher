@@ -17,12 +17,20 @@ type market_token = {
 
 }
 
-let assert_or_fail
+let assert_some_or_fail_with
+    (type a)
+    (an_opt: a option)
+    (error: nat) = 
+    match an_opt with
+    | None -> failwith error
+    | Some _ -> ()
+
+let assert_or_fail_with
     (predicate: bool)
     (error: nat) = 
     if not predicate then failwith error else ()
 
-let find_or_fail
+let find_or_fail_with
      (type a b)
      (key: a)
      (error: nat)

@@ -62,8 +62,10 @@ let originate_oracle
 
 let originate_tzbtc
   (trader: Breath.Context.actor)
+  (trader_2: Breath.Context.actor)
+  (trader_3: Breath.Context.actor)
   (level: Breath.Logger.level)  =
-  let storage = TestStorage.tzbtc_initial_storage trader in
+  let storage = TestStorage.tzbtc_initial_storage trader trader_2 trader_3 in
   TestUtils.originate_tzbtc storage level
 
 let originate_usdt
@@ -85,7 +87,7 @@ let originate
   (eurl_trader: Breath.Context.actor) =
   let oracle = originate_oracle level in
   let additional_oracle = originate_oracle level in
-  let tzbtc = originate_tzbtc tzbtc_trader level in
+  let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
   let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
@@ -108,7 +110,7 @@ let originate_with_admin_and_fee_recipient
   (fee_recipient: address) =
   let oracle = originate_oracle level in
   let additional_oracle = originate_oracle level in
-  let tzbtc = originate_tzbtc tzbtc_trader level in
+  let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
   let initial_storage = TestStorage.initial_storage_with_admin_and_fee_recipient oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address fee_recipient in
@@ -131,7 +133,7 @@ let originate_with_batch_for_clearing
   (pair: string)  =
   let oracle = originate_oracle level in
   let additional_oracle = originate_oracle level in
-  let tzbtc = originate_tzbtc tzbtc_trader level in
+  let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
   let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
@@ -239,6 +241,12 @@ let add_liquidity
   } in
   Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (AddLiquidity token_amount) 0tez))
 
+let remove_liquidity
+  (actor: Breath.Context.actor)
+  (contract: originated_contract)
+  (token_name: string) =
+  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (RemoveLiquidity token_name) 0tez))
+
 let expect_last_order_number
   (storage: storage)
   (last_order_number: nat)  = TestStorage.expect_from_storage "last_order_number" storage (fun s -> s.last_order_number) last_order_number
@@ -279,3 +287,39 @@ let get_current_batch
   match Map.find_opt pair batch_set.current_batch_indices with
   | Some i -> Big_map.find_opt i batch_set.batches
   | None -> None
+
+
+
+type balances = {
+   tzbtc : nat;
+   usdt: nat;
+   eurl: nat;
+}
+
+let get_balances
+  (holder: address)
+  (tzbtc_contract:  (TZBTC.parameter, TZBTC.storage) originated)
+  (usdt_contract:  (USDT.parameter, USDT.storage) originated)
+  (eurl_contract:  (EURL.parameter, EURL.storage) originated) : balances = 
+  let tzbtc_storage = Breath.Contract.storage_of tzbtc_contract in 
+  let eurl_storage = Breath.Contract.storage_of usdt_contract in 
+  let usdt_storage = Breath.Contract.storage_of eurl_contract in 
+  let tzbtc_balance = match Big_map.find_opt holder tzbtc_storage.tokens with
+                       | None -> 0n
+                       | Some v -> v
+  in
+  let usdt_balance  =  match Big_map.find_opt (holder,0n) usdt_storage.ledger with
+                       | None -> 0n
+                       | Some v -> v
+  in
+  let eurl_balance  =  match Big_map.find_opt (holder,0n) eurl_storage.ledger with
+                       | None -> 0n
+                       | Some v -> v
+  in
+  {
+     tzbtc = tzbtc_balance;
+     usdt = usdt_balance;
+     eurl = eurl_balance;
+  }
+
+

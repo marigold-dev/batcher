@@ -13,11 +13,17 @@ let fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address)
 let  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address)
 
 let tzbtc_initial_storage
-  (trader: Breath.Context.actor) =
+  (trader: Breath.Context.actor) 
+  (trader_2: Breath.Context.actor) 
+  (trader_3: Breath.Context.actor) =
   let trader_address = trader.address in
+  let trader_2_address = trader_2.address in
+  let trader_3_address = trader_3.address in
   {
   tokens = Big_map.literal [
-    ((trader_address), 100000000000n)
+    ((trader_address), 90000000000n);
+    ((trader_2_address), 10000000000n);
+    ((trader_3_address), 10000000000n)
   ];
   allowances = (Big_map.empty : (TZBTC.allowance_key, nat) big_map);
   token_metadata = Big_map.literal [

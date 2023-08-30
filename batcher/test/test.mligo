@@ -14,6 +14,8 @@
 #import "./endpoints/admin/test_change_oracle_source_of_pair.mligo" "Admin_Change_Oracle_Source_Of_Pair"
 #import "./endpoints/admin/test_add_remove_token_swap_pair.mligo" "Admin_Add_Remove_Token_Swap_Pair"
 #import "./market_maker/test_add_update_liquidity.mligo" "Market_Maker_Add_Update_Liquidity"
+#import "./market_maker/test_claim_rewards.mligo" "Market_Maker_Claim_Rewards"
+#import "./market_maker/test_remove_liquidity.mligo" "Market_Maker_Remove_Liquidity"
 #import "./endpoints/maintenance/test_tick.mligo" "Maintenance_Tick"
 #import "./economics/test_clearing.mligo" "Economics_Clearing"
 
@@ -44,7 +46,7 @@ let () =
   Breath.Model.run_suites Void
   [
       test_suite
-  (*  ; Admin_Change_Fee.test_suite
+   (* ; Admin_Change_Fee.test_suite
     ; Admin_Change_Admin_Address.test_suite
     ; Admin_Change_Fee_Recipient_Address.test_suite
     ; Admin_Change_Deposit_Time_Window.test_suite
@@ -54,10 +56,12 @@ let () =
     ; Admin_Change_Oracle_Source_Of_Pair.test_suite
     ; Admin_Add_Remove_Token_Swap_Pair.test_suite
     ; Maintenance_Tick.test_suite
-    ; Economics_Clearing.test_suite
+    ; Economics_Clearing.test_suite *)
     ; User_Deposits.test_suite
-    ; User_Cancellations.test_suite *)
+    ; User_Cancellations.test_suite 
 //  ; User_Redemptions.test_suite 
     ; Market_Maker_Add_Update_Liquidity.test_suite
+    ; Market_Maker_Claim_Rewards.test_suite
+    ; Market_Maker_Remove_Liquidity.test_suite
   ]
 

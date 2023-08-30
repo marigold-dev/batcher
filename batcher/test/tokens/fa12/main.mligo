@@ -130,6 +130,8 @@ let getTotalSupply (param, storage : getTotalSupply * storage) : operation list 
   [Tezos.transaction total 0mutez param.callback]
 
 
+
+[@entry]
 let main (param, storage : parameter * storage) : result =
   begin
     if Tezos.get_amount () <> 0mutez

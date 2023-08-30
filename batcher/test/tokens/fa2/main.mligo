@@ -202,12 +202,17 @@ let update_ops (updates : update_operators) (s : storage) : operation list * sto
   let s = Storage.set_operators s operators in
   ([]: operation list), s
 
+[@view]
+let get_balance ((holder, token_id), storage : (address * nat) * storage) = 
+  Ledger.get_for_user storage.ledger holder token_id
+
 type parameter = 
 [@layout:comb] 
 | Transfer of transfer 
 | Balance_of of balance_of 
 | Update_operators of update_operators
 
+[@entry]
 let main (p, s : parameter * storage) = 
   match p with
   | Transfer p -> transfer p s

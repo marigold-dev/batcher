@@ -76,16 +76,23 @@ let vanilla_deposit_should_succeed =
         spender = batcher.originated_address;
         value = deposit_amount
        } in
+
+      let prior_balances = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let act_allow_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
       let act_deposit = Helpers.place_order btc_trader batcher bstorage.fee_in_mutez "tzBTC" "USDT" deposit_amount Buy Exact bstorage.valid_tokens in
 
       let bstorage = Breath.Contract.storage_of batcher in
       let bbalance = Breath.Contract.balance_of batcher in
-
+      let post_balances = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
+      let expected_prior_balance = 90000000000n in
+      let expected_post_balance = abs (expected_prior_balance - deposit_amount) in
+   
       Breath.Result.reduce [
         act_allow_transfer
         ; act_deposit
         ; Breath.Assert.is_equal "balance" bbalance bstorage.fee_in_mutez
+        ; Breath.Assert.is_equal "tzbtc balance prior" prior_balances.tzbtc expected_prior_balance
+        ; Breath.Assert.is_equal "tzbtc balance post" post_balances.tzbtc expected_post_balance
         ; Helpers.expect_last_order_number bstorage 1n
       ])
 
