@@ -238,8 +238,8 @@ const Exchange = () => {
   };
 
   return (
-    <div className="flex flex-col grow my-4">
-      <div className="p-5 flex flex-col md:flex-row justify-center border-2 border-solid border-lightgray">
+    <div className="flex flex-col grow my-2">
+      <div className="p-5 flex flex-col md:flex-row justify-center border-2 border-solid border-lightgray md:text-base text-sm">
         <Form.Root
           className="flex flex-col items-center"
           onSubmit={event => {
@@ -266,11 +266,14 @@ const Exchange = () => {
                 </p>
               </Form.Label>
             </div>
-
             <Form.Control asChild>
+              {/* //TODO: fix bug with float value. We can't swap 0.001tzBTC for
+              example */}
               <input
                 className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                onChange={event => setAmount(parseFloat(event.target.value))}
+                onChange={event => {
+                  setAmount(parseFloat(event.target.value));
+                }}
                 type="number"
                 value={amount}
                 min={0}
@@ -306,7 +309,7 @@ const Exchange = () => {
           <div
             className={`${
               animate && 'animate-rotate'
-            } duration-100 rounded my-8 text-primary flex justify-center items-center hover:cursor-pointer`}
+            } duration-100 rounded my-6 text-primary flex justify-center items-center hover:cursor-pointer`}
             onClick={() => {
               setAnimate(true);
               dispatch(reverseSwap());

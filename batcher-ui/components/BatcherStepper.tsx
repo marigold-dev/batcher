@@ -25,8 +25,8 @@ const BatcherStepper = () => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex gap-3 px-4 py-3">
-        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-sm">
+      <div className="flex md:gap-3 gap-1 px-4 py-3">
+        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-xs">
           <Square isActive={status !== BatcherStatus.NONE} />
           <p>Started</p>
         </div>
@@ -35,7 +35,7 @@ const BatcherStepper = () => {
         <Dot isActive={status !== BatcherStatus.NONE} />
         <Dot isActive={status !== BatcherStatus.NONE} />
 
-        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-sm">
+        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-xs">
           <Square
             isActive={
               status === BatcherStatus.CLOSED ||
@@ -49,7 +49,7 @@ const BatcherStepper = () => {
         <Dot isActive={status === BatcherStatus.CLEARED} />
         <Dot isActive={status === BatcherStatus.CLEARED} />
 
-        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-sm">
+        <div className="flex flex-col items-center md:gap-5 gap-3 md:text-xl text-xs">
           <Square isActive={status === BatcherStatus.CLEARED} />
           <p>Cleared</p>
         </div>

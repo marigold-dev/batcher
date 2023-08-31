@@ -8,8 +8,10 @@ const PriceStrategyComponent = () => {
   const dispatch = useDispatch();
 
   return (
-    <div className="flex flex-col items-center border-2 border-solid border-lightgray p-4 my-4 md:mr-4 pb-4">
-      <p className="p-4 md:mb-10 mb-4">Select the price you want to sell :</p>
+    <div className="flex flex-col items-center border-2 border-solid border-lightgray p-4 my-2 md:mr-4 pb-4 md:text-base text-sm">
+      <p className="p-4 md:mb-5 mb-4 text-base">
+        Select the price you want to sell
+      </p>
       <form>
         <RadioGroup.Root
           className="flex flex-col md:gap-10 gap-5"
@@ -25,10 +27,10 @@ const PriceStrategyComponent = () => {
               className="bg-white w-6 h-6 rounded-full shadow-[0_0_0_2px] shadow-[black] hover:bg-gray-200 outline-none cursor-pointer"
               value={PriceStrategy.WORSE}
               id="r1">
-              <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
+              <RadioGroup.Indicator className="flex items-center justify-center w-full h-full after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
             </RadioGroup.Item>
             <label
-              className="text-white text-[15px] leading-none pl-[15px]"
+              className="text-white md:text-base text-sm leading-none pl-[15px]"
               htmlFor="r1">
               Worse Price / Better Fill
             </label>
@@ -41,7 +43,7 @@ const PriceStrategyComponent = () => {
               <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
             </RadioGroup.Item>
             <label
-              className="text-white text-[15px] leading-none pl-[15px]"
+              className="text-white md:text-base text-sm leading-none pl-[15px]"
               htmlFor="r2">
               Oracle Price
             </label>
@@ -54,7 +56,7 @@ const PriceStrategyComponent = () => {
               <RadioGroup.Indicator className="flex items-center justify-center w-full h-full relative after:content-[''] after:block after:w-[11px] after:h-[11px] after:rounded-[50%] after:bg-[black]" />
             </RadioGroup.Item>
             <label
-              className="text-white text-[15px] leading-none pl-[15px]"
+              className="text-white md:text-base text-sm leading-none pl-[15px]"
               htmlFor="r3">
               Better Price / Worse Fill
             </label>

@@ -52,7 +52,7 @@ const Volume = () => {
   return (
     <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 mt-4">
       <p className="mb-4 text-xl">Volumes</p>
-      <table className="border-collapse text-sm md:m-0 mx-4">
+      <table className="border-collapse md:m-0 mx-4 md:text-base text-sm">
         <thead>
           <tr>
             {listOfBuyVolumesColumns.map((b, i) => (

@@ -33,6 +33,16 @@ export const newEventCmd = (event: BigMapEvent) => {
               );
               return Promise.resolve();
             }
+            if (eventData.path === 'user_batch_ordertypes') {
+              console.log(
+                '🚀 ~ file: events.ts:37 ~ newEventCmd ~ eventData:',
+                eventData
+              );
+              // TODO: deserialize event and compute holdings from event
+              const userAddress = userAddressSelector(getState());
+              dispatch(getHoldings(userAddress));
+              return Promise.resolve();
+            }
             return Promise.reject('Unknown event');
           }
           case 'update_key': {
@@ -56,6 +66,7 @@ export const newEventCmd = (event: BigMapEvent) => {
             }
             if (eventData.path === 'user_batch_ordertypes') {
               console.log('🚀 ~ file: events.ts:67 ~ eventData:', eventData);
+              // TODO: deserialize event and compute holdings from event
               const userAddress = userAddressSelector(getState());
               dispatch(getHoldings(userAddress));
               return Promise.resolve();

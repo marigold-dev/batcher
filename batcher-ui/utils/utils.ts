@@ -666,11 +666,11 @@ const computeHoldingsByBatch = (
   );
 };
 
-//TODO
+//TODO: improve that
 export const getOrdersBook = async (address: string, userAddress: string) => {
   const storage = await getStorageByAddress(address);
   const b: { [key: number]: Deposit[] } = await getBigMapByIdAndUserAddress(
-    321390,
+    storage['user_batch_ordertypes'],
     userAddress
   );
   return Promise.all(
@@ -684,12 +684,12 @@ export const getOrdersBook = async (address: string, userAddress: string) => {
         cleared: { tzBTC: 0, USDT: 0 },
       });
     })
-  ).then(x =>
-    x.reduce(
-      (acc, v) => {
+  ).then(holdings =>
+    holdings.reduce(
+      (acc, currentHoldings) => {
         return {
-          open: addObj(acc.open, v.open),
-          cleared: addObj(acc.cleared, v.cleared),
+          open: addObj(acc.open, currentHoldings.open),
+          cleared: addObj(acc.cleared, currentHoldings.cleared),
         };
       },
       { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }

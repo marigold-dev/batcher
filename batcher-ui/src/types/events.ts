@@ -11,7 +11,7 @@ type BigMapEventData = {
   contract: { address: string };
   id: number;
   level: number;
-  path: 'batch_set.batches' | 'rates_current'; // path dans la bigmap
+  path: 'batch_set.batches' | 'rates_current' | 'user_batch_ordertypes'; // path dans la bigmap
   timestamp: string;
 };
 

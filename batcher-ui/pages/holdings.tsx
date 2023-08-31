@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { TezosToolkitContext } from 'contexts/tezos-toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import { getHoldings, userAddressSelector } from 'src/reducers';
@@ -12,6 +12,11 @@ const Holdings = () => {
   const userAddress = useSelector(userAddressSelector);
 
   const dispatch = useDispatch();
+
+  const hasClearedHoldings = useCallback(
+    () => Object.values(cleared).some(holdings => holdings > 0),
+    [cleared]
+  );
 
   useEffect(() => {
     if (userAddress) {
@@ -48,9 +53,9 @@ const Holdings = () => {
   };
   return (
     <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 mt-4">
-      <p className="mb-4 text-xl">Holdings</p>
+      <p className="mb-8 text-xl">Holdings</p>
       <p>Open/closed batches</p>
-      <table className="border-collapse text-sm md:my-4 min-w-[50%]">
+      <table className="border-collapse md:text-base text-sm md:my-8 my-4 min-w-[50%]">
         <thead>
           <tr>
             {Object.keys(open).map((b, i) => (
@@ -79,7 +84,7 @@ const Holdings = () => {
 
       <p>Cleared batches (Redeemable)</p>
 
-      <table className="border-collapse text-sm md:my-4 min-w-[50%]">
+      <table className="border-collapse md:text-base text-sm md:my-8 my-4 min-w-[50%]">
         <thead>
           <tr>
             {Object.keys(cleared).map((b, i) => (
@@ -106,14 +111,14 @@ const Holdings = () => {
         </tbody>
       </table>
       <>
-        {/* {hasClearedHoldings ? ( */}
-        {/* //TODO afficher le bouton seulement si on a des "cleared holdings" */}
-        <button
-          className="text-white bg-primary rounded py-2 px-4 m-2 hidden md:flex hover:bg-red-500"
-          type="button"
-          onClick={redeem}>
-          Redeem
-        </button>
+        {hasClearedHoldings() && (
+          <button
+            className="text-white bg-primary rounded py-2 px-4 m-2 hidden md:flex hover:bg-red-500"
+            type="button"
+            onClick={redeem}>
+            Redeem
+          </button>
+        )}
       </>
     </div>
   );

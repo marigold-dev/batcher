@@ -11,6 +11,7 @@ import {
   batcherUnsetup,
 } from '../src/actions';
 
+
 const Welcome = () => {
   const userAddress = useSelector(userAddressSelector);
 
@@ -43,7 +44,7 @@ const Welcome = () => {
   }, [userAddress, dispatch]);
 
   return (
-    <div className="flex flex-col md:mx-[15%] mx-8">
+    <div className="flex flex-col md:mx-[15%] mx-4">
       <BatcherInfo />
       <div className="flex md:flex-row flex-col">
         <PriceStrategy />

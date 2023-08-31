@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import Image from 'next/image';
 import { connectedWallet, disconnectedWallet } from '.././src/actions';
@@ -7,7 +7,7 @@ import { useWallet } from '.././contexts/wallet';
 import ChoosePairs from './ChoosePairs';
 import Menu from './Menu';
 import LinkComponent from './Link';
-import { faXmark, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface NavBarProps {
@@ -21,8 +21,6 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
   const walletCtx = useWallet();
   const userAddress = walletCtx.state.userAddress;
 
-  const [isOpen, setIsOpen] = useState(true);
-
   useEffect(() => {
     userAddress
       ? dispatch(connectedWallet({ userAddress }))
@@ -31,26 +29,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed top-0 z-50 flex h-12 w-full items-center justify-between bg-primary px-4 text-xs text-white md:text-base">
-          <div className="flex">
-            <span className="font-light mr-2">{'Make sure the URL is '}</span>
-            <p>
-              {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'MAINNET'
-                ? 'batcher.marigold.dev'
-                : 'ghostnet.batcher.marigold.dev'}
-            </p>
-          </div>
-          <button onClick={() => setIsOpen(false)}>
-            <FontAwesomeIcon icon={faXmark} color="white" size="xl" />
-          </button>
-        </div>
-      )}
-
-      <div
-        className={`${
-          isOpen && 'mt-12'
-        } flex flex-row justify-between font-custom border-b-4 border-lightgray border-solid bg-darkgray md:text-base`}>
+      <div className="flex flex-row justify-between font-custom border-b-4 border-lightgray border-solid bg-darkgray md:text-base">
         <div className="flex gap-2 p-2 items-center">
           <Image alt="Batcher Logo" src={BatcherLogo} height={32} />
           <p>BATCHER</p>

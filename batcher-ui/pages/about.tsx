@@ -3,10 +3,9 @@ import Link from 'next/link';
 
 const About = () => {
   return (
-    // <div className="font-custom flex flex-col max-w-[75%] justify-center items-center">
-    <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 my-4 p-2">
+    <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 my-4 p-2 md:text-base text-sm">
       <h2 className="border-solid border-2 border-lightgray p-2">
-        WHAT IS BATCHER ?
+        WHAT IS BATCHER?
       </h2>
 
       <p className="m-4">
