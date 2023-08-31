@@ -28,8 +28,21 @@ let f(_:unit) : Batcher.Storage.t = {
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
         swap = {
-            from =  "tzBTC";
-            to =  "USDT";
+            from = {
+              amount = 1n;
+              token = {
+                name = "tzBTC";
+                address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
+                decimals = 8n;
+                standard = Some "FA1.2 token"
+              }
+            };
+            to = {
+              name = "USDT";
+              address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
+              decimals = 6n;
+              standard = Some "FA2 token";
+            }
         };
         oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
         oracle_asset_name = "BTC-USDT";
@@ -39,8 +52,21 @@ let f(_:unit) : Batcher.Storage.t = {
     );
     ("tzBTC/EURL", {
         swap = {
-          from = "tzBTC";
-          to = "EURL";
+          from = {
+            amount = 1n;
+            token = {
+              name = "tzBTC";
+              address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
+              decimals = 8n;
+              standard = Some "FA1.2 token";
+            }
+          };
+          to = {
+            name = "EURL";
+            address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
+            decimals = 6n;
+            standard = Some "FA2 token";
+          }
         };
         oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
         oracle_asset_name = "BTC-EUR";
