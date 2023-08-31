@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {  SwapOutlined, SettingOutlined, RetweetOutlined, DollarOutlined } from '@ant-design/icons';
-import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio, } from 'antd';
-import {  compose, OpKind,  WalletContract, } from "@taquito/taquito";
+import { SwapOutlined, SettingOutlined, RetweetOutlined, DollarOutlined } from '@ant-design/icons';
+import { Input, Button, Space, Typography, Col, Row, message, Form, Drawer, Radio } from 'antd';
+import { compose, OpKind, WalletContract } from '@taquito/taquito';
 import { useModel } from 'umi';
 import '@/components/Exchange/index.less';
 import '@/global.less';
-import { ExchangeProps, PriceType, } from '@/extra_utils/types';
+import { ExchangeProps, PriceType, BatcherStatus } from '@/extra_utils/types';
 // import { ReactComponent as ExchangeDollarSvg } from '../../../img/exchange-dollar.svg';
 import { getErrorMess, scaleAmountUp } from '@/extra_utils/utils';
-import { tzip12, Tzip12Module } from "@taquito/tzip12";
-import { tzip16 } from "@taquito/tzip16";
-
+import { tzip12, Tzip12Module } from '@taquito/tzip12';
+import { tzip16 } from '@taquito/tzip16';
 const Exchange: React.FC<ExchangeProps> = ({
   userAddress,
   buyBalance,
@@ -21,23 +20,25 @@ const Exchange: React.FC<ExchangeProps> = ({
   fee_in_mutez,
   buyToken,
   sellToken,
-  showDrawer
+  showDrawer,
+  updateAll,
+  setUpdateAll,
+  status,
 }: ExchangeProps) => {
-
-// const DollarIcon = (props: Partial<CustomIconComponentProps>) => (
-//  <Icon component={ExchangeDollarSvg} {...props} />
-// );
-
-
-
   const [price, setPrice] = useState(PriceType.EXACT);
   const [side, setSide] = useState(0);
   const [amount, setAmount] = useState(0);
   const { initialState } = useModel('@@initialState');
+  const [batchClosed, setBatchClosed] = useState(false);
 
   const [form] = Form.useForm();
 
-  tezos.addExtension(new Tzip12Module());
+  const triggerUpdate = () => {
+    setTimeout(function () {
+      const u = !updateAll;
+      setUpdateAll(u);
+    }, 5000);
+  };
 
   const inverseTokenType = () => {
     setInversion(!inversion);
@@ -45,18 +46,22 @@ const Exchange: React.FC<ExchangeProps> = ({
     setSide(s);
   };
 
-
   const depositToken = async () => {
     if (!userAddress) {
       return;
     }
 
+    tezos.setWalletProvider(initialState.wallet);
+
+    console.info('tezos', initialState.tezos);
     const tokenName = inversion ? buyToken.name : sellToken.name;
     const selectedToken = inversion ? buyToken : sellToken;
     const batcherContract = await tezos.wallet.at(REACT_APP_BATCHER_CONTRACT_HASH);
-    const tokenContract : WalletContract = await tezos.wallet.at(
-      inversion ? buyToken.address : sellToken.address, compose(tzip12,tzip16));
-
+    const tokenContract: WalletContract = await tezos.wallet.at(
+      inversion ? buyToken.address : sellToken.address,
+      compose(tzip12, tzip16),
+    );
+    const tokenId = inversion ? buyToken.token_id : sellToken.token_id;
 
     const scaled_amount = inversion
       ? scaleAmountUp(amount, buyToken.decimals)
@@ -65,7 +70,7 @@ const Exchange: React.FC<ExchangeProps> = ({
     const selected_side = inversion ? 0 : 1;
     let tolerance = 0;
 
-    if(selected_side == 0) {
+    if (selected_side == 0) {
       if (price === PriceType.WORSE) {
         tolerance = 0;
       } else if (price === PriceType.EXACT) {
@@ -80,10 +85,8 @@ const Exchange: React.FC<ExchangeProps> = ({
         tolerance = 1;
       } else {
         tolerance = 0;
-     }
+      }
     }
-     
-
 
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
@@ -91,7 +94,7 @@ const Exchange: React.FC<ExchangeProps> = ({
         add_operator: {
           owner: userAddress,
           operator: REACT_APP_BATCHER_CONTRACT_HASH,
-          token_id: 0,
+          token_id: tokenId,
         },
       },
     ];
@@ -101,11 +104,10 @@ const Exchange: React.FC<ExchangeProps> = ({
         remove_operator: {
           owner: userAddress,
           operator: REACT_APP_BATCHER_CONTRACT_HASH,
-          token_id: 0,
+          token_id: tokenId,
         },
       },
     ];
-
 
     let loading = function () {
       return undefined;
@@ -117,11 +119,13 @@ const Exchange: React.FC<ExchangeProps> = ({
       console.log('operations-token', selectedToken);
       console.log('operations-side', side);
       console.log('operations-fee-in-mutez', fee_in_mutez);
+      console.log('operations-scaled-amount', fee_in_mutez);
 
       const swap_params = {
         swap: {
           from: {
             token: {
+              token_id: inversion ? buyToken.token_id : sellToken.token_id,
               name: inversion ? buyToken.name : sellToken.name,
               address: inversion ? buyToken.address : sellToken.address,
               decimals: inversion ? buyToken.decimals : sellToken.decimals,
@@ -130,6 +134,7 @@ const Exchange: React.FC<ExchangeProps> = ({
             amount: scaled_amount,
           },
           to: {
+            token_id: inversion ? sellToken.token_id : buyToken.token_id,
             name: inversion ? sellToken.name : buyToken.name,
             address: inversion ? sellToken.address : buyToken.address,
             decimals: inversion ? sellToken.decimals : buyToken.decimals,
@@ -139,29 +144,34 @@ const Exchange: React.FC<ExchangeProps> = ({
         created_at: new Date(),
         side: selected_side,
         tolerance: tolerance,
-       };
+      };
 
-       console.log("test");
+      console.log('test');
 
       if (selectedToken.standard === 'FA1.2 token') {
-        console.log("inversion", inversion);
-        console.log("buy", buyToken);
-        console.log("sell", sellToken);
-        const tokenfa12Contract : WalletContract = await tezos.wallet.at(buyToken.address, compose(tzip12,tzip16));
-        console.log("methods", tokenfa12Contract.methods);
+        console.log('inversion', inversion);
+        console.log('buy', buyToken);
+        console.log('sell', sellToken);
+        const tokenfa12Contract: WalletContract = await tezos.wallet.at(
+          buyToken.address,
+          compose(tzip12, tzip16),
+        );
+        console.log('methods', tokenfa12Contract.methods);
         order_batcher_op = await tezos.wallet
           .batch([
-          {
-            kind: OpKind.TRANSACTION,
-            ...tokenfa12Contract.methods.approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount).toTransferParams(),
-          },
-          {
-            kind: OpKind.TRANSACTION,
-            ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-            to: REACT_APP_BATCHER_CONTRACT_HASH,
-            amount: fee_in_mutez,
-            mutez: true,
-          }
+            {
+              kind: OpKind.TRANSACTION,
+              ...tokenfa12Contract.methods
+                .approve(REACT_APP_BATCHER_CONTRACT_HASH, scaled_amount)
+                .toTransferParams(),
+            },
+            {
+              kind: OpKind.TRANSACTION,
+              ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+              to: REACT_APP_BATCHER_CONTRACT_HASH,
+              amount: fee_in_mutez,
+              mutez: true,
+            },
           ])
           .send();
       }
@@ -169,21 +179,23 @@ const Exchange: React.FC<ExchangeProps> = ({
       if (selectedToken.standard === 'FA2 token') {
         order_batcher_op = await tezos.wallet
           .batch([
-          {
-            kind: OpKind.TRANSACTION,
-            ...tokenContract.methods.update_operators(fa2_add_operator_params).toTransferParams()
-          },
-          {
-            kind: OpKind.TRANSACTION,
-            ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
-            to: REACT_APP_BATCHER_CONTRACT_HASH,
-            amount: fee_in_mutez,
-            mutez: true,
-          },
-          {
-            kind: OpKind.TRANSACTION,
-            ...tokenContract.methods.update_operators(fa2_remove_operator_params).toTransferParams()
-          }
+            {
+              kind: OpKind.TRANSACTION,
+              ...tokenContract.methods.update_operators(fa2_add_operator_params).toTransferParams(),
+            },
+            {
+              kind: OpKind.TRANSACTION,
+              ...batcherContract.methodsObject.deposit(swap_params).toTransferParams(),
+              to: REACT_APP_BATCHER_CONTRACT_HASH,
+              amount: fee_in_mutez,
+              mutez: true,
+            },
+            {
+              kind: OpKind.TRANSACTION,
+              ...tokenContract.methods
+                .update_operators(fa2_remove_operator_params)
+                .toTransferParams(),
+            },
           ])
           .send();
       }
@@ -194,14 +206,13 @@ const Exchange: React.FC<ExchangeProps> = ({
         console.error(confirm);
         message.error('Failed to deposit ' + tokenName);
         throw new Error(
-          'Failed to deposit ' +
-            (inversion ? buyToken.name : sellToken.name) +
-            ' token',
+          'Failed to deposit ' + (inversion ? buyToken.name : sellToken.name) + ' token',
         );
       } else {
         loading();
         form.resetFields();
         message.success('Successfully deposited ' + tokenName);
+        triggerUpdate();
       }
     } catch (error) {
       console.log('deposit error', error);
@@ -212,6 +223,18 @@ const Exchange: React.FC<ExchangeProps> = ({
     }
   };
 
+  const isBatchClosed = () => {
+    console.info('EXCHANGE: isBatchClosed', status);
+    if (status === BatcherStatus.CLOSED) {
+      setBatchClosed(true);
+    } else {
+      setBatchClosed(false);
+    }
+  };
+
+  useEffect(() => {
+    isBatchClosed();
+  }, [status]);
   return (
     <div>
       <Form onFinish={depositToken} form={form}>
@@ -293,25 +316,23 @@ const Exchange: React.FC<ExchangeProps> = ({
           </Space>
         </Col>
         <Col className="batcher-action-items" lg={24} xs={24}>
-        <Space align="center" size={100}>
-        <SwapOutlined
-          className="exchange-button grid-padding"
-          onClick={inverseTokenType}
-          rotate={90}
-        />
-        <div onClick={showDrawer}>
-        <SettingOutlined
-          className="exchange-button"
-        />
-        </div>
-        </Space>
+          <Space align="center" size={100}>
+            <SwapOutlined
+              className="exchange-button grid-padding"
+              onClick={inverseTokenType}
+              rotate={90}
+            />
+            <div onClick={showDrawer}>
+              <SettingOutlined className="exchange-button" />
+            </div>
+          </Space>
         </Col>
         <Col className="quote-content grid-padding br-t br-b br-l br-r">
           <Typography className="batcher-title p-16">
             To {inversion ? sellToken.name : buyToken.name}
           </Typography>
         </Col>
-        {userAddress ? (
+        {userAddress && !batchClosed ? (
           <Form.Item>
             <div className="tx-align">
               <Button className="swap-btn mtb-25" type="primary" htmlType="submit" danger>

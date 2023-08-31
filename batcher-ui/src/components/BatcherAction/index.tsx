@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import '@/components/BatcherAction/index.less';
 import '@/global.less';
-import type {  RadioChangeEvent } from 'antd';
-import { Button, Col, Space, Row, Typography, Drawer, Radio, } from 'antd';
+import type { RadioChangeEvent } from 'antd';
+import { Button, Col, Space, Row, Typography, Drawer, Radio } from 'antd';
 import { BatcherActionProps, ContentType } from '@/extra_utils/types';
 
 const { Text } = Typography;
@@ -10,8 +10,7 @@ const { Text } = Typography;
 const BatcherAction: React.FC<BatcherActionProps> = ({
   content,
   setContent,
-  }: BatcherActionProps) => {
-
+}: BatcherActionProps) => {
   return (
     <div>
       <Row>
@@ -21,7 +20,7 @@ const BatcherAction: React.FC<BatcherActionProps> = ({
             <Col lg={3} />
             <Col className="batcher-action-items" lg={18} xs={24}>
               <Space align="center">
-                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)} >
+                <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.SWAP)}>
                   <Text underline>Swap</Text>
                 </Button>
                 <Button className="batcher-nav-btn" onClick={() => setContent(ContentType.VOLUME)}>

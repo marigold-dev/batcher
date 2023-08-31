@@ -1,0 +1,44 @@
+name: Release Liquidity Bots
+
+on:
+  workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
+  push:
+    tags:
+      - 'bots-v*'
+
+defaults:
+  run:
+    working-directory: batcher-bot/liquidity
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - name: Install modules
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Package
+        run: npm run package
+      - name: Tar compress
+        run: tar -cvf batcher-liquidity-bot.tar.xz dist/*
+      - name: Hash Tar
+        run: echo $(md5sum batcher-liquidity-bot.tar.xz) > batcher-liquidity-bot.tar.hash.md
+      - name: Zip compress
+        run: zip -r batcher-liquidity-bot.zip dist/*
+      - name: Hash Tar
+        run: echo $(md5sum batcher-liquidity-bot.zip) > batcher-liquidity-bot.zip.hash.md
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            ./batcher-bot/liquidity/batcher-liquidity-bot.tar.xz
+            ./batcher-bot/liquidity/batcher-liquidity-bot.tar.hash.md
+            ./batcher-bot/liquidity/batcher-liquidity-bot.zip
+            ./batcher-bot/liquidity/batcher-liquidity-bot.zip.hash.md

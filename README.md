@@ -8,7 +8,7 @@ The aim of the batch clearing dex is to enable users to deposit tokens with the 
 After the termination of the batch, the users that placed orders can retrieve their funds.  Either the user's order did not clear and they retrieve their original funds or the order cleared (totally or partially) and the get an execution of their order.
 
 
-## Deposit
+## Deposit 
 
 The deposit window is open for a finite time period.  During the time period users can deposit their tokens for a BUY or SELL order on the token pair along with an offset to the future received oracle price.
 

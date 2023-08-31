@@ -1,11 +1,13 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.65.0
-TEZOS_PROTOCOL:=lima
+
+LIGO_COMPILER_VERSION:=0.66.0
+TEZOS_PROTOCOL:=mumbai
+
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
 define test_ligo
-  $(LIGO_DOCKER) run test $(1) 
+  $(LIGO_DOCKER) run test $(1)
 endef
 
 define compile_contract
@@ -24,19 +26,25 @@ define install_deps
     $(LIGO_DOCKER) install
 endef
 
-define clean_files
-   rm -rf *.tz
-   rm -rf batcher/*.tz
+define clean_mainnet_files
+   rm -rf *mainnet.tz
+   rm -rf batcher/*mainnet.tz
+endef
+
+define clean_ghostnet_files
+   rm -rf *ghostnet.tz
+   rm -rf batcher/*ghostnet.tz
 endef
 
 clean:
-	$(call clean_files)
-build-ghostnet:
-	$(call clean_files)
+	$(call clean_mainnet_files)
+	$(call clean_ghostnet_files)
+build-mainnet:
+	$(call clean_mainnet_files)
 	$(call compile_contract,batcher.mligo, batcher-mainnet.tz)
 	$(call compile_storage,storage/initial_storage_mainnet.mligo, batcher-storage-mainnet.tz)
 build-ghostnet:
-	$(call clean_files)
+	$(call clean_ghostnet_files)
 	$(call compile_contract,batcher.mligo, batcher-ghostnet.tz)
 	$(call compile_storage,storage/initial_storage_ghostnet.mligo, batcher-storage-ghostnet.tz)
 build-tzBTC:
