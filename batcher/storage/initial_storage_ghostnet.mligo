@@ -11,13 +11,13 @@ let f(_:unit) : Batcher.Storage.t = {
     });
     (("EURL"),{
       name = "EURL";
-      address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
+      address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     });
     (("USDT"),{
       name = "USDT";
-      address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
+      address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     })
@@ -36,7 +36,7 @@ let f(_:unit) : Batcher.Storage.t = {
             };
             to = {
               name = "USDT";
-              address = Some(("KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm" : address));
+              address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
               decimals = 6n;
               standard = Some "FA2 token";
             }
@@ -60,7 +60,7 @@ let f(_:unit) : Batcher.Storage.t = {
           };
           to = {
             name = "EURL";
-            address = Some(("KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5" : address));
+            address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
             decimals = 6n;
             standard = Some "FA2 token";
           }
