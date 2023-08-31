@@ -39,6 +39,7 @@
 [@inline] let cannot_update_scale_factor_to_less_than_the_minimum : nat          = 135n
 [@inline] let cannot_update_scale_factor_to_more_than_the_maximum : nat          = 136n
 [@inline] let cannot_remove_swap_pair_that_is_not_disabled : nat                 = 137n
+[@inline] let incorrect_side_specified: nat                                      = 138n
 
 (* Constants *)
 
@@ -1590,6 +1591,18 @@ let confirm_swap_pair_is_disabled_prior_to_removal
   (valid_swap:valid_swap) : unit =
   if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
 
+
+[@inline]
+let enforce_correct_side
+  (order:external_swap_order)
+  (valid_swap:valid_swap) : unit = 
+  let swap = order.swap in
+  match order.side with
+  | 0n -> if swap.from.token.name = vaild_swap.from.token.name then () else failwith incorrect_side_specified
+  | 1n -> if swap.from.token.name = vaild_swap.to.token.name then () else failwith incorrect_side_specified
+  | _ ->  failwith incorrect_side_specified
+
+
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
@@ -1599,6 +1612,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap pair_name storage in
   if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else
+  let () = enforce_correct_side external_order.side vaild_swap in
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
