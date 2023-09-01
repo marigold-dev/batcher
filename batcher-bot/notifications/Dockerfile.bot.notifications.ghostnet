@@ -1,0 +1,19 @@
+FROM node:latest as builder
+
+WORKDIR /app
+
+COPY ./package.json ./
+
+RUN npm install
+
+COPY ./tsconfig.json ./
+COPY ./src ./src
+COPY ./.env.ghostnet ./.env.ghostnet
+
+RUN npm run  build:ghostnet
+
+
+FROM node:latest
+COPY --from=builder /app /usr/share/batcher/bot
+WORKDIR /usr/share/batcher/bot
+CMD [ "npm", "run", "start:ghostnet" ]

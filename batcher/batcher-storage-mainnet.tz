@@ -1,0 +1,15 @@
+(Pair (Pair (Pair (Pair "tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" {} {}) 600 10000)
+            (Pair "tz1burnburnburnburnburnburnburjAYjjX" 0)
+            10
+            {})
+      (Pair (Pair {} 1)
+            {}
+            { Elt "tzBTC/EURL"
+                  (Pair (Pair "tzBTC" "EURL") "KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG" "BTC-EUR" 6 False) ;
+              Elt "tzBTC/USDT"
+                  (Pair (Pair "tzBTC" "USDT") "KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG" "BTC-USDT" 6 False) })
+      { Elt "EURL" (Pair 0 "EURL" (Some "KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8") 6 (Some "FA2 token")) ;
+        Elt "USDT" (Pair 0 "USDT" (Some "KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o") 6 (Some "FA2 token")) ;
+        Elt "tzBTC"
+            (Pair 0 "tzBTC" (Some "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn") 8 (Some "FA1.2 token")) })
+

@@ -1,0 +1,65 @@
+name: Docker ghostnet
+
+on:
+  push:
+    branches:
+      - 'release-ghostnet'
+  pull_request:
+    branches:
+      - 'release-ghostnet'
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  ui:
+    # Only run this job if it's a direct push or a *merged* pull request
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    strategy:
+      matrix:
+        network: [ghostnet]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.0
+        with:
+          submodules: true
+
+      - name: Set outputs
+        id: vars
+        run: |
+          echo "date=$(date +%Y-%m-%dT%H-%M-%S)" >> "${GITHUB_OUTPUT}"
+          echo "sha_short=$(git rev-parse --short HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/Setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push release version of ui
+        uses: docker/build-push-action@v3
+        with:
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
+          context: ./batcher-ui/
+          push: true
+          tags: |
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push release version of notification bot
+        uses: docker/build-push-action@v3
+        with:
+          file: ./batcher-bot/notifications/Dockerfile.bot.notifications.${{ matrix.network }}
+          context: ./batcher-bot/notifications
+          push: true
+          tags: |
+            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
