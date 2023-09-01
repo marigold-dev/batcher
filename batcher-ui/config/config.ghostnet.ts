@@ -56,6 +56,7 @@ export default defineConfig({
     REACT_APP_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
     REACT_APP_BATCHER_CONTRACT_HASH: 'KT1UPMR3WkoFRJYmBBbvv4Z9bBhKYuhCx7Cq',
     GA_TRACKING_ID: 'G-2K59PEELC8',
+
   },
   metas: [
     {
