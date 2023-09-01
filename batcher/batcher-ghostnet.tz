@@ -1000,34 +1000,44 @@
                          IF { DROP 5 ; PUSH nat 125 ; FAILWITH }
                             { DUP 4 ;
                               CAR ;
-                              PUSH nat 0 ;
-                              DUP 6 ;
+                              DUP 5 ;
                               GET 5 ;
+                              PUSH nat 0 ;
+                              DUP 2 ;
                               COMPARE ;
                               EQ ;
-                              IF { SWAP ;
-                                   CAR ;
-                                   CAR ;
-                                   CAR ;
-                                   CAR ;
+                              IF { DROP ; UNIT ; LEFT unit }
+                                 { PUSH nat 1 ;
                                    SWAP ;
-                                   CAR ;
-                                   CAR ;
-                                   CAR ;
                                    COMPARE ;
                                    EQ ;
-                                   IF {} { PUSH nat 138 ; FAILWITH } }
-                                 { SWAP ;
-                                   CAR ;
-                                   CDR ;
-                                   CAR ;
-                                   SWAP ;
-                                   CAR ;
-                                   CAR ;
-                                   CAR ;
-                                   COMPARE ;
-                                   EQ ;
-                                   IF {} { PUSH nat 138 ; FAILWITH } } ;
+                                   IF { UNIT ; RIGHT unit } { PUSH nat 106 ; FAILWITH } } ;
+                              IF_LEFT
+                                { DROP ;
+                                  SWAP ;
+                                  CAR ;
+                                  CAR ;
+                                  CAR ;
+                                  CAR ;
+                                  SWAP ;
+                                  CAR ;
+                                  CAR ;
+                                  CAR ;
+                                  COMPARE ;
+                                  EQ ;
+                                  IF {} { PUSH nat 138 ; FAILWITH } }
+                                { DROP ;
+                                  SWAP ;
+                                  CAR ;
+                                  CDR ;
+                                  CAR ;
+                                  SWAP ;
+                                  CAR ;
+                                  CAR ;
+                                  CAR ;
+                                  COMPARE ;
+                                  EQ ;
+                                  IF {} { PUSH nat 138 ; FAILWITH } } ;
                               DUP 4 ;
                               CAR ;
                               CAR ;
