@@ -19,6 +19,7 @@ import { fetchUserBalances, reverseSwap } from 'src/actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import SelectPair from './SelectPair';
 
 const Exchange = () => {
   const userAddress = useSelector(userAddressSelector);
@@ -245,7 +246,7 @@ const Exchange = () => {
     <div className="flex flex-col grow my-2">
       <div className="p-5 flex flex-col md:flex-row justify-center border-2 border-solid border-lightgray md:text-base text-sm">
         <Form.Root
-          className="flex flex-col items-center"
+          className="flex flex-col items-strech"
           onSubmit={event => {
             event.preventDefault();
             depositToken();
@@ -265,24 +266,27 @@ const Exchange = () => {
                         0
                       : userBalances[
                           currentSwap.swap.from.token.name.toUpperCase()
-                        ]
+                        ] || 0
                   }`}
                 </p>
               </Form.Label>
             </div>
-            <Form.Control asChild>
-              <input
-                className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                onChange={event => {
-                  (/^\d*\.{0,1}\d*$/.test(event.target.value) ||
-                    event.target.value === '') &&
-                    setAmount(event.target.value);
-                }}
-                type="text"
-                value={amountInput}
-                defaultValue={0}
-              />
-            </Form.Control>
+            <div className="flex">
+              <SelectPair />
+              <Form.Control asChild>
+                <input
+                  className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onChange={event => {
+                    (/^\d*\.{0,1}\d*$/.test(event.target.value) ||
+                      event.target.value === '') &&
+                      setAmount(event.target.value);
+                  }}
+                  type="text"
+                  value={amountInput}
+                  defaultValue={0}
+                />
+              </Form.Control>
+            </div>
             <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
               match={'valueMissing'}>
@@ -339,7 +343,8 @@ const Exchange = () => {
                       ? userBalances[
                           currentSwap.swap.from.token.name.toUpperCase()
                         ] || 0
-                      : userBalances[currentSwap.swap.to.name.toUpperCase()]
+                      : userBalances[currentSwap.swap.to.name.toUpperCase()] ||
+                        0
                   }`}
                 </p>
               </Form.Label>
@@ -358,7 +363,7 @@ const Exchange = () => {
           <Form.Submit asChild>
             <button
               disabled={!userAddress || batcherStatus !== BatcherStatus.OPEN}
-              className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl">
+              className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Swap
             </button>
           </Form.Submit>

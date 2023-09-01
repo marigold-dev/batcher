@@ -212,7 +212,7 @@ export const getStorageByAddress = (address: string): Promise<any> =>
 export const getPairsInformations = async (
   pair: string,
   address: string
-): Promise<{ currentSwap: CurrentSwap; pair: string }> => {
+): Promise<{ currentSwap: Omit<CurrentSwap, 'isReverse'>; pair: string }> => {
   const storage = await getStorageByAddress(address);
   const validTokens = storage['valid_tokens'];
   const pairs = pair.split('/');
@@ -232,7 +232,6 @@ export const getPairsInformations = async (
           decimals: parseInt(validTokens[pairs[1]].decimals, 10),
         },
       },
-      isReverse: false,
     },
     pair,
   };

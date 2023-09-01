@@ -83,7 +83,17 @@ const exchangeReducer = (
     case 'BATCHER_UNSETUP':
       return loop(state, Cmd.clearInterval(state.batcherTimerId));
     case 'CHANGE_PAIR':
-      return loop(state, Cmd.action(getPairsInfos(action.payload.pair)));
+      return loop(
+        {
+          ...state,
+          swapPairName: action.payload.pair,
+          currentSwap: {
+            ...state.currentSwap,
+            isReverse: action.payload.isReverse,
+          },
+        },
+        Cmd.action(getPairsInfos(action.payload.pair))
+      );
     case 'GET_PAIR_INFOS':
       return loop(state, fetchPairInfosCmd(action.payload.pair));
     case 'UPDATE_PAIR_INFOS': {
@@ -95,6 +105,7 @@ const exchangeReducer = (
           swapPairName: action.payload.pair,
           currentSwap: {
             ...action.payload.currentSwap,
+            isReverse: state.currentSwap.isReverse,
             swap: {
               from: {
                 token: {

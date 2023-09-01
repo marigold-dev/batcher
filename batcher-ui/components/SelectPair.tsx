@@ -1,40 +1,73 @@
 import React from 'react';
 import * as Select from '@radix-ui/react-select';
-import classnames from 'classnames';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from '@radix-ui/react-icons';
+  faChevronDown,
+  faCheck,
+  faChevronUp,
+} from '@fortawesome/free-solid-svg-icons';
+import { useSelector } from 'react-redux';
+import { currentSwapSelector } from 'src/reducers';
+import { useDispatch } from 'react-redux';
+import { changePair } from 'src/actions';
 
-const SelectDemo = () => (
-  <Select.Root>
-    <Select.Trigger
-      className="flex items-center justify-center rounded px-2 border border-solid border-[red] text-base leading-none h-[35px] gap-[5px] bg-[pink] shadow-[0_2px_10px] shadow-black/10 hover:bg-[red] focus:shadow-[0_0_0_2px] focus:shadow-black outline-none"
-      aria-label="Tokens">
-      <Select.Value placeholder="tzBTC" />
-      <Select.Icon className="text-[red]">
-        <ChevronDownIcon />
-      </Select.Icon>
-    </Select.Trigger>
-    <Select.Portal>
-      <Select.Content className="overflow-hidden bg-[pink] rounded-md shadow-[0px_10px_38px_-10px_rgba(22,_23,_24,_0.35),0px_10px_20px_-15px_rgba(22,_23,_24,_0.2)]">
-        <Select.ScrollUpButton className="flex items-center justify-center h-[25px] bg-[pink]text-violet11 cursor-default">
-          <ChevronUpIcon />
-        </Select.ScrollUpButton>
-        <Select.Viewport className="p-[5px]">
-          <Select.Group>
-            <SelectItem value="usdt">USDT</SelectItem>
-            <SelectItem value="eurl">EURL</SelectItem>
-          </Select.Group>
-        </Select.Viewport>
-        <Select.ScrollDownButton className="flex items-center justify-center h-[25px] bg-[pink]text-violet11 cursor-default">
-          <ChevronDownIcon />
-        </Select.ScrollDownButton>
-      </Select.Content>
-    </Select.Portal>
-  </Select.Root>
-);
+const SelectPair = () => {
+  const { swap, isReverse } = useSelector(currentSwapSelector);
+  const dispatch = useDispatch();
+
+  const availableTokens = ['tzBTC', 'USDT', 'EURL'];
+
+  return (
+    <Select.Root
+      value={isReverse ? swap.to.name : swap.from.token.name}
+      onValueChange={value => {
+        console.warn(value);
+        const pair =
+          value === 'tzBTC' ? `tzBTC/${swap.to.name}` : `tzBTC/${value}`;
+        const reversed = value !== 'tzBTC';
+        dispatch(changePair(pair, reversed));
+      }}>
+      <Select.Trigger className="flex items-center text-dark w-[90px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
+        <Select.Value
+          placeholder={isReverse ? swap.to.name : swap.from.token.name}
+        />
+        <Select.Icon className="text-dark">
+          <FontAwesomeIcon icon={faChevronDown} />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal className="w-[7rem]">
+        <Select.Content className="overflow-hidden bg-white rounded-md text-dark">
+          <Select.ScrollUpButton className="flex items-center justify-center h-[25px] bg-[red] cursor-default">
+            <FontAwesomeIcon icon={faChevronUp} />
+          </Select.ScrollUpButton>
+          <Select.Viewport className="p-2">
+            <Select.Group>
+              {availableTokens
+                // .filter(a =>
+                //   isReverse ? swap.to.name !== a : swap.from.token.name !== a
+                // )
+                .map(t => (
+                  <SelectItem
+                    value={t}
+                    key={t}
+                    disabled={
+                      isReverse
+                        ? swap.to.name === t
+                        : swap.from.token.name === t
+                    }>
+                    {t}
+                  </SelectItem>
+                ))}
+            </Select.Group>
+          </Select.Viewport>
+          <Select.ScrollDownButton className="flex items-center justify-center h-[25px] bg-[pink]text-violet11 cursor-default">
+            <FontAwesomeIcon icon={faChevronDown} />
+          </Select.ScrollDownButton>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  );
+};
 
 // eslint-disable-next-line react/display-name
 const SelectItem = React.forwardRef<
@@ -43,22 +76,25 @@ const SelectItem = React.forwardRef<
     children: React.ReactNode;
     className?: string;
     value: string;
+    disabled?: boolean;
   }
->(({ children, className, ...props }, forwardedRef) => {
+>(({ children, className, disabled, ...props }, forwardedRef) => {
   return (
     <Select.Item
-      className={classnames(
-        'text-[13px] leading-none text-violet11 rounded-[3px] flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-[green] data-[highlighted]:text-violet1',
-        className
-      )}
+      disabled={disabled}
+      className={`${
+        disabled
+          ? 'data-[highlighted]:cursor-not-allowed data-[highlighted]:bg-white'
+          : ''
+      } text-base text-dark rounded flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[highlighted]:outline-none data-[highlighted]:bg-hovergray disabled:cursor-not-allowed`}
       {...props}
       ref={forwardedRef}>
       <Select.ItemText>{children}</Select.ItemText>
-      <Select.ItemIndicator className="absolute left-0 w-[25px] inline-flex items-center justify-center">
-        <CheckIcon />
+      <Select.ItemIndicator className="absolute left-0 w-6 inline-flex items-center justify-center">
+        <FontAwesomeIcon icon={faCheck} />
       </Select.ItemIndicator>
     </Select.Item>
   );
 });
 
-export default SelectDemo;
+export default SelectPair;

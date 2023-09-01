@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { connectedWallet, disconnectedWallet } from '.././src/actions';
 import BatcherLogo from '../img/batcher-logo.png';
 import { useWallet } from '.././contexts/wallet';
-import ChoosePairs from './ChoosePairs';
 import Menu from './Menu';
 import LinkComponent from './Link';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
@@ -42,7 +41,6 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
         </div>
 
         <div className="flex">
-          <ChoosePairs />
           {userAddress ? (
             <p className="p-4">{`${userAddress.substring(
               0,

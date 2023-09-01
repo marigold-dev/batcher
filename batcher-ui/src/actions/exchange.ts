@@ -11,10 +11,10 @@ export const reverseSwap = () =>
     type: 'REVERSE_SWAP',
   } as const);
 
-export const changePair = (pair: string) =>
+export const changePair = (pair: string, isReverse: boolean) =>
   ({
     type: 'CHANGE_PAIR',
-    payload: { pair },
+    payload: { pair, isReverse },
   } as const);
 
 export const getPairsInfos = (pair: string) =>
@@ -27,7 +27,7 @@ export const updatePairsInfos = ({
   currentSwap,
   pair,
 }: {
-  currentSwap: CurrentSwap;
+  currentSwap: Omit<CurrentSwap, 'isReverse'>;
   pair: string;
 }) =>
   ({

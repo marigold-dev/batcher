@@ -12,6 +12,7 @@ module.exports = {
         primary: '#D8464E',
         darkgray: '#2B2A2E',
         lightgray: '#7B7B7E',
+        hovergray: '#d1d5db',
       },
     },
     fontFamily: {
