@@ -5,11 +5,27 @@
       (Pair (Pair {} 1)
             {}
             { Elt "tzBTC/EURL"
-                  (Pair (Pair "tzBTC" "EURL") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-EUR" 6 False) ;
+                  (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS") 8 (Some "FA1.2 token")) 1)
+                              "EURL"
+                              (Some "KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS")
+                              6
+                              (Some "FA2 token"))
+                        "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ"
+                        "BTC-EUR"
+                        6
+                        False) ;
               Elt "tzBTC/USDT"
-                  (Pair (Pair "tzBTC" "USDT") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) })
-      { Elt "EURL" (Pair 0 "EURL" (Some "KT1UhjCszVyY5dkNUXFGAwdNcVgVe2ZeuPv5") 6 (Some "FA2 token")) ;
-        Elt "USDT" (Pair 0 "USDT" (Some "KT1H9hKtcqcMHuCoaisu8Qy7wutoUPFELcLm") 6 (Some "FA2 token")) ;
+                  (Pair (Pair (Pair (Pair "tzBTC" (Some "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS") 8 (Some "FA1.2 token")) 1)
+                              "USDT"
+                              (Some "KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR")
+                              6
+                              (Some "FA2 token"))
+                        "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ"
+                        "BTC-USDT"
+                        6
+                        False) })
+      { Elt "EURL" (Pair "EURL" (Some "KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS") 6 (Some "FA2 token")) ;
+        Elt "USDT" (Pair "USDT" (Some "KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR") 6 (Some "FA2 token")) ;
         Elt "tzBTC"
             (Pair 0 "tzBTC" (Some "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS") 8 (Some "FA1.2 token")) })
 

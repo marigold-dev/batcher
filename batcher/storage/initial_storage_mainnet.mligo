@@ -28,8 +28,21 @@ let f(_:unit) : Batcher.Storage.t = {
   valid_swaps = Map.literal [
     ("tzBTC/USDT", {
         swap = {
-            from = "tzBTC";
-            to = "USDT";
+            from = {
+              amount = 1n;
+              token = {
+                name = "tzBTC";
+                address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+                decimals = 8n;
+                standard = Some "FA1.2 token"
+              }
+            };
+            to = {
+              name = "USDT";
+              address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
+              decimals = 6n;
+              standard = Some "FA2 token";
+            }
         };
         oracle_address = ("KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG": address);
         oracle_asset_name = "BTC-USDT";
@@ -58,7 +71,7 @@ let f(_:unit) : Batcher.Storage.t = {
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
+  administrator = ("tz1ftWawLjmm6poX3R73Xc1UaFRoucCSpnhf" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
   scale_factor_for_oracle_staleness = 1n
