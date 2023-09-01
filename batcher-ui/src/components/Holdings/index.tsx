@@ -1,27 +1,59 @@
-import React, { useEffect } from 'react';
-import { Button, Space, Typography, Col, message } from 'antd';
+import React, { useState, useEffect, useContext } from 'react';
+import { Button, Space, Typography, Col, message, Table } from 'antd';
 import '@/components/Exchange/index.less';
 import '@/components/Holdings/index.less';
 import '@/global.less';
 import { HoldingsProps } from '@/extra_utils/types';
-
+import { useModel } from 'umi';
+import { zeroHoldings } from '@/extra_utils/utils';
 const Holdings: React.FC<HoldingsProps> = ({
   tezos,
-  userAddress,
   contractAddress,
-  buyToken,
-  sellToken,
-  buyTokenHolding,
-  sellTokenHolding,
-  setBuySideAmount,
-  setSellSideAmount,
+  openHoldings,
+  clearedHoldings,
+  setOpenHoldings,
+  setClearedHoldings,
+  updateAll,
+  setUpdateAll,
+  hasClearedHoldings,
 }: HoldingsProps) => {
+  const { initialState } = useModel('@@initialState');
+
+  const triggerUpdate = () => {
+    setTimeout(function () {
+      const u = !updateAll;
+      setUpdateAll(u);
+    }, 5000);
+  };
+
+  const generateHoldings = (dict: Map<string, number>) => {
+    var data = [];
+    for (const key of dict) {
+      data.push({
+        token: key[0],
+        holding: key[1],
+      });
+    }
+    return (
+      <>
+        {data.map((h) => (
+          <React.Fragment key={h.token}>
+            <Typography>
+              {' '}
+              {h.holding} {h.token} |{' '}
+            </Typography>
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
   const redeemHoldings = async (): Promise<void> => {
     let loading = function () {
       return undefined;
     };
 
     try {
+      tezos.setWalletProvider(initialState.wallet);
       const contractWallet = await tezos.wallet.at(contractAddress);
       let redeem_op = await contractWallet.methods.redeem().send();
 
@@ -32,10 +64,11 @@ const Holdings: React.FC<HoldingsProps> = ({
           message.error('Failed to redeem holdings');
           console.error('Failed to redeem holdings' + confirm);
         } else {
-          setSellSideAmount(0);
-          setBuySideAmount(0);
+          setOpenHoldings(new Map<string, number>());
+          setClearedHoldings(new Map<string, number>());
           loading();
           message.success('Successfully redeemed holdings');
+          triggerUpdate();
         }
       } else {
         throw new Error('Failed to redeem tokens');
@@ -50,21 +83,31 @@ const Holdings: React.FC<HoldingsProps> = ({
   return (
     <Col className="base-content br-t br-b br-l br-r">
       <Space className="batcher-price" direction="vertical">
-        <Typography className="batcher-title p-16">Holdings</Typography>
+        <Typography className="batcher-title p-16">Open/Closed Batches</Typography>
         <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
-          <Space direction="vertical">
-            <Typography>
-              {buyTokenHolding} {buyToken.name}
-            </Typography>
-            <Typography>
-              {sellTokenHolding} {sellToken.name}
-            </Typography>
+          <Space direction="horizontal">
+            <Typography>Holdings =&gt; </Typography>| {generateHoldings(openHoldings)}
           </Space>
         </Col>
+      </Space>
+      <Space className="batcher-price" direction="vertical">
+        <Typography className="batcher-title p-16">Cleared Batches (Redeemable)</Typography>
+        <Col className="batcher-holding-content br-t br-b br-l br-r pd-25 tx-align" span={24}>
+          <Space direction="horizontal">
+            <Typography>Holdings =&gt; </Typography>
+            {generateHoldings(clearedHoldings)}
+          </Space>
+        </Col>
+      </Space>
+      <Space className="batcher-price" direction="vertical">
         <Col className="batcher-redeem-btn">
-          <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
-            Redeem
-          </Button>
+          {hasClearedHoldings ? (
+            <Button className="btn-content mtb-25" type="primary" onClick={redeemHoldings} danger>
+              Redeem
+            </Button>
+          ) : (
+            <div></div>
+          )}
         </Col>
       </Space>
     </Col>

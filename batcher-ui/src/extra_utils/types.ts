@@ -33,6 +33,7 @@ export enum selected_price {
 }
 
 export class token {
+  token_id!: number;
   name!: string;
   address!: string;
   decimals!: number;
@@ -171,7 +172,6 @@ export type OrderBookProps = {
   sellToken: token;
 };
 
-
 export type ExchangeProps = {
   userAddress: string;
   buyBalance: number;
@@ -183,6 +183,9 @@ export type ExchangeProps = {
   buyToken: token;
   sellToken: token;
   showDrawer: Dispatch<SetStateAction<boolean>>;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  status: string;
 };
 
 export type BatcherInfoProps = {
@@ -196,10 +199,13 @@ export type BatcherInfoProps = {
   rate: number;
   status: string;
   openTime: string;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  batchNumber: number;
 };
 
 export type BatcherActionProps = {
-  content: ContentType,
+  content: ContentType;
   setContent: Dispatch<SetStateAction<ContentType>>;
 };
 export class aggregate_orders {
@@ -223,19 +229,18 @@ export type BatcherStepperProps = {
   status: string;
 };
 
-
 export type HoldingsProps = {
   tezos: TezosToolkit;
   userAddress: string;
   contractAddress: string;
-  buyToken: token;
-  sellToken: token;
-  buyTokenHolding: number;
-  sellTokenHolding: number;
-  setBuySideAmount: Dispatch<SetStateAction<number>>;
-  setSellSideAmount: Dispatch<SetStateAction<number>>;
+  openHoldings: Map<string, number>;
+  clearedHoldings: Map<string, number>;
+  setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>;
+  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>;
+  updateAll: boolean;
+  setUpdateAll: Dispatch<SetStateAction<boolean>>;
+  hasClearedHoldings: boolean;
 };
-
 
 export type Volumes = {
   buy_minus_volume: string;
@@ -248,8 +253,6 @@ export type Volumes = {
 
 export type VolumeProps = {
   volumes: Volumes;
-  buyToken: token;
-  sellToken: token;
 };
 
 export const BUY = 'bUY';
@@ -259,3 +262,8 @@ export const CLEARED = 'cleared';
 export const MINUS = 'mINUS';
 export const EXACT = 'eXACT';
 export const PLUS = 'pLUS';
+
+export type tokens = {
+  buy_token_name: string;
+  sell_token_name: string;
+};
