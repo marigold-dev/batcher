@@ -33,7 +33,7 @@ const Exchange = () => {
 
   const dispatch = useDispatch();
 
-  const [amount, setAmount] = useState(0);
+  const [amountInput, setAmount] = useState<string>('0');
   const [fees, setFees] = useState(0);
   const [animate, setAnimate] = useState(false);
 
@@ -66,12 +66,14 @@ const Exchange = () => {
   };
 
   const depositToken = async () => {
+    const amount = parseFloat(amountInput);
     if (!userAddress) {
       return;
     }
     const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
     if (!batcherContractHash) return;
 
+    console.warn('swap', swap, isReverse, amount);
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;
 
     const selectedToken = isReverse ? swap.to : swap.from.token;
@@ -115,7 +117,7 @@ const Exchange = () => {
 
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
-
+      console.warn(scaleAmountUp(amount, currentSwap.swap.to.decimals));
       const swap_params = {
         swap: isReverse
           ? {
@@ -147,6 +149,8 @@ const Exchange = () => {
         side: isReverse ? 1 : 0,
         tolerance,
       };
+
+      console.warn(swap_params, fees);
 
       if (selectedToken.standard === 'FA1.2 token') {
         if (!swap.from.token.address) return; //TODO: improve this
@@ -224,7 +228,7 @@ const Exchange = () => {
         console.info(`Successfully deposited ${tokenName}`);
 
         dispatch(fetchUserBalances());
-        setAmount(0);
+        setAmount('0');
 
         //   form.resetFields();
         //   message.success('Successfully deposited ' + tokenName);
@@ -267,31 +271,30 @@ const Exchange = () => {
               </Form.Label>
             </div>
             <Form.Control asChild>
-              {/* //TODO: fix bug with float value. We can't swap 0.001tzBTC for
-              example */}
               <input
                 className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 onChange={event => {
-                  setAmount(parseFloat(event.target.value));
+                  (/^\d*\.{0,1}\d*$/.test(event.target.value) ||
+                    event.target.value === '') &&
+                    setAmount(event.target.value);
                 }}
-                type="number"
-                value={amount}
-                min={0}
-                required
+                type="text"
+                value={amountInput}
+                defaultValue={0}
               />
             </Form.Control>
             <Form.Message
-              className="text-[13px] text-[red] opacity-[0.8]"
+              className="text-[13px] text-primary opacity-[0.8]"
               match={'valueMissing'}>
               Please input your amount
             </Form.Message>
             <Form.Message
-              className="text-[13px] text-[red] opacity-[0.8]"
+              className="text-[13px] text-primary opacity-[0.8]"
               match={'badInput'}>
               Invalid input.
             </Form.Message>
             <Form.Message
-              className="text-[13px] text-[red] opacity-[0.8]"
+              className="text-[13px] text-primary opacity-[0.8]"
               match={value => {
                 return (
                   (isReverse &&
@@ -344,7 +347,6 @@ const Exchange = () => {
             <Form.Control asChild>
               <input
                 className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                onChange={event => setAmount(parseFloat(event.target.value))}
                 type="number"
                 min={0}
                 disabled

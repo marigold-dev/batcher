@@ -87,12 +87,26 @@ const exchangeReducer = (
     case 'GET_PAIR_INFOS':
       return loop(state, fetchPairInfosCmd(action.payload.pair));
     case 'UPDATE_PAIR_INFOS': {
+      //! We hard code token_id because it's not in contract storage.
+      //! Update this when we use token with token_id != 0
       return loop(
         {
           ...state,
           swapPairName: action.payload.pair,
           currentSwap: {
             ...action.payload.currentSwap,
+            swap: {
+              from: {
+                token: {
+                  ...action.payload.currentSwap.swap.from.token,
+                  token_id: 0,
+                },
+              },
+              to: {
+                ...action.payload.currentSwap.swap.to,
+                token_id: 0,
+              },
+            },
           },
         },
         Cmd.action(getOraclePrice())
