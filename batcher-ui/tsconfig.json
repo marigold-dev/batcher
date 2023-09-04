@@ -24,7 +24,7 @@
     "incremental": true,
     "esModuleInterop": true,
     "isolatedModules": true,
-    "module": "esnext"
+    "module": "esnext",
   },
   "include": [
     "src/utils/**/*",
@@ -36,7 +36,8 @@
     ".eslintrc.json",
     ".prettierrc.json",
     "jest.config.js",
-    "pages/*"
+    "pages/*",
+    "global.d.ts"
   ],
   "exclude": [
     "node_modules",
