@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;300;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html {
+  background-color: #1c1d22;
+  font-family: Roboto Mono;
+  color: white;
+  height: 100%;
+}
+body {
+  min-height: fit-content;
+  height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
