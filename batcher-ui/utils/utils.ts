@@ -246,7 +246,7 @@ export const getFees = async (address: string) => {
 export const getCurrentBatchNumber = async (
   address: string,
   pair: string
-): Promise<number> => {
+): Promise<number | undefined> => {
   const storage = await getStorageByAddress(address);
   const currentBatchIndices = storage['batch_set']['current_batch_indices'];
   return currentBatchIndices[pair];
@@ -324,17 +324,6 @@ const getStartTime = (status: string, batch: any) => {
       return null;
   }
 };
-
-// export const parseStatus = (rawStatus: BatcherStatusStorage) => {
-//   const status = Object.keys(rawStatus)[0];
-//   return {
-//     status: toBatcherStatus(status),
-//     at: new Date(getStatusTime(status, batch)).toISOString(),
-//     startTime: getStartTime(status, batch)
-//       ? new Date(getStartTime(status, batch)).toISOString()
-//       : null,
-//   };
-// };
 
 export const getBatcherStatus = async (
   batchNumber: number,
@@ -419,11 +408,7 @@ export const toVolumes = (
   };
 };
 
-export const getVolumes = async (
-  batchNumber: number,
-  currentSwap: CurrentSwap,
-  address: string
-) => {
+export const getVolumes = async (batchNumber: number, address: string) => {
   const storage = await getStorageByAddress(address);
   const batch = await getBigMapByIdAndBatchNumber(
     storage['batch_set']['batches'],

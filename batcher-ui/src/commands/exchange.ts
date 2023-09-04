@@ -93,7 +93,6 @@ const fetchVolumesCmd = (batchNumber: number, currentSwap: CurrentSwap) => {
     () => {
       return getVolumes(
         batchNumber,
-        currentSwap,
         process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
       );
     },

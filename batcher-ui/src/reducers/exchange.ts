@@ -2,6 +2,7 @@ import { Cmd, loop } from 'redux-loop';
 import {
   ExchangeActions,
   getBatcherStatus,
+  getCurrentBatchNumber,
   getOraclePrice,
   getPairsInfos,
   getVolumes,
@@ -120,7 +121,7 @@ const exchangeReducer = (
             },
           },
         },
-        Cmd.action(getOraclePrice())
+        Cmd.list([Cmd.action(getCurrentBatchNumber())])
       );
     }
     case 'UDPATE_PRICE_STATEGY':
@@ -154,8 +155,18 @@ const exchangeReducer = (
       return loop(state, fetchCurrentBatchNumberCmd(state.swapPairName));
     case 'UDPATE_BATCH_NUMBER':
       return loop(
-        { ...state, batchNumber: action.payload.batchNumber },
-        Cmd.list([Cmd.action(getBatcherStatus()), Cmd.action(getVolumes())])
+        {
+          ...state,
+          batchNumber: action.payload.batchNumber,
+          batcherStatus: !action.payload.batchNumber && {
+            status: BatcherStatus.NONE,
+            remainingTime: 0,
+            startTime: null,
+          },
+        },
+        action.payload.batchNumber
+          ? Cmd.list([Cmd.action(getBatcherStatus()), Cmd.action(getVolumes())])
+          : Cmd.none
       );
     case 'GET_ORACLE_PRICE':
       return loop(
