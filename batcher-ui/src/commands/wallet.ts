@@ -1,5 +1,5 @@
 import { Cmd } from 'redux-loop';
-import { scaleAmountDown, storeBalances } from '../../utils/utils';
+import { scaleAmountDown, storeBalances } from '../utils/utils';
 import { gotUserBalances } from '../actions';
 import * as api from '@tzkt/sdk-api';
 

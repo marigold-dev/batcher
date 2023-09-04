@@ -6,7 +6,7 @@ import {
   getCurrentRates,
   getPairsInformations,
   getVolumes,
-} from '../../utils/utils';
+} from '../utils/utils';
 import {
   updateBatchNumber,
   updateBatcherStatus,

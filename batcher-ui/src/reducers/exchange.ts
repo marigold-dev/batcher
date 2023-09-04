@@ -20,7 +20,7 @@ import {
   getOraclePriceCmd,
   setupBatcherCmd,
 } from '../../src/commands/exchange';
-import { getTimeDifference } from 'utils/utils';
+import { getTimeDifference } from 'src/utils/utils';
 
 const initialSwap: CurrentSwap = {
   swap: {

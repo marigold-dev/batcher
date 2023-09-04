@@ -7,8 +7,8 @@ import {
   currentPairSelector,
   oraclePriceSelector,
   remainingTimeSelector,
-} from '../src/reducers';
-import { BatcherStatus } from '../src/types';
+} from '../reducers';
+import { BatcherStatus } from '../types';
 
 const BatcherInfo = () => {
   const tokenPair = useSelector(currentPairSelector);

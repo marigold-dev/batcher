@@ -2,7 +2,7 @@ import { WalletActions } from 'src/actions';
 import { Loop, liftState, loop } from 'redux-loop';
 import { fetchUserBalancesCmd } from '../commands/wallet';
 import { WalletState } from 'src/types';
-import { TOKENS } from 'utils/utils';
+import { TOKENS } from 'src/utils/utils';
 
 // TODO: fp-ts
 

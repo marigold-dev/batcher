@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect } from 'react';
-import { TezosToolkitContext } from 'contexts/tezos-toolkit';
+import { TezosToolkitContext } from 'src/contexts/tezos-toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import { getHoldings, userAddressSelector } from 'src/reducers';
 import { getHoldings as getHoldingsAction } from 'src/actions';

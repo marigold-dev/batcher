@@ -1,6 +1,6 @@
 import React from 'react';
 import LinkComponent from './Link';
-import { useWallet } from 'contexts/wallet';
+import { useWallet } from 'src/contexts/wallet';
 
 interface MenuProps {
   setIsMenuOpen(arg: boolean): void;

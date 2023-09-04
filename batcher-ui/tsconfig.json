@@ -27,12 +27,12 @@
     "module": "esnext"
   },
   "include": [
-    "utils/**/*",
+    "src/utils/**/*",
     "src/**/*",
     "tests/**/*",
     "test/**/*",
     "__test__/**/*",
-    "config/**/*",
+    "src/config/**/*",
     ".eslintrc.json",
     ".prettierrc.json",
     "jest.config.js",

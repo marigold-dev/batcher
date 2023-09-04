@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import Exchange from '../components/Exchange';
-import BatcherInfo from '../components/BatcherInfo';
-import PriceStrategy from '../components/PriceStrategy';
+import Exchange from '../src/components/Exchange';
+import BatcherInfo from '../src/components/BatcherInfo';
+import PriceStrategy from '../src/components/PriceStrategy';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { userAddressSelector } from '../src/reducers';

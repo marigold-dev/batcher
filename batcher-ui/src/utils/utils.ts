@@ -7,7 +7,7 @@ import {
   VolumesState,
   VolumesStorage,
   batchIsCleared,
-} from '../src/types';
+} from '../types';
 import { Batch } from 'src/types/events';
 import { NetworkType } from '@airgap/beacon-sdk';
 
@@ -82,7 +82,6 @@ export const getNetworkType = () => {
     return NetworkType.MAINNET;
   }
 };
-
 
 // ----- BALANCES ------
 

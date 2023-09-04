@@ -4,7 +4,7 @@ import React, { createContext, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { newEvent } from 'src/actions/events';
 // import { userAddressSelector } from 'src/reducers';
-import { setup /* subscribeTokenBalances */ } from 'utils/webSocketUtils';
+import { setup /* subscribeTokenBalances */ } from 'src/utils/webSocketUtils';
 
 export const EventsContext = createContext<{}>({});
 

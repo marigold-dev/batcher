@@ -8,7 +8,7 @@ import {
 import { getHoldings } from 'src/actions/holdings';
 import { currentSwapSelector, userAddressSelector } from 'src/reducers';
 import { Batch, BigMapEvent, UpdateRateEvent } from 'src/types/events';
-import { computeOraclePrice, toVolumes } from 'utils/utils';
+import { computeOraclePrice, toVolumes } from 'src/utils/utils';
 
 export const newEventCmd = (event: BigMapEvent) => {
   return Cmd.run(

@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 
-const config = require('./config/env.ts');
+const config = require('./src/config/env.ts');
 
 const env = process.env.ENV; // 'mainnet' | 'ghostnet'
-console.log('🚀 ~ file: next.config.js:6 ~ env:', env);
+
+console.info('🚀 Current env:', env);
 
 const nextConfig = {
   reactStrictMode: false,

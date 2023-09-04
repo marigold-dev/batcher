@@ -12,10 +12,10 @@ import {
   priceStrategySelector,
   userAddressSelector,
   userBalancesSelector,
-} from '../src/reducers';
-import { BatcherStatus, PriceStrategy } from '../src/types';
+} from '../reducers';
+import { BatcherStatus, PriceStrategy } from '../types';
 import { useDispatch } from 'react-redux';
-import { fetchUserBalances, reverseSwap } from 'src/actions';
+import { fetchUserBalances, reverseSwap } from '../actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';

@@ -1,13 +1,13 @@
-import Footer from '../components/Footer';
+import Footer from '../src/components/Footer';
 import React, { useEffect, useState } from 'react';
 import { AppProps } from 'next/app';
-import { TezosToolkitProvider } from '../contexts/tezos-toolkit';
-import { WalletProvider } from '../contexts/wallet';
-import { EventsProvider } from '../contexts/events';
+import { TezosToolkitProvider } from '../src/contexts/tezos-toolkit';
+import { WalletProvider } from '../src/contexts/wallet';
+import { EventsProvider } from '../src/contexts/events';
 import '../styles/globals.css';
 import { Provider } from 'react-redux';
 import { store } from '../src/store';
-import NavBar from '../components/NavBar';
+import NavBar from '../src/components/NavBar';
 import ReactGA from 'react-ga4';
 import * as api from '@tzkt/sdk-api';
 import Head from 'next/head';
