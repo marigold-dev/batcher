@@ -14,8 +14,6 @@ html {
 body {
   min-height: fit-content;
   height: 100%;
-  /* display: flex;
-  flex-flow: column; */
 }
 
 a {

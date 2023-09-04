@@ -17,19 +17,6 @@ const Welcome = () => {
 
   const dispatch = useDispatch();
 
-  // const updateFromStorage = async (storage: any) => {
-  //   updateBigMapIds(storage);
-  //   zeroHoldings(storage, setOpenHoldings, setClearedHoldings);
-  //   await updateTokenDetails(storage);
-  //   await getBatches(storage);
-  //   await updateSwapMap(storage);
-  //   await setFee(storage);
-  //   await getOraclePrice();
-  //   await getTokenBalance();
-  //   await updateHoldings(storage);
-  //   await getCurrentVolume(storage);
-  // };
-
   useEffect(() => {
     dispatch(batcherSetup());
     return () => {

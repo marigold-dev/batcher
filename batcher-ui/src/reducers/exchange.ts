@@ -3,7 +3,6 @@ import {
   ExchangeActions,
   getBatcherStatus,
   getCurrentBatchNumber,
-  getOraclePrice,
   getPairsInfos,
   getVolumes,
 } from '../../src/actions';

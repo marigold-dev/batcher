@@ -28,28 +28,20 @@
   },
   "include": [
     "utils/**/*",
-    "mock/**/*",
     "src/**/*",
-    "playwright.config.ts",
     "tests/**/*",
     "test/**/*",
     "__test__/**/*",
-    "typings/**/*",
     "config/**/*",
     ".eslintrc.json",
-    ".stylelintrc.js",
     ".prettierrc.json",
     "jest.config.js",
-    "mock/*",
     "pages/*"
   ],
   "exclude": [
     "node_modules",
     "build",
     "dist",
-    "scripts",
-    "src/.umi/*",
-    "webpack",
     "jest"
   ]
 }

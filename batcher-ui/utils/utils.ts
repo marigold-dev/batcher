@@ -8,23 +8,8 @@ import {
   VolumesStorage,
   batchIsCleared,
 } from '../src/types';
-import * as types from './types';
-import { Dispatch, SetStateAction } from 'react';
 import { Batch } from 'src/types/events';
-
-export const setTokenAmount = (
-  balances: any[],
-  standardBalance: number,
-  tokenAddress: string,
-  tokenDecimals: number,
-  setBalance: Dispatch<SetStateAction<number>>
-) => {
-  const item = balances.find(
-    item => item.token.contract.address === tokenAddress
-  );
-  const tokAmount = item ? parseInt(item.balance) / 10 ** tokenDecimals : 0;
-  setBalance(tokAmount);
-};
+import { NetworkType } from '@airgap/beacon-sdk';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -33,21 +18,6 @@ export const scaleAmountDown = (amount: number, decimals: number) => {
 export const scaleAmountUp = (amount: number, decimals: number) => {
   const scale = 10 ** decimals;
   return amount * scale;
-};
-
-export const setSocketTokenAmount = (
-  balances: any[],
-  userAddress: string | undefined,
-  token: types.token,
-  setBalance: Dispatch<SetStateAction<number>>
-) => {
-  const item = balances.find(
-    item =>
-      item.account.address === userAddress &&
-      item.token.contract.address === token.address
-  );
-  const tokAmount = item ? parseInt(item.balance) / 10 ** token.decimals : 0;
-  setBalance(tokAmount);
 };
 
 // Contract error codes
@@ -104,74 +74,15 @@ export const getErrorMess = (error: any) => {
   }
 };
 
-export const orders_exist_in_order_book = (ob: types.order_book) => {
-  try {
-    return ob.bids.length > 0 || ob.asks.length > 0;
-  } catch {
-    return false;
-  }
-};
-
-export const getEmptyOrderBook = () => {
-  return {
-    bids: [],
-    asks: [],
-  };
-};
-
 export const getNetworkType = () => {
   const network = process.env.NEXT_PUBLIC_NETWORK_TARGET;
   if (network?.includes('GHOSTNET')) {
-    return types.NetworkType.GHOSTNET;
+    return NetworkType.GHOSTNET;
   } else {
-    return types.NetworkType.MAINNET;
+    return NetworkType.MAINNET;
   }
 };
 
-export const getEmptyVolumes = () => {
-  return {
-    buy_minus_volume: '0',
-    buy_exact_volume: '0',
-    buy_plus_volume: '0',
-    sell_minus_volume: '0',
-    sell_exact_volume: '0',
-    sell_plus_volume: '0',
-  };
-};
-
-export const scaleStringAmountDownToString = (
-  amount: string,
-  decimals: number
-) => {
-  if (!amount) {
-    console.error(
-      'scaleStringAmountDownToString - amount is undefined',
-      amount
-    );
-    return '0';
-  } else {
-    const scale = 10 ** -decimals;
-    return (Number.parseInt(amount) * scale).toString();
-  }
-};
-
-export const zeroHoldings = (
-  storage: any,
-  setOpenHoldings: Dispatch<SetStateAction<Map<string, number>>>,
-  setClearedHoldings: Dispatch<SetStateAction<Map<string, number>>>
-) => {
-  const valid_pairs = storage?.valid_tokens;
-  const ot = new Map<string, number>();
-  const ct = new Map<string, number>();
-  if (valid_pairs) {
-    Object.keys(valid_pairs).map((k, i) => {
-      ot.set(k, 0);
-      ct.set(k, 0);
-    });
-    setClearedHoldings(ct);
-    setOpenHoldings(ot);
-  }
-};
 
 // ----- BALANCES ------
 
