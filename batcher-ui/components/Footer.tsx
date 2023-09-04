@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import MarigoldLogo from '../img/marigold-logo.png';
 
 const Footer = () => (
   <footer
@@ -15,7 +14,12 @@ const Footer = () => (
             className="text-zinc-400">
             ©{new Date().getFullYear()} Copyright Marigold
           </a>
-          <Image alt="Marigold Logo" src={MarigoldLogo} />
+          <Image
+            alt="Marigold Logo"
+            src="/marigold-logo.png"
+            height={32}
+            width={32}
+          />
         </div>
 
         <div>

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import Image from 'next/image';
 import { connectedWallet, disconnectedWallet } from '.././src/actions';
-import BatcherLogo from '../img/batcher-logo.png';
 import { useWallet } from '.././contexts/wallet';
 import Menu from './Menu';
 import LinkComponent from './Link';
@@ -30,7 +29,12 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
     <>
       <div className="flex flex-row justify-between font-custom border-b-4 border-lightgray border-solid bg-darkgray md:text-base">
         <div className="flex gap-2 p-2 items-center">
-          <Image alt="Batcher Logo" src={BatcherLogo} height={32} />
+          <Image
+            alt="Batcher Logo"
+            src={'/batcher-logo.png'}
+            height={32}
+            width={64}
+          />
           <p>BATCHER</p>
           <div className="hidden md:flex md:ml-8 md:items-center">
             <LinkComponent path="/" title={'Swap'} />

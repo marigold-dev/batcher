@@ -16,7 +16,6 @@ COPY ./utils ./utils
 COPY ./src ./src
 COPY ./styles ./styles
 COPY ./public ./public
-COPY ./img ./img
 COPY ./config ./config
 COPY ./postcss.config.js ./postcss.config.js
 COPY ./next.config.js ./next.config.js
