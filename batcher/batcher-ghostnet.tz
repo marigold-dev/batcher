@@ -1094,6 +1094,7 @@
                                   CAR ;
                                   CAR ;
                                   GET 3 ;
+
                                   COMPARE ;
                                   EQ ;
                                   IF {} { PUSH nat 138 ; FAILWITH } } ;
