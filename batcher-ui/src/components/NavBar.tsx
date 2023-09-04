@@ -7,6 +7,7 @@ import Menu from './Menu';
 import LinkComponent from './Link';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Copy from './Copy';
 
 interface NavBarProps {
   isMenuOpen: boolean;
@@ -46,10 +47,12 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
 
         <div className="flex">
           {userAddress ? (
-            <p className="p-4">{`${userAddress.substring(
-              0,
-              3
-            )}...${userAddress.substring(userAddress.length - 3)}`}</p>
+            <Copy value={userAddress} disabled={false}>
+              <p className="p-4">{`${userAddress.substring(
+                0,
+                3
+              )}...${userAddress.substring(userAddress.length - 3)}`}</p>
+            </Copy>
           ) : null}
           <button
             type="button"

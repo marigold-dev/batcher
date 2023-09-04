@@ -36,6 +36,7 @@
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-radio-group": "^1.1.3",
     "@radix-ui/react-select": "^1.2.2",
+    "@radix-ui/react-tooltip": "^1.0.6",
     "@taquito/beacon-wallet": "^16.0.0",
     "@taquito/taquito": "^16.0.0",
     "@taquito/tzip12": "^16.0.0",
