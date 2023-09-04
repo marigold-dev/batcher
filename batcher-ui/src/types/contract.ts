@@ -25,7 +25,7 @@ export enum PriceStrategy {
 
 // ------ BATCHER STORAGE REPRESENTATION ------ //
 
-type TokenNames = 'tzBTC' | 'EURL' | 'USDT';
+export type TokenNames = 'tzBTC' | 'EURL' | 'USDT';
 type SwapNames = 'tzBTC/USDT' | 'tzBTC/EURL';
 
 type Swap = {

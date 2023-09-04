@@ -4,12 +4,15 @@ import {
   CurrentSwap,
   Deposit,
   HoldingsState,
+  Token,
+  TokenNames,
   VolumesState,
   VolumesStorage,
   batchIsCleared,
 } from '../types';
 import { Batch } from 'src/types/events';
 import { NetworkType } from '@airgap/beacon-sdk';
+import * as api from '@tzkt/sdk-api';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -94,23 +97,30 @@ export type Balances = {
 // TODO: need to configure token available in Batcher
 export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
-/**
- * Use to convert balances raw JSON from TZKT API to smooth Object
- */
-export const toUserBalances = (rawBalances: any[]): Balances => {
-  return rawBalances.map(rawB => ({
-    name: rawB.token.metadata.symbol,
-    balance: rawB.balance,
-    decimals: rawB.token.metadata.decimals,
-  }));
+export const getBalances = async (
+  address: string,
+  userAddress: string
+): Promise<Balances> => {
+  const storage = await getStorageByAddress(address);
+  const validTokens: Record<TokenNames, Token> = storage['valid_tokens'];
+  const rawBalances = await api.tokensGetTokenBalances({
+    account: {
+      eq: userAddress,
+    },
+  });
+  return Object.values(validTokens).map(token => {
+    const balance = rawBalances.find(
+      b => b.token?.contract?.address === token.address
+    )?.balance;
+    return {
+      name: token.name,
+      decimals: token.decimals,
+      balance: balance
+        ? scaleAmountDown(parseFloat(balance), token.decimals)
+        : 0,
+    };
+  });
 };
-
-export const filterBalances = (balances: Balances): Balances => {
-  return balances.filter(b => TOKENS.includes(b.name.toUpperCase()));
-};
-
-export const storeBalances = (balances: any[]) =>
-  filterBalances(toUserBalances(balances));
 
 // ----- STORAGE ------
 
