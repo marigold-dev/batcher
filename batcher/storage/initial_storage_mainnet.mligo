@@ -1,24 +1,25 @@
+
 #import "../batcher.mligo" "Batcher"
 
 let f(_:unit) : Batcher.Storage.t = {
   metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
-      token_id = 0n;
+      token_id = 0n; 
       name = "tzBTC";
       address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
     (("EURL"),{
-      token_id = 0n;
+      token_id = 0n; 
       name = "EURL";
       address = Some(("KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     });
     (("USDT"),{
-      token_id = 0n;
+      token_id = 0n; 
       name = "USDT";
       address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
       decimals = 6n;
@@ -31,6 +32,7 @@ let f(_:unit) : Batcher.Storage.t = {
             from = {
               amount = 1n;
               token = {
+                token_id = 0n; 
                 name = "tzBTC";
                 address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
                 decimals = 8n;
@@ -38,6 +40,7 @@ let f(_:unit) : Batcher.Storage.t = {
               }
             };
             to = {
+              token_id = 0n; 
               name = "USDT";
               address = Some(("KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o" : address));
               decimals = 6n;
@@ -52,8 +55,23 @@ let f(_:unit) : Batcher.Storage.t = {
     );
     ("tzBTC/EURL", {
         swap = {
-          from = "tzBTC";
-          to =  "EURL";
+          from = {
+            amount = 1n;
+            token = {
+              token_id = 0n; 
+              name = "tzBTC";
+              address = Some(("KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn" : address));
+              decimals = 8n;
+              standard = Some "FA1.2 token";
+            }
+          };
+          to = {
+            token_id = 0n; 
+            name = "EURL";
+            address = Some(("KT1JBNFcB5tiycHNdYGYCtR3kk6JaJysUCi8" : address));
+            decimals = 6n;
+            standard = Some "FA2 token";
+          }
         };
         oracle_address = ("KT1EhS7KVk6cAaYjUpg4jM1VjPGLJTrT9vqG": address);
         oracle_asset_name = "BTC-EUR";
@@ -62,7 +80,7 @@ let f(_:unit) : Batcher.Storage.t = {
       }
     )
   ];
-  rates_current = (Big_map.empty : Batcher.rates_current);
+  rates_current = (Big_map.empty : Batcher.Storage.rates_current);
   batch_set = {
     current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
@@ -77,4 +95,5 @@ let f(_:unit) : Batcher.Storage.t = {
   scale_factor_for_oracle_staleness = 1n
 
 }
+
 
