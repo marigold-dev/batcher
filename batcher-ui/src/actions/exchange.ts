@@ -59,8 +59,7 @@ export const getCurrentBatchNumber = () =>
     type: 'GET_CURRENT_BATCHER_NUMBER',
   } as const);
 
-//TODO: fix that
-export const updateBatchNumber = (batchNumber: number | undefined) =>
+export const updateBatchNumber = (batchNumber: number) =>
   ({
     type: 'UDPATE_BATCH_NUMBER',
     payload: { batchNumber },

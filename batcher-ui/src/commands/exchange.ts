@@ -2,7 +2,7 @@ import { Cmd } from 'redux-loop';
 import {
   computeOraclePrice,
   getBatcherStatus,
-  getCurrentBatchNumber,
+  fetchCurrentBatchNumber,
   getCurrentRates,
   getPairsInformations,
   getVolumes,
@@ -11,35 +11,27 @@ import {
   updateBatchNumber,
   updateBatcherStatus,
   updatePairsInfos,
-  getCurrentBatchNumber as getCurrentBatchNumberAction,
-  getPairsInfos,
   updateOraclePrice,
   updateVolumes,
   batcherTimerId,
   getBatcherStatus as getBatcherStatusAction,
 } from '../actions';
-import { CurrentSwap } from 'src/types';
+import { CurrentSwap, SwapNames } from 'src/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
     () => {
-      return getPairsInformations(
-        pair,
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
-      );
+      return getPairsInformations(pair);
     },
     {
       successActionCreator: updatePairsInfos,
     }
   );
 
-const fetchCurrentBatchNumberCmd = (pair: string) =>
+const fetchCurrentBatchNumberCmd = (pair: SwapNames) =>
   Cmd.run(
     () => {
-      return getCurrentBatchNumber(
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '',
-        pair
-      );
+      return fetchCurrentBatchNumber(pair);
     },
     {
       successActionCreator: updateBatchNumber,
@@ -49,38 +41,28 @@ const fetchCurrentBatchNumberCmd = (pair: string) =>
 const fetchBatcherStatusCmd = (batchNumber: number) =>
   Cmd.run(
     () => {
-      return getBatcherStatus(
-        batchNumber,
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
-      );
+      return getBatcherStatus(batchNumber);
     },
     {
       successActionCreator: updateBatcherStatus,
     }
   );
 
+//TODO: setup timeout to close batch when started + 10min
 const setupBatcherCmd = (pair: string) => {
-  return Cmd.list([
-    Cmd.action(getCurrentBatchNumberAction()),
-    Cmd.action(getPairsInfos(pair)),
-    Cmd.setInterval(Cmd.action(getBatcherStatusAction()), 50000, {
-      scheduledActionCreator: timerId => batcherTimerId(timerId),
-    }),
-  ]);
+  return Cmd.setInterval(Cmd.action(getBatcherStatusAction()), 50000, {
+    scheduledActionCreator: timerId => batcherTimerId(timerId),
+  });
 };
 
-const getOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
+const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   return Cmd.run(
-    () => {
-      return getCurrentRates(
-        tokenPair,
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
-      ).then(rates =>
-        computeOraclePrice(rates[0].rate, {
-          buyDecimals: swap.to.decimals,
-          sellDecimals: swap.from.token.decimals,
-        })
-      );
+    async () => {
+      const rates = await getCurrentRates(tokenPair);
+      return computeOraclePrice(rates[0].rate, {
+        buyDecimals: swap.to.decimals,
+        sellDecimals: swap.from.token.decimals,
+      });
     },
     {
       successActionCreator: updateOraclePrice,
@@ -88,13 +70,10 @@ const getOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   );
 };
 
-const fetchVolumesCmd = (batchNumber: number, currentSwap: CurrentSwap) => {
+const fetchVolumesCmd = (batchNumber: number) => {
   return Cmd.run(
     () => {
-      return getVolumes(
-        batchNumber,
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || ''
-      );
+      return getVolumes(batchNumber);
     },
     {
       successActionCreator: updateVolumes,
@@ -107,6 +86,6 @@ export {
   fetchCurrentBatchNumberCmd,
   fetchBatcherStatusCmd,
   setupBatcherCmd,
-  getOraclePriceCmd,
+  fetchOraclePriceCmd,
   fetchVolumesCmd,
 };

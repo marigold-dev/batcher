@@ -1,11 +1,8 @@
 import { Cmd, loop } from 'redux-loop';
 import {
   ExchangeActions,
-  getBatcherStatus,
-  getCurrentBatchNumber,
   getOraclePrice,
   getPairsInfos,
-  getVolumes,
 } from '../../src/actions';
 import {
   BatcherStatus,
@@ -18,7 +15,7 @@ import {
   fetchCurrentBatchNumberCmd,
   fetchPairInfosCmd,
   fetchVolumesCmd,
-  getOraclePriceCmd,
+  fetchOraclePriceCmd,
   setupBatcherCmd,
 } from '../../src/commands/exchange';
 import { getTimeDifference } from 'src/utils/utils';
@@ -27,7 +24,7 @@ const initialSwap: CurrentSwap = {
   swap: {
     from: {
       token: {
-        token_id: 0,
+        tokenId: 0,
         name: 'tzBTC',
         address: undefined,
         decimals: 0,
@@ -36,7 +33,7 @@ const initialSwap: CurrentSwap = {
       amount: 0,
     },
     to: {
-      token_id: 0,
+      tokenId: 0,
       name: 'USDT',
       address: undefined,
       decimals: 0,
@@ -121,7 +118,7 @@ const exchangeReducer = (
             },
           },
         },
-        Cmd.list([Cmd.action(getCurrentBatchNumber())])
+        Cmd.action(getOraclePrice())
       );
     }
     case 'UDPATE_PRICE_STATEGY':
@@ -158,29 +155,18 @@ const exchangeReducer = (
         {
           ...state,
           batchNumber: action.payload.batchNumber,
-          batcherStatus: !action.payload.batchNumber && {
-            status: BatcherStatus.NONE,
-            remainingTime: 0,
-            startTime: null,
-          },
         },
-        action.payload.batchNumber
-          ? Cmd.list([
-              Cmd.action(getBatcherStatus()),
-              Cmd.action(getVolumes()),
-              Cmd.action(getOraclePrice()),
-            ])
-          : Cmd.none
+        fetchBatcherStatusCmd(action.payload.batchNumber)
       );
     case 'GET_ORACLE_PRICE':
       return loop(
         state,
-        getOraclePriceCmd(state.swapPairName, state.currentSwap)
+        fetchOraclePriceCmd(state.swapPairName, state.currentSwap)
       );
     case 'UPDATE_ORACLE_PRICE':
       return { ...state, oraclePrice: action.payload.oraclePrice };
     case 'GET_VOLUMES':
-      return loop(state, fetchVolumesCmd(state.batchNumber, state.currentSwap));
+      return loop(state, fetchVolumesCmd(state.batchNumber));
     case 'UPDATE_VOLUMES':
       return { ...state, volumes: action.payload.volumes };
     default:

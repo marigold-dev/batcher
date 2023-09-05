@@ -40,9 +40,7 @@ const Exchange = () => {
 
   //TODO: rewrite with redux-loop
   useEffect(() => {
-    getFees(process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '').then(f =>
-      setFees(f)
-    );
+    getFees().then(f => setFees(f));
   }, []);
 
   //TODO: rewrite error management
@@ -87,7 +85,7 @@ const Exchange = () => {
       selectedToken.address,
       compose(tzip12, tzip16)
     );
-    const tokenId = isReverse ? swap.to.token_id : swap.from.token.token_id;
+    const tokenId = isReverse ? swap.to.tokenId : swap.from.token.tokenId;
 
     const scaled_amount = isReverse
       ? scaleAmountUp(amount, swap.to.decimals)

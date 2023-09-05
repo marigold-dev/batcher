@@ -4,25 +4,29 @@ import BatcherInfo from '../src/components/BatcherInfo';
 import PriceStrategy from '../src/components/PriceStrategy';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { userAddressSelector } from '../src/reducers';
+import { currentPairSelector, userAddressSelector } from '../src/reducers';
 import {
   fetchUserBalances,
   batcherSetup,
   batcherUnsetup,
+  getPairsInfos,
 } from '../src/actions';
 
-
-const Welcome = () => {
+const Swap = () => {
   const userAddress = useSelector(userAddressSelector);
+  const tokenPair = useSelector(currentPairSelector);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(batcherSetup());
+
+    dispatch(getPairsInfos(tokenPair));
+
     return () => {
       dispatch(batcherUnsetup());
     };
-  }, [dispatch]);
+  }, [dispatch, tokenPair]);
 
   useEffect(() => {
     if (userAddress) {
@@ -41,4 +45,4 @@ const Welcome = () => {
   );
 };
 
-export default Welcome;
+export default Swap;

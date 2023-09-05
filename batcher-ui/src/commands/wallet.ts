@@ -7,10 +7,7 @@ const fetchUserBalancesCmd = (userAddress?: string) => {
     async () => {
       if (!userAddress) return Promise.reject('No address !');
 
-      return getBalances(
-        process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '',
-        userAddress
-      );
+      return getBalances(userAddress);
     },
     {
       successActionCreator: gotUserBalances,

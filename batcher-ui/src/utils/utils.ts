@@ -2,17 +2,21 @@ import { add, differenceInMinutes, parseISO } from 'date-fns';
 import {
   BatcherStatus,
   CurrentSwap,
-  Deposit,
+  UserOrder,
   HoldingsState,
-  Token,
-  TokenNames,
   VolumesState,
   VolumesStorage,
   batchIsCleared,
+  BatcherStorage,
+  BatchBigmap,
+  OrderBookBigmap,
+  TokenNames,
+  SwapNames,
+  RatesCurrentBigmap,
 } from '../types';
-import { Batch } from 'src/types/events';
 import { NetworkType } from '@airgap/beacon-sdk';
 import * as api from '@tzkt/sdk-api';
+import { getByKey } from './local-storage';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -97,12 +101,9 @@ export type Balances = {
 // TODO: need to configure token available in Batcher
 export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
-export const getBalances = async (
-  address: string,
-  userAddress: string
-): Promise<Balances> => {
-  const storage = await getStorageByAddress(address);
-  const validTokens: Record<TokenNames, Token> = storage['valid_tokens'];
+export const getBalances = async (userAddress: string): Promise<Balances> => {
+  const storage = await getStorage();
+  const validTokens: BatcherStorage['valid_tokens'] = storage['valid_tokens'];
   const rawBalances = await api.tokensGetTokenBalances({
     account: {
       eq: userAddress,
@@ -112,30 +113,73 @@ export const getBalances = async (
     const balance = rawBalances.find(
       b => b.token?.contract?.address === token.address
     )?.balance;
+    const decimals = parseInt(token.decimals, 10);
     return {
       name: token.name,
-      decimals: token.decimals,
-      balance: balance
-        ? scaleAmountDown(parseFloat(balance), token.decimals)
-        : 0,
+      decimals,
+      balance: balance ? scaleAmountDown(parseFloat(balance), decimals) : 0,
     };
   });
 };
 
-// ----- STORAGE ------
+// ----- FETCH STORAGE AND BIGMAPS ------
 
-export const getStorageByAddress = (address: string): Promise<any> =>
+export const getStorage = (): Promise<BatcherStorage> =>
   fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${address}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
   ).then(r => r.json());
 
+export const getBigMapByIdAndUserAddress = (
+  userAddress?: string
+): Promise<OrderBookBigmap> => {
+  const bigMapId: string | null = getByKey('user_batch_ordertypes');
+  if (!userAddress || !bigMapId)
+    return Promise.reject('No address or no bigmap ID for order book.');
+  return (
+    fetch(
+      `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
+    )
+      // TODO: improve that by parseStatus function
+      .then(r => (r.status === 204 ? { value: [] } : r.json()))
+      .then(r => r.value)
+  );
+};
+
+export const getBigMapByIdAndBatchNumber = (
+  batchNumber: number
+): Promise<BatchBigmap> => {
+  const bigMapId: string | null = getByKey('batches');
+  if (!bigMapId) return Promise.reject('No bigmap ID for batches.');
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+  )
+    .then(r => r.json())
+    .then(r => r.value);
+};
+
+export const getBigMapByIdAndTokenPair = (
+  tokenPair: string
+): Promise<Array<RatesCurrentBigmap>> => {
+  const bigMapId: string | null = getByKey('rates_current');
+  if (!bigMapId) return Promise.reject('No bigmap ID for rates_current.');
+
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`
+  )
+    .then(r => r.json())
+    .then(response =>
+      response.filter((r: any) => r.key === tokenPair).map((r: any) => r.value)
+    );
+};
+
+// ----- FETCH CONTRACT INFORMATIONS AND PARSING ------
+
 export const getPairsInformations = async (
-  pair: string,
-  address: string
+  pair: string
 ): Promise<{ currentSwap: Omit<CurrentSwap, 'isReverse'>; pair: string }> => {
-  const storage = await getStorageByAddress(address);
+  const storage = await getStorage();
   const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('/');
+  const pairs = pair.split('/') as TokenNames[];
 
   return {
     currentSwap: {
@@ -144,12 +188,14 @@ export const getPairsInformations = async (
           token: {
             ...validTokens[pairs[0]],
             decimals: parseInt(validTokens[pairs[0]].decimals, 10),
+            tokenId: 0, //! HARD CODED
           },
           amount: 0,
         },
         to: {
           ...validTokens[pairs[1]],
           decimals: parseInt(validTokens[pairs[1]].decimals, 10),
+          tokenId: 0, //! HARD CODED
         },
       },
     },
@@ -157,56 +203,20 @@ export const getPairsInformations = async (
   };
 };
 
-export const getFees = async (address: string) => {
-  const storage = await getStorageByAddress(address);
+export const getFees = async () => {
+  const storage = await getStorage();
   const feeInMutez: number = storage['fee_in_mutez'];
   return feeInMutez;
 };
 
-export const getCurrentBatchNumber = async (
-  address: string,
-  pair: string
-): Promise<number | undefined> => {
-  const storage = await getStorageByAddress(address);
+export const fetchCurrentBatchNumber = async (
+  pair: SwapNames
+): Promise<number> => {
+  const storage = await getStorage();
   const currentBatchIndices = storage['batch_set']['current_batch_indices'];
-  return currentBatchIndices[pair];
+  if (!currentBatchIndices) return Promise.reject('No batch for this pair');
+  return parseInt(currentBatchIndices[pair], 10);
 };
-
-export const getBigMapByIdAndUserAddress = (
-  bigMapId: number,
-  userAddress?: string
-) => {
-  if (!userAddress) return [];
-  return (
-    fetch(
-      `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
-    )
-      // TODO: fix that
-      .then(r => (r.status === 204 ? { value: [] } : r.json()))
-      .then(r => r.value)
-  );
-};
-
-export const getBigMapByIdAndBatchNumber = (
-  bigMapId: number,
-  batchNumber: number
-) =>
-  fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
-  )
-    .then(r => r.json())
-    .then(r => r.value);
-
-export const getBigMapByIdAndTokenPair = (
-  bigMapId: number,
-  tokenPair: string
-) =>
-  //TODO: type response
-  fetch(`${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`)
-    .then(r => r.json())
-    .then(response =>
-      response.filter((r: any) => r.key === tokenPair).map((r: any) => r.value)
-    );
 
 const toBatcherStatus = (rawStatus: string): BatcherStatus => {
   switch (rawStatus) {
@@ -246,20 +256,20 @@ const getStartTime = (status: string, batch: any) => {
 };
 
 export const getBatcherStatus = async (
-  batchNumber: number,
-  address: string
+  batchNumber: number
 ): Promise<{ status: BatcherStatus; at: string; startTime: string | null }> => {
-  const storage = await getStorageByAddress(address);
-  const batch = await getBigMapByIdAndBatchNumber(
-    storage['batch_set']['batches'],
-    batchNumber
-  );
-  const status = Object.keys(batch.status)[0];
+  const batch = await getBigMapByIdAndBatchNumber(batchNumber);
+  return mapStatus(batch);
+};
+
+export const mapStatus = (batch: BatchBigmap) => {
+  const s = Object.keys(batch.status)[0];
+  console.warn(s);
   return {
-    status: toBatcherStatus(status),
-    at: new Date(getStatusTime(status, batch)).toISOString(),
-    startTime: getStartTime(status, batch)
-      ? new Date(getStartTime(status, batch)).toISOString()
+    status: toBatcherStatus(s),
+    at: new Date(getStatusTime(s, batch)).toISOString(),
+    startTime: getStartTime(s, batch)
+      ? new Date(getStartTime(s, batch)).toISOString()
       : null,
   };
 };
@@ -278,22 +288,15 @@ export const getTimeDifference = (
   return 0;
 };
 
-export const getCurrentRates = async (tokenPair: string, address: string) => {
-  const storage = await getStorageByAddress(address);
-  const ratesCurrent = await getBigMapByIdAndTokenPair(
-    storage['rates_current'],
-    tokenPair
-  );
-
-  return ratesCurrent;
-};
+export const getCurrentRates = async (tokenPair: string) =>
+  await getBigMapByIdAndTokenPair(tokenPair);
 
 export const computeOraclePrice = (
-  rate: { p: number; q: number },
+  rate: { p: string; q: string },
   { buyDecimals, sellDecimals }: { buyDecimals: number; sellDecimals: number }
 ) => {
-  const numerator = rate.p;
-  const denominator = rate.q;
+  const numerator = parseInt(rate.p);
+  const denominator = parseInt(rate.q);
   const scaledPow = sellDecimals - buyDecimals;
   return scaleAmountUp(numerator / denominator, scaledPow);
 };
@@ -328,15 +331,11 @@ export const toVolumes = (
   };
 };
 
-export const getVolumes = async (batchNumber: number, address: string) => {
-  const storage = await getStorageByAddress(address);
-  const batch = await getBigMapByIdAndBatchNumber(
-    storage['batch_set']['batches'],
-    batchNumber
-  );
+export const getVolumes = async (batchNumber: number) => {
+  const batch = await getBigMapByIdAndBatchNumber(batchNumber);
   return toVolumes(batch['volumes'], {
-    buyDecimals: batch.pair.decimals_0,
-    sellDecimals: batch.pair.decimals_1,
+    buyDecimals: parseInt(batch.pair.decimals_0, 10),
+    sellDecimals: parseInt(batch.pair.decimals_1, 10),
   });
 };
 
@@ -360,7 +359,7 @@ const convertHoldingToPayout = (
   return [scaled_payout, scaled_remainder];
 };
 
-const findTokensForBatch = (batch: Batch) => {
+const findTokensForBatch = (batch: BatchBigmap) => {
   const pair = batch.pair;
   const tkns = {
     // buy_token_name: pair.name_0,
@@ -390,7 +389,7 @@ const wasInClearingForBatch = (
   return clearingToleranceNumber <= toleranceNumber;
 };
 
-const getSideFromDeposit = (deposit: Deposit) => {
+const getSideFromDeposit = (deposit: UserOrder) => {
   const rawSide = Object.keys(deposit.key.side)[0];
   if (rawSide !== 'buy' && rawSide !== 'sell')
     throw new Error('Unable to parse side.');
@@ -410,8 +409,8 @@ const getTolerance = (obj: {}) => {
 };
 
 const computeHoldingsByBatchAndDeposit = (
-  deposit: Deposit,
-  batch: Batch,
+  deposit: UserOrder,
+  batch: BatchBigmap,
   currentHoldings: HoldingsState
 ) => {
   const side = getSideFromDeposit(deposit);
@@ -549,8 +548,8 @@ const addObj = (o1: any, o2: any) => {
 };
 
 const computeHoldingsByBatch = (
-  deposits: Deposit[], //! depots dans un batch
-  batch: Batch,
+  deposits: UserOrder[], //! depots dans un batch
+  batch: BatchBigmap,
   currentHoldings: HoldingsState
 ) => {
   return deposits.reduce(
@@ -570,17 +569,10 @@ const computeHoldingsByBatch = (
   );
 };
 
-//TODO: improve that
-export const getOrdersBook = async (address: string, userAddress: string) => {
-  const storage = await getStorageByAddress(address);
-  const b: { [key: number]: Deposit[] } = await getBigMapByIdAndUserAddress(
-    storage['user_batch_ordertypes'],
-    userAddress
-  );
+export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
   return Promise.all(
-    Object.entries(b).map(async ([batchNumber, deposits]) => {
+    Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
       const batch = await getBigMapByIdAndBatchNumber(
-        storage['batch_set']['batches'],
         parseInt(batchNumber, 10)
       );
       return computeHoldingsByBatch(deposits, batch, {
@@ -599,6 +591,12 @@ export const getOrdersBook = async (address: string, userAddress: string) => {
       { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }
     )
   );
+};
+
+export const getOrdersBook = async (userAddress: string) => {
+  const orderBookByBatch: { [key: number]: UserOrder[] } =
+    await getBigMapByIdAndUserAddress(userAddress);
+  return computeAllHoldings(orderBookByBatch);
 };
 
 const getDepositAmount = (depositAmount: number, decimals: number) =>
