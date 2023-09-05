@@ -61,7 +61,16 @@ export const newEventCmd = (event: BigMapEvent) => {
             }
             if (eventData.path === 'batch_set.batches') {
               console.log('🚀 ~ file: events.ts:67 ~ eventData:', eventData);
+              const data = eventData.content.value as Batch;
               dispatch(getBatcherStatus());
+              dispatch(
+                updateVolumes(
+                  toVolumes(data.volumes, {
+                    buyDecimals: parseInt(data.pair.decimals_1, 10),
+                    sellDecimals: parseInt(data.pair.decimals_0, 10),
+                  })
+                )
+              );
               return Promise.resolve();
             }
             if (eventData.path === 'user_batch_ordertypes') {
