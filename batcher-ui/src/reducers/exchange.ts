@@ -3,6 +3,7 @@ import {
   ExchangeActions,
   getBatcherStatus,
   getCurrentBatchNumber,
+  getOraclePrice,
   getPairsInfos,
   getVolumes,
 } from '../../src/actions';
@@ -164,7 +165,11 @@ const exchangeReducer = (
           },
         },
         action.payload.batchNumber
-          ? Cmd.list([Cmd.action(getBatcherStatus()), Cmd.action(getVolumes())])
+          ? Cmd.list([
+              Cmd.action(getBatcherStatus()),
+              Cmd.action(getVolumes()),
+              Cmd.action(getOraclePrice()),
+            ])
           : Cmd.none
       );
     case 'GET_ORACLE_PRICE':

@@ -3,11 +3,11 @@ name: Docker ghostnet front staging
 on:
   push:
     branches:
-      - '378-upgrade-batcher-ui'
+      - 'release-ghostnet-staging'
       - 'release-ghostnet-beta'
   pull_request:
     branches:
-      - '378-upgrade-batcher-ui'
+      - 'release-ghostnet-staging'
       - 'release-ghostnet-beta'
     types:
       - closed
@@ -40,13 +40,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ui version 378-upgrade-batcher-ui
-        if: github.ref == 'refs/heads/378-upgrade-batcher-ui'
+      - name: Build and push ui version release-ghostnet-staging
+        if: github.ref == 'refs/heads/release-ghostnet-staging'
         uses: docker/build-push-action@v3
         with:
           file: ./batcher-ui/Dockerfile.${{ matrix.network }}
           context: ./batcher-ui/
-          push: ${{ github.ref == 'refs/heads/378-upgrade-batcher-ui' }}
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-staging' }}
           tags: |
             ghcr.io/marigold-dev/batcher-${{ matrix.network }}:staging
             ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-staging
