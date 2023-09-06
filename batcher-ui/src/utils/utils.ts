@@ -130,10 +130,7 @@ export const getBalances = async (userAddress: string): Promise<Balances> => {
   const storage = await getStorage();
   const validTokens: BatcherStorage['valid_tokens'] = storage['valid_tokens'];
   const rawBalances = await getTokensBalancesByAccount(userAddress);
-  console.log(
-    '🚀 ~ file: utils.ts:117 ~ getBalances ~ rawBalances:',
-    rawBalances
-  );
+
   return Object.values(validTokens).map(token => {
     const balance = rawBalances.find(
       (b: TokenBalance) => b.token?.contract?.address === token.address
@@ -306,7 +303,6 @@ export const getTimeDifference = (
 ) => {
   if (status === BatcherStatus.OPEN && startTime) {
     const now = new Date();
-    console.log('🚀 ~ file: utils.ts:288 ~ now:', now);
     const open = parseISO(startTime);
     const batcherClose = add(open, { minutes: 10 });
     const diff = differenceInMinutes(batcherClose, now);

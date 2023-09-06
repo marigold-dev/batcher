@@ -64,7 +64,7 @@ const setupBatcherCmd = (startTime: string | null, status: BatcherStatus) => {
         ),
         getTimeDifferenceInMs(status, startTime)
       ),
-      Cmd.setInterval(Cmd.action(updateRemainingTime()), 10000, {
+      Cmd.setInterval(Cmd.action(updateRemainingTime()), 60000, {
         scheduledActionCreator: timerId => batcherTimerId(timerId),
       }),
     ]);

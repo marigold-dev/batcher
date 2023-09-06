@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
 import { getFees, scaleAmountUp } from '../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
@@ -35,13 +35,7 @@ const Exchange = () => {
   const dispatch = useDispatch();
 
   const [amountInput, setAmount] = useState<string>('0');
-  const [fees, setFees] = useState(0);
   const [animate, setAnimate] = useState(false);
-
-  //TODO: rewrite with redux-loop
-  useEffect(() => {
-    getFees().then(f => setFees(f));
-  }, []);
 
   //TODO: rewrite error management
   if (!tezos)
@@ -72,7 +66,6 @@ const Exchange = () => {
     const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
     if (!batcherContractHash) return;
 
-    console.warn('swap', swap, isReverse, amount);
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;
 
     const selectedToken = isReverse ? swap.to : swap.from.token;
@@ -80,6 +73,8 @@ const Exchange = () => {
     const batcherContract = await tezos.wallet.at(batcherContractHash);
 
     if (!selectedToken.address) return; //TODO:improve this
+
+    const fees = await getFees();
 
     const tokenContract: WalletContract = await tezos.wallet.at(
       selectedToken.address,
@@ -116,7 +111,6 @@ const Exchange = () => {
 
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
-      console.warn(scaleAmountUp(amount, currentSwap.swap.to.decimals));
       const swap_params = {
         swap: isReverse
           ? {
@@ -148,8 +142,6 @@ const Exchange = () => {
         side: isReverse ? 1 : 0,
         tolerance,
       };
-
-      console.warn(swap_params, fees);
 
       if (selectedToken.standard === 'FA1.2 token') {
         if (!swap.from.token.address) return; //TODO: improve this
@@ -214,7 +206,7 @@ const Exchange = () => {
 
       const confirm = await order_batcher_op?.confirmation();
 
-      confirm?.completed ? console.log('Successfully deposited !!!!!!') : null;
+      confirm?.completed ? console.info('Successfully deposited !!!!!!') : null;
 
       if (!confirm.completed) {
         console.error(confirm);
@@ -233,7 +225,7 @@ const Exchange = () => {
         //   message.success('Successfully deposited ' + tokenName);
       }
     } catch (error) {
-      console.log('deposit error', error);
+      console.error('deposit error', error);
       // const converted_error_message = getErrorMess(error);
       // message.error(converted_error_message);
       // message.loading('Attempting to place swap order for ' + tokenName, 0);
