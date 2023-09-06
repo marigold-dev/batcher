@@ -42,7 +42,6 @@
     "@taquito/tzip12": "^16.0.0",
     "@taquito/tzip16": "^16.0.0",
     "@types/react-redux": "^7.1.25",
-    "@tzkt/sdk-api": "^2.2.0",
     "date-fns": "^2.29.3",
     "fp-ts": "^2.16.0",
     "next": "^13.4.10",

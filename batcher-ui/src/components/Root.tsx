@@ -2,7 +2,6 @@ import { NextComponentType, NextPageContext } from 'next';
 import { useEffect, useState } from 'react';
 import Footer from './Footer';
 import NavBar from './NavBar';
-import * as api from '@tzkt/sdk-api';
 import { batcherSetup, getCurrentBatchNumber } from 'src/actions';
 import { useDispatch } from 'react-redux';
 import { setByKey } from 'src/utils/local-storage';
@@ -22,10 +21,6 @@ const Root = ({ Component }: RootProps) => {
 
   // Override TZKT base url if we are in ghostnet
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET') {
-      api.defaults.baseUrl = 'https://api.ghostnet.tzkt.io/';
-    }
-
     dispatch(getCurrentBatchNumber());
   }, [dispatch]);
 

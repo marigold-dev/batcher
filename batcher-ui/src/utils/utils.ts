@@ -20,7 +20,6 @@ import {
   RatesCurrentBigmap,
 } from '../types';
 import { NetworkType } from '@airgap/beacon-sdk';
-import * as api from '@tzkt/sdk-api';
 import { getByKey } from './local-storage';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
@@ -103,20 +102,41 @@ export type Balances = {
   decimals: number;
 }[];
 
+type TokenBalance = {
+  address: string;
+  balance: string;
+  token: {
+    contract: { address: string };
+    standard: string;
+    tokenId: string;
+    metadata: {
+      name: string;
+      symbol: string;
+      decimals: string;
+      thumbnailUri: string;
+    };
+  };
+};
+
 // TODO: need to configure token available in Batcher
 export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
+
+export const getTokensBalancesByAccount = (userAddress: string) =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens/balances?account=${userAddress}`
+  ).then(r => r.json());
 
 export const getBalances = async (userAddress: string): Promise<Balances> => {
   const storage = await getStorage();
   const validTokens: BatcherStorage['valid_tokens'] = storage['valid_tokens'];
-  const rawBalances = await api.tokensGetTokenBalances({
-    account: {
-      eq: userAddress,
-    },
-  });
+  const rawBalances = await getTokensBalancesByAccount(userAddress);
+  console.log(
+    '🚀 ~ file: utils.ts:117 ~ getBalances ~ rawBalances:',
+    rawBalances
+  );
   return Object.values(validTokens).map(token => {
     const balance = rawBalances.find(
-      b => b.token?.contract?.address === token.address
+      (b: TokenBalance) => b.token?.contract?.address === token.address
     )?.balance;
     const decimals = parseInt(token.decimals, 10);
     return {
