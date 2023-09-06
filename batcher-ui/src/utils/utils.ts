@@ -118,13 +118,22 @@ type TokenBalance = {
   };
 };
 
+const checkStatus = (response: Response, noContentReturnValue?: unknown) => {
+  if (!response.ok) return Promise.reject('FETCH_ERROR');
+  if (response.status === 204) {
+    //! No content
+    return Promise.resolve(noContentReturnValue);
+  }
+  return response.json();
+};
+
 // TODO: need to configure token available in Batcher
 export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
 export const getTokensBalancesByAccount = (userAddress: string) =>
   fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens/balances?account=${userAddress}`
-  ).then(r => r.json());
+  ).then(checkStatus);
 
 export const getBalances = async (userAddress: string): Promise<Balances> => {
   const storage = await getStorage();
@@ -149,7 +158,7 @@ export const getBalances = async (userAddress: string): Promise<Balances> => {
 export const getStorage = (): Promise<BatcherStorage> =>
   fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
-  ).then(r => r.json());
+  ).then(checkStatus);
 
 export const getBigMapByIdAndUserAddress = (
   userAddress?: string
@@ -162,7 +171,7 @@ export const getBigMapByIdAndUserAddress = (
       `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
     )
       // TODO: improve that by parseStatus function
-      .then(r => (r.status === 204 ? { value: [] } : r.json()))
+      .then(response => checkStatus(response, { value: [] }))
       .then(r => r.value)
   );
 };
@@ -175,7 +184,7 @@ export const getBigMapByIdAndBatchNumber = (
   return fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
   )
-    .then(r => r.json())
+    .then(checkStatus)
     .then(r => r.value);
 };
 
@@ -188,7 +197,7 @@ export const getBigMapByIdAndTokenPair = (
   return fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`
   )
-    .then(r => r.json())
+    .then(checkStatus)
     .then(response =>
       response.filter((r: any) => r.key === tokenPair).map((r: any) => r.value)
     );
