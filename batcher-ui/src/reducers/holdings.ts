@@ -14,7 +14,7 @@ export const holdingsReducer = (
 ) => {
   switch (action.type) {
     case 'REDEEM':
-      //TODO
+      //TODO redeem with Redux
       return loop(state, Cmd.none);
     case 'UPDATE_HOLDINGS':
       return { ...state, ...action.payload.holdings };
