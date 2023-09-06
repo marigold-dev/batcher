@@ -7,7 +7,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { currentPairSelector, userAddressSelector } from '../src/reducers';
 import {
   fetchUserBalances,
-  batcherSetup,
   batcherUnsetup,
   getPairsInfos,
 } from '../src/actions';
@@ -19,8 +18,6 @@ const Swap = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(batcherSetup());
-
     dispatch(getPairsInfos(tokenPair));
 
     return () => {

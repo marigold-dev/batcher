@@ -6,6 +6,7 @@ import {
   getCurrentRates,
   getPairsInformations,
   getVolumes,
+  getTimeDifferenceInMs,
 } from '../utils/utils';
 import {
   updateBatchNumber,
@@ -14,9 +15,10 @@ import {
   updateOraclePrice,
   updateVolumes,
   batcherTimerId,
-  getBatcherStatus as getBatcherStatusAction,
+  updateRemainingTime,
+  noBatchError,
 } from '../actions';
-import { CurrentSwap, SwapNames } from 'src/types';
+import { BatcherStatus, CurrentSwap, SwapNames } from 'src/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
@@ -35,6 +37,7 @@ const fetchCurrentBatchNumberCmd = (pair: SwapNames) =>
     },
     {
       successActionCreator: updateBatchNumber,
+      failActionCreator: (e: string) => noBatchError(e),
     }
   );
 
@@ -48,12 +51,27 @@ const fetchBatcherStatusCmd = (batchNumber: number) =>
     }
   );
 
-//TODO: setup timeout to close batch when started + 10min
-const setupBatcherCmd = (pair: string) => {
-  return Cmd.setInterval(Cmd.action(getBatcherStatusAction()), 50000, {
-    scheduledActionCreator: timerId => batcherTimerId(timerId),
-  });
+const setupBatcherCmd = (startTime: string | null, status: BatcherStatus) => {
+  if (startTime && status === BatcherStatus.OPEN) {
+    return Cmd.list([
+      Cmd.setTimeout(
+        Cmd.action(
+          updateBatcherStatus({
+            status: BatcherStatus.CLOSED,
+            at: startTime,
+            startTime,
+          })
+        ),
+        getTimeDifferenceInMs(status, startTime)
+      ),
+      Cmd.setInterval(Cmd.action(updateRemainingTime()), 10000, {
+        scheduledActionCreator: timerId => batcherTimerId(timerId),
+      }),
+    ]);
+  }
+  return Cmd.none;
 };
+
 
 const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   return Cmd.run(

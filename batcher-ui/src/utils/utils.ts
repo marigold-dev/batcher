@@ -1,4 +1,9 @@
-import { add, differenceInMinutes, parseISO } from 'date-fns';
+import {
+  add,
+  differenceInMilliseconds,
+  differenceInMinutes,
+  parseISO,
+} from 'date-fns';
 import {
   BatcherStatus,
   CurrentSwap,
@@ -214,7 +219,9 @@ export const fetchCurrentBatchNumber = async (
 ): Promise<number> => {
   const storage = await getStorage();
   const currentBatchIndices = storage['batch_set']['current_batch_indices'];
-  if (!currentBatchIndices) return Promise.reject('No batch for this pair');
+  if (!currentBatchIndices || !currentBatchIndices[pair]) {
+    return Promise.reject('No batch for this pair.');
+  }
   return parseInt(currentBatchIndices[pair], 10);
 };
 
@@ -264,7 +271,6 @@ export const getBatcherStatus = async (
 
 export const mapStatus = (batch: BatchBigmap) => {
   const s = Object.keys(batch.status)[0];
-  console.warn(s);
   return {
     status: toBatcherStatus(s),
     at: new Date(getStatusTime(s, batch)).toISOString(),
@@ -280,9 +286,24 @@ export const getTimeDifference = (
 ) => {
   if (status === BatcherStatus.OPEN && startTime) {
     const now = new Date();
+    console.log('🚀 ~ file: utils.ts:288 ~ now:', now);
     const open = parseISO(startTime);
     const batcherClose = add(open, { minutes: 10 });
     const diff = differenceInMinutes(batcherClose, now);
+    return diff < 0 ? 0 : diff;
+  }
+  return 0;
+};
+
+export const getTimeDifferenceInMs = (
+  status: BatcherStatus,
+  startTime: string | null
+) => {
+  if (status === BatcherStatus.OPEN && startTime) {
+    const now = new Date();
+    const open = parseISO(startTime);
+    const batcherClose = add(open, { minutes: 10 });
+    const diff = differenceInMilliseconds(batcherClose, now);
     return diff < 0 ? 0 : diff;
   }
   return 0;
