@@ -40,8 +40,6 @@ const Holdings = () => {
         if (!confirm.completed) {
           console.error('Failed to redeem holdings' + confirm);
         } else {
-          // setOpenHoldings(new Map<string, number>());
-          // setClearedHoldings(new Map<string, number>());
           console.info('Successfully redeemed holdings');
         }
       } else {
@@ -113,7 +111,7 @@ const Holdings = () => {
       <>
         {hasClearedHoldings() && (
           <button
-            className="text-white bg-primary rounded py-2 px-4 m-2 hidden md:flex hover:bg-red-500"
+            className="text-white bg-primary rounded py-2 px-4 m-2 md:flex hover:bg-red-500"
             type="button"
             onClick={redeem}>
             Redeem
