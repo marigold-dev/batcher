@@ -203,6 +203,30 @@ export const getBigMapByIdAndTokenPair = (
     );
 };
 
+export const getTokensMetadata = async () => {
+  const storage = await getStorage();
+  const validTokens = storage['valid_tokens'];
+  return Promise.all(
+    Object.values(validTokens).map(async token => {
+      const icon = await fetch(
+        `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens?contract=${token.address}`
+      )
+        .then(t => t.json())
+        .then(([t]) =>
+          t.metadata.thumbnailUri
+            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
+            : undefined
+        );
+
+      return {
+        name: token.name,
+        address: token.address,
+        icon,
+      };
+    })
+  );
+};
+
 // ----- FETCH CONTRACT INFORMATIONS AND PARSING ------
 
 export const getPairsInformations = async (
