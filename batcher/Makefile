@@ -1,6 +1,6 @@
 .PHONY: test
 
-LIGO_COMPILER_VERSION:=0.72.0
+LIGO_COMPILER_VERSION:=0.70.0
 TEZOS_PROTOCOL:=mumbai
 LIGO_DOCKER := docker run --rm  -v $(PWD):$(PWD) -w $(PWD) ligolang/ligo:$(LIGO_COMPILER_VERSION)
 
@@ -51,6 +51,14 @@ build-ghostnet:
 	$(call clean_ghostnet_files)
 	$(call compile_contract,batcher.mligo, batcher-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/initial_storage_ghostnet.mligo, batcher-storage-ghostnet.tz)
+build-mm-mainnet:
+	$(call clean_mainnet_files)
+	$(call compile_contract,marketmaker.mligo, marketmaker-mainnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_mainnet.mligo, marketmaker-storage-mainnet.tz)
+build-mm-ghostnet:
+	$(call clean_ghostnet_files)
+	$(call compile_contract,marketmaker.mligo, marketmaker-ghostnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_ghostnet.mligo, marketmaker-storage-ghostnet.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, tzBTC_token.tz)

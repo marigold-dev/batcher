@@ -96,11 +96,38 @@ let vanilla_deposit_should_succeed =
         ; Helpers.expect_last_order_number bstorage 1n
       ])
 
+let deposit_with_incorrect_side_should_fail =
+  Breath.Model.case
+  "test deposit"
+  "should be successful"
+    (fun (level: Breath.Logger.level) ->
+      let context = Helpers.test_context level in 
+      let batcher = context.contracts.batcher in
+      let btc_trader = context.btc_trader in 
+
+      let bstorage = Breath.Contract.storage_of batcher in
+
+      let deposit_amount = 2000000n in
+      let allowance = {
+        spender = batcher.originated_address;
+        value = deposit_amount
+       } in
+
+      let act_allow_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
+      let act_deposit = Helpers.place_order btc_trader batcher bstorage.fee_in_mutez "tzBTC" "USDT" deposit_amount Sell Exact bstorage.valid_tokens in
+   
+      Breath.Result.reduce [
+        act_allow_transfer
+        ; act_deposit
+        ; Breath.Expect.fail_with_value Batcher.incorrect_side_specified act_deposit
+      ])
+
 let test_suite =
   Breath.Model.suite "Suite for Deposits" [
     deposit_fail_no_token_allowance
     ; vanilla_deposit_should_succeed
     ; deposit_fail_if_batch_is_closed
+    ; deposit_with_incorrect_side_should_fail
 
   ]
 

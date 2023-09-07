@@ -22,11 +22,9 @@ let claim_should_fail_with_zero_unclaimed =
         spender = batcher.originated_address;
         value = deposit_amount
        } in
-      let prior_balances = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let act_allow_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
       let act_add_liquidity = Helpers.add_liquidity btc_trader batcher token_name deposit_amount bstorage.valid_tokens in
       let act_claim = Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Claim token_name) 0tez)) in
-      let bstorage = Breath.Contract.storage_of batcher in
       
 
       Breath.Result.reduce [
