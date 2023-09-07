@@ -63,9 +63,17 @@ const SelectPair = () => {
                       : swap.from.token.name === t.name
                   }>
                   <div className="flex items-center">
-                    {t.icon && (
+                    {t.icon ? (
                       <Image
                         src={t.icon}
+                        alt={`${t.name} icon`}
+                        width={24}
+                        height={24}
+                        style={{ paddingRight: 4 }}
+                      />
+                    ) : (
+                      <Image
+                        src={`/${t.name}-icon.png`}
                         alt={`${t.name} icon`}
                         width={24}
                         height={24}
