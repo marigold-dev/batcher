@@ -4,8 +4,7 @@
   "author": "batcher <marigold@dev.com>",
   "description": "Batcher for exchanging tokens",
   "dependencies": {
-    "@ligo/math-lib": "^1.0.0",
-    "ligo-breathalyzer": "^1.4.0",
-    "ligo-extendable-fa2": "^1.0.4"
+    "@ligo/math-lib": "^1.1.0",
+    "ligo-breathalyzer": "^1.4.0"
   }
 }

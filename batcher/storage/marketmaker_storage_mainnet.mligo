@@ -1,7 +1,7 @@
-#import "../batcher.mligo" "Batcher"
+#import "../marketmaker.mligo" "MarketMaker"
 
-let f(_:unit) : Batcher.Storage.t = {
-  metadata = (Big_map.empty : Batcher.metadata);
+let f(_:unit) : MarketMaker.Storage.t = {
+  metadata = (Big_map.empty : MarketMaker.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
       token_id = 0n;
@@ -49,17 +49,11 @@ let f(_:unit) : Batcher.Storage.t = {
       }
     )
   ];
-  rates_current = (Big_map.empty : Batcher.rates_current);
-  batch_set = {
-    current_batch_indices = (Map.empty : (string,nat) map);
-   	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
-  };
-  last_order_number = 0n;
-  user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
-  fee_in_mutez = 10_000mutez;
-  fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
+  batcher = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
+  vaults = (Big_map.empty: MarketMaker.market_vaults);
   limit_on_tokens_or_pairs = 10n;
-  deposit_time_window_in_seconds = 600n;
+  last_holding_id = 0n;
+  user_holdings = (Big_map.empty: MarketMaker.user_holdings);
+  vault_holdings = (Big_map.empty: MarketMaker.vault_holdings);
 }
-

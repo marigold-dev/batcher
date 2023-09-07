@@ -51,9 +51,9 @@ let f(_:unit) : MarketMaker.Storage.t = {
   ];
   batcher = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
-  vaults = (Big_map.empty: Batcher.market_vaults);
+  vaults = (Big_map.empty: MarketMaker.market_vaults);
+  limit_on_tokens_or_pairs = 10n;
   last_holding_id = 0n;
   user_holdings = (Big_map.empty: MarketMaker.user_holdings);
   vault_holdings = (Big_map.empty: MarketMaker.vault_holdings);
 }
-

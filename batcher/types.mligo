@@ -1,7 +1,4 @@
-
-
-
-
+#import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 (* Side of an order, either BUY side or SELL side  *)
 type side =
@@ -136,15 +133,56 @@ type sell_exact_token = int
 type sell_plus_token = int
 type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
 
+type batch_status =
+  | Open of { start_time : timestamp }
+  | Closed of { start_time : timestamp ; closing_time : timestamp }
+  | Cleared of { at : timestamp; clearing : clearing; rate : exchange_rate }
 
+type volumes = [@layout:comb] {
+  buy_minus_volume : nat;
+  buy_exact_volume : nat;
+  buy_plus_volume : nat;
+  buy_total_volume : nat;
+  sell_minus_volume : nat;
+  sell_exact_volume : nat;
+  sell_plus_volume : nat;
+  sell_total_volume : nat;
+}
 
+type pair = string * string
 
+(* This represents the type of order.  I.e. buy/sell and which level*)
+type ordertype = [@layout:comb] {
+   side: side;
+   tolerance: tolerance;
+}
 
+(* Mapping order type to total amount of placed orders  *)
+type ordertypes = (ordertype, nat) map
 
-type market_token = {
-   circulation: nat;
-   token: token;
+(* pairing of batch_id and ordertypes. *)
+type batch_ordertypes = (nat,  ordertypes) map
 
+(* Associated user address to a given set of batches and ordertypes  *)
+type user_batch_ordertypes = (address, batch_ordertypes) big_map
+
+(* Batch of orders for the same pair of tokens *)
+type batch = [@layout:comb] {
+  batch_number: nat;
+  status : batch_status;
+  volumes : volumes;
+  pair : pair;
+  holdings : nat;
+  market_vault_used : side option;
+}
+
+type batch_indices = (string,  nat) map
+
+type batches = (nat, batch) big_map
+
+type batch_set = [@layout:comb] {
+  current_batch_indices: batch_indices;
+  batches: batches;
 }
 
 (* Type for contract metadata *)
@@ -155,50 +193,51 @@ type metadata_update = {
   value: bytes;
 }
 
-let assert_some_or_fail_with
-    (type a)
-    (an_opt: a option)
-    (error: nat) = 
-    match an_opt with
-    | None -> failwith error
-    | Some _ -> ()
+type oracle_price_update = timestamp * nat
 
-let assert_or_fail_with
-    (predicate: bool)
-    (error: nat) = 
-    if not predicate then failwith error else ()
+type oracle_source_change = [@layout:comb] {
+  pair_name: string;
+  oracle_address: address;
+  oracle_asset_name: string;
+  oracle_precision: nat;
+}
 
-let find_or_fail_with
-     (type a b)
-     (key: a)
-     (error: nat)
-     (bmap:  (a,b) big_map) : b =
-     match Big_map.find_opt key bmap with
-     | None -> failwith error
-     | Some v -> v
+(* The tokens that are valid within the contract  *)
+type valid_tokens = (string, token) map
 
-let bi_map_opt_sn
-    (type a b)
-    (f_some: a -> b)
-    (f_none: unit -> b)
-    (boxed: a option): b = 
-    match boxed with
-    | Some v -> f_some v
-    | None -> f_none ()
+(* The swaps of valid tokens that are accepted by the contract  *)
+type valid_swaps =  (string, valid_swap_reduced) map
 
-let map_opt
-   (type a b)
-   (f: a -> b)
-   (boxed: a option): b option = 
-   match boxed with
-   | None -> None
-   | Some v -> Some (f v)
+(* The current, most up to date exchange rates between tokens  *)
+type rates_current = (string, exchange_rate) big_map
 
-let bind_opt
-  (type a b)
-  (f: a -> b option)
-  (boxed: a option): b option = 
-  match boxed with
-  | None -> None
-  | Some v -> f v
+type fees = {
+   to_send: tez;
+   to_refund: tez;
+   payer: address;
+   recipient: address;
+}
+
+type market_maker_vault = {
+  total_shares: nat;
+  holdings: nat set;
+  native_token: token_amount;
+  foreign_tokens: token_amount_map;
+}
+
+type market_vaults = (string, market_maker_vault) big_map
+
+type market_vault_holding = {   
+   id: nat;
+   token: string;
+   holder: address;
+   shares: nat;
+   unclaimed: tez;
+}
+
+type user_holding_key = address * string
+
+type user_holdings =  (user_holding_key, nat) big_map
+
+type vault_holdings = (nat, market_vault_holding) big_map
 
