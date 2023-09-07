@@ -38,7 +38,7 @@ const SelectPair = () => {
         const reversed = value !== 'tzBTC';
         dispatch(changePair(pair, reversed));
       }}>
-      <Select.Trigger className="flex items-center text-dark w-[140px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
+      <Select.Trigger className="flex items-center text-dark w-[150px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
         <Select.Value
           placeholder={isReverse ? swap.to.name : swap.from.token.name}
         />

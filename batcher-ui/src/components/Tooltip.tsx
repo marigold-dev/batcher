@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 
 type tooltipProps = {
   children: ReactNode;
-  text: string;
+  text: string | ReactNode;
   disabled?: boolean;
   visible?: boolean;
 };
@@ -22,9 +22,9 @@ const Tooltip = ({
         </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Content
           sideOffset={4}
-          className="radix-side-top:animate-slide-down-fade radix-side-right:animate-slide-left-fade radix-side-bottom:animate-slide-up-fade radix-side-left:animate-slide-right-fade inline-flex items-center rounded-md bg-zinc-800 px-4 py-2.5 shadow-lg">
-          <TooltipPrimitive.Arrow className="fill-current text-zinc-800" />
-          <span className="block max-w-xs text-xs leading-none text-zinc-100">
+          className="radix-side-top:animate-slide-down-fade radix-side-right:animate-slide-left-fade radix-side-bottom:animate-slide-up-fade radix-side-left:animate-slide-right-fade inline-flex items-center rounded-md bg-white px-4 py-2.5 shadow-lg">
+          <TooltipPrimitive.Arrow className="fill-current text-white" />
+          <span className="block max-w-xs text-xs leading-none text-darkgray">
             {text}
           </span>
         </TooltipPrimitive.Content>
