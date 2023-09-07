@@ -1,7 +1,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
-#import "./../../common/helpers.mligo" "Helpers"
-#import "./../../common/batch.mligo" "Batch"
-#import "../../../batcher.mligo" "Batcher"
+#import "./../../../common/helpers.mligo" "Helpers"
+#import "./../../../common/batch.mligo" "Batch"
+#import "../../../../batcher.mligo" "Batcher"
 
 type skew = Batch.skew
 type pressure = Batch.pressure

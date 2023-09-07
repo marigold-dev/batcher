@@ -1,6 +1,6 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
-#import "./../../common/helpers.mligo" "Helpers"
-#import "../../../batcher.mligo" "Batcher"
+#import "./../../../common/helpers.mligo" "Helpers"
+#import "../../../../batcher.mligo" "Batcher"
 
 let get_tzbtc_eurl_swap_pair
   (disabled: bool)

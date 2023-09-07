@@ -1,7 +1,7 @@
 
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
-#import "./../../common/helpers.mligo" "Helpers"
-#import "../../../batcher.mligo" "Batcher"
+#import "./../../../common/helpers.mligo" "Helpers"
+#import "../../../../batcher.mligo" "Batcher"
 
 
 let change_fee_recipient_address_should_succeed_if_user_is_admin =

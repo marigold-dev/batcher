@@ -4,7 +4,6 @@ on:
   workflow_dispatch: # adding the workflow_dispatch so it can be triggered manually
   push:
 
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,10 +22,15 @@ jobs:
           ligo_version: 0.70.1
           command: install
           working_directory: batcher
-      - name: Run test
+      - name: Run batcher test
         uses: marigold-dev/ligo-action@v1.0.0
         with:
           ligo_version: 0.70.1
-          command: run test test/test.mligo
+          command: run test test/test-batcher.mligo
           working_directory: batcher
-
+      - name: Run market maker test
+        uses: marigold-dev/ligo-action@v1.0.0
+        with:
+          ligo_version: 0.70.1
+          command: run test test/test-market-maker.mligo
+          working_directory: batcher

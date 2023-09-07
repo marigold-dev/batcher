@@ -75,8 +75,13 @@ build-fa12-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, tzBTC_fa12_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/tzBTC_storage.mligo, tzBTC_fa12_token_storage.tz)
-test:
-	$(call test_ligo,$(TEST_DIRECTORY)/test.mligo)
+test-mm:
+	$(call test_ligo,$(TEST_DIRECTORY)/test-market-maker.mligo)
+test-batcher:
+	$(call test_ligo,$(TEST_DIRECTORY)/test-batcher.mligo)
+test-all:
+	$(call test_ligo,$(TEST_DIRECTORY)/test-batcher.mligo)
+	$(call test_ligo,$(TEST_DIRECTORY)/test-market-maker.mligo)
 measure:
 	$(call measure_contract,batcher.mligo)
 install:

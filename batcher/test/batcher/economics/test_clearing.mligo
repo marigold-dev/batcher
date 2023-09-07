@@ -1,8 +1,8 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
-#import "./../common/utils.mligo" "Utils"
-#import "./../common/batch.mligo" "Batch"
-#import "../../batcher.mligo" "Batcher"
-#import "./../common/helpers.mligo" "Helpers"
+#import "./../../common/utils.mligo" "Utils"
+#import "./../../common/batch.mligo" "Batch"
+#import "../../../batcher.mligo" "Batcher"
+#import "./../../common/helpers.mligo" "Helpers"
 
 
 type batch = Batcher.batch
