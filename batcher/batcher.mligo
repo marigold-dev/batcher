@@ -1,5 +1,5 @@
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
-#import "shared.mligo" "Shared"
+#import "types.mligo" "Types"
 
 (* Errors  *)
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
@@ -58,6 +58,7 @@
 [@inline] let holding_amount_to_redeem_is_larger_than_holding                    = 153n
 [@inline] let holding_shares_greater_than_total_shares_remaining                 = 154n
 [@inline] let no_holdings_to_claim                                               = 155n
+[@inline] let incorrect_side_specified                                           = 156n
 
 (* Constants *)
 
@@ -90,125 +91,53 @@
 (* The contract assumes that the minimum precision is six and that the oracle precision must EXACTLY be 6 *)
 [@inline] let minimum_precision : nat = 6n
 
-(* Side of an order, either BUY side or SELL side  *)
-type side =
-  Buy
-  | Sell
+type side = Types.side
 
-(* Tolerance of the order against the oracle price  *)
-type tolerance =
-  Plus | Exact | Minus
+type tolerance = Types.tolerance
 
-type token = Shared.token
+type token = Types.token
 
-(* A token value ascribes an amount to token metadata *)
-type token_amount = [@layout:comb] {
-  token : token;
-  amount : nat;
-}
+type token_amount = Types.token_amount
 
-type token_amount_map = (string, token_amount) map
+type token_amount_map = Types.token_amount_map
 
-type token_holding_map = (address, token_amount_map) map
+type token_holding_map = Types.token_holding_map
 
+type token_holding = Types.token_holding
 
-(* A token amount 'held' by a specific address *)
-type token_holding = [@layout:comb] {
-  holder: address;
-  token_amount : token_amount;
-  redeemed: bool;
-}
+type swap =  Types.swap
 
-type swap =  [@layout:comb] {
- from : token_amount;
- to : token;
-}
+type swap_reduced = Types.swap_reduced
 
-type swap_reduced = [@layout:comb] {
-  from: string;
-  to: string;
-}
+type valid_swap_reduced = Types.valid_swap_reduced
 
-(* A valid swap is a swap pair that has a source of pricing from an oracle.  *)
-type valid_swap_reduced = [@layout:comb] {
-  swap: swap_reduced;
-  oracle_address: address;
-  oracle_asset_name: string;
-  oracle_precision: nat;
-  is_disabled_for_deposits: bool;
-}
-(* A valid swap is a swap pair that has a source of pricing from an oracle.  *)
-type valid_swap = [@layout:comb] {
-  swap: swap;
-  oracle_address: address;
-  oracle_asset_name: string;
-  oracle_precision: nat;
-  is_disabled_for_deposits: bool;
-}
+type valid_swap = Types.valid_swap
 
-type exchange_rate_full = [@layout:comb] {
-  swap : swap;
-  rate: Rational.t;
-  when : timestamp;
-}
+type exchange_rate_full = Types.exchange_rate_full
 
-type exchange_rate = [@layout:comb] {
-  swap : swap_reduced;
-  rate: Rational.t;
-  when : timestamp;
-}
+type exchange_rate = Types.exchange_rate
 
-type swap_order =  [@layout:comb] {
-  order_number: nat;
-  batch_number: nat;
-  trader : address;
-  swap  : swap;
-  side : side;
-  tolerance : tolerance;
-  redeemed:bool;
-}
+type swap_order =  Types.swap_order
 
-type external_swap_order = [@layout:comb] {
-  swap  : swap;
-  created_at : timestamp;
-  side : nat;
-  tolerance : nat;
-}
+type external_swap_order = Types.external_swap_order
 
-type batch_status  =
-  NOT_OPEN | OPEN | CLOSED | FINALIZED
+type batch_status  = Types.batch_status
 
-type total_cleared_volumes = [@layout:comb] {
-  buy_side_total_cleared_volume: nat;
-  buy_side_volume_subject_to_clearing: nat;
-  sell_side_total_cleared_volume: nat;
-  sell_side_volume_subject_to_clearing: nat;
+type total_cleared_volumes = Types.total_cleared_volumes
 
-}
+type clearing_volumes = Types.clearing_volumes
 
-type clearing_volumes = [@layout:comb] {
-  minus: nat;
-  exact: nat;
-  plus: nat;
-}
+type clearing =  Types.clearing
 
-type clearing =  [@layout:comb] {
-  clearing_volumes : clearing_volumes;
-  clearing_tolerance : tolerance;
-  total_cleared_volumes: total_cleared_volumes;
-  clearing_rate: exchange_rate;
-}
+type buy_minus_token = Types.buy_minus_token
+type buy_exact_token = Types.buy_exact_token
+type buy_plus_token = Types.buy_plus_token
+type buy_side = Types.buy_side
 
-(* These types are used in math module *)
-type buy_minus_token = int
-type buy_exact_token = int
-type buy_plus_token = int
-type buy_side = buy_minus_token * buy_exact_token * buy_plus_token
-
-type sell_minus_token = int
-type sell_exact_token = int
-type sell_plus_token = int
-type sell_side = sell_minus_token * sell_exact_token * sell_plus_token
+type sell_minus_token = Types.sell_minus_token
+type sell_exact_token = Types.sell_exact_token
+type sell_plus_token = Types.sell_plus_token
+type sell_side = Types.sell_side
 
 type batch_status =
   | Open of { start_time : timestamp }
@@ -265,13 +194,9 @@ type batch_set = [@layout:comb] {
   batches: batches;
 }
 
-(* Type for contract metadata *)
-type metadata = (string, bytes) big_map
+type metadata = Shared.metadata
 
-type metadata_update = {
-  key: string;
-  value: bytes;
-}
+type metadata_update = Shared.metadata_update
 
 type orace_price_update = timestamp * nat
 
@@ -298,36 +223,6 @@ type fees = {
    recipient: address;
 }
 
-
-type market_maker_vault = {
-  total_shares: nat;
-  holdings: nat set;
-  native_token: token_amount;
-  foreign_tokens: token_amount_map;
-}
-
-type market_vaults = (string, market_maker_vault) big_map
-
-type market_vault_holding = {   
-   id: nat;
-   token: string;
-   holder: address;
-   shares: nat;
-   unclaimed: tez;
-}
-
-type user_holding_key = address * string
-
-type user_holdings =  (user_holding_key, nat) big_map
-
-type vault_holdings = (nat, market_vault_holding) big_map
-
-type market_maker = {
-  vaults: market_vaults; 
-  last_holding_id: nat;
-  user_holdings: user_holdings; 
-  vault_holdings: vault_holdings;
-}
 
 [@inline]
 let get_token
@@ -1545,12 +1440,15 @@ let start_period
 [@inline]
 let close
 (deposit_time_window: nat)
-(batch : batch) : batch =
+(batch : batch)
+(storage: Storage.t): Storage.t * batch =
   match batch.status with
     | Open { start_time } ->
+      let liquidity_order_number = storage.last_order_number + 1n in
+      let (batch,storage) = MarketVaultUtils.inject_jit_liquidity batch liquidity_order_number storage in
       let batch_close_time = start_time + (int deposit_time_window) in
       let new_status = Closed { start_time = start_time; closing_time = batch_close_time } in
-      { batch with status = new_status }
+      storage,{ batch with status = new_status }
     | _ -> failwith trying_to_close_batch_which_is_not_open
 
 [@inline]
@@ -1566,18 +1464,21 @@ let progress_batch
   (pair: pair)
   (batch: batch)
   (batch_set: batch_set)
-  (current_time : timestamp) : (batch * batch_set) =
+  (storage: Storage.t)
+  (current_time : timestamp) : (batch * batch_set * Storage.t) =
   match batch.status with
   | Open { start_time } ->
     if  current_time >= start_time + (int deposit_time_window) then
-      let closed_batch = close deposit_time_window batch in
-      update_current_batch_in_set closed_batch batch_set
+      let (storage,closed_batch) = close deposit_time_window batch storage in
+      let (b,bs) = update_current_batch_in_set closed_batch batch_set in
+      (b,bs,storage)
     else
-      (batch, batch_set)
+      (batch, batch_set,storage)
   | Closed { closing_time =_ ; start_time = _} ->
     (*  Batches can only be cleared on receipt of rate so here they should just be returned *)
-    (batch, batch_set)
-  | Cleared _ -> start_period pair batch_set current_time
+    (batch, batch_set,storage)
+  | Cleared _ -> let  (b,bs) = start_period pair batch_set current_time in 
+                  (b,bs,storage)
 
 
 [@inline]
@@ -1627,27 +1528,50 @@ let get_current_batch_without_opening
   (deposit_time_window: nat)
   (pair: pair)
   (current_time: timestamp)
-  (batch_set: batch_set) : (batch option * batch_set) =
+  (storage: Storage.t)
+  (batch_set: batch_set) : (batch option * batch_set * Storage.t) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
-  | None ->  None, batch_set
+  | None ->  None, batch_set,storage
   | Some cb -> let is_cleared = is_cleared cb in
                if is_cleared then
-                 Some cb, batch_set
+                 Some cb, batch_set,storage
                 else
-                 let batch, batch_set = progress_batch deposit_time_window pair cb batch_set current_time in
-                 Some batch, batch_set
+                 let batch, batch_set, storage = progress_batch deposit_time_window pair cb batch_set storage current_time in
+                 Some batch, batch_set, storage
 
 [@inline]
 let get_current_batch
   (deposit_time_window: nat)
   (pair: pair)
   (current_time: timestamp)
-  (batch_set: batch_set) : (batch * batch_set) =
+  (storage: Storage.t)
+  (batch_set: batch_set) : (batch * batch_set * Storage.t) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
-  | None ->  start_period pair batch_set current_time
-  | Some cb ->  progress_batch deposit_time_window pair cb batch_set current_time
+  | None ->  let (b, bs) = start_period pair batch_set current_time in 
+             (b,bs,storage)
+  | Some cb ->  progress_batch deposit_time_window pair cb batch_set storage current_time
+
+
+let update_storage_with_order
+    (order: swap_order)
+    (next_order_number: nat)
+    (current_batch_number: nat)
+    (batch: batch)
+    (batch_set: batch_set)
+    (storage:Storage.t) : Storage.t = 
+    let updated_volumes = update_volumes order batch in
+    let updated_batches = Big_map.update current_batch_number (Some updated_volumes) batch_set.batches in
+    let updated_batches = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes updated_batches in
+    let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
+    let updated_batch_set = { batch_set with batches = updated_batches } in
+    updated_volumes, {
+      storage with batch_set = updated_batch_set;
+      last_order_number = next_order_number;
+      user_batch_ordertypes = new_ubot; 
+    } 
+
 
 end
 
@@ -1737,214 +1661,6 @@ let compute_clearing_prices
 
 end
 
-module MarketVaultUtils = struct
-
-
-let create_or_update_market_vault_holding
-  (id: nat)
-  (token_amount: token_amount)
-  (holder:address)
-  (previous_holding: market_vault_holding option) : market_vault_holding =
-  match previous_holding with 
-  | None -> {
-              id = id;
-              token = token_amount.token.name;
-              holder = holder;
-              shares = token_amount.amount;
-              unclaimed = 0mutez;
-             }
-  | Some ph ->  if not (ph.holder = holder) then failwith incorrect_market_vault_holder else
-                if not (ph.id = id) then failwith incorrect_market_vault_id else
-                { ph with shares = ph.shares + token_amount.amount; }
-
-let create_or_update_market_maker_vault
-  (id: nat)
-  (token_amount: token_amount)
-  (mmv_opt: market_maker_vault option) : market_maker_vault = 
-  match mmv_opt with
-  | None  -> { 
-               total_shares = token_amount.amount;
-               holdings = Set.literal [ id ];
-               native_token = token_amount;
-               foreign_tokens = TokenAmountMap.new;
-             }
-  | Some mmv -> let nt = mmv.native_token in 
-                if not Token_Utils.are_equivalent_tokens token_amount.token nt.token then failwith token_already_exists_but_details_are_different else
-                let shares = mmv.total_shares + token_amount.amount in
-                let native_token = { nt with amount =  nt.amount + token_amount.amount; } in
-                let hldgs =  if Set.mem id mmv.holdings then mmv.holdings else Set.add id mmv.holdings in  
-                {
-                mmv with holdings = hldgs; total_shares = shares; native_token = native_token;
-                }             
-
-let add_liquidity
-    (h_key: user_holding_key)
-    (new_holding_id: nat)
-    (holder: address)
-    (token_amount: token_amount)
-    (market_maker: market_maker): market_maker = 
-    let token_name = token_amount.token.name in
-    let vault_opt = Big_map.find_opt token_name market_maker.vaults in
-    let new_holding = {
-      id = new_holding_id;
-      token = token_amount.token.name;
-      holder = holder;
-      shares = token_amount.amount;
-      unclaimed = 0mutez;
-    } in
-    let vault = create_or_update_market_maker_vault new_holding_id token_amount vault_opt in
-    let vts = Big_map.update token_name (Some vault) market_maker.vaults in
-    let uhs = Big_map.add h_key new_holding_id market_maker.user_holdings in
-    let vhs = Big_map.add new_holding_id new_holding market_maker.vault_holdings in
-    { market_maker with
-        vaults = vts;
-        vault_holdings = vhs;
-        user_holdings = uhs;
-        last_holding_id = new_holding_id;
-    }
-
-
-let update_liquidity
-    (id: nat)
-    (holder: address)
-    (token_amount: token_amount)
-    (market_maker: market_maker): market_maker = 
-    let token_name = token_amount.token.name in
-    let vault_opt = Big_map.find_opt token_name market_maker.vaults in
-    let vault = create_or_update_market_maker_vault id token_amount vault_opt in
-    let vts = Big_map.update token_name (Some vault) market_maker.vaults in
-    let vh_opt = Big_map.find_opt id market_maker.vault_holdings in
-    if vh_opt = (None: market_vault_holding option) then failwith unable_to_find_vault_holding_for_id else
-    let vh = Option.unopt  vh_opt in
-    let () = Shared.assert_or_fail_with (vh.holder = holder) user_in_holding_is_incorrect in 
-    let vh = {vh with shares = vh.shares + token_amount.amount; } in 
-    let vhs = Big_map.update id (Some vh) market_maker.vault_holdings in
-    { market_maker with
-        vaults = vts;
-        vault_holdings = vhs;
-        user_holdings = market_maker.user_holdings;
-    }
-
-let add_liquidity_to_market_maker
-   (holder: address)
-   (token_amount: token_amount)
-   (storage: Storage.t): ( operation list * Storage.t) =
-   let ops = Treasury.deposit holder token_amount in
-   let market_maker = storage.market_maker in 
-   let last_holding_id = market_maker.last_holding_id in 
-   let next_holding_id = last_holding_id + 1n in
-   let h_key = (holder, token_amount.token.name) in
-   let uh_opt = Big_map.find_opt h_key market_maker.user_holdings in  
-   let mm = match uh_opt with
-            | None  -> add_liquidity h_key next_holding_id holder token_amount market_maker 
-            | Some uh_id -> update_liquidity uh_id holder token_amount market_maker
-   in
-   let storage ={ storage with market_maker = mm; } in
-   (ops, storage)
-
-let collect_from_vault
-    (perc_share: Rational.t)
-    (ta: token_amount)
-    (tam: token_amount_map): (token_amount * token_amount_map) =
-    let rat_amt = Rational.new (int ta.amount) in
-    let rat_amount_to_redeem = Rational.mul perc_share rat_amt in
-    let amount_to_redeem = Utils.get_rounded_number_lower_bound rat_amount_to_redeem in
-    if amount_to_redeem > ta.amount then failwith holding_amount_to_redeem_is_larger_than_holding else
-    let rem =abs ((int ta.amount) - amount_to_redeem) in 
-    let ta_rem = {ta with amount = rem; } in
-    let ta_red = {ta with amount = amount_to_redeem; } in
-    let tam = if ta_red.amount = 0n then  tam else TokenAmountMap.increase ta_red tam in
-    (ta_rem, tam)
-
-let collect_tokens_for_redemption
-     (holding_id: nat)
-     (perc_share: Rational.t)
-     (shares: nat)
-     (vault: market_maker_vault) = 
-     let tokens = TokenAmountMap.new in 
-     let (native,tokens) = collect_from_vault perc_share vault.native_token tokens in
-     let acc: (Rational.t * token_amount_map * token_amount_map) = (perc_share, TokenAmountMap.new, tokens ) in
-     let collect_redemptions = fun ((ps,rem_t,red_t),(_tn,ta):(Rational.t * token_amount_map * token_amount_map) * (string * token_amount)) -> 
-                                let (ta_rem,red_t)  =  collect_from_vault ps ta red_t in
-                                let rem_t = TokenAmountMap.increase ta_rem rem_t in
-                                (ps,rem_t,red_t) 
-     in
-     let (_, foreign_tokens, tokens) = Map.fold collect_redemptions vault.foreign_tokens acc in
-     if shares > vault.total_shares then failwith holding_shares_greater_than_total_shares_remaining else
-     let rem_shares = abs (vault.total_shares - shares) in
-     let holdings = Set.remove holding_id vault.holdings in 
-     ({ vault with native_token = native; foreign_tokens = foreign_tokens; holdings = holdings; total_shares = rem_shares;} ,tokens)
-   
-let remove_liquidity
-    (id: nat)
-    (holder: address)
-    (token_name: string)
-    (h_key: user_holding_key)
-    (vault: market_maker_vault)
-    (market_maker: market_maker): (operation list * market_maker) =
-    let vaults = market_maker.vaults in
-    let user_holdings = market_maker.user_holdings in
-    let vault_holdings = market_maker.vault_holdings in
-    let holding = Shared.find_or_fail_with id unable_to_find_vault_holding_for_id vault_holdings in 
-    let  () = Shared.assert_or_fail_with (holder = holding.holder) user_in_holding_is_incorrect in
-    let unclaimed_tez = holding.unclaimed in
-    let shares  = holding.shares in
-    let total_shares = vault.total_shares in
-    let perc_share = Rational.div (Rational.new (int shares)) (Rational.new (int total_shares)) in
-    let (vault, tam) = collect_tokens_for_redemption id perc_share shares vault in
-    let tez_op = Treasury_Utils.transfer_fee holder unclaimed_tez in
-    let treasury_vault =  Treasury.get_treasury_vault () in
-    let tok_ops = Treasury_Utils.transfer_holdings treasury_vault holder tam in
-    let vaults = Big_map.update token_name (Some vault) vaults in
-    let user_holdings = Big_map.remove h_key user_holdings in
-    let vault_holdings = Big_map.remove id vault_holdings in 
-    let ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
-    let mm = { market_maker with user_holdings = user_holdings; vault_holdings = vault_holdings; vaults = vaults; } in
-    (ops, mm)
-
-let remove_liquidity_from_market_maker
-   (holder: address)
-   (token_name: string)
-   (storage: Storage.t): ( operation list * Storage.t) =
-   let market_maker = storage.market_maker in 
-   let h_key = (holder, token_name) in
-   let uh_opt: nat option = Big_map.find_opt h_key market_maker.user_holdings in  
-   let v_opt = Big_map.find_opt token_name market_maker.vaults in 
-   let () = Shared.assert_some_or_fail_with uh_opt no_holding_in_market_maker_for_holder in
-   let () = Shared.assert_some_or_fail_with v_opt no_market_vault_for_token in
-   let (ops, mm) = remove_liquidity (Option.unopt uh_opt) holder token_name h_key (Option.unopt v_opt) market_maker in
-   let storage = { storage with market_maker = mm; } in
-   (ops, storage)
-
-let claim_from_holding
-  (holder:address)
-  (id:nat)
-  (holding: market_vault_holding)
-  (market_maker: market_maker)
-  (storage: Storage.t) : (operation list * Storage.t) = 
-  let unclaimed_tez = holding.unclaimed in 
-  if unclaimed_tez = 0mutez then failwith no_holdings_to_claim else
-  let holding = { holding with unclaimed = 0tez; } in
-  let tez_op = Treasury_Utils.transfer_fee holder unclaimed_tez in
-  let vault_holdings = Big_map.update id (Some holding) market_maker.vault_holdings in
-  let market_maker = {market_maker with vault_holdings = vault_holdings;} in
-  let storage = { storage with market_maker = market_maker; } in 
-  ([tez_op], storage)
-
-
-let claim_rewards
-  (holder:address)
-  (token_name:string)
-  (storage:Storage.t) : (operation list * Storage.t) =
-   let market_maker = storage.market_maker in 
-   let h_key = (holder, token_name) in
-   match Big_map.find_opt h_key market_maker.user_holdings with
-   | None -> failwith no_holdings_to_claim
-   | Some id -> (match Big_map.find_opt id market_maker.vault_holdings with
-                 | None -> failwith no_holdings_to_claim
-                 | Some h ->claim_from_holding holder id h market_maker storage) 
-
-end
 
 
 type storage  = Storage.t
@@ -1970,9 +1686,6 @@ type entrypoint =
   | Disable_swap_pair_for_deposit of string
   | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
-  | RemoveLiquidity of string
-  | AddLiquidity of token_amount
-  | Claim of string
 
 
 [@inline]
@@ -2111,7 +1824,7 @@ let cancel_order
   (storage: storage) : result =
   let ubots = storage.user_batch_ordertypes in
   let current_time = Tezos.get_now () in
-  let (batch, batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
+  let (batch, batch_set, storage) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage storage.batch_set in
   let () = if not (Batch_Utils.is_batch_open batch) then failwith cannot_cancel_orders_for_a_batch_that_is_not_open in
   match Big_map.find_opt holder ubots with
   | None -> failwith no_orders_for_user_address
@@ -2167,32 +1880,15 @@ let confirm_swap_pair_is_disabled_prior_to_removal
   if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
 
 
-(* Add Liquidity into a market vault *)
 [@inline]
-let add_liquidity
-  (token_amount: token_amount)
-  (storage: storage) : result = 
-  let () = reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.add_liquidity_to_market_maker holder token_amount storage
-
-(* Add Liquidity into a market vault *)
-[@inline]
-let claim
-  (token_name: string)
-  (storage: storage) : result = 
-  let () = reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.claim_rewards holder token_name storage
-
-(* Remove Liquidity into a market vault *)
-[@inline]
-let remove_liquidity
-  (token_name: string)
-  (storage: storage) : result = 
-  let () = reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.remove_liquidity_from_market_maker holder token_name storage
+let enforce_correct_side
+  (order:external_swap_order)
+  (valid_swap:valid_swap_reduced) : unit = 
+  let swap = order.swap in
+  if order.side = 0n then
+    if swap.from.token.name = valid_swap.swap.from then () else failwith incorrect_side_specified
+  else 
+    if swap.from.token.name = valid_swap.swap.to then () else failwith incorrect_side_specified
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
@@ -2203,11 +1899,12 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
   if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else
+  let () = enforce_correct_side external_order valid_swap in
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
   if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
   if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
-  let (current_batch, current_batch_set) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage.batch_set in
+  let (current_batch, current_batch_set, storage) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage storage.batch_set in
   if Batch_Utils.can_deposit current_batch then
      let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in
      let storage = { storage with batch_set = current_batch_set } in
@@ -2216,15 +1913,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
-       let updated_volumes = Batch_Utils.update_volumes order current_batch in
-       let updated_batches = Big_map.update current_batch_number (Some updated_volumes) current_batch_set.batches in
-       let updated_batches = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes updated_batches in
-       let new_ubot = Ubots.add_order order.trader current_batch_number order storage.user_batch_ordertypes in
-       let updated_batch_set = { current_batch_set with batches = updated_batches } in
-       let updated_storage = {
-         storage with batch_set = updated_batch_set;
-         last_order_number = next_order_number;
-         user_batch_ordertypes = new_ubot; } in
+       let updated_storage = Batch_Utils.update_storage_with_order order next_order_number current_batch_number current_batch current_batch_set storage in 
        let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
@@ -2296,7 +1985,7 @@ let tick_price
   let pair = Utils.pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
-  let (batch_opt, batch_set) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time batch_set in
+  let (batch_opt, batch_set, storage) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time storage batch_set in
   match batch_opt with
   | Some b -> let batch_set = finalize b current_time oracle_rate batch_set in
               let storage = { storage with batch_set = batch_set } in
@@ -2446,44 +2135,6 @@ let get_current_batches ((),storage: unit * storage) : batch list=
     in
     Map.fold collect_batches storage.batch_set.current_batch_indices []
 
-type vault_summary = (string, market_maker_vault) map
-type holding_summary = (string, market_vault_holding) map
-
-type  vault_holdings_summary = 
-   {
-     holdings: holding_summary;
-     vaults: vault_summary;
-   }
-
-[@view]
-let get_market_vault_holdings ((), storage : unit * storage) : vault_holdings_summary =
-    let mm = storage.market_maker in 
-    let vaults = mm.vaults in 
-    let user_holdings = mm.user_holdings in 
-    let vault_holdings = mm.vault_holdings in 
-    let holder = Tezos.get_sender () in
-    let get_tokens = fun (l,(tn,_vt): string list * (string * token)) -> tn :: l in
-    let tokens = Map.fold get_tokens storage.valid_tokens [] in
-    let get_vaults = fun (vs,t: vault_summary * string) -> 
-       match Big_map.find_opt t vaults with
-       | None -> vs
-       | Some v -> Map.add t v vs
-    in
-    let vaults = List.fold get_vaults tokens (Map.empty: vault_summary) in
-    let get_holdings = fun (hs,t: holding_summary * string) -> 
-       let key = (holder, t) in
-       match Big_map.find_opt key user_holdings with
-       | None -> hs
-       | Some id -> (match Big_map.find_opt id vault_holdings with
-                    | None -> hs
-                    | Some h -> Map.add t h hs)
-    in
-    let holdings = List.fold get_holdings tokens (Map.empty: holding_summary) in
-    {
-     holdings = holdings;
-     vaults = vaults;
-    }
-
 
 let main
   (action, storage : entrypoint * storage) : operation list * storage =
@@ -2507,9 +2158,5 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
-  (* Market  Liquidity endpoint *)
-   | AddLiquidity t ->  add_liquidity t storage
-   | RemoveLiquidity tn ->  remove_liquidity tn storage
-   | Claim tn -> claim tn storage
 
 
