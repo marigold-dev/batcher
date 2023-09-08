@@ -1,4 +1,5 @@
 #import "../../batcher.mligo" "Batcher"
+#import "../../marketmaker.mligo" "MarketMaker"
 #import "../tokens/fa12/main.mligo" "TZBTC"
 #import "../tokens/fa2/main.mligo" "USDT"
 #import "../tokens/fa2/main.mligo" "EURL"
@@ -11,6 +12,7 @@
 
 type originated = Breath.Contract.originated
 type originated_contract = (Batcher.entrypoint, Batcher.storage) originated
+type originated_mm_contract = (MarketMaker.entrypoint, MarketMaker.Storage.t) originated
 
 type swap = Batcher.swap
 type side = Batcher.side
@@ -21,6 +23,7 @@ type level = Breath.Logger.level
 
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
+   marketmaker:  (MarketMaker.entrypoint, MarketMaker.Storage.t) originated;
    oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    additional_oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    tzbtc:  (TZBTC.parameter, TZBTC.storage) originated;
@@ -92,8 +95,11 @@ let originate
   let eurl = originate_eurl eurl_trader level in
   let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
   let batcher = TestUtils.originate initial_storage level in
+  let initial_mm_storage: MarketMaker.Storage.t = TestStorage.initial_mm_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address initial_storage.administrator in
+  let mm: originated_mm_contract = TestUtils.originate_mm initial_mm_storage level in
   {
    batcher = batcher;
+   marketmaker = mm;
    oracle = oracle;
    additional_oracle = additional_oracle;
    tzbtc = tzbtc;
@@ -115,8 +121,11 @@ let originate_with_admin_and_fee_recipient
   let eurl = originate_eurl eurl_trader level in
   let initial_storage = TestStorage.initial_storage_with_admin_and_fee_recipient oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address fee_recipient in
   let batcher = TestUtils.originate initial_storage level in
+  let initial_mm_storage : MarketMaker.Storage.t = TestStorage.initial_mm_storage_with_admin oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address batcher.originated_address in
+  let mm : originated_mm_contract = TestUtils.originate_mm initial_mm_storage level in
   {
    batcher = batcher;
+   marketmaker = mm;
    oracle = oracle;
    additional_oracle = additional_oracle;
    tzbtc = tzbtc;
@@ -230,7 +239,7 @@ let place_order
 
 let add_liquidity
   (actor: Breath.Context.actor)
-  (contract: originated_contract)
+  (contract: originated_mm_contract)
   (token_name: string)
   (amount: nat)
   (valid_tokens: valid_tokens) =
@@ -243,7 +252,7 @@ let add_liquidity
 
 let remove_liquidity
   (actor: Breath.Context.actor)
-  (contract: originated_contract)
+  (contract: originated_mm_contract)
   (token_name: string) =
   Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (RemoveLiquidity token_name) 0tez))
 

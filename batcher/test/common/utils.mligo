@@ -6,10 +6,12 @@
 #import "../tokens/fa2/main.mligo" "EURL"
 #import "../mocks/oracle.mligo" "Oracle"
 #import "./storage.mligo" "TestStorage"
+#import "../../marketmaker.mligo" "MarketMaker"
 
 type level = Breath.Logger.level
 let log = Breath.Logger.log
-type storage = Batcher.Storage.t
+type batcher_storage = Batcher.Storage.t
+type mm_storage = MarketMaker.Storage.t
 type originated = Breath.Contract.originated
 type valid_swap = Batcher.valid_swap
 type external_order = Batcher.external_swap_order
@@ -34,13 +36,24 @@ let tolerance_to_nat (tolerance : tolerance) : nat =
   else 2n
 
 let originate
-(storage: storage)
+(storage: batcher_storage)
 (level: level) =
   let () = log level storage in
   Breath.Contract.originate_uncurried
     level
     "batcher"
     (Batcher.main)
+    (storage)
+    (0tez)
+
+let originate_mm
+(storage: mm_storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    "marketmaker"
+    (MarketMaker.main)
     (storage)
     (0tez)
 

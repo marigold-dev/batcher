@@ -1,6 +1,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 let test_metadata = ("546573742044617461" : bytes)
 let updated_test_metadata = ("5570646174656420546573742044617461" : bytes)
@@ -67,11 +68,11 @@ let change_metadata_should_fail_if_user_is_not_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "metadata should be empty" None initial_metadata 
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_add_metadata
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_add_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None added_meta
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_update_metadata
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_update_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None updated_meta
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_remove_metadata
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_remove_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None removed_meta
       ])
 
@@ -97,11 +98,11 @@ let change_metadata_should_fail_if_tez_is_supplied =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "metadata should be empty" None initial_metadata 
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_add_metadata
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_add_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None added_meta
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_update_metadata
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_update_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None updated_meta
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_remove_metadata
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_remove_metadata
         ; Breath.Assert.is_equal "metadata should be empty" None removed_meta
       ])
 

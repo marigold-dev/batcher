@@ -1214,9 +1214,11 @@ let enforce_correct_side
   (order:external_swap_order)
   (valid_swap:valid_swap_reduced) : unit = 
   let swap = order.swap in
-  if order.side = 0n then
+  let side = Utils.nat_to_side order.side in
+  match side with
+  | Buy -> 
     if swap.from.token.name = valid_swap.swap.from then () else failwith Errors.incorrect_side_specified
-  else 
+  | Sell ->
     if swap.from.token.name = valid_swap.swap.to then () else failwith Errors.incorrect_side_specified
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.

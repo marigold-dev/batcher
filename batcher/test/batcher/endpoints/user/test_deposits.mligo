@@ -2,6 +2,7 @@
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "./../../../common/batch.mligo" "Batch"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 type skew = Batch.skew
 type pressure = Batch.pressure
@@ -55,7 +56,7 @@ let deposit_fail_if_batch_is_closed =
 
       Breath.Result.reduce [
         act_allow_transfer
-        ; Breath.Expect.fail_with_value Batcher.no_open_batch act_deposit
+        ; Breath.Expect.fail_with_value Errors.no_open_batch act_deposit
         ; Breath.Assert.is_equal "balance" bbalance 0tez
         ; Helpers.expect_last_order_number bstorage 0n
       ])
@@ -118,8 +119,7 @@ let deposit_with_incorrect_side_should_fail =
    
       Breath.Result.reduce [
         act_allow_transfer
-        ; act_deposit
-        ; Breath.Expect.fail_with_value Batcher.incorrect_side_specified act_deposit
+        ; Breath.Expect.fail_with_value Errors.incorrect_side_specified act_deposit
       ])
 
 let test_suite =

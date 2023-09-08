@@ -2,6 +2,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../common/helpers.mligo" "Helpers"
 #import "../../batcher.mligo" "Batcher"
+#import "../../marketmaker.mligo" "MarketMaker"
 
 
 let add_liquidity_should_succeed =
@@ -10,26 +11,26 @@ let add_liquidity_should_succeed =
   "should be successful"
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
-      let batcher = context.contracts.batcher in
+      let mm = context.contracts.marketmaker in
       let btc_trader = context.btc_trader in 
 
-      let bstorage = Breath.Contract.storage_of batcher in
+      let bstorage = Breath.Contract.storage_of mm in
 
        let token_name = "tzBTC" in
 
       let deposit_amount = 2000000n in
       let allowance = {
-        spender = batcher.originated_address;
+        spender = mm.originated_address;
         value = deposit_amount
        } in
       let prior_balances = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let act_allow_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
-      let act_add_liquidity = Helpers.add_liquidity btc_trader batcher token_name deposit_amount bstorage.valid_tokens in
+      let act_add_liquidity = Helpers.add_liquidity btc_trader mm token_name deposit_amount bstorage.valid_tokens in
 
-      let bstorage = Breath.Contract.storage_of batcher in
+      let bstorage = Breath.Contract.storage_of mm in
       
-      let market_maker = bstorage.market_maker in
-      let h_key: Batcher.user_holding_key = (btc_trader.address, token_name) in
+      let market_maker = bstorage in
+      let h_key: MarketMaker.user_holding_key = (btc_trader.address, token_name) in
       let vault = Option.unopt (Big_map.find_opt token_name market_maker.vaults) in
       let user_holding = Option.unopt (Big_map.find_opt h_key market_maker.user_holdings) in
       let vault_holding = Option.unopt (Big_map.find_opt user_holding market_maker.vault_holdings) in
@@ -57,37 +58,37 @@ let update_liquidity_for_same_user_should_succeed =
   "for same user should increase shares "
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
-      let batcher = context.contracts.batcher in
+      let mm = context.contracts.marketmaker in
       let btc_trader = context.btc_trader in 
 
-      let bstorage = Breath.Contract.storage_of batcher in
+      let bstorage = Breath.Contract.storage_of mm in
 
        let token_name = "tzBTC" in
 
       let deposit_amount = 2000000n in
       let allowance = {
-        spender = batcher.originated_address;
+        spender = mm.originated_address;
         value = deposit_amount
        } in
       let act_allow_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
-      let act_add_liquidity = Helpers.add_liquidity btc_trader batcher token_name deposit_amount bstorage.valid_tokens in
+      let act_add_liquidity = Helpers.add_liquidity btc_trader mm token_name deposit_amount bstorage.valid_tokens in
 
-      let bstorage = Breath.Contract.storage_of batcher in
+      let bstorage = Breath.Contract.storage_of mm in
       
-      let first_market_maker = bstorage.market_maker in
-      let h_key: Batcher.user_holding_key = (btc_trader.address, token_name) in
+      let first_market_maker = bstorage in
+      let h_key: MarketMaker.user_holding_key = (btc_trader.address, token_name) in
       let first_vault = Option.unopt (Big_map.find_opt token_name first_market_maker.vaults) in
       let first_user_holding = Option.unopt (Big_map.find_opt h_key first_market_maker.user_holdings) in
       let first_vault_holding = Option.unopt (Big_map.find_opt first_user_holding first_market_maker.vault_holdings) in
 
       let prior_balances = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let act_allow_second_transfer =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
-      let act_add_additional_liquidity = Helpers.add_liquidity btc_trader batcher token_name deposit_amount bstorage.valid_tokens in
+      let act_add_additional_liquidity = Helpers.add_liquidity btc_trader mm token_name deposit_amount bstorage.valid_tokens in
 
-      let ustorage = Breath.Contract.storage_of batcher in
+      let ustorage = Breath.Contract.storage_of mm in
       
       let twice_deposit_amount = abs (2 * deposit_amount) in
-      let second_market_maker = ustorage.market_maker in
+      let second_market_maker = ustorage in
       let second_vault = Option.unopt (Big_map.find_opt token_name second_market_maker.vaults) in
       let second_user_holding = Option.unopt (Big_map.find_opt h_key second_market_maker.user_holdings) in
       let second_vault_holding = Option.unopt (Big_map.find_opt second_user_holding second_market_maker.vault_holdings) in
@@ -120,30 +121,30 @@ let add_liquidity_for_two_users_should_succeed =
   "for two users should suceed "
     (fun (level: Breath.Logger.level) ->
       let context = Helpers.test_context level in 
-      let batcher = context.contracts.batcher in
+      let mm = context.contracts.marketmaker in
       let btc_trader = context.btc_trader in 
       let usdt_trader = context.usdt_trader in 
 
-      let bstorage = Breath.Contract.storage_of batcher in
+      let bstorage = Breath.Contract.storage_of mm in
 
        let token_name = "tzBTC" in
 
       let deposit_amount = 2000000n in
       let allowance = {
-        spender = batcher.originated_address;
+        spender = mm.originated_address;
         value = deposit_amount
        } in
       let prior_balances_tzbtc = Helpers.get_balances btc_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let prior_balances_usdt = Helpers.get_balances usdt_trader.address context.contracts.tzbtc context.contracts.usdt context.contracts.eurl in 
       let act_allow_transfer_trader_1 =   Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
-      let act_add_liquidity_trader_1 = Helpers.add_liquidity btc_trader batcher token_name deposit_amount bstorage.valid_tokens in
+      let act_add_liquidity_trader_1 = Helpers.add_liquidity btc_trader mm token_name deposit_amount bstorage.valid_tokens in
       let act_allow_transfer_trader_2 =   Breath.Context.act_as usdt_trader (fun (_u:unit) -> (Breath.Contract.transfer_to context.contracts.tzbtc (Approve allowance) 0tez)) in
-      let act_add_liquidity_trader_2 = Helpers.add_liquidity usdt_trader batcher token_name deposit_amount bstorage.valid_tokens in
+      let act_add_liquidity_trader_2 = Helpers.add_liquidity usdt_trader mm token_name deposit_amount bstorage.valid_tokens in
 
-      let bstorage = Breath.Contract.storage_of batcher in
-      let market_maker = bstorage.market_maker in
-      let h_key_1: Batcher.user_holding_key = (btc_trader.address, token_name) in
-      let h_key_2: Batcher.user_holding_key = (usdt_trader.address, token_name) in
+      let bstorage = Breath.Contract.storage_of mm in
+      let market_maker = bstorage in
+      let h_key_1: MarketMaker.user_holding_key = (btc_trader.address, token_name) in
+      let h_key_2: MarketMaker.user_holding_key = (usdt_trader.address, token_name) in
       let vault = Option.unopt (Big_map.find_opt token_name market_maker.vaults) in
       let user_holding_1 = Option.unopt (Big_map.find_opt h_key_1 market_maker.user_holdings) in
       let vault_holding_1 = Option.unopt (Big_map.find_opt user_holding_1 market_maker.vault_holdings) in

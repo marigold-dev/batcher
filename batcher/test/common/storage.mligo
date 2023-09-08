@@ -1,4 +1,5 @@
 #import "../../batcher.mligo" "Batcher"
+#import "../../marketmaker.mligo" "MarketMaker"
 #import "../tokens/fa12/main.mligo" "TZBTC"
 #import "../tokens/fa2/main.mligo" "USDT"
 #import "../tokens/fa2/main.mligo" "EURL"
@@ -7,7 +8,8 @@
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 type level = Breath.Logger.level
-type storage = Batcher.Storage.t
+type batcher_storage = Batcher.Storage.t
+type mm_storage = MarketMaker.Storage.t
 
 let fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address)
 let  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address)
@@ -61,7 +63,7 @@ let initial_storage_with_admin_and_fee_recipient
   (usdt_address:address)
   (eurl_address:address)
   (admin: address)
-  (fee_recipient: address): storage = {
+  (fee_recipient: address): batcher_storage = {
   metadata = (Big_map.empty : Batcher.metadata);
   valid_tokens = Map.literal [
     (("tzBTC"), {
@@ -111,12 +113,6 @@ let initial_storage_with_admin_and_fee_recipient
   administrator = admin;
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
-  market_maker = {
-    vaults = (Big_map.empty: Batcher.market_vaults);
-    last_holding_id = 0n;
-    user_holdings = (Big_map.empty: Batcher.user_holdings);
-    vault_holdings = (Big_map.empty: Batcher.vault_holdings);
-  };
 }
 
 
@@ -126,8 +122,71 @@ let initial_storage
   (oracle_address: address)
   (tzbtc_address: address)
   (usdt_address:address)
-  (eurl_address:address) : storage = 
+  (eurl_address:address) : batcher_storage = 
   initial_storage_with_admin_and_fee_recipient oracle_address tzbtc_address usdt_address eurl_address administrator fee_recipient
+
+let initial_mm_storage_with_admin
+  (oracle_address: address)
+  (tzbtc_address: address)
+  (usdt_address:address)
+  (eurl_address:address)
+  (admin: address)
+  (batcher: address): mm_storage = {
+  metadata = (Big_map.empty : MarketMaker.metadata);
+  valid_tokens = Map.literal [
+    (("tzBTC"), {
+      token_id = 0n;
+      name = "tzBTC";
+      address = Some(tzbtc_address);
+      decimals = 8n;
+      standard = Some "FA1.2 token"
+    });
+    (("EURL"),{
+      token_id = 0n;
+      name = "EURL";
+      address = Some(eurl_address);
+      decimals = 6n;
+      standard = Some "FA2 token"
+    });
+    (("USDT"),{
+      token_id = 0n;
+      name = "USDT";
+      address = Some(usdt_address);
+      decimals = 6n;
+      standard = Some "FA2 token"
+    })
+  ];
+  valid_swaps = Map.literal [
+    ("tzBTC/USDT", {
+        swap = {
+            from =  "tzBTC";
+            to =  "USDT";
+        };
+        oracle_address = oracle_address ;
+        oracle_asset_name = "BTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    )
+  ];
+  administrator = admin;
+  limit_on_tokens_or_pairs = 10n;
+  batcher = batcher;
+  vaults = (Big_map.empty: MarketMaker.market_vaults);
+  last_holding_id = 0n;
+  user_holdings = (Big_map.empty: MarketMaker.user_holdings);
+  vault_holdings = (Big_map.empty: MarketMaker.vault_holdings);
+}
+
+
+let initial_mm_storage
+  (oracle_address: address)
+  (tzbtc_address: address)
+  (usdt_address:address)
+  (eurl_address:address)
+  (batcher_address:address): mm_storage = 
+  initial_mm_storage_with_admin oracle_address tzbtc_address usdt_address eurl_address administrator batcher_address
+
 
 let oracle_initial_storage =
   Map.literal [
@@ -147,7 +206,7 @@ let oracle_initial_storage =
     )]
 
 let expect_from_storage
-  (type a)
+  (type a storage)
   (name: string)
   (storage: storage)
   (selector: storage -> a)

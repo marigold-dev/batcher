@@ -1,6 +1,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 
 let amend_token_pair_limit_should_succeed_if_user_is_admin =
@@ -35,7 +36,7 @@ let amend_token_pair_limit_should_fail_if_user_is_not_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old limit" 10n old_storage.limit_on_tokens_or_pairs
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_amend_token_pair_limit
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_amend_token_pair_limit
         ; Breath.Assert.is_equal "limit unchanged" 10n new_storage.limit_on_tokens_or_pairs
       ])
 
@@ -53,7 +54,7 @@ let amend_token_pair_limit_should_fail_if_tez_is_sent =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old limit" 10n old_storage.limit_on_tokens_or_pairs
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_amend_token_pair_limit
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_amend_token_pair_limit
         ; Breath.Assert.is_equal "limit unchanged" 10n new_storage.limit_on_tokens_or_pairs
       ])
 
@@ -71,7 +72,7 @@ let amend_token_pair_limit_should_fail_if_limit_is_less_than_current_tokens =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "old limit" 10n old_storage.limit_on_tokens_or_pairs
-        ; Breath.Expect.fail_with_value Batcher.cannot_reduce_limit_on_tokens_to_less_than_already_exists act_amend_token_pair_limit
+        ; Breath.Expect.fail_with_value Errors.cannot_reduce_limit_on_tokens_to_less_than_already_exists act_amend_token_pair_limit
         ; Breath.Assert.is_equal "limit unchanged" 10n new_storage.limit_on_tokens_or_pairs
       ])
 

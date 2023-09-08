@@ -1,6 +1,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 let get_tzbtc_eurl_swap_pair
   (disabled: bool)
@@ -76,7 +77,7 @@ let add_swap_pair_should_fail_if_user_is_non_admin =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_add_swap_pair
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_add_swap_pair
         ; Breath.Assert.is_equal "swap pair still does not exist" None added_swap_pair_reduced
       ])
 
@@ -97,7 +98,7 @@ let add_swap_pair_should_fail_if_tez_is_supplied =
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_add_swap_pair
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_add_swap_pair
         ; Breath.Assert.is_equal "swap pair still does not exist" None added_swap_pair_reduced
       ])
 
@@ -152,7 +153,7 @@ let remove_swap_pair_should_fail_if_user_is_non_admin =
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
         ; act_add_swap_pair
         ; Breath.Assert.is_equal "swap pair should have been added" swap_pair_reduced added_swap_pair_reduced
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_remove_swap_pair
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_remove_swap_pair
         ; Breath.Assert.is_equal "swap pair should still exist" swap_pair_reduced removed_swap_pair_reduced
       ])
 
@@ -180,7 +181,7 @@ let remove_swap_pair_should_fail_if_tez_is_supplied =
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
         ; act_add_swap_pair
         ; Breath.Assert.is_equal "swap pair should have been added" swap_pair_reduced added_swap_pair_reduced
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_remove_swap_pair
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_remove_swap_pair
         ; Breath.Assert.is_equal "swap pair should still exist" swap_pair_reduced removed_swap_pair_reduced
       ])
 
@@ -201,7 +202,7 @@ let remove_swap_pair_should_fail_if_swap_does_not_exist =
       let removed_swap_pair_reduced = Map.find_opt "tzBTC/EURL" r_storage.valid_swaps in
       Breath.Result.reduce [
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
-        ; Breath.Expect.fail_with_value Batcher.swap_does_not_exist act_remove_swap_pair
+        ; Breath.Expect.fail_with_value Errors.swap_does_not_exist act_remove_swap_pair
         ; Breath.Assert.is_equal "swap pair should have been removed" None removed_swap_pair_reduced
       ])
 
@@ -222,7 +223,7 @@ let remove_swap_pair_should_fail_if_swap_is_not_disabled =
       let removed_swap_pair_reduced = Map.find_opt "tzBTC/EURL" r_storage.valid_swaps in
       Breath.Result.reduce [
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 
-        ; Breath.Expect.fail_with_value Batcher.cannot_remove_swap_pair_that_is_not_disabled act_remove_swap_pair
+        ; Breath.Expect.fail_with_value Errors.cannot_remove_swap_pair_that_is_not_disabled act_remove_swap_pair
         ; Breath.Assert.is_equal "swap pair should have been removed" None removed_swap_pair_reduced
       ])
 

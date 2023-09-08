@@ -1,6 +1,7 @@
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 let pair = "tzBTC/USDT"
 let oraclepair = "BTC-USDT"
@@ -48,7 +49,7 @@ let change_oracle_source_should_fail_if_the_user_is_non_admin =
       Breath.Result.reduce [
         Breath.Assert.is_equal "new price" new_oracle_price old_price
         ; Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
-        ; Breath.Expect.fail_with_value Batcher.sender_not_administrator act_change_oracle_source
+        ; Breath.Expect.fail_with_value Errors.sender_not_administrator act_change_oracle_source
         ; Breath.Assert.is_equal "old address unchanged" oracle.originated_address new_test_swap.oracle_address
       ])
 
@@ -71,7 +72,7 @@ let change_oracle_source_should_fail_if_tez_is_sent =
       Breath.Result.reduce [
         Breath.Assert.is_equal "new price" new_oracle_price old_price
         ; Breath.Assert.is_equal "old address" oracle.originated_address test_swap.oracle_address
-        ; Breath.Expect.fail_with_value Batcher.endpoint_does_not_accept_tez act_change_oracle_source
+        ; Breath.Expect.fail_with_value Errors.endpoint_does_not_accept_tez act_change_oracle_source
         ; Breath.Assert.is_equal "old address unchanged" oracle.originated_address new_test_swap.oracle_address
       ])
 

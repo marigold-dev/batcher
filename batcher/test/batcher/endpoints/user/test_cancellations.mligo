@@ -2,6 +2,7 @@
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "./../../../common/batch.mligo" "Batch"
 #import "../../../../batcher.mligo" "Batcher"
+#import "../../../../errors.mligo" "Errors"
 
 type skew = Batch.skew
 type pressure = Batch.pressure
@@ -21,7 +22,7 @@ let cancellation_fail_if_batch_is_closed =
       let act_cancel = Breath.Context.act_as btc_trader (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Cancel pair) 0tez)) in
 
       Breath.Result.reduce [
-        Breath.Expect.fail_with_value Batcher.cannot_cancel_orders_for_a_batch_that_is_not_open act_cancel
+        Breath.Expect.fail_with_value Errors.cannot_cancel_orders_for_a_batch_that_is_not_open act_cancel
       ])
 
 let cancellation_should_succeed =
