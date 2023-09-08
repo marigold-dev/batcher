@@ -44,8 +44,7 @@ jobs:
         if: github.ref == 'refs/heads/release-ghostnet-staging'
         uses: docker/build-push-action@v3
         with:
-          # file: ./batcher-ui/Dockerfile.${{ matrix.network }}
-          file: ./batcher-ui/Dockerfile.staging
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
           context: ./batcher-ui/
           push: ${{ github.ref == 'refs/heads/release-ghostnet-staging' }}
           tags: |
