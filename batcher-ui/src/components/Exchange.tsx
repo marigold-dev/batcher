@@ -262,7 +262,7 @@ const Exchange = () => {
               </Form.Label>
             </div>
             <div className="flex">
-              <SelectPair />
+              <SelectPair isFrom />
               <Form.Control asChild>
                 <input
                   className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -339,15 +339,18 @@ const Exchange = () => {
                 </p>
               </Form.Label>
             </div>
-            <Form.Control asChild>
-              <input
-                className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                type="number"
-                min={0}
-                disabled
-                required
-              />
-            </Form.Control>
+            <div className="flex">
+              <SelectPair isFrom={false} />
+              <Form.Control asChild>
+                <input
+                  className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  type="number"
+                  min={0}
+                  disabled
+                  required
+                />
+              </Form.Control>
+            </div>
           </Form.Field>
 
           <Form.Submit asChild>

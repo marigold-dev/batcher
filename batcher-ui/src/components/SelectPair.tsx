@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,11 +13,23 @@ import { changePair } from 'src/actions';
 import { getTokensMetadata } from 'src/utils/utils';
 import Image from 'next/image';
 
-const SelectPair = () => {
+interface SelectPairProps {
+  isFrom: boolean;
+}
+
+const SelectPair = ({ isFrom }: SelectPairProps) => {
   const { swap, isReverse } = useSelector(currentSwapSelector);
   const dispatch = useDispatch();
 
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
+
+  const displayValue = useCallback(() => {
+    if (isReverse && isFrom) return swap.to.name;
+    if (isReverse && !isFrom) return swap.from.token.name;
+    if (!isReverse && isFrom) return swap.from.token.name;
+    if (!isReverse && !isFrom) return swap.to.name;
+    return swap.from.token.name;
+  }, [isReverse, isFrom, swap]);
 
   useEffect(() => {
     getTokensMetadata().then(
@@ -28,14 +40,13 @@ const SelectPair = () => {
 
   return (
     <Select.Root
-      // value={availableTokens[1].name}
-      value={isReverse ? swap.to.name : swap.from.token.name}
+      value={displayValue()}
       onValueChange={value => {
         //TODO: change this when we had more pair
-        // const parsedValue = value === 'USDt'
         const pair =
           value === 'tzBTC' ? `tzBTC/${swap.to.name}` : `tzBTC/${value}`;
-        const reversed = value !== 'tzBTC';
+        const reversed =
+          (!isFrom && value === 'tzBTC') || (isFrom && value !== 'tzBTC');
         dispatch(changePair(pair, reversed));
       }}>
       <Select.Trigger className="flex items-center text-dark w-[150px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
