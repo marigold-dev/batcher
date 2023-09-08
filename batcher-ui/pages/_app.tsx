@@ -11,12 +11,12 @@ import Head from 'next/head';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import Root from '../src/components/Root';
+import Toast from 'src/components/Toast';
 
 config.autoAddCss = false;
 
 process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
   ReactGA.initialize(process.env.NEXT_PUBLIC_GA_TRACKING_ID);
-
 
 const App = ({ Component }: AppProps) => {
   return (
@@ -54,6 +54,7 @@ const App = ({ Component }: AppProps) => {
           <WalletProvider>
             <EventsProvider>
               <Root Component={Component} />
+              <Toast />
             </EventsProvider>
           </WalletProvider>
         </TezosToolkitProvider>

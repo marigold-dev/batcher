@@ -17,6 +17,7 @@ import {
   batcherTimerId,
   updateRemainingTime,
   noBatchError,
+  newError,
 } from '../actions';
 import { BatcherStatus, CurrentSwap, SwapNames } from 'src/types';
 
@@ -27,6 +28,7 @@ const fetchPairInfosCmd = (pair: string) =>
     },
     {
       successActionCreator: updatePairsInfos,
+      failActionCreator: () => newError('Fail to get pair informations.'),
     }
   );
 
@@ -48,6 +50,7 @@ const fetchBatcherStatusCmd = (batchNumber: number) =>
     },
     {
       successActionCreator: updateBatcherStatus,
+      failActionCreator: () => newError('Fail to get batch status.'),
     }
   );
 
@@ -72,7 +75,6 @@ const setupBatcherCmd = (startTime: string | null, status: BatcherStatus) => {
   return Cmd.none;
 };
 
-
 const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   return Cmd.run(
     async () => {
@@ -84,6 +86,7 @@ const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
     },
     {
       successActionCreator: updateOraclePrice,
+      failActionCreator: () => newError('Fail to get oracle price.'),
     }
   );
 };
@@ -95,6 +98,7 @@ const fetchVolumesCmd = (batchNumber: number) => {
     },
     {
       successActionCreator: updateVolumes,
+      failActionCreator: () => newError('Fail to fetch batch volumes.'),
     }
   );
 };

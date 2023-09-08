@@ -15,7 +15,7 @@ import {
 } from '../reducers';
 import { BatcherStatus, PriceStrategy } from '../types';
 import { useDispatch } from 'react-redux';
-import { fetchUserBalances, reverseSwap } from '../actions';
+import { fetchUserBalances, newError, newInfo, reverseSwap } from '../actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -61,10 +61,17 @@ const Exchange = () => {
   const depositToken = async () => {
     const amount = parseFloat(amountInput);
     if (!userAddress) {
+      dispatch(newError('Not connected.'));
       return;
     }
+
     const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
-    if (!batcherContractHash) return;
+    if (!batcherContractHash) {
+      dispatch(
+        newError('Batcher contract not found, please contact Marigold.')
+      );
+      return;
+    }
 
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;
 
@@ -72,7 +79,10 @@ const Exchange = () => {
 
     const batcherContract = await tezos.wallet.at(batcherContractHash);
 
-    if (!selectedToken.address) return; //TODO:improve this
+    if (!selectedToken.address) {
+      dispatch(newError('Token contract not found, please contact Marigold.'));
+      return;
+    }
 
     const fees = await getFees();
 
@@ -200,35 +210,36 @@ const Exchange = () => {
       }
 
       if (!order_batcher_op) {
-        console.error('Order Batcher Operation is not defined...');
+        dispatch(newError('Failed to define order Batcher operation.'));
         throw new Error('Order Batcher Operation is not defined...');
       }
-
+      dispatch(newInfo('Attempt to deposit the order...'));
       const confirm = await order_batcher_op?.confirmation();
-
-      confirm?.completed ? console.info('Successfully deposited !!!!!!') : null;
 
       if (!confirm.completed) {
         console.error(confirm);
+        dispatch(
+          newError(
+            `Deposit failed for token ${
+              isReverse ? swap.to.name : swap.from.token.name
+            }`
+          )
+        );
         throw new Error(
           `Failed to deposit ${
             isReverse ? swap.to.name : swap.from.token.name
           } token.`
         );
       } else {
-        console.info(`Successfully deposited ${tokenName}`);
+        dispatch(newInfo(`Successfully deposited ${tokenName}`));
 
         dispatch(fetchUserBalances());
         setAmount('0');
-
-        //   form.resetFields();
-        //   message.success('Successfully deposited ' + tokenName);
       }
     } catch (error) {
-      console.error('deposit error', error);
-      // const converted_error_message = getErrorMess(error);
-      // message.error(converted_error_message);
-      // message.loading('Attempting to place swap order for ' + tokenName, 0);
+      dispatch(
+        newError('Unknown deposit error, please retry or contact Marigold')
+      );
     }
   };
 

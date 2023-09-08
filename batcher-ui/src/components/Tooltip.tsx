@@ -1,19 +1,19 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import React, { ReactNode } from 'react';
 
-type tooltipProps = {
+type TooltipBaseProps = {
   children: ReactNode;
   text: string | ReactNode;
   disabled?: boolean;
   visible?: boolean;
 };
 
-const Tooltip = ({
+const TooltipBase = ({
   children,
   text,
   disabled = false,
   visible,
-}: tooltipProps) => {
+}: TooltipBaseProps) => {
   return (
     <TooltipPrimitive.Provider delayDuration={0}>
       <TooltipPrimitive.Root open={visible}>
@@ -33,4 +33,4 @@ const Tooltip = ({
   );
 };
 
-export default Tooltip;
+export default TooltipBase;

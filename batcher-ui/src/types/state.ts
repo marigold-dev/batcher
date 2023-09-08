@@ -50,9 +50,17 @@ export type HoldingsState = {
   cleared: Record<string, number>;
 };
 
+export type EventsState = {
+  toast: {
+    isToastOpen: boolean;
+    toastDescription: string;
+    type: 'info' | 'error';
+  };
+};
+
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
-  event: {};
+  events: EventsState;
   holdings: HoldingsState;
 };

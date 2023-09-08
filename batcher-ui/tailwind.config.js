@@ -9,6 +9,7 @@ module.exports = {
         darkgray: '#2B2A2E',
         lightgray: '#7B7B7E',
         hovergray: '#d1d5db',
+        green: '#6FE17A',
       },
     },
     fontFamily: {

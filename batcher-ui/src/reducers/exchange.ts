@@ -5,6 +5,7 @@ import {
   getCurrentBatchNumber,
   getOraclePrice,
   getPairsInfos,
+  newError,
 } from '../../src/actions';
 import {
   BatcherStatus,
@@ -197,16 +198,19 @@ const exchangeReducer = (
     case 'UPDATE_VOLUMES':
       return { ...state, volumes: action.payload.volumes };
     case 'NO_BATCH_ERROR':
-      return {
-        ...state,
-        batcherStatus: {
-          status: BatcherStatus.NONE,
-          at: null,
-          startTime: null,
-          remainingTime: 0,
+      return loop(
+        {
+          ...state,
+          batcherStatus: {
+            status: BatcherStatus.NONE,
+            at: null,
+            startTime: null,
+            remainingTime: 0,
+          },
+          batchNumber: 0,
         },
-        batchNumber: 0,
-      };
+        Cmd.action(newError('No batch open for this pair.'))
+      );
     default:
       return state;
   }
