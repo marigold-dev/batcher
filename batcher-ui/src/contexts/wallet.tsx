@@ -1,9 +1,10 @@
 import { TezosToolkit } from '@taquito/taquito';
 import React, { createContext, useEffect, useReducer } from 'react';
 import { BeaconWallet } from '@taquito/beacon-wallet';
-import { AccountInfo, NetworkType } from '@airgap/beacon-sdk';
+import { AccountInfo } from '@airgap/beacon-sdk';
 import { useTezosToolkit } from './tezos-toolkit';
 import { getByKey, setByKey } from 'src/utils/local-storage';
+import { NetworkType } from '@airgap/beacon-types';
 
 type WalletState = {
   wallet: BeaconWallet | undefined;
@@ -33,6 +34,7 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
   if (!tezos) return Promise.reject('ERROR');
   const wallet = new BeaconWallet({
     name: 'batcher',
+    // @ts-ignore
     preferredNetwork:
       process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
         ? NetworkType.GHOSTNET
@@ -43,7 +45,11 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
 
   await wallet.requestPermissions({
     network: {
-      type: NetworkType.GHOSTNET,
+      // @ts-ignore
+      type:
+        process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+          ? NetworkType.GHOSTNET
+          : NetworkType.MAINNET,
       rpcUrl: process.env.NEXT_PUBLIC_TEZOS_NODE_URI,
     },
   });
@@ -118,6 +124,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (userAddress) {
       const wallet = new BeaconWallet({
         name: 'batcher',
+        // @ts-ignore
         preferredNetwork:
           process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
             ? NetworkType.GHOSTNET
