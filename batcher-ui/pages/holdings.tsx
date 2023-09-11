@@ -42,7 +42,7 @@ const Holdings = () => {
         dispatch(newInfo('Attempting to redeem holdings...'));
         // message.loading('Attempting to redeem holdings...', 0);
         const confirm = await redeemTransaction.confirmation();
-        if (!confirm.completed) {
+        if (!confirm || !confirm.completed) {
           dispatch(newError('Failed to redeem holdings.'));
         } else {
           dispatch(newInfo('Successfully redeemed holdings.'));

@@ -28,7 +28,7 @@
     "not ie <= 10"
   ],
   "dependencies": {
-    "@airgap/beacon-sdk": "^4.0.6",
+    "@airgap/beacon-sdk": "^4.0.10",
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
@@ -40,10 +40,10 @@
     "@radix-ui/react-select": "^1.2.2",
     "@radix-ui/react-toast": "^1.1.4",
     "@radix-ui/react-tooltip": "^1.0.6",
-    "@taquito/beacon-wallet": "^16.0.0",
-    "@taquito/taquito": "^16.0.0",
-    "@taquito/tzip12": "^16.0.0",
-    "@taquito/tzip16": "^16.0.0",
+    "@taquito/beacon-wallet": "^17.3.0",
+    "@taquito/taquito": "^17.3.0",
+    "@taquito/tzip12": "^17.3.0",
+    "@taquito/tzip16": "^17.3.0",
     "@types/react-redux": "^7.1.25",
     "date-fns": "^2.29.3",
     "fp-ts": "^2.16.0",

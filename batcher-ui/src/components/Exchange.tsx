@@ -37,14 +37,17 @@ const Exchange = () => {
   const [amountInput, setAmount] = useState<string>('0');
   const [animate, setAnimate] = useState(false);
 
-  if (!tezos) {
-    dispatch(
-      newError(
-        "There is an error with Tezos Tool Kit, can't swap ! Please contact Marigold if problem persists."
-      )
+  if (!tezos)
+    return (
+      <div>
+        <p className="text-xxl">
+          {
+            "There is an error with Tezos Tool Kit, can't swap ! Please contact \
+        Marigold if problem persists."
+          }
+        </p>
+      </div>
     );
-    return null;
-  }
 
   const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
     switch (priceStategy) {
@@ -222,7 +225,7 @@ const Exchange = () => {
       dispatch(newInfo('Attempt to deposit the order...'));
       const confirm = await order_batcher_op?.confirmation();
 
-      if (!confirm.completed) {
+      if (!confirm || !confirm.completed) {
         console.error(confirm);
         dispatch(
           newError(

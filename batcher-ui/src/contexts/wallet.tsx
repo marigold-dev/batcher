@@ -1,10 +1,8 @@
 import { TezosToolkit } from '@taquito/taquito';
 import React, { createContext, useEffect, useReducer } from 'react';
 import { BeaconWallet } from '@taquito/beacon-wallet';
-import { AccountInfo } from '@airgap/beacon-sdk';
+import { AccountInfo, NetworkType } from '@airgap/beacon-sdk';
 import { useTezosToolkit } from './tezos-toolkit';
-import { getByKey, setByKey } from 'src/utils/local-storage';
-import { NetworkType } from '@airgap/beacon-types';
 
 type WalletState = {
   wallet: BeaconWallet | undefined;
@@ -41,6 +39,8 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
         : NetworkType.MAINNET,
   });
 
+  //TODO: Find a way to fix error "Argument of type 'BeaconWallet' is not assignable to parameter of type 'WalletProvider'.
+  // @ts-ignore
   tezos.setWalletProvider(wallet);
 
   await wallet.requestPermissions({
@@ -57,8 +57,6 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
   return await wallet.client.getActiveAccount().then(async userAccount => {
     const userAddress = await wallet.getPKH();
 
-    setByKey('userAddress', userAddress);
-
     return { wallet, userAddress, userAccount };
   });
 };
@@ -72,8 +70,6 @@ const disconnectWallet = async (
 
   wallet.clearActiveAccount();
   wallet.disconnect();
-
-  setByKey('userAddress');
 
   return Promise.resolve();
 };
@@ -94,7 +90,7 @@ const reducer = (
       }
     | {
         type: 'HYDRATE_WALLET';
-        userAddress: string;
+        userAddress: string | undefined;
         userAccount: AccountInfo | undefined;
         wallet: BeaconWallet;
       }
@@ -119,23 +115,27 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    const userAddress = getByKey('userAddress');
+    const wallet = new BeaconWallet({
+      name: 'batcher',
+      // @ts-ignore
+      preferredNetwork:
+        process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+          ? NetworkType.GHOSTNET
+          : NetworkType.MAINNET,
+    });
 
-    if (userAddress) {
-      const wallet = new BeaconWallet({
-        name: 'batcher',
-        // @ts-ignore
-        preferredNetwork:
-          process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
-            ? NetworkType.GHOSTNET
-            : NetworkType.MAINNET,
-      });
-      wallet.client.getActiveAccount().then(userAccount => {
-        dispatch({ type: 'HYDRATE_WALLET', userAddress, userAccount, wallet });
-      });
+    //TODO: Find a way to fix error "Argument of type 'BeaconWallet' is not assignable to parameter of type 'WalletProvider'.
+    // @ts-ignore
+    tezos?.setWalletProvider(wallet);
 
-      tezos?.setWalletProvider(wallet);
-    }
+    wallet.client.getActiveAccount().then(userAccount => {
+      dispatch({
+        type: 'HYDRATE_WALLET',
+        userAddress: userAccount?.address,
+        userAccount,
+        wallet,
+      });
+    });
   }, [tezos]);
 
   return (
