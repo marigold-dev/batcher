@@ -37,15 +37,14 @@ const Exchange = () => {
   const [amountInput, setAmount] = useState<string>('0');
   const [animate, setAnimate] = useState(false);
 
-  //TODO: rewrite error management
-  if (!tezos)
-    return (
-      <div>
-        <p className="text-xxl">
-          {"There is an error with Tezos Tool Kit, can't swap !"}
-        </p>
-      </div>
+  if (!tezos) {
+    dispatch(
+      newError(
+        "There is an error with Tezos Tool Kit, can't swap ! Please contact Marigold if problem persists."
+      )
     );
+    return null;
+  }
 
   const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
     switch (priceStategy) {
@@ -154,7 +153,14 @@ const Exchange = () => {
       };
 
       if (selectedToken.standard === 'FA1.2 token') {
-        if (!swap.from.token.address) return; //TODO: improve this
+        if (!swap.from.token.address) {
+          dispatch(
+            newError(
+              `Can\t retrieve token contract address for ${swap.from.token.name}`
+            )
+          );
+          return;
+        }
         const tokenfa12Contract = await tezos?.wallet.at(
           swap.from.token.address,
           compose(tzip12, tzip16)
@@ -236,10 +242,16 @@ const Exchange = () => {
         dispatch(fetchUserBalances());
         setAmount('0');
       }
-    } catch (error) {
-      dispatch(
-        newError('Unknown deposit error, please retry or contact Marigold')
-      );
+    } catch (error: any) {
+      console.error(error);
+      if (error?.title === 'Aborted') {
+        // Action aborted by user
+        dispatch(newError(error.description));
+      } else {
+        dispatch(
+          newError('Unknown deposit error, please retry or contact Marigold')
+        );
+      }
     }
   };
 

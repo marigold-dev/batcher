@@ -6,6 +6,7 @@ import {
   updateBatcherStatus,
 } from 'src/actions';
 import { updateHoldings } from 'src/actions/holdings';
+import { userAddressSelector } from 'src/reducers';
 import { BatchBigmap, OrderBookBigmap, RatesCurrentBigmap } from 'src/types';
 import { BigMapEvent } from 'src/types/events';
 import {
@@ -17,7 +18,7 @@ import {
 
 export const newEventCmd = (event: BigMapEvent) => {
   return Cmd.run(
-    dispatch => {
+    (dispatch, getState) => {
       return event.data.map(async eventData => {
         switch (eventData.action) {
           case 'add_key': {
@@ -41,8 +42,12 @@ export const newEventCmd = (event: BigMapEvent) => {
               case 'user_batch_ordertypes': {
                 //! deposit from new address
                 const data = eventData.content.value as OrderBookBigmap;
-                const holdings = await computeAllHoldings(data);
-                dispatch(updateHoldings(holdings));
+                const userAddress = userAddressSelector(getState());
+                //! user addresses are keys of this bigmap so we need to ensure that the key is the user address
+                if (userAddress === eventData.content.key) {
+                  const holdings = await computeAllHoldings(data);
+                  dispatch(updateHoldings(holdings));
+                }
                 return Promise.resolve();
               }
               case 'rates_current':
@@ -83,8 +88,12 @@ export const newEventCmd = (event: BigMapEvent) => {
               case 'user_batch_ordertypes': {
                 //! new deposit or redeem from an existing address
                 const data = eventData.content.value as OrderBookBigmap;
-                const holdings = await computeAllHoldings(data);
-                dispatch(updateHoldings(holdings));
+                const userAddress = userAddressSelector(getState());
+                //! user addresses are keys of this bigmap so we need to ensure that the key is the user address
+                if (userAddress === eventData.content.key) {
+                  const holdings = await computeAllHoldings(data);
+                  dispatch(updateHoldings(holdings));
+                }
                 return Promise.resolve();
               }
               default:
@@ -97,7 +106,7 @@ export const newEventCmd = (event: BigMapEvent) => {
       });
     },
     {
-      args: [Cmd.dispatch],
+      args: [Cmd.dispatch, Cmd.getState],
     }
   );
 };

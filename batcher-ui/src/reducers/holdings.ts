@@ -4,8 +4,8 @@ import { fetchHoldingsCmd } from 'src/commands/holdings';
 import { HoldingsState } from 'src/types';
 
 const initialState: HoldingsState = {
-  open: { tzBTC: 0, USDT: 0 },
-  cleared: { tzBTC: 0, USDT: 0 },
+  open: { tzBTC: 0, USDT: 0, EURL: 0 },
+  cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
 };
 
 export const holdingsReducer = (

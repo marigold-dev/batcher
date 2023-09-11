@@ -613,7 +613,7 @@ const addObj = (o1: any, o2: any) => {
         [c]: o1[c] + o2[c],
       };
     },
-    { tzBTC: 0, USDT: 0 }
+    { tzBTC: 0, USDT: 0, EURL: 0 }
   );
 };
 
@@ -635,7 +635,10 @@ const computeHoldingsByBatch = (
         ),
       };
     },
-    { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }
+    {
+      open: { tzBTC: 0, USDT: 0, EURL: 0 },
+      cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
+    }
   );
 };
 
@@ -646,8 +649,8 @@ export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
         parseInt(batchNumber, 10)
       );
       return computeHoldingsByBatch(deposits, batch, {
-        open: { tzBTC: 0, USDT: 0 },
-        cleared: { tzBTC: 0, USDT: 0 },
+        open: { tzBTC: 0, USDT: 0, EURL: 0 },
+        cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
       });
     })
   ).then(holdings =>
@@ -658,7 +661,10 @@ export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
           cleared: addObj(acc.cleared, currentHoldings.cleared),
         };
       },
-      { open: { tzBTC: 0, USDT: 0 }, cleared: { tzBTC: 0, USDT: 0 } }
+      {
+        open: { tzBTC: 0, USDT: 0, EURL: 0 },
+        cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
+      }
     )
   );
 };
