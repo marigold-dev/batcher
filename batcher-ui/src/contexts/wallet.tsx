@@ -33,7 +33,10 @@ const connectWallet = async (tezos: TezosToolkit | undefined) => {
   if (!tezos) return Promise.reject('ERROR');
   const wallet = new BeaconWallet({
     name: 'batcher',
-    preferredNetwork: NetworkType.GHOSTNET,
+    preferredNetwork:
+      process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+        ? NetworkType.GHOSTNET
+        : NetworkType.MAINNET,
   });
 
   tezos.setWalletProvider(wallet);
@@ -58,8 +61,8 @@ const disconnectWallet = async (
   tezos?: TezosToolkit,
   wallet?: BeaconWallet
 ) => {
-  if (!tezos) return Promise.reject('ERROR');
-  if (!wallet) return Promise.reject('ERROR: no wallet');
+  if (!tezos) return Promise.reject('Error: Tezos Toolkit is not initialized.');
+  if (!wallet) return Promise.reject("Error: No wallet. Can't disconnected.");
 
   wallet.clearActiveAccount();
   wallet.disconnect();
@@ -115,7 +118,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     if (userAddress) {
       const wallet = new BeaconWallet({
         name: 'batcher',
-        preferredNetwork: NetworkType.GHOSTNET,
+        preferredNetwork:
+          process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+            ? NetworkType.GHOSTNET
+            : NetworkType.MAINNET,
       });
       wallet.client.getActiveAccount().then(userAccount => {
         dispatch({ type: 'HYDRATE_WALLET', userAddress, userAccount, wallet });
