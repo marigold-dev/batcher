@@ -1,24 +1,28 @@
 #import "../batcher.mligo" "Batcher"
 
+let meta:bytes = 0x68747470733a2f2f697066732e6763702e6d617269676f6c642e6465762f697066732f516d56375a534b6358324d4e75656938745a3268723555484d5a66737039476b375675345878766d6246734a4e45
+
 let f(_:unit) : Batcher.Storage.t = {
-  metadata = (Big_map.empty : Batcher.metadata);
+  metadata = Big_map.literal [
+   ("",meta)
+   ];
   valid_tokens = Map.literal [
     (("tzBTC"), {
-      token_id = 0n;
+      token_id = 0n; 
       name = "tzBTC";
       address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
     (("EURL"),{
-      token_id = 0n;
+      token_id = 0n; 
       name = "EURL";
       address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
       decimals = 6n;
       standard = Some "FA2 token"
     });
     (("USDT"),{
-      token_id = 0n;
+      token_id = 0n; 
       name = "USDT";
       address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
       decimals = 6n;
@@ -31,6 +35,7 @@ let f(_:unit) : Batcher.Storage.t = {
             from = {
               amount = 1n;
               token = {
+                token_id = 0n; 
                 name = "tzBTC";
                 address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
                 decimals = 8n;
@@ -38,6 +43,7 @@ let f(_:unit) : Batcher.Storage.t = {
               }
             };
             to = {
+              token_id = 0n; 
               name = "USDT";
               address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
               decimals = 6n;
@@ -55,6 +61,7 @@ let f(_:unit) : Batcher.Storage.t = {
           from = {
             amount = 1n;
             token = {
+              token_id = 0n; 
               name = "tzBTC";
               address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
               decimals = 8n;
@@ -62,6 +69,7 @@ let f(_:unit) : Batcher.Storage.t = {
             }
           };
           to = {
+            token_id = 0n; 
             name = "EURL";
             address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
             decimals = 6n;
@@ -75,7 +83,7 @@ let f(_:unit) : Batcher.Storage.t = {
       }
     )
   ];
-  rates_current = (Big_map.empty : Batcher.rates_current);
+  rates_current = (Big_map.empty : Batcher.Storage.rates_current);
   batch_set = {
     current_batch_indices = (Map.empty : (string,nat) map);
    	batches = (Big_map.empty : (nat,Batcher.batch) big_map);
@@ -84,10 +92,11 @@ let f(_:unit) : Batcher.Storage.t = {
   user_batch_ordertypes = (Big_map.empty: Batcher.user_batch_ordertypes);
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
-  administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
+  administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
   scale_factor_for_oracle_staleness = 1n
 
 }
+
 
