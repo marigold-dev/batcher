@@ -1,16 +1,24 @@
 import { Cmd } from 'redux-loop';
 import { getMarketHoldings } from '../utils/utils';
+import { MarketHoldingsState } from '../types/state';
 import { updateMarketHoldings } from 'src/actions/marketholdings';
 
-const fetchMarketHoldingsCmd = (userAddress?: string) => {
+const fetchMarketHoldingsCmd = (
+  contractAddress?: string,
+  userAddress?: string
+) => {
   return Cmd.run(
     async () => {
-      const marketHoldings = await getMarketHoldings(
-        process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH || '',
-        userAddress
+      const vaultArray = await getMarketHoldings(
+        contractAddress || '',
+        userAddress || ''
       );
+      const vaults = new Map(vaultArray.map(i => [i.global.native.name, i]));
 
-      return marketHoldings;
+      const ms: MarketHoldingsState = {
+        vaults: vaults,
+      };
+      return ms;
     },
     {
       successActionCreator: updateMarketHoldings,

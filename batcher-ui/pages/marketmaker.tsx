@@ -6,7 +6,7 @@ import { getMarketHoldings as getMarketHoldingsAction } from 'src/actions';
 
 const Holdings = () => {
   const { tezos } = useContext(TezosToolkitContext);
-  const contractAddress = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
+  const contractAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH;
 
   const { vaults } = useSelector(getMarketHoldings);
   const userAddress = useSelector(userAddressSelector);
@@ -14,10 +14,8 @@ const Holdings = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (userAddress) {
-      dispatch(getMarketHoldingsAction(userAddress));
-    }
-  }, [userAddress, dispatch]);
+    dispatch(getMarketHoldingsAction(contractAddress, userAddress));
+  }, [userAddress, contractAddress, dispatch]);
 
   return (
     <div className="flex flex-col items-center border-solid border-2 border-lightgray py-4 md:mx-[15%] mx-8 mt-4">

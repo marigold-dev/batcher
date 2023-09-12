@@ -13,6 +13,8 @@ import {
   GlobalVault,
   UserVault,
   VaultToken,
+  Vault,
+  MarketHoldingsState,
   MVault,
 } from '../types';
 import { Batch } from 'src/types/events';
@@ -192,15 +194,22 @@ export const getBigMapByIdAndUserAddress = (
   );
 };
 
+export const getBigMapByIdAndKey = (bigMapId: number, key: string) =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${key}`
+  )
+    // TODO: fix that
+    .then(r => (r.status === 204 ? { value: [] } : r.json()))
+    .then(r => r.value)
+    .catch(error => console.log(error));
+
 export const getBigMapByIdAndBatchNumber = (
   bigMapId: number,
   batchNumber: number
 ) =>
   fetch(
     `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
-  )
-    .then(r => r.json())
-    .then(r => r.value);
+  ).then(r => r.json());
 
 export const getBigMapByIdAndTokenPair = (
   bigMapId: number,
@@ -609,33 +618,44 @@ export const getOrdersBook = async (address: string, userAddress: string) => {
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
 
+export const getVaultFromBigMap = async (
+  vaultId: number,
+  token: string
+): Promise<MVault> => {
+  const b = await getBigMapByIdAndKey(vaultId, token);
+  console.info(b);
+  const userVault: UserVault = {
+    shares: 0,
+    unclaimed: 0,
+  };
+
+  const globalVault: GlobalVault = {
+    total_shares: 0,
+    native: {
+      name: token,
+      amount: 0,
+    },
+    foreign: new Map<string, VaultToken>(),
+  };
+  const mvault = {
+    global: globalVault,
+    user: userVault,
+  };
+
+  return mvault;
+};
+
+
 export const getMarketHoldings = async (
   marketMakerAddress: string,
   userAddress: string
 ) => {
-  const storage: MarketMakerStorage = await getStorageByAddress(
-    marketMakerAddress
-  );
+  const storage = await getStorageByAddress(marketMakerAddress);
+  console.log('Vaults id', storage.vaults);
+  console.log('MMStorage', storage);
   return Promise.all(
-    Object.entries(storage.vaults).map(async ([token, vault]) => {
-      const userVault: UserVault = {
-        shares: 0,
-        unclaimed: 0,
-      };
-
-      const globalVault: GlobalVault = {
-        total_shares: 0,
-        native: {
-          name: token,
-          amount: 0,
-        },
-        foreign: new Map<string, VaultToken>(),
-      };
-
-      return {
-        global: globalVault,
-        user: userVault,
-      };
-    })
+    Object.keys(storage.valid_tokens).map(async token =>
+      await getVaultFromBigMap(storage.vaults, token)
+    )
   );
 };

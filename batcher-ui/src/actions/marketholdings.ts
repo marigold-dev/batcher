@@ -21,10 +21,13 @@ export const updateMarketHoldings = (vaults: MarketHoldingsState) =>
     payload: { vaults },
   }) as const;
 
-export const getMarketHoldings = (userAddress: string | undefined) =>
+export const getMarketHoldings = (
+  contractAddress: string | undefined,
+  userAddress: string | undefined
+) =>
   ({
     type: 'GET_MARKET_HOLDINGS',
-    payload: { userAddress },
+    payload: { contractAddress, userAddress },
   }) as const;
 
 export type MarketHoldingsActions =

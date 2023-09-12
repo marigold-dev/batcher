@@ -24,7 +24,7 @@ export const marketHoldingsReducer = (
     case 'UPDATE_MARKET_HOLDINGS':
       return { ...state, ...action.payload.vaults };
     case 'GET_MARKET_HOLDINGS':
-      return loop(state, fetchMarketHoldingsCmd(action.payload.userAddress));
+      return loop(state, fetchMarketHoldingsCmd(action.payload.contractAddress, action.payload.userAddress));
     default:
       return state;
   }
