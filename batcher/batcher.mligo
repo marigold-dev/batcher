@@ -39,6 +39,7 @@ type ordertypes = Types.ordertypes
 type batch_ordertypes = Types.batch_ordertypes
 type user_batch_ordertypes = Types.user_batch_ordertypes
 type batch = Types.batch
+type reduced_batch = Types.reduced_batch
 type batch_indices = Types.batch_indices
 type batches = Types.batches
 type batch_set = Types.batch_set
@@ -1466,6 +1467,16 @@ let get_current_batches ((),storage: unit * storage) : batch list=
      | Some b -> b :: acc
     in
     Map.fold collect_batches storage.batch_set.current_batch_indices []
+
+[@view]
+let get_current_batches_reduced ((), storage: unit * storage) : reduced_batch list = 
+  let current_batches: batch list = get_current_batches ((),storage) in
+  let map_to_reduced (b: batch) : reduced_batch = {
+                                                         status = b.status;
+                                                         volumes = b.volumes;
+                                                        }
+  in
+  List.map map_to_reduced current_batches
 
 
 let main

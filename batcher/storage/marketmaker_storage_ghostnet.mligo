@@ -51,7 +51,53 @@ let f(_:unit) : MarketMaker.Storage.t = {
   ];
   batcher = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
-  vaults = (Big_map.empty: MarketMaker.market_vaults);
+  vaults = Big_map.literal [
+    ("tzBTC", {
+      total_shares = 0n;
+      holdings = (Set.empty: nat set);
+      native_token = {
+        token = {
+          token_id = 0n;
+          name = "tzBTC";
+          address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
+          decimals = 8n;
+          standard = Some "FA1.2 token"
+        }; 
+        amount= 0n;
+      };
+      foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
+    });
+    ("EURL", {
+      total_shares = 0n;
+      holdings = (Set.empty: nat set);
+      native_token = {
+        token = {
+          token_id = 0n;
+          name = "EURL";
+          address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
+          decimals = 6n;
+          standard = Some "FA2 token"
+        }; 
+        amount= 0n;
+      };
+      foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
+    });
+    ("USDT", {
+      total_shares = 0n;
+      holdings = (Set.empty: nat set);
+      native_token = {
+        token = {
+          token_id = 0n;
+          name = "USDT";
+          address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
+          decimals = 6n;
+          standard = Some "FA2 token"
+        }; 
+        amount= 0n;
+      };
+      foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
+    })
+  ];
   limit_on_tokens_or_pairs = 10n;
   last_holding_id = 0n;
   user_holdings = (Big_map.empty: MarketMaker.user_holdings);

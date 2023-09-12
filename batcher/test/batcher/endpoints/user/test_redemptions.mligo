@@ -3,6 +3,7 @@
 #import "./../../../common/batch.mligo" "Batch"
 #import "../../../../batcher.mligo" "Batcher"
 #import "./../../../common/helpers.mligo" "Helpers"
+#import "../../../../errors.mligo" "Errors"
 
 
 let test_redemption_should_be_successful = 

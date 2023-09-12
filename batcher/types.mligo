@@ -176,6 +176,11 @@ type batch = [@layout:comb] {
   market_vault_used : side option;
 }
 
+type reduced_batch = [@layout:comb] {
+  status: batch_status;
+  volumes: volumes;
+}
+
 type batch_indices = (string,  nat) map
 
 type batches = (nat, batch) big_map
