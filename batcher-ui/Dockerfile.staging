@@ -18,9 +18,9 @@ COPY ./next.config.js ./next.config.js
 COPY ./tailwind.config.js ./tailwind.config.js
 
 
-RUN npm run build:ghostnet
+RUN npm run build:staging
 
 EXPOSE 80
 
-CMD ["npm", "run", "start:ghostnet"]
+CMD ["npm", "run", "start:staging"]
 

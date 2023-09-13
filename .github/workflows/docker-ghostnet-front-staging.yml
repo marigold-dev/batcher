@@ -1,0 +1,67 @@
+name: Docker ghostnet front staging
+
+on:
+  push:
+    branches:
+      - 'release-ghostnet-staging'
+      - 'release-ghostnet-beta'
+  pull_request:
+    branches:
+      - 'release-ghostnet-staging'
+      - 'release-ghostnet-beta'
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  ui:
+    strategy:
+      matrix:
+        network: [ghostnet]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.0
+        with:
+          submodules: true
+
+      - name: Set outputs
+        id: vars
+        run: |
+          echo "date=$(date +%Y-%m-%dT%H-%M-%S)" >> "${GITHUB_OUTPUT}"
+          echo "sha_short=$(git rev-parse --short HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/Setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ui version release-ghostnet-staging
+        if: github.ref == 'refs/heads/release-ghostnet-staging'
+        uses: docker/build-push-action@v3
+        with:
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
+          context: ./batcher-ui/
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-staging' }}
+          tags: |
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:staging
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push ui version on release-ghostnet-beta
+        if: github.ref == 'refs/heads/release-ghostnet-beta'
+        uses: docker/build-push-action@v3
+        with:
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
+          context: ./batcher-ui/
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-beta' }}
+          tags: |
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:beta
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-beta
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
