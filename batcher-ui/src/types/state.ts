@@ -65,6 +65,7 @@ export type MVault = {
 
 export type MarketHoldingsState = {
   vaults: Map<string, MVault>;
+  current_vault: MVault;
 };
 
 export type AppState = {
@@ -73,4 +74,24 @@ export type AppState = {
   event: {};
   holdings: HoldingsState;
   marketHoldings: MarketHoldingsState;
+};
+
+export const initialMVault: MVault = {
+  global: {
+    total_shares: 0,
+    native: {
+      name: 'tzBTC',
+      amount: 0,
+    },
+    foreign: new Map<string, VaultToken>(),
+  },
+  user: {
+    shares: 0,
+    unclaimed: 0,
+  },
+};
+
+export const initialMHState: MarketHoldingsState = {
+  vaults: new Map<string, MVault>(),
+  current_vault: initialMVault,
 };

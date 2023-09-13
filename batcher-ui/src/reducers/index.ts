@@ -1,7 +1,12 @@
 import { LoopReducer, combineReducers } from 'redux-loop';
 import exchangeReducer from './exchange';
 import walletReducer from './wallet';
-import { AppState, ExchangeState, WalletState } from '../types';
+import {
+  AppState,
+  ExchangeState,
+  WalletState,
+  MarketHoldingsState,
+} from '../types';
 import { eventReducer } from './events';
 import { holdingsReducer } from './holdings';
 import { marketHoldingsReducer } from './marketholdings';
@@ -47,12 +52,12 @@ export const volumesSelector = (state: AppState) => state.exchange.volumes;
 // Holdings selectors
 export const getHoldings = (state: AppState) => state.holdings;
 
-export const getMarketHoldings = (state: AppState) => state.marketHoldings;
+export const getMarketHoldingsState = (state: AppState) => state.marketHoldings;
 
 export default combineReducers({
   exchange: exchangeReducer as LoopReducer<ExchangeState>,
   wallet: walletReducer as LoopReducer<WalletState>,
   event: eventReducer as LoopReducer<{}>,
   holdings: holdingsReducer as LoopReducer<{}>,
-  marketHoldings: marketHoldingsReducer as LoopReducer<{}>,
+  marketHoldings: marketHoldingsReducer as LoopReducer<MarketHoldingsState>,
 });

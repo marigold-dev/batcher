@@ -30,9 +30,16 @@ export const getMarketHoldings = (
     payload: { contractAddress, userAddress },
   }) as const;
 
+export const changeVault = (vault: string) =>
+  ({
+    type: 'CHANGE_VAULT',
+    payload: { vault },
+  }) as const;
+
 export type MarketHoldingsActions =
   | ReturnType<typeof addLiquidity>
   | ReturnType<typeof removeLiquidity>
   | ReturnType<typeof claimRewards>
+  | ReturnType<typeof changeVault>
   | ReturnType<typeof getMarketHoldings>
   | ReturnType<typeof updateMarketHoldings>;

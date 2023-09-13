@@ -16,6 +16,7 @@ import {
   Vault,
   MarketHoldingsState,
   MVault,
+  initialMVault,
 } from '../types';
 import { Batch } from 'src/types/events';
 import { NetworkType } from '@airgap/beacon-sdk';
@@ -645,7 +646,6 @@ export const getVaultFromBigMap = async (
   return mvault;
 };
 
-
 export const getMarketHoldings = async (
   marketMakerAddress: string,
   userAddress: string
@@ -654,8 +654,11 @@ export const getMarketHoldings = async (
   console.log('Vaults id', storage.vaults);
   console.log('MMStorage', storage);
   return Promise.all(
-    Object.keys(storage.valid_tokens).map(async token =>
-      await getVaultFromBigMap(storage.vaults, token)
+    Object.keys(storage.valid_tokens).map(
+      async token => await getVaultFromBigMap(storage.vaults, token)
     )
   );
+};
+export const getMVault = (vault: MVault | undefined) => {
+  return !vault ? initialMVault : vault;
 };
