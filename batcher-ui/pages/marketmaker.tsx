@@ -5,7 +5,7 @@ import { getMarketHoldings as getMarketHoldingsAction } from 'src/actions';
 import MMVault from '../src/components/MMVault';
 
 const Holdings = () => {
-  const contractAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH;
+  const contractAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH || '';
 
   const { vaults, current_vault } = useSelector(getMarketHoldingsState);
   const userAddress = useSelector(userAddressSelector);

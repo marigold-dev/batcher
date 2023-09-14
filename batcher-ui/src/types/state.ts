@@ -43,8 +43,12 @@ export type HoldingsState = {
 };
 
 export type VaultToken = {
+  id: number;
   name: string;
+  address: string;
+  decimals: number;
   amount: number;
+  standard: string;
 };
 
 export type GlobalVault = {
@@ -80,8 +84,12 @@ export const initialMVault: MVault = {
   global: {
     total_shares: 0,
     native: {
+      id: 0,
       name: 'tzBTC',
       amount: 0,
+      address: '',
+      decimals: 8,
+      standard: 'FA1.2 token',
     },
     foreign: new Map<string, VaultToken>(),
   },

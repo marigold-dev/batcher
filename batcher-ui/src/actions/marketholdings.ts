@@ -22,8 +22,8 @@ export const updateMarketHoldings = (vaults: MarketHoldingsState) =>
   }) as const;
 
 export const getMarketHoldings = (
-  contractAddress: string | undefined,
-  userAddress: string | undefined
+  contractAddress: string,
+  userAddress: string
 ) =>
   ({
     type: 'GET_MARKET_HOLDINGS',

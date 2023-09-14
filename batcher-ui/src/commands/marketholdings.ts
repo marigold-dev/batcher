@@ -7,10 +7,14 @@ const switchVaultCmd = (state: MarketHoldingsState, vault?: string) => {
   return Cmd.run(
     () => {
       if (!vault) {
+        console.info('switch vault');
+        console.info(vault);
         return state;
       }
 
       const v = state.vaults.get(vault);
+      console.info('v');
+      console.info(v);
       if (!v) {
         return state;
       }
@@ -28,20 +32,19 @@ const switchVaultCmd = (state: MarketHoldingsState, vault?: string) => {
 };
 
 const fetchMarketHoldingsCmd = (
-  contractAddress?: string,
-  userAddress?: string
+  contractAddress: string,
+  userAddress: string
 ) => {
   return Cmd.run(
     async () => {
-      const vaultArray = await getMarketHoldings(
-        contractAddress || '',
-        userAddress || ''
-      );
+      const vaultArray = await getMarketHoldings(contractAddress, userAddress);
       const vaults = new Map(vaultArray.map(i => [i.global.native.name, i]));
-
+      console.info('vaults');
+      console.info(vaults);
+      const firstVault = vaults.values().next().value;
       const ms: MarketHoldingsState = {
         vaults: vaults,
-        current_vault: initialMVault,
+        current_vault: firstVault,
       };
       return ms;
     },
