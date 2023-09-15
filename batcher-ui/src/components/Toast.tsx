@@ -49,7 +49,7 @@ const Toast = () => {
           asChild
           altText="Undo">
           <button className="inline-flex items-center justify-center rounded text-xs text-white px-[10px] h-[25px] shadow-[inset_0_0_0_1px] bg-primary hover:bg-hovergray hover:text-black">
-            Undo
+            Close
           </button>
         </ToastBase.Action>
       </ToastBase.Root>
