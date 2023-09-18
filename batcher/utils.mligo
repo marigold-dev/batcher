@@ -398,6 +398,16 @@ let is_administrator
   (administrator : address) : unit =
   if Tezos.get_sender () = administrator then () else failwith Errors.sender_not_administrator
 
+type orace_price_update = Types.oracle_price_update
+
+[@inline]
+let get_oracle_price
+  (failure_code: nat)
+  (valid_swap: valid_swap_reduced) : orace_price_update =
+  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
+  | Some opu -> opu
+  | None -> failwith failure_code
+
 module TokenAmountMap = struct
 
   type op = Increase | Decrease

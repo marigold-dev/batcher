@@ -56,3 +56,5 @@
 [@inline] let holding_shares_greater_than_total_shares_remaining                 = 154n
 [@inline] let no_holdings_to_claim                                               = 155n
 [@inline] let incorrect_side_specified                                           = 156n
+[@inline] let entrypoint_does_not_exist                                          = 157n
+[@inline] let unable_to_get_reduced_batches_from_batcher                         = 158n

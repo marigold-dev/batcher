@@ -22,6 +22,7 @@ type metadata_update = Types.metadata_update
 type swap_order = Types.swap_order
 type batch = Types.batch
 type batch_set = Types.batch_set
+type reduced_batch = Types.reduced_batch
 
 module Storage = struct
   type t = {
@@ -324,6 +325,39 @@ let claim_rewards
 
 end
 
+module BatcherUtils = struct 
+
+[@inline]
+let get_contract_entrypoint
+  (entrypoint: string)
+  (batcher:address) =
+  match Tezos.get_entrypoint_opt entrypoint batcher with
+  Some contract -> contract
+  | None -> failwith Errors.entrypoint_does_not_exist
+
+end
+
+module TickUtils = struct
+
+[@inline]
+let rebalance_vaults
+  (_valid_tokens: valid_tokens)
+  (_valid_swaps: valid_swaps)
+  (market_vaults: market_vaults): market_vaults = market_vaults
+
+[@inline]
+let redeem
+  (_batcher:address) 
+  (_batches: reduced_batch list)
+  (storage: Storage.t): (operation option * Storage.t) = (None: operation option), storage
+
+[@inline]
+let deposit
+  (_batcher:address) 
+  (_batches: reduced_batch list)
+  (storage: Storage.t): (operation list * Storage.t) = ([]: operation list), storage
+
+end
 
 type result = operation list * Storage.t
 
@@ -334,6 +368,7 @@ type entrypoint =
   | RemoveLiquidity of string
   | AddLiquidity of token_amount
   | Claim of string
+  | Tick
   | Change_admin_address of address
   | Change_batcher_address of address
 
@@ -382,6 +417,30 @@ let change_batcher_address
     let storage = { storage with batcher = new_batcher_address; } in
     no_op storage
 
+[@inline]
+let get_reduced_batches
+  (failure_code: nat)
+  (batcher: address) : reduced_batch list =
+  match Tezos.call_view "get_current_batches_reduced" () batcher with
+  | Some rbl -> rbl
+  | None -> failwith failure_code
+
+[@inline]
+let tick
+    (storage: Storage.t) : result =
+    let () = Utils.reject_if_tez_supplied () in
+    let reduced_batches = get_reduced_batches Errors.unable_to_get_reduced_batches_from_batcher storage.batcher in
+    let valid_tokens = storage.valid_tokens in
+    let valid_swaps = storage.valid_swaps in
+    let vaults = TickUtils.rebalance_vaults valid_tokens valid_swaps storage.vaults in
+    let (redeem_op_opt, storage) = TickUtils.redeem storage.batcher reduced_batches storage in
+    let (deposit_ops, storage) = TickUtils.deposit storage.batcher reduced_batches storage in
+    let storage = { storage with vaults = vaults;} in
+    let ops = match redeem_op_opt with
+              | Some op -> op :: deposit_ops
+              | None -> deposit_ops
+    in
+    (ops, storage)
 
 type vault_summary = (string, market_maker_vault) map
 type holding_summary = (string, market_vault_holding) map
@@ -428,6 +487,7 @@ let main
    | AddLiquidity t ->  add_liquidity t storage
    | RemoveLiquidity tn ->  remove_liquidity tn storage
    | Claim tn -> claim tn storage
+   | Tick -> tick storage
   (* Admin endpoints *)
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Change_batcher_address new_batcher_address -> change_batcher_address new_batcher_address storage
