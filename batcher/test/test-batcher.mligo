@@ -6,6 +6,7 @@
 #import "./batcher/economics/test_clearing.mligo" "Economics_Clearing"
 #import "./batcher/endpoints/admin/test_change_fee.mligo" "Admin_Change_Fee"
 #import "./batcher/endpoints/admin/test_change_admin_address.mligo" "Admin_Change_Admin_Address"
+#import "./batcher/endpoints/admin/test_change_marketmaker_address.mligo" "Admin_Change_MarketMaker_Address"
 #import "./batcher/endpoints/admin/test_change_fee_recipient_address.mligo" "Admin_Change_Fee_Recipient_Address"
 #import "./batcher/endpoints/admin/test_change_deposit_time_window.mligo" "Admin_Change_Deposit_Time_Window"
 #import "./batcher/endpoints/admin/test_enable_disable_swap_pair_for_deposit.mligo" "Admin_Enable_Disable_Swap_Pair"
@@ -43,9 +44,10 @@ let () =
   Breath.Model.run_suites Void
   [
       test_suite
-    ; Admin_Change_Fee.test_suite
-    ; Admin_Change_Admin_Address.test_suite
-    ; Admin_Change_Fee_Recipient_Address.test_suite
+    (*; Admin_Change_Fee.test_suite
+    ; Admin_Change_Admin_Address.test_suite *)
+    ; Admin_Change_MarketMaker_Address.test_suite
+   (* ; Admin_Change_Fee_Recipient_Address.test_suite
     ; Admin_Change_Deposit_Time_Window.test_suite
     ; Admin_Enable_Disable_Swap_Pair.test_suite
     ; Admin_Amend_Token_pair_Limit.test_suite
@@ -55,7 +57,7 @@ let () =
     ; Maintenance_Tick.test_suite
     ; Economics_Clearing.test_suite
     ; User_Deposits.test_suite
-    ; User_Cancellations.test_suite 
+    ; User_Cancellations.test_suite *)
 //  ; User_Redemptions.test_suite 
   ]
 

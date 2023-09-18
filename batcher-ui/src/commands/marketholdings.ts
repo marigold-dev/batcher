@@ -37,7 +37,10 @@ const fetchMarketHoldingsCmd = (
 ) => {
   return Cmd.run(
     async () => {
-      const vaultArray = await getMarketHoldings(contractAddress, userAddress);
+  const usrAddress = !userAddress
+    ? 'tz1WfhZiKXiy7zVMxBzMFrdaNJ5nhPM5W2Ef'
+    : userAddress;
+      const vaultArray = await getMarketHoldings(contractAddress, usrAddress);
       const vaults = new Map(vaultArray.map(i => [i.global.native.name, i]));
       console.info('vaults');
       console.info(vaults);

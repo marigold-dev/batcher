@@ -59,6 +59,7 @@ let f(_:unit) : Batcher.Storage.t = {
   fee_in_mutez = 10_000mutez;
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
+  marketmaker = ("tz1aSL2gjFnfh96Xf1Zp4T36LxbzKuzyvVJ4" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
 }

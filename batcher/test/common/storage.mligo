@@ -111,6 +111,7 @@ let initial_storage_with_admin_and_fee_recipient
   fee_in_mutez = 10_000mutez;
   fee_recipient = fee_recipient;
   administrator = admin;
+  marketmaker = admin;
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
 }

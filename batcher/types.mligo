@@ -173,12 +173,13 @@ type batch = [@layout:comb] {
   volumes : volumes;
   pair : pair;
   holdings : nat;
-  market_vault_used : side option;
+  market_vault_used : bool;
 }
 
 type reduced_batch = [@layout:comb] {
   status: batch_status;
   volumes: volumes;
+  market_vault_used : bool;
 }
 
 type batch_indices = (string,  nat) map
@@ -219,8 +220,10 @@ type rates_current = (string, exchange_rate) big_map
 type fees = {
    to_send: tez;
    to_refund: tez;
+   to_market_maker: tez;
    payer: address;
    recipient: address;
+   market_maker: address;
 }
 
 type market_maker_vault = {

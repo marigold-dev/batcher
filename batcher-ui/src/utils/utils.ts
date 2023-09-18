@@ -617,7 +617,12 @@ export const getOrdersBook = async (address: string, userAddress: string) => {
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
 
-const getUserVault = async (userAddress: string, key: string, userVaultId: number) => {
+const getUserVault = async (
+  userAddress: string,
+  key: string,
+  userVaultId: number,
+  holdingsVaultId: number
+) => {
   if (!userAddress) {
     console.info('No user address ');
     console.info(userAddress);
@@ -628,14 +633,22 @@ const getUserVault = async (userAddress: string, key: string, userVaultId: numbe
     return userVault;
   }
 
-  const u = await getBigMapByIdAndKey(userVaultId, key);
+  const ukey = await getBigMapByIdAndKey(userVaultId, key);
+  console.info(holdingsVaultId);
+  console.info(ukey);
+  const h = await getBigMapByIdAndKey(holdingsVaultId, ukey);
   console.info('userVault');
-  console.info(u);
-  console.info(userVaultId);
-  console.info(key);
+  console.info(h);
+  if (!h) {
+    const userVault: UserVault = {
+      shares: 0,
+      unclaimed: 0,
+    };
+    return userVault;
+  }
   const uv: UserVault = {
-    shares: 0,
-    unclaimed: 0,
+    shares: h.shares,
+    unclaimed: h.unclaimed,
   };
   return uv;
 };
@@ -644,14 +657,20 @@ export const getVaultFromBigMap = async (
   vaultId: number,
   token: any,
   userVaultId: number,
-  userAddress: string
+  userAddress: string,
+  holdingsVaultId: number
 ): Promise<MVault> => {
   const b = await getBigMapByIdAndKey(vaultId, token.name);
   const rtk = b.native_token;
   const scaleAmount = scaleAmountDown(rtk.amount, token.decimals);
   const key: string = `{"string":"${token.name}","address":"${userAddress}"}`;
   console.info(key);
-  const userVault = await getUserVault(userAddress, key, userVaultId);
+  const userVault = await getUserVault(
+    userAddress,
+    key,
+    userVaultId,
+    holdingsVaultId
+  );
   const globalVault: GlobalVault = {
     total_shares: b.total_shares,
     native: {
@@ -679,6 +698,10 @@ export const getMarketHoldings = async (
   const storage = await getStorageByAddress(marketMakerAddress);
   console.log('Vaults id', storage.vaults);
   console.log('MMStorage', storage);
+  const usrAddress = !userAddress
+    ? 'tz1WfhZiKXiy7zVMxBzMFrdaNJ5nhPM5W2Ef'
+    : userAddress;
+  console.log('usrAddress', usrAddress);
   return Promise.all(
     Object.values(storage.valid_tokens).map(
       async token =>
@@ -686,7 +709,8 @@ export const getMarketHoldings = async (
           storage.vaults,
           token,
           storage.user_holdings,
-          userAddress
+          usrAddress,
+          storage.vault_holdings
         )
     )
   );

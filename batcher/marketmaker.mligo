@@ -24,7 +24,6 @@ type batch = Types.batch
 type batch_set = Types.batch_set
 
 module Storage = struct
-
   type t = {
     metadata: metadata;
     valid_tokens : valid_tokens;
@@ -37,7 +36,6 @@ module Storage = struct
     user_holdings: user_holdings; 
     vault_holdings: vault_holdings;
   }
-
 end
 
 module MarketVaultUtils = struct
@@ -336,7 +334,8 @@ type entrypoint =
   | RemoveLiquidity of string
   | AddLiquidity of token_amount
   | Claim of string
-
+  | Change_admin_address of address
+  | Change_batcher_address of address
 
 (* Add Liquidity into a market vault *)
 [@inline]
@@ -365,6 +364,23 @@ let remove_liquidity
   let holder = Tezos.get_sender () in
   MarketVaultUtils.remove_liquidity_from_market_maker holder token_name storage
 
+[@inline]
+let change_admin_address
+    (new_admin_address: address)
+    (storage: Storage.t) : result =
+    let () = Utils.is_administrator storage.administrator in
+    let () = Utils.reject_if_tez_supplied () in
+    let storage = { storage with administrator = new_admin_address; } in
+    no_op storage
+
+[@inline]
+let change_batcher_address
+    (new_batcher_address: address)
+    (storage: Storage.t) : result =
+    let () = Utils.is_administrator storage.administrator in
+    let () = Utils.reject_if_tez_supplied () in
+    let storage = { storage with batcher = new_batcher_address; } in
+    no_op storage
 
 
 type vault_summary = (string, market_maker_vault) map
@@ -412,5 +428,8 @@ let main
    | AddLiquidity t ->  add_liquidity t storage
    | RemoveLiquidity tn ->  remove_liquidity tn storage
    | Claim tn -> claim tn storage
+  (* Admin endpoints *)
+   | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | Change_batcher_address new_batcher_address -> change_batcher_address new_batcher_address storage
 
 

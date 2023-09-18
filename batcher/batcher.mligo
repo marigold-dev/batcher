@@ -113,6 +113,7 @@ module Storage = struct
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address;
+    marketmaker : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
   }
@@ -347,19 +348,24 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens, fees, fee_in_mutez), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez) =
+  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez * bool) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
-                          let f = fees.to_send + fee_in_mutez in
-                          let uf = { fees with to_send = f; } in
-                          (tm, uf)
+                          if market_vault_used then
+                            let f = fees.to_market_maker + fee_in_mutez in
+                            let uf = { fees with to_market_maker = f; } in
+                            (tm, uf)
+                          else
+                            let f = fees.to_send + fee_in_mutez in
+                            let uf = { fees with to_send = f; } in
+                            (tm, uf)
                         else
                           let ta: token_amount = Utils.TokenAmount.recover ot amt c tokens in
                           let f = fees.to_refund + fee_in_mutez in
                           let uf = { fees with to_refund = f; } in
                           (Utils.TokenAmountMap.increase ta tam, uf)
   in
-  (c, u_tam, vols, tokens, u_fees, fee_in_mutez)
+  (c, u_tam, vols, tokens, u_fees, fee_in_mutez, market_vault_used)
 
 end
 
@@ -393,7 +399,7 @@ let collect_redemptions
     | None -> bots, tam, bts, tokens, fees, fee_in_mutez
     | Some batch -> (match get_clearing batch with
                       | None -> bots, tam, bts, tokens, fees, fee_in_mutez
-                      | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez)  in
+                      | Some c -> let _c, u_tam, _vols, _tokns, fs, _fim, _mvu = Map.fold Redemption_Utils.collect_order_payout_from_clearing otps (c, tam, batch.volumes, tokens, fees, fee_in_mutez, batch.market_vault_used)  in
                                   let batches = BatchHoldings_Utils.remove_batch_holding batch.batch_number batches in
                                   let bts = if BatchHoldings_Utils.can_batch_be_removed batch.batch_number batches then
                                               let batches = Big_map.remove batch.batch_number bts.batches in
@@ -450,6 +456,12 @@ let resolve_fees
     else
       token_ops
   in
+  let token_ops =
+    if fees.to_market_maker > 0mutez then
+      Utils.Treasury_Utils.transfer_fee fees.market_maker fees.to_market_maker :: token_ops
+    else
+      token_ops
+  in
   if fees.to_send > 0mutez then
     Utils.Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
   else
@@ -472,8 +484,10 @@ let redeem
       let fees = {
         to_send = 0mutez;
         to_refund = 0mutez;
+        to_market_maker = 0mutez;
         payer = redeem_address;
         recipient = storage.fee_recipient;
+        market_maker = storage.marketmaker;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
       let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
@@ -738,7 +752,7 @@ let make
     pair = pair;
     volumes = volumes;
     holdings = 0n;
-    market_vault_used = None;
+    market_vault_used = false;
   }
 
 [@inline]
@@ -1014,6 +1028,7 @@ type entrypoint =
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
+  | Change_marketmaker_address of address
   | Change_fee_recipient_address of address
   | Add_token_swap_pair of valid_swap
   | Remove_token_swap_pair of valid_swap
@@ -1241,6 +1256,12 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in
      let storage = { storage with batch_set = current_batch_set } in
      let current_batch_number = current_batch.batch_number in
+     let depositor = Tezos.get_sender () in
+     let current_batch = if depositor = storage.marketmaker then
+                            { current_batch with market_vault_used = true; }
+                         else
+                            current_batch
+     in
      let next_order_number = storage.last_order_number + 1n in
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
@@ -1354,6 +1375,16 @@ let change_admin_address
     let () = Utils.reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_admin_address storage.fee_recipient in
     let storage = { storage with administrator = new_admin_address; } in
+    no_op storage
+
+[@inline]
+let change_mm_address
+    (new_marketmaker_address: address)
+    (storage: storage) : result =
+    let () = Utils.is_administrator storage.administrator in
+    let () = Utils.reject_if_tez_supplied () in
+    let () = admin_and_fee_recipient_address_are_different new_marketmaker_address storage.fee_recipient in
+    let storage = { storage with marketmaker = new_marketmaker_address; } in
     no_op storage
 
 [@inline]
@@ -1474,6 +1505,7 @@ let get_current_batches_reduced ((), storage: unit * storage) : reduced_batch li
   let map_to_reduced (b: batch) : reduced_batch = {
                                                          status = b.status;
                                                          volumes = b.volumes;
+                                                         market_vault_used = b.market_vault_used;
                                                         }
   in
   List.map map_to_reduced current_batches
@@ -1491,6 +1523,7 @@ let main
   (* Admin endpoints *)
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
+   | Change_marketmaker_address new_mm_address -> change_mm_address new_mm_address storage
    | Change_fee_recipient_address new_fee_recipient_address -> change_fee_recipient_address new_fee_recipient_address storage
    | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
    | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
