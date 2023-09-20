@@ -34,14 +34,14 @@ const Footer = () => (
           <a
             href={`https://${
               process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
-                ? 'ghostnet.'
-                : ''
+                ? ''
+                : 'ghostnet.'
             }batcher.marigold.dev/`}
             target="_blank"
             rel="noreferrer">
             {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
-              ? 'Batcher Ghostnet'
-              : 'Batcher Mainnet'}
+              ? 'Batcher Mainnet'
+              : 'Batcher Ghostnet'}
           </a>
         </div>
         <div>
