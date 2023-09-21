@@ -1283,33 +1283,6 @@ let redeem
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
-[@inline]
-let convert_oracle_price
-  (precision: nat)
-  (swap: swap)
-  (lastupdated: timestamp)
-  (price: nat)
-  (tokens: valid_tokens): exchange_rate =
-  let prc,den : nat * int =  if swap.from.token.decimals > precision then
-                               let diff:int = swap.from.token.decimals - precision in
-                               let diff_pow = Utils.pow 10 diff in
-                               let adj_price = Utils.to_nat (price * diff_pow) in
-                               let denom  = Utils.pow 10 (int swap.from.token.decimals) in
-                               (adj_price, denom)
-                             else
-                               let denom = Utils.pow 10 (int precision) in
-                               (price, denom)
-  in
-  let rational_price = Rational.new (int prc) in
-  let rational_denom = Rational.new den in
-  let rational_rate: Rational.t = Rational.div rational_price rational_denom in
-  let swap_reduced: swap_reduced = Utils.swap_to_swap_reduced swap in
-  let rate = {
-   swap = swap_reduced;
-   rate = rational_rate;
-   when = lastupdated;
-  } in
-  Utils.scale_on_receive_for_token_precision_difference rate tokens
 
 [@inline]
 let change_oracle_price_source
@@ -1330,10 +1303,10 @@ let tick_price
   (valid_swap : valid_swap)
   (storage : storage) : storage =
   let valid_swap_reduced = Utils.valid_swap_to_valid_swap_reduced valid_swap in
-  let (lastupdated, price) = get_oracle_price Errors.unable_to_get_price_from_oracle valid_swap_reduced in
+  let (lastupdated, price) = Utils.get_oracle_price Errors.unable_to_get_price_from_oracle valid_swap_reduced in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
-  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
+  let oracle_rate = Utils.convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
   let rates_current = Utils.update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
   let storage = { storage with rates_current = rates_current; } in
   let pair = Utils.pair_of_rate oracle_rate in
@@ -1489,6 +1462,26 @@ let get_valid_swaps ((), storage : unit * storage) : valid_swaps = storage.valid
 
 [@view]
 let get_valid_tokens ((), storage : unit * storage) : valid_tokens = storage.valid_tokens
+
+[@view]
+let redeemable_holdings_available ((), storage : unit * storage) : bool = 
+  let sender = Tezos.get_sender () in
+  let find_non_zero_ordertype = fun (has,(_ot,v):bool * (ordertype * nat) ) -> has || v > 0n
+  in                              
+  let find_non_zero_holding = fun (has,(_bn,ots):bool * (nat * ordertypes) ) -> has || Map.fold find_non_zero_ordertype ots false
+  in
+  match Big_map.find_opt sender storage.user_batch_ordertypes with
+  | None -> false
+  | Some bots -> Map.fold find_non_zero_holding bots false
+
+(* Mapping order type to total amount of placed orders  *)
+type ordertypes = (ordertype, nat) map
+
+(* pairing of batch_id and ordertypes. *)
+type batch_ordertypes = (nat,  ordertypes) map
+
+(* Associated user address to a given set of batches and ordertypes  *)
+type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
 [@view]
 let get_current_batches ((),storage: unit * storage) : batch list=

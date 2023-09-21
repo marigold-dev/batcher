@@ -574,3 +574,65 @@ let transfer_fee (receiver : address) (amount : tez) : operation =
 
 end
 
+[@inline]
+let convert_oracle_price
+  (precision: nat)
+  (swap: swap)
+  (lastupdated: timestamp)
+  (price: nat)
+  (tokens: valid_tokens): exchange_rate =
+  let prc,den : nat * int =  if swap.from.token.decimals > precision then
+                               let diff:int = swap.from.token.decimals - precision in
+                               let diff_pow = pow 10 diff in
+                               let adj_price = to_nat (price * diff_pow) in
+                               let denom  = pow 10 (int swap.from.token.decimals) in
+                               (adj_price, denom)
+                             else
+                               let denom = pow 10 (int precision) in
+                               (price, denom)
+  in
+  let rational_price = Rational.new (int prc) in
+  let rational_denom = Rational.new den in
+  let rational_rate: Rational.t = Rational.div rational_price rational_denom in
+  let swap_reduced: swap_reduced = swap_to_swap_reduced swap in
+  let rate = {
+   swap = swap_reduced;
+   rate = rational_rate;
+   when = lastupdated;
+  } in
+  scale_on_receive_for_token_precision_difference rate tokens
+
+[@inline]
+let add_token_amounts
+  (base_token_amount: token_amount)
+  (to_add: token_amount) : token_amount =
+  if are_equivalent_tokens base_token_amount.token  to_add.token then
+    let new_amount = base_token_amount.amount + to_add.amount in
+    {base_token_amount with amount = new_amount;}
+  else
+    failwith Errors.token_already_exists_but_details_are_different
+
+[@inline]
+let subtract_token_amounts
+  (base_token_amount: token_amount)
+  (to_subtract: token_amount) : token_amount =
+  if are_equivalent_tokens base_token_amount.token  to_subtract.token then
+    let new_int_amount = base_token_amount.amount - to_subtract.amount in
+    if new_int_amount < 0 then failwith Errors.unable_to_reduce_token_amount_to_less_than_zero else
+    {base_token_amount with amount = abs (new_int_amount);}
+  else
+    failwith Errors.token_already_exists_but_details_are_different
+
+[@inline]
+let has_redeemable_holdings
+  (batcher: address) : bool =
+  match Tezos.call_view "redeemable_holdings_available" () batcher with
+  | None -> failwith Errors.unable_to_call_on_chain_view
+  | Some has -> has
+
+[@inline]
+let get_contract
+  (addr : address) =
+  match Tezos.get_contract_opt addr with
+    Some contract -> contract
+  | None -> failwith Errors.contract_does_not_exist

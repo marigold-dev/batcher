@@ -58,3 +58,6 @@
 [@inline] let incorrect_side_specified                                           = 156n
 [@inline] let entrypoint_does_not_exist                                          = 157n
 [@inline] let unable_to_get_reduced_batches_from_batcher                         = 158n
+[@inline] let unable_to_get_oracle_price                                         = 159n
+[@inline] let contract_does_not_exist                                            = 160n
+[@inline] let unable_to_call_on_chain_view                                       = 161n

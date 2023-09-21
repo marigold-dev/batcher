@@ -12,6 +12,8 @@ type market_maker_vault = Types.market_maker_vault
 type market_vaults = Types.market_vaults
 type market_vault_holding = Types.market_vault_holding
 type valid_swaps = Types.valid_swaps
+type valid_swap = Types.valid_swap
+type valid_swap_reduced = Types.valid_swap_reduced
 type valid_tokens = Types.valid_tokens
 type exchange_rate = Types.exchange_rate
 type user_holding_key = Types.user_holding_key
@@ -339,15 +341,61 @@ end
 
 module TickUtils = struct
 
+let exchange_amount
+  (native_amount_to_move: token_amount)
+  (foreign_amount_to_move:token_amount)
+  (native_token_amount:token_amount)
+  (foreign_token_amount:token_amount)
+  (opposing_vault_foreign_token_amount:token_amount)
+  (opposing_vault_native_token_amount:token_amount) : (token_amount * token_amount * token_amount * token_amount) =
+  let native_token_amount = Utils.add_token_amounts native_token_amount native_amount_to_move in 
+  let opposing_vault_native_token_amount = Utils.subtract_token_amounts opposing_vault_native_token_amount native_amount_to_move in
+  let foreign_token_amount =Utils.subtract_token_amounts foreign_token_amount foreign_amount_to_move in
+  let opposing_vault_foreign_token_amount = Utils.add_token_amounts opposing_vault_foreign_token_amount foreign_amount_to_move in
+  native_token_amount, foreign_token_amount, opposing_vault_foreign_token_amount, opposing_vault_native_token_amount
+
+let balance_token_amounts_with_rate
+  (native_token_amount:token_amount)
+  (foreign_token_amount:token_amount)
+  (opposing_vault_foreign_token_amount:token_amount)
+  (opposing_vault_native_token_amount:token_amount)
+  (vsr: valid_swap_reduced)
+  (valid_tokens:valid_tokens): (token_amount * token_amount * token_amount * token_amount) = 
+  (* Get oracle price for the pair *)
+  let (ts,pu) = Utils.get_oracle_price Errors.unable_to_get_oracle_price vsr in
+  let vs = Utils.valid_swap_reduced_to_valid_swap vsr 1n valid_tokens in
+  let rate = Utils.convert_oracle_price vsr.oracle_precision vs.swap ts pu valid_tokens in
+  (* Check if exchange direction is the same as that of the swap; i.e. if tzBTC/USDT has from as tzBTC and to as USDT *)
+  if vsr.swap.from = native_token_amount.token.name && vsr.swap.to = foreign_token_amount.token.name then
+    (* Create a Rational version of the  native token in the opposing vault i.e a rational version of the tzBTC held in the USDT vault   *)
+    let rat_opposing_vault_native_amount = Rational.new (int opposing_vault_native_token_amount.amount) in
+    (* Use the rate to create a foreign equivalent of the native token in the opposing vault  this is the tzBTC held in the USDT vault but converted into its USDT value for comparison *)
+    let opposite_native_equivalent = Rational.mul rate.rate rat_opposing_vault_native_amount in 
+    (* Create a Rational version of the  foreign token amount in the native vault i.e a rational version of the USDT held in the tzBTC vault   *)
+    let rat_foreign_token_amount = Rational.new (int foreign_token_amount.amount) in
+    (* We are comparing USDT equivalent of the tzBTC in the USDT vault with the USDT held in the tzBTC vault as a foreign token  *)
+    let rat_foreign_amount_to_move = if opposite_native_equivalent > rat_foreign_token_amount then rat_foreign_token_amount else opposite_native_equivalent in
+    let rat_native_amount_to_move = Rational.div rat_foreign_amount_to_move rate.rate in
+    let int_native_amount_to_move = Utils.get_rounded_number_lower_bound rat_native_amount_to_move in
+    let int_foreign_amount_to_move = Utils.get_rounded_number_lower_bound rat_foreign_amount_to_move in
+    let native_amount_to_move = { native_token_amount with amount = int_native_amount_to_move; } in
+    let foreign_amount_to_move = { foreign_token_amount with amount = int_foreign_amount_to_move; } in
+     exchange_amount native_amount_to_move foreign_amount_to_move native_token_amount foreign_token_amount opposing_vault_foreign_token_amount opposing_vault_native_token_amount
+  else
+    native_token_amount, foreign_token_amount, opposing_vault_foreign_token_amount, opposing_vault_native_token_amount
+
 
 let balance_token_amounts
   (native_token_amount:token_amount)
   (foreign_token_amount:token_amount)
   (opposing_vault_foreign_token_amount:token_amount)
   (opposing_vault_native_token_amount:token_amount)
-  (_valid_swaps: valid_swaps) : (token_amount * token_amount * token_amount * token_amount) = 
-  (native_token_amount, foreign_token_amount, opposing_vault_foreign_token_amount, opposing_vault_native_token_amount)
-
+  (valid_tokens: valid_tokens)
+  (valid_swaps: valid_swaps) : (token_amount * token_amount * token_amount * token_amount) = 
+  let pair_name = Utils.find_lexicographical_pair_name native_token_amount.token.name foreign_token_amount.token.name in
+  match Map.find_opt pair_name valid_swaps with
+  | None -> native_token_amount, foreign_token_amount, opposing_vault_foreign_token_amount, opposing_vault_native_token_amount
+  | Some vsr -> balance_token_amounts_with_rate native_token_amount foreign_token_amount opposing_vault_foreign_token_amount opposing_vault_native_token_amount vsr valid_tokens
 
 [@inline]
 let find_and_rebalance_foreign_vault
@@ -355,6 +403,7 @@ let find_and_rebalance_foreign_vault
   (foreign_token_vault: market_maker_vault)
   (foreign_token_amount: token_amount)
   (valid_swaps: valid_swaps)
+  (valid_tokens: valid_tokens)
   (market_vaults: market_vaults ) :  (market_maker_vault * market_vaults) =
   match Map.find_opt native_token_vault.native_token.token.name foreign_token_vault.foreign_tokens with
   | None -> (native_token_vault,market_vaults)
@@ -362,7 +411,7 @@ let find_and_rebalance_foreign_vault
   | Some ovnta -> let nta = native_token_vault.native_token in  (*This is the native token of the vault that needs to be balanced i.e. tzBTC *)
                   let fta = foreign_token_amount in  (* This is the foreign token in the vault that needs toe b balanced, i.e. USDT held as a foreign token in the tzBTC vault *)
                   let ovfta = foreign_token_vault.native_token in (* This is the foreign token in the foreign  vault (but native in that vault), i.e, USDT in the USDT vault *)
-                  let nta,fta,ovfta,ovnta = balance_token_amounts nta fta ovfta ovnta valid_swaps in  
+                  let nta,fta,ovfta,ovnta = balance_token_amounts nta fta ovfta ovnta valid_tokens valid_swaps in  
                   let updated_vault_foreign_tokens = Map.update fta.token.name (Some fta) native_token_vault.foreign_tokens in 
                   let updated_vault =  { native_token_vault with native_token = nta; foreign_tokens = updated_vault_foreign_tokens;} in 
                   let opposing_vault_foreign_tokens = Map.update ovnta.token.name (Some ovnta) foreign_token_vault.foreign_tokens in
@@ -377,11 +426,12 @@ let find_and_rebalance_foreign_vault
 let rebalance_vault
   (vault_to_balance: market_maker_vault)
   (valid_swaps: valid_swaps)
+  (valid_tokens: valid_tokens)
   (market_vaults: market_vaults ): market_vaults = 
   let rebalance = fun ((vtb,mvs),(foreign_token_name,foreign_token_amount):(market_maker_vault * market_vaults) * (string * token_amount)) ->
                   match  Big_map.find_opt foreign_token_name market_vaults with
                   | None ->  (vtb,mvs)
-                  | Some foreign_token_vault -> find_and_rebalance_foreign_vault vault_to_balance foreign_token_vault foreign_token_amount valid_swaps market_vaults
+                  | Some foreign_token_vault -> find_and_rebalance_foreign_vault vault_to_balance foreign_token_vault foreign_token_amount valid_swaps valid_tokens market_vaults
   in
   let (_,market_vaults) = Map.fold rebalance vault_to_balance.foreign_tokens (vault_to_balance,market_vaults) in
   market_vaults
@@ -390,24 +440,28 @@ let rebalance_vault
 
 [@inline]
 let rebalance_vaults
-  (valid_tokens: valid_tokens)
-  (_valid_swaps: valid_swaps)
   (storage: Storage.t): Storage.t = 
   let get_token_names = fun ((l,(tn,_t)):(string list * (string * token))) -> tn :: l in
-  let tokens = Map.fold get_token_names valid_tokens [] in 
+  let tokens = Map.fold get_token_names storage.valid_tokens [] in 
   let rebalance_vault = fun ((s,tn):(Storage.t * string)) -> 
                         match Big_map.find_opt tn s.vaults with
-                        | Some v -> let mvaults = rebalance_vault v s.valid_swaps s.vaults in 
+                        | Some v -> let mvaults = rebalance_vault v s.valid_swaps s.valid_tokens s.vaults in 
                                     {s with  vaults = mvaults; }
                         | None -> s
   in
   List.fold rebalance_vault tokens storage
 
 [@inline]
+let redeem_holdings
+  (storage: Storage.t): (operation option * Storage.t) =
+  let contract = Utils.get_contract (storage.batcher) in
+  let op = Tezos.transaction () 0mutez contract in
+  Some op,storage
+
+[@inline]
 let redeem
-  (_batcher:address) 
-  (_batches: reduced_batch list)
-  (storage: Storage.t): (operation option * Storage.t) = (None: operation option), storage
+  (storage: Storage.t): (operation option * Storage.t) =
+  if Utils.has_redeemable_holdings storage.batcher then redeem_holdings storage else None,storage
 
 [@inline]
 let deposit
@@ -488,10 +542,8 @@ let tick
     (storage: Storage.t) : result =
     let () = Utils.reject_if_tez_supplied () in
     let reduced_batches = get_reduced_batches Errors.unable_to_get_reduced_batches_from_batcher storage.batcher in
-    let valid_tokens = storage.valid_tokens in
-    let valid_swaps = storage.valid_swaps in
-    let storage = TickUtils.rebalance_vaults valid_tokens valid_swaps storage in
-    let (redeem_op_opt, storage) = TickUtils.redeem storage.batcher reduced_batches storage in
+    let storage = TickUtils.rebalance_vaults storage in
+    let (redeem_op_opt, storage) = TickUtils.redeem storage in
     let (deposit_ops, storage) = TickUtils.deposit storage.batcher reduced_batches storage in
     let ops = match redeem_op_opt with
               | Some op -> op :: deposit_ops
