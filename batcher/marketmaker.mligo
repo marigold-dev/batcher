@@ -339,11 +339,69 @@ end
 
 module TickUtils = struct
 
+
+let balance_token_amounts
+  (native_token_amount:token_amount)
+  (foreign_token_amount:token_amount)
+  (opposing_vault_foreign_token_amount:token_amount)
+  (opposing_vault_native_token_amount:token_amount)
+  (_valid_swaps: valid_swaps) : (token_amount * token_amount * token_amount * token_amount) = 
+  (native_token_amount, foreign_token_amount, opposing_vault_foreign_token_amount, opposing_vault_native_token_amount)
+
+
+[@inline]
+let find_and_rebalance_foreign_vault
+  (native_token_vault: market_maker_vault)
+  (foreign_token_vault: market_maker_vault)
+  (foreign_token_amount: token_amount)
+  (valid_swaps: valid_swaps)
+  (market_vaults: market_vaults ) :  (market_maker_vault * market_vaults) =
+  match Map.find_opt native_token_vault.native_token.token.name foreign_token_vault.foreign_tokens with
+  | None -> (native_token_vault,market_vaults)
+  (* This is the native toen held as a foreign token in the foreign token vault; i.e. tzBTC held in the foreign tokens of the USDT vault *)
+  | Some ovnta -> let nta = native_token_vault.native_token in  (*This is the native token of the vault that needs to be balanced i.e. tzBTC *)
+                  let fta = foreign_token_amount in  (* This is the foreign token in the vault that needs toe b balanced, i.e. USDT held as a foreign token in the tzBTC vault *)
+                  let ovfta = foreign_token_vault.native_token in (* This is the foreign token in the foreign  vault (but native in that vault), i.e, USDT in the USDT vault *)
+                  let nta,fta,ovfta,ovnta = balance_token_amounts nta fta ovfta ovnta valid_swaps in  
+                  let updated_vault_foreign_tokens = Map.update fta.token.name (Some fta) native_token_vault.foreign_tokens in 
+                  let updated_vault =  { native_token_vault with native_token = nta; foreign_tokens = updated_vault_foreign_tokens;} in 
+                  let opposing_vault_foreign_tokens = Map.update ovnta.token.name (Some ovnta) foreign_token_vault.foreign_tokens in
+                  let updated_foreign_vault = { foreign_token_vault with native_token = ovfta; foreign_tokens = opposing_vault_foreign_tokens;  } in
+                  let market_vaults  = Big_map.update updated_vault.native_token.token.name (Some updated_vault) market_vaults in
+                  let market_vaults  = Big_map.update updated_foreign_vault.native_token.token.name (Some updated_foreign_vault) market_vaults in
+                  (updated_vault, market_vaults)
+
+
+
+[@inline]
+let rebalance_vault
+  (vault_to_balance: market_maker_vault)
+  (valid_swaps: valid_swaps)
+  (market_vaults: market_vaults ): market_vaults = 
+  let rebalance = fun ((vtb,mvs),(foreign_token_name,foreign_token_amount):(market_maker_vault * market_vaults) * (string * token_amount)) ->
+                  match  Big_map.find_opt foreign_token_name market_vaults with
+                  | None ->  (vtb,mvs)
+                  | Some foreign_token_vault -> find_and_rebalance_foreign_vault vault_to_balance foreign_token_vault foreign_token_amount valid_swaps market_vaults
+  in
+  let (_,market_vaults) = Map.fold rebalance vault_to_balance.foreign_tokens (vault_to_balance,market_vaults) in
+  market_vaults
+
+
+
 [@inline]
 let rebalance_vaults
-  (_valid_tokens: valid_tokens)
+  (valid_tokens: valid_tokens)
   (_valid_swaps: valid_swaps)
-  (market_vaults: market_vaults): market_vaults = market_vaults
+  (storage: Storage.t): Storage.t = 
+  let get_token_names = fun ((l,(tn,_t)):(string list * (string * token))) -> tn :: l in
+  let tokens = Map.fold get_token_names valid_tokens [] in 
+  let rebalance_vault = fun ((s,tn):(Storage.t * string)) -> 
+                        match Big_map.find_opt tn s.vaults with
+                        | Some v -> let mvaults = rebalance_vault v s.valid_swaps s.vaults in 
+                                    {s with  vaults = mvaults; }
+                        | None -> s
+  in
+  List.fold rebalance_vault tokens storage
 
 [@inline]
 let redeem
@@ -432,10 +490,9 @@ let tick
     let reduced_batches = get_reduced_batches Errors.unable_to_get_reduced_batches_from_batcher storage.batcher in
     let valid_tokens = storage.valid_tokens in
     let valid_swaps = storage.valid_swaps in
-    let vaults = TickUtils.rebalance_vaults valid_tokens valid_swaps storage.vaults in
+    let storage = TickUtils.rebalance_vaults valid_tokens valid_swaps storage in
     let (redeem_op_opt, storage) = TickUtils.redeem storage.batcher reduced_batches storage in
     let (deposit_ops, storage) = TickUtils.deposit storage.batcher reduced_batches storage in
-    let storage = { storage with vaults = vaults;} in
     let ops = match redeem_op_opt with
               | Some op -> op :: deposit_ops
               | None -> deposit_ops
