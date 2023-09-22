@@ -25,6 +25,9 @@ type token_amount = Types.token_amount
 type ordertype = Types.ordertype
 type swap_order = Types.swap_order
 
+
+
+
 [@inline]
 let get_vault () : address = Tezos.get_self_address ()
 
@@ -631,8 +634,102 @@ let has_redeemable_holdings
   | Some has -> has
 
 [@inline]
-let get_contract
-  (addr : address) =
-  match Tezos.get_contract_opt addr with
-    Some contract -> contract
-  | None -> failwith Errors.contract_does_not_exist
+let get_entrypoint
+  (type a)
+  (entry: string)
+  (addr : address): a =
+  match Tezos.get_entrypoint_opt entry addr with
+  | Some ep -> ep
+  | None -> failwith Errors.entrypoint_does_not_exist
+
+[@inline]
+let has_token_standard
+  (token:token)
+  (standard: string): bool = 
+  match token.standard with
+  | None  -> false
+  | Some s  -> s = standard
+
+[@inline]
+let approve_fa2_token_transfer
+  (order: external_swap_order)
+  (batcher: address): operation list =
+  match order.swap.from.token.address with
+  | None  -> ([]:operation list)
+  | Some ta -> let contract = Tezos.get_self_address () in
+               let add_operator = get_entrypoint "%add_operator" ta in
+               let param = { 
+                  owner = contract; 
+                  operator = batcher; 
+                  token_id = order.swap.from.token.token_id; } in
+               let op = Tezos.transaction param 0mutez add_operator in
+               [ op ]
+
+[@inline]
+let approve_fa12_token_transfer
+  (order: external_swap_order)
+  (batcher:address): operation list =
+  match order.swap.from.token.address with
+  | None -> ([]: operation list)
+  | Some ta -> let approve = get_entrypoint "%approve" ta in
+               let param = { 
+                  spender = batcher;
+                  value = order.swap.from.amount; } in
+               let op = Tezos.transaction param 0mutez approve in
+               [ op ]
+
+[@inline]
+let approve_token_transfer
+  (order: external_swap_order)
+  (batcher:address): operation list = 
+  if has_token_standard order.swap.from.token Constants.fa12_token then
+    approve_fa12_token_transfer order batcher 
+  else if has_token_standard order.swap.from.token Constants.fa2_token then
+    approve_fa2_token_transfer order batcher 
+  else
+    failwith Errors.token_standard_not_found
+
+
+
+[@inline]
+let revoke_fa2_token_transfer
+  (order: external_swap_order)
+  (batcher: address): operation list =
+  match order.swap.from.token.address with
+  | None -> ([]:operation list)
+  | Some ta -> let contract = Tezos.get_self_address () in
+               let remove_operator = get_entrypoint "%remove_operator" ta in
+               let param = { 
+                  owner = contract; 
+                  operator = batcher; 
+                  token_id = order.swap.from.token.token_id; } in
+               [ Tezos.transaction param 0mutez remove_operator ]
+
+[@inline]
+let revoke_token_transfer
+  (order: external_swap_order)
+  (batcher:address): operation list =
+  if has_token_standard order.swap.from.token Constants.fa12_token then 
+    ([]:operation list)
+  else if has_token_standard order.swap.from.token Constants.fa2_token then 
+    revoke_fa2_token_transfer order batcher
+  else
+    failwith Errors.token_standard_not_found
+
+[@inline]
+let deposit_to_contract
+  (order: external_swap_order)
+  (batcher:address): operation list = 
+  let deposit = get_entrypoint "%deposit" batcher in
+  [ Tezos.transaction order 0mutez deposit ]
+
+[@inline]
+let execute_deposit
+  (order:external_swap_order)
+  (batcher: address): operation list = 
+  match order.swap.from.token.address with
+  | None -> failwith Errors.xtz_not_currently_supported
+  | Some ta -> let app = approve_token_transfer order batcher in
+               let _dep = deposit_to_contract order batcher in
+               let _rev = revoke_token_transfer order batcher in
+               app

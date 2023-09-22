@@ -454,8 +454,8 @@ let rebalance_vaults
 [@inline]
 let redeem_holdings
   (storage: Storage.t): (operation option * Storage.t) =
-  let contract = Utils.get_contract (storage.batcher) in
-  let op = Tezos.transaction () 0mutez contract in
+  let redeem = Utils.get_entrypoint "%redeem" storage.batcher in
+  let op = Tezos.transaction () 0mutez redeem in
   Some op,storage
 
 [@inline]
