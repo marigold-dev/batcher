@@ -454,7 +454,10 @@ let rebalance_vaults
 [@inline]
 let redeem_holdings
   (storage: Storage.t): (operation option * Storage.t) =
-  let redeem = Utils.get_entrypoint "%redeem" storage.batcher in
+  let redeem = match Tezos.get_entrypoint_opt "%redeem" storage.batcher with
+               | Some ep -> ep
+               | None -> failwith Errors.entrypoint_does_not_exist
+  in
   let op = Tezos.transaction () 0mutez redeem in
   Some op,storage
 
