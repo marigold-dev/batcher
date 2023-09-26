@@ -76,8 +76,8 @@ jobs:
           context: ./batcher-ui/
           push: ${{ github.ref == 'refs/heads/release-ghostnet-emergency' }}
           tags: |
-            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
-            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:staging
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
