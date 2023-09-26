@@ -17,6 +17,7 @@ const Footer = () => (
           <Image
             alt="Marigold Logo"
             src="/marigold-logo.png"
+            loader={({ src }) => src}
             height={32}
             width={32}
           />
