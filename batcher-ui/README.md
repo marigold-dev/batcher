@@ -1,6 +1,8 @@
-# Ant Design Pro
+# Batcher User Interface
 
-This project is initialized with [Ant Design Pro](https://pro.ant.design). Follow is the quick guide for how to use.
+
+This project is built with React ecosystem. Follow is the quick guide for how to use.
+
 
 ## Environment Prepare
 
@@ -10,48 +12,38 @@ Install `node_modules`:
 npm install
 ```
 
-or
+### Run project in development mode
+
+
+:warning: For now, Batcher in development runs onto Ghostnet Smart Contract.
+
+
+
+
+
+
+
 
 ```bash
-yarn
+npm run dev
+
 ```
 
-## Provided Scripts
+### Start project on GHOSTNET
 
-Ant Design Pro provides some useful script to help you quick start and build with web project, code style check and test.
-
-Scripts provided in `package.json`. It's safe to modify or add additional script:
-
-### Start project
 
 ```bash
-npm start
+npm run build:ghostnet && npm run start:ghostnet
+
 ```
 
-### Build project
+### Build project on MAINNET
+
+
+
 
 ```bash
-npm run build
+npm run build && npm start
+
 ```
 
-### Check code style
-
-```bash
-npm run lint
-```
-
-You can also use script to auto fix some lint error:
-
-```bash
-npm run lint:fix
-```
-
-### Test code
-
-```bash
-npm test
-```
-
-## More
-
-You can view full document on our [official website](https://pro.ant.design). And welcome any feedback in our [github](https://github.com/ant-design/ant-design-pro).
