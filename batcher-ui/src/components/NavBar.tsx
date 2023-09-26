@@ -33,6 +33,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
           <Image
             alt="Batcher Logo"
             src={'/batcher-logo.png'}
+            loader={({ src }) => src}
             height={32}
             width={64}
           />

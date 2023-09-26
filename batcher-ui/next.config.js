@@ -15,14 +15,14 @@ const nextConfig = {
 
     return config;
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'ipfs.io',
-      },
-    ],
-  },
+  // images: {
+  // remotePatterns: [
+  //   {
+  //     protocol: 'https',
+  //     hostname: 'ipfs.io',
+  //   },
+  // ],
+  // },
 };
 
 module.exports = nextConfig;
