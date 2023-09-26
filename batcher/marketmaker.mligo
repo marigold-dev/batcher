@@ -24,7 +24,7 @@ type metadata_update = Types.metadata_update
 type swap_order = Types.swap_order
 type batch = Types.batch
 type batch_set = Types.batch_set
-type reduced_batch = Types.reduced_batch
+type external_swap_order = Types.external_swap_order
 
 module Storage = struct
   type t = {
@@ -86,48 +86,6 @@ let create_liq_order
       redeemed = false;
    }
 
-(*
-let inject_buy_side_liquidity
-  (non: nat)
-  (last_rate:exchange_rate)
-  (sell_volume: nat)
-  (batch:batch)
-  (batch_set: batch_set)
-  (storage: Storage.t): batch * Storage.t =
-  let (buy_token,sell_token) = batch.pair in
-  match Big_map.find_opt buy_token storage.vaults with
-  | None -> batch,storage
-  | Some v ->  let liq_amount = find_liquidity_amount last_rate v.native_token.amount sell_volume in
-               let order = create_liq_order batch.batch_number non buy_token sell_token Buy liq_amount storage.valid_tokens in
-               Batch_Utils.update_storage_with_order order non batch.number batch batch_set storage
-
-let inject_sell_side_liquidity
-  (non: nat)
-  (last_rate:exchange_rate)
-  (buy_volume: nat)
-  (batch:batch)
-  (batch_set: batch_set)
-  (storage: Storage.t): batch * Storage.t =
-  let (buy_token, sell_token) = batch.pair in
-  let mm = storage.market_maker in
-  match Big_map.find_opt sell_token mm.vaults with
-  | None -> batch,storage
-  | Some v ->  let liq_amount = find_liquidity_amount last_rate v.native_token.amount buy_volume in
-               let order = create_liq_order batch.batch_number non sell_token buy_token Sell liq_amount storage.valid_tokens in
-               Batch_Utils.update_storage_with_order order non batch.number batch batch_set storage
-
-let inject_jit_liquidity
-  (last_rate:exchange_rate)
-  (batch:batch)
-  (next_order_number:nat)
-  (storage: Storage.t): batch * Storage.t =
-  let batch_set = storage.batch_set in
-  let buy_volume = batch.volumes.buy_total_volume in
-  let sell_volume = batch.volumes.sell_total_volume in
-  if (buy_volume > 0n) && (sell_volume = 0n) then inject_sell_side_liquidity next_order_number last_rate buy_volume batch batch_set storage else
-  if (buy_volume = 0n) && (sell_volume > 0n) then inject_buy_side_liquidity next_order_number last_rate sell_volume batch batch_set storage else
-  batch,storage 
-*)
 
 let create_or_update_market_vault_holding
   (id: nat)
@@ -467,10 +425,108 @@ let redeem
   if Utils.has_redeemable_holdings storage.batcher then redeem_holdings storage else None,storage
 
 [@inline]
+let construct_order
+  (side:side)
+  (from_token:token)
+  (to_token:token)
+  (amount:nat) : external_swap_order = 
+  let side_nat = Utils.side_to_nat side in
+  let tolerance = Utils.tolerance_to_nat Exact in 
+  let swap = {
+    from= {
+          token = from_token;
+          amount= amount
+          };
+    to = to_token;
+  } in
+  {
+  swap = swap;
+  created_at = Tezos.get_now ();
+  side = side_nat;
+  tolerance = tolerance;
+  }
+
+
+[@inline]
+let find_available_liquidity
+  (token:token)
+  (volume:nat)
+  (vaults:market_vaults): nat * market_vaults  =
+  match  Big_map.find_opt token.name vaults with
+  | None -> failwith Errors.no_market_vault_for_token
+  | Some v -> let nt = v.native_token in
+              let avail_liq = v.native_token.amount in
+              let liq = if volume < avail_liq then volume else avail_liq in
+              let nt = { nt with amount = abs(nt.amount - liq); } in
+              let v = { v with native_token = nt; } in
+              let uvs = Big_map.update token.name (Some v) vaults in
+              liq, uvs
+
+[@inline]
+let inject_buy_side_liq
+  (sell_side_volume:nat)
+  (batcher:address)
+  (batch:batch)
+  (storage:Storage.t) : (operation list * market_vaults) = 
+  let (buy_token,sell_token) = batch.pair in
+  let buy_token_opt = Map.find_opt buy_token storage.valid_tokens in
+  let sell_token_opt = Map.find_opt sell_token storage.valid_tokens in
+  match (buy_token_opt,sell_token_opt) with
+  | Some bt, Some st -> let liq,vaults = find_available_liquidity bt sell_side_volume storage.vaults in
+                        if liq = 0n then 
+                          ([],vaults) 
+                        else
+                          let order =  construct_order Buy bt st liq in
+                          let ops = Utils.execute_deposit order batcher in
+                          (ops, vaults)
+  | _, _ -> failwith Errors.token_name_not_in_list_of_valid_tokens
+  
+[@inline]
+let inject_sell_side_liq
+  (buy_side_volume:nat)
+  (batcher:address)
+  (batch:batch)
+  (storage:Storage.t) : (operation list * market_vaults) =
+  let (buy_token,sell_token) = batch.pair in
+  let buy_token_opt = Map.find_opt buy_token storage.valid_tokens in
+  let sell_token_opt = Map.find_opt sell_token storage.valid_tokens in
+  match (buy_token_opt,sell_token_opt) with
+  | Some bt, Some st -> let liq, vaults = find_available_liquidity st buy_side_volume storage.vaults in
+                        if liq = 0n then 
+                          ([],vaults) 
+                        else
+                          let order =  construct_order Sell st bt liq in
+                          let ops = Utils.execute_deposit order batcher in
+                          (ops, vaults)
+  | _, _ -> failwith Errors.token_name_not_in_list_of_valid_tokens
+
+[@inline]
+let inject_liquidity_if_required
+  (batcher:address)
+  (batch:batch)
+  (storage: Storage.t): (operation list * market_vaults) =
+  if batch.market_vault_used then ([], storage.vaults) else
+  let buy_vol_opt = if batch.volumes.sell_total_volume = 0n then None else Some batch.volumes.sell_total_volume in
+  let sell_vol_opt = if batch.volumes.buy_total_volume = 0n then None else Some batch.volumes.buy_total_volume in
+  match (buy_vol_opt, sell_vol_opt) with
+  | Some _,Some _ -> ([], storage.vaults)
+  | Some bv, None ->  inject_sell_side_liq bv batcher batch storage
+  | None, Some sv ->  inject_buy_side_liq sv batcher batch storage
+  | None, None -> ([], storage.vaults)
+
+
+[@inline]
 let deposit
-  (_batcher:address) 
-  (_batches: reduced_batch list)
-  (storage: Storage.t): (operation list * Storage.t) = ([]: operation list), storage
+  (batcher:address) 
+  (batches: batch list)
+  (storage: Storage.t): (operation list * Storage.t) =
+  let inject = fun ((ol,s),rb:((operation list* Storage.t) * batch)) -> 
+               let (iops,vaults) = inject_liquidity_if_required batcher rb s in 
+               let s = {s with vaults = vaults;  } in
+               (Utils.concatlo iops ol,s)  
+  in
+  let (deposit_ops,storage) = List.fold inject batches ([],storage) in
+  deposit_ops, storage
 
 end
 
@@ -533,21 +589,21 @@ let change_batcher_address
     no_op storage
 
 [@inline]
-let get_reduced_batches
+let get_batches
   (failure_code: nat)
-  (batcher: address) : reduced_batch list =
-  match Tezos.call_view "get_current_batches_reduced" () batcher with
-  | Some rbl -> rbl
+  (batcher: address) : batch list =
+  match Tezos.call_view "get_current_batches" () batcher with
+  | Some bl -> bl
   | None -> failwith failure_code
 
 [@inline]
 let tick
     (storage: Storage.t) : result =
     let () = Utils.reject_if_tez_supplied () in
-    let reduced_batches = get_reduced_batches Errors.unable_to_get_reduced_batches_from_batcher storage.batcher in
+    let batches = get_batches Errors.unable_to_get_batches_from_batcher storage.batcher in
     let storage = TickUtils.rebalance_vaults storage in
     let (redeem_op_opt, storage) = TickUtils.redeem storage in
-    let (deposit_ops, storage) = TickUtils.deposit storage.batcher reduced_batches storage in
+    let (deposit_ops, storage) = TickUtils.deposit storage.batcher batches storage in
     let ops = match redeem_op_opt with
               | Some op -> op :: deposit_ops
               | None -> deposit_ops
