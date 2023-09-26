@@ -5,10 +5,12 @@ on:
     branches:
       - 'release-ghostnet-staging'
       - 'release-ghostnet-beta'
+      - 'release-ghostnet-emergency'
   pull_request:
     branches:
       - 'release-ghostnet-staging'
       - 'release-ghostnet-beta'
+      - 'release-ghostnet-emergency'
     types:
       - closed
   workflow_dispatch:
@@ -65,3 +67,17 @@ jobs:
             ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-beta
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build and push ui version on release-ghostnet-emergency
+        if: github.ref == 'refs/heads/release-ghostnet-emergency'
+        uses: docker/build-push-action@v3
+        with:
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
+          context: ./batcher-ui/
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-emergency' }}
+          tags: |
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
