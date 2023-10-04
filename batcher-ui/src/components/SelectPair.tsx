@@ -90,6 +90,7 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
                         width={24}
                         height={24}
                         style={{ paddingRight: 4 }}
+                        unoptimized
                       />
                     )}
                     <p>{t.name}</p>

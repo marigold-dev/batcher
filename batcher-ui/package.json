@@ -8,13 +8,11 @@
     "prepare": "cd .. && husky install batcher-ui/.husky",
     "prettier": "prettier -c --write \"src/**/*\"",
     "tsc": "tsc --noEmit",
-    "dev": "ENV=staging next dev",
+    "dev": "ENV=ghostnet next dev",
     "build": "ENV=mainnet next build",
     "start": "ENV=mainnet next start -p 80",
     "start:ghostnet": "ENV=ghostnet next start -p 80",
     "build:ghostnet": "ENV=ghostnet next build",
-    "start:staging": "ENV=staging next start -p 80",
-    "build:staging": "ENV=staging next build",
     "lint": "next lint"
   },
   "lint-staged": {

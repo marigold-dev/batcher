@@ -24,8 +24,8 @@ const Copy = ({ children, value, disabled = false, text }: copyProps) => {
       text={isCopying ? 'Copied' : text ?? 'Copy'}
       disabled={disabled}
       visible={isCopying ? true : disabled ? false : undefined}>
-      <a
-        href="#"
+      <div
+        className="cursor-pointer"
         onClick={async () => {
           if (disabled) return;
 
@@ -39,7 +39,7 @@ const Copy = ({ children, value, disabled = false, text }: copyProps) => {
         }}
         data-name="copy">
         {children}
-      </a>
+      </div>
     </Tooltip>
   );
 };
