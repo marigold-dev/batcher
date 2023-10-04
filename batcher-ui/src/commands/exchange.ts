@@ -50,7 +50,7 @@ const fetchBatcherStatusCmd = (batchNumber: number) =>
     },
     {
       successActionCreator: updateBatcherStatus,
-      failActionCreator: () => newError('Fail to get batch status.'),
+      // failActionCreator: () => newError('Fail to get batch status.'),
     }
   );
 

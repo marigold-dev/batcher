@@ -36,6 +36,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
             loader={({ src }) => src}
             height={32}
             width={64}
+            unoptimized
           />
           <p>BATCHER</p>
           <div className="hidden md:flex md:ml-8 md:items-center">

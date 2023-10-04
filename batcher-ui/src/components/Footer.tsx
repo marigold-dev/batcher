@@ -20,6 +20,7 @@ const Footer = () => (
             loader={({ src }) => src}
             height={32}
             width={32}
+            unoptimized
           />
         </div>
 
@@ -34,13 +35,13 @@ const Footer = () => (
         <div>
           <a
             href={`https://${
-              process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
+              process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
                 ? ''
                 : 'ghostnet.'
             }batcher.marigold.dev/`}
             target="_blank"
             rel="noreferrer">
-            {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
+            {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
               ? 'Batcher Mainnet'
               : 'Batcher Ghostnet'}
           </a>
