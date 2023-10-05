@@ -51,6 +51,39 @@ let f(_:unit) : Batcher.Storage.t = {
         is_disabled_for_deposits = false
       }
     );
+    ("BTCtz/USDtz", {
+        swap = {
+            from =  "BTCtz";
+            to =  "USDtz";
+        };
+        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_asset_name = "BTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    );
+    ("tzBTC/USDtz", {
+        swap = {
+            from =  "tzBTC";
+            to =  "USDtz";
+        };
+        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_asset_name = "BTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    );
+    ("BTCtz/USDT", {
+        swap = {
+            from =  "BTCtz";
+            to =  "USDT";
+        };
+        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_asset_name = "BTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    );
     ("tzBTC/EURL", {
         swap = {
           from = "tzBTC";
