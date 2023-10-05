@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import Footer from '../src/components/Footer';
-import React, { useEffect, useState } from 'react';
-=======
 import React from 'react';
->>>>>>> release-ghostnet
 import { AppProps } from 'next/app';
 import { TezosToolkitProvider } from '../src/contexts/tezos-toolkit';
 import { WalletProvider } from '../src/contexts/wallet';

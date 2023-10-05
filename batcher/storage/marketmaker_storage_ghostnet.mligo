@@ -12,7 +12,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
     });
     (("BTCtz"), {
       token_id = 0n;
-      name = "tzBTC";
+      name = "BTCtz";
       address = Some(("KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe" : address));
       decimals = 8n;
       standard = Some "FA2 token"
@@ -109,7 +109,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
           address = Some(("KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS" : address));
           decimals = 8n;
           standard = Some "FA1.2 token"
-        }; 
+        };
         amount= 0n;
       };
       foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
@@ -124,7 +124,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
           address = Some(("KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe" : address));
           decimals = 8n;
           standard = Some "FA2 token"
-        }; 
+        };
         amount= 0n;
       };
       foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
@@ -139,7 +139,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
           address = Some(("KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS" : address));
           decimals = 6n;
           standard = Some "FA2 token"
-        }; 
+        };
         amount= 0n;
       };
       foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
@@ -154,7 +154,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
           address = Some(("KT1B8tP5Q8Cb7HctLfxt4MVk2cWouHFrnbjW" : address));
           decimals = 6n;
           standard = Some "FA1.2 token"
-        }; 
+        };
         amount= 0n;
       };
       foreign_tokens = (Map.empty: MarketMaker.token_amount_map);
@@ -169,7 +169,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
           address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
           decimals = 6n;
           standard = Some "FA2 token"
-        }; 
+        };
         amount= 0n;
       };
       foreign_tokens = (Map.empty: MarketMaker.token_amount_map);

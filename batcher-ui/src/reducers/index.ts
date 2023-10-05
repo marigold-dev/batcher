@@ -3,23 +3,15 @@ import exchangeReducer from './exchange';
 import walletReducer from './wallet';
 import {
   AppState,
-<<<<<<< HEAD
   ExchangeState,
   WalletState,
   MarketHoldingsState,
-} from '../types';
-import { eventReducer } from './events';
-import { holdingsReducer } from './holdings';
-import { marketHoldingsReducer } from './marketholdings';
-=======
   EventsState,
-  ExchangeState,
   HoldingsState,
-  WalletState,
 } from '../types';
+import { marketHoldingsReducer } from './marketholdings';
 import { eventReducer } from './events';
 import { holdingsReducer } from './holdings';
->>>>>>> release-ghostnet
 
 // Wallet selectors
 export const userAddressSelector = (state: AppState) => {
@@ -66,9 +58,9 @@ export const getHoldings = (state: AppState) => state.holdings;
 export const getMarketHoldingsState = (state: AppState) => state.marketHoldings;
 
 export const getCurrentUserVaultSelector = (state: AppState) =>
-  state.marketHoldings.userVaults.get(state.marketHoldings.currentVault);
+  state.marketHoldings.userVaults[state.marketHoldings.currentVault];
 export const getCurrentGlobalVaultSelector = (state: AppState) =>
-  state.marketHoldings.globalVaults.get(state.marketHoldings.currentVault);
+  state.marketHoldings.globalVaults[state.marketHoldings.currentVault];
 
 export const getCurrentVaultName = (state: AppState) =>
   state.marketHoldings.currentVault;

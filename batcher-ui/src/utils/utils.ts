@@ -18,6 +18,14 @@ import {
   TokenNames,
   SwapNames,
   RatesCurrentBigmap,
+  UserVault,
+  GlobalVault,
+  VaultToken,
+  BatcherMarketMakerStorage,
+  UserHoldingsBigMapItem,
+  VaultsBigMapItem,
+  VaultHoldingsBigMapItem,
+  ContractToken,
 } from '../types';
 import { NetworkType } from '@airgap/beacon-sdk';
 import { getByKey } from './local-storage';
@@ -213,7 +221,7 @@ export const getTokensMetadata = async () => {
       )
         .then(t => t.json())
         .then(([t]) =>
-          t.metadata.thumbnailUri
+          t?.metadata?.thumbnailUri
             ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
             : undefined
         );
@@ -669,8 +677,48 @@ export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
   );
 };
 
+export const getOrdersBook = async (userAddress: string) => {
+  const orderBookByBatch: { [key: number]: UserOrder[] } =
+    await getBigMapByIdAndUserAddress(userAddress);
+  return computeAllHoldings(orderBookByBatch);
+};
+
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
+
+// MARKET MAKER HOLDINGS
+
+const getMarketMakerStorage = (): Promise<BatcherMarketMakerStorage> => {
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH}/storage`
+  ).then(checkStatus);
+};
+
+const getUserVaultFromBigmap = (
+  bigmapId: number,
+  userKey: string
+): Promise<UserHoldingsBigMapItem> => {
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${userKey}`
+  ).then(checkStatus);
+};
+
+const getHoldingsVaultFromBigmap = (
+  bigmapId: number,
+  key: string
+): Promise<VaultHoldingsBigMapItem> => {
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${key}`
+  ).then(checkStatus);
+};
+const getVaultsFromBigmap = (
+  bigmapId: number,
+  tokenName: string
+): Promise<VaultsBigMapItem> => {
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${tokenName}`
+  ).then(checkStatus);
+};
 
 const getUserVault = async (
   userAddress: string,
@@ -678,9 +726,9 @@ const getUserVault = async (
   userVaultId: number,
   holdingsVaultId: number
 ) => {
+  console.warn('🚀 ~ file: utils.ts:730 ~ userAddress:', userAddress);
   if (!userAddress) {
-    console.info('No user address ');
-    console.info(userAddress);
+    console.error('No user address ');
     const userVault: UserVault = {
       shares: 0,
       unclaimed: 0,
@@ -688,13 +736,21 @@ const getUserVault = async (
     return userVault;
   }
 
-  const ukey = await getBigMapByIdAndKey(userVaultId, key);
-  console.info(holdingsVaultId);
-  console.info(ukey);
-  const h = await getBigMapByIdAndKey(holdingsVaultId, ukey);
-  console.info('userVault');
-  console.info(h);
-  if (!h) {
+  const userHoldings = await getUserVaultFromBigmap(userVaultId, key);
+  if (!userHoldings) {
+    console.error('No user vault ');
+    const userVault: UserVault = {
+      shares: 0,
+      unclaimed: 0,
+    };
+    return userVault;
+  }
+  const holdingsVault = await getHoldingsVaultFromBigmap(
+    holdingsVaultId,
+    userHoldings.value
+  );
+  if (!holdingsVault || !holdingsVault.active) {
+    console.error('No holding vault ');
     const userVault: UserVault = {
       shares: 0,
       unclaimed: 0,
@@ -702,81 +758,66 @@ const getUserVault = async (
     return userVault;
   }
   const uv: UserVault = {
-    shares: h.shares,
-    unclaimed: h.unclaimed,
+    shares: parseInt(holdingsVault.value.shares, 10),
+    unclaimed: parseInt(holdingsVault.value.unclaimed, 10),
   };
   return uv;
 };
 
-export const getVaultFromBigMap = async (
-  vaultId: number,
-  token: any,
-  userVaultId: number,
-  userAddress: string,
-  holdingsVaultId: number
-): Promise<MVault> => {
-  const b = await getBigMapByIdAndKey(vaultId, token.name);
-  const rtk = b.native_token;
-  const scaleAmount = scaleAmountDown(rtk.amount, token.decimals);
-  const key: string = `{"string":"${token.name}","address":"${userAddress}"}`;
-  console.info(key);
-  const userVault = await getUserVault(
-    userAddress,
-    key,
-    userVaultId,
-    holdingsVaultId
-  );
-  const globalVault: GlobalVault = {
-    total_shares: b.total_shares,
-    native: {
-      name: token.name,
-      id: token.token_id,
-      address: token.address,
-      decimals: token.decimals,
-      standard: token.standard,
-      amount: scaleAmount,
-    },
-    foreign: new Map<string, VaultToken>(),
-  };
-  const mvault = {
-    global: globalVault,
-    user: userVault,
-  };
 
-  return mvault;
-};
-
-export const getMarketHoldings = async (
-  marketMakerAddress: string,
-  userAddress: string
-) => {
-  const storage = await getStorageByAddress(marketMakerAddress);
-  console.log('Vaults id', storage.vaults);
-  console.log('MMStorage', storage);
-  const usrAddress = !userAddress
-    ? 'tz1WfhZiKXiy7zVMxBzMFrdaNJ5nhPM5W2Ef'
-    : userAddress;
-  console.log('usrAddress', usrAddress);
-  return Promise.all(
-    Object.values(storage.valid_tokens).map(async (token: Token) => {
-      console.log('🚀 ~ file: utils.ts:717 ~ Object.values ~ token:', token);
+export const getMarketHoldings = async (userAddress: string) => {
+  const storage = await getMarketMakerStorage();
+  const userVaults = await Promise.all(
+    Object.keys(storage.valid_tokens).map(async token => {
+      const userVaultKey: string = `{"string":"${token}","address":"${userAddress}"}`;
+      const userVault = await getUserVault(
+        userAddress,
+        userVaultKey,
+        storage.user_holdings,
+        storage.vault_holdings
+      );
       return {
-        [token.name]: await getVaultFromBigMap(
-          storage.vaults,
-          token,
-          storage.user_holdings,
-          usrAddress,
-          storage.vault_holdings
-        ),
+        [token]: userVault,
       };
     })
   );
-};
-export const getMVault = (vault: MVault | undefined) => {
-  return !vault ? initialMVault : vault;
-};
-export const getOrdersBook = async (userAddress: string) => {
-  const orderBookByBatch: { [key: number]: UserOrder[] } =
-    await getBigMapByIdAndUserAddress(userAddress);
-  return computeAllHoldings(orderBookByBatch);
+
+  const y = userVaults.reduce((acc, v) => {
+    const name = Object.keys(v)[0];
+    return { ...acc, [name]: v[name] };
+  }, {});
+
+  const globalVaults = await Promise.all(
+    Object.keys(storage.valid_tokens).map(async token => {
+      const t = storage.valid_tokens[token] as ContractToken & {
+        token_id: number;
+      };
+      const b = await getVaultsFromBigmap(storage.vaults, token);
+      const rtk = b.value.native_token;
+
+      const scaleAmount = scaleAmountDown(
+        parseInt(rtk.amount, 10),
+        parseInt(t.decimals, 10)
+      );
+      const globalVault: GlobalVault = {
+        total_shares: parseInt(b.value.total_shares, 10),
+        native: {
+          name: t.name,
+          id: t.token_id,
+          address: t.address,
+          decimals: parseInt(t.decimals, 10),
+          standard: t.standard,
+          amount: scaleAmount,
+        },
+        foreign: new Map<string, VaultToken>(),
+      };
+      return { [token]: globalVault };
+    })
+  );
+
+  const x = globalVaults.reduce((acc, v) => {
+    const name = Object.keys(v)[0];
+    return { ...acc, [name]: v[name] };
+  }, {});
+  return { globalVaults: x, userVaults: y };
 };

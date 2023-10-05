@@ -15,11 +15,13 @@ export const claimRewards = () =>
     type: 'CLAIMREWARDS',
   }) as const;
 
-export const updateMarketHoldings = (vaults: MarketHoldingsState) =>
+export const updateMarketHoldings = (
+  vaults: Partial<Omit<MarketHoldingsState, 'currentVault'>>
+) =>
   ({
     type: 'UPDATE_MARKET_HOLDINGS',
     payload: { vaults },
-  }) as const;
+  } as const);
 
 export const getMarketHoldings = (
   contractAddress: string,

@@ -14,7 +14,7 @@ let f(_:unit) : Batcher.Storage.t = {
     });
     (("BTCtz"), {
       token_id = 0n;
-      name = "tzBTC";
+      name = "BTCtz";
       address = Some(("KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe" : address));
       decimals = 8n;
       standard = Some "FA2 token"
