@@ -10,6 +10,13 @@ let f(_:unit) : Batcher.Storage.t = {
       decimals = 8n;
       standard = Some "FA1.2 token"
     });
+    (("BTCtz"), {
+      token_id = 0n;
+      name = "tzBTC";
+      address = Some(("KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe" : address));
+      decimals = 8n;
+      standard = Some "FA2 token"
+    });
     (("EURL"),{
       token_id = 0n;
       name = "EURL";
@@ -23,6 +30,13 @@ let f(_:unit) : Batcher.Storage.t = {
       address = Some(("KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR" : address));
       decimals = 6n;
       standard = Some "FA2 token"
+    });
+    (("USDtz"),{
+      token_id = 0n;
+      name = "USDtz";
+      address = Some(("KT1B8tP5Q8Cb7HctLfxt4MVk2cWouHFrnbjW" : address));
+      decimals = 6n;
+      standard = Some "FA1.2 token"
     })
   ];
   valid_swaps = Map.literal [
