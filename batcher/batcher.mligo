@@ -1486,15 +1486,6 @@ let redeemable_holdings_available ((), storage : unit * storage) : bool =
   | None -> false
   | Some bots -> Map.fold find_non_zero_holding bots false
 
-(* Mapping order type to total amount of placed orders  *)
-type ordertypes = (ordertype, nat) map
-
-(* pairing of batch_id and ordertypes. *)
-type batch_ordertypes = (nat,  ordertypes) map
-
-(* Associated user address to a given set of batches and ordertypes  *)
-type user_batch_ordertypes = (address, batch_ordertypes) big_map
-
 [@view]
 let get_current_batches ((),storage: unit * storage) : batch list=
   let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
@@ -1503,17 +1494,6 @@ let get_current_batches ((),storage: unit * storage) : batch list=
      | Some b -> b :: acc
     in
     Map.fold collect_batches storage.batch_set.current_batch_indices []
-
-[@view]
-let get_current_batches_reduced ((), storage: unit * storage) : reduced_batch list =
-  let current_batches: batch list = get_current_batches ((),storage) in
-  let map_to_reduced (b: batch) : reduced_batch = {
-                                                         status = b.status;
-                                                         volumes = b.volumes;
-                                                         market_vault_used = b.market_vault_used;
-                                                        }
-  in
-  List.map map_to_reduced current_batches
 
 
 let main

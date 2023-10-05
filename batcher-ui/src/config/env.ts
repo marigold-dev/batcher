@@ -6,9 +6,9 @@ module.exports = {
       'https://storage.googleapis.com/marigold-public-bucket/batcher-logo.png',
     NEXT_PUBLIC_TEZOS_NODE_URI: 'https://ghostnet.tezos.marigold.dev/',
     NEXT_PUBLIC_TZKT_URI_API: 'https://api.ghostnet.tzkt.io',
-    NEXT_PUBLIC_BATCHER_CONTRACT_HASH: 'KT1UPMR3WkoFRJYmBBbvv4Z9bBhKYuhCx7Cq',
+    NEXT_PUBLIC_BATCHER_CONTRACT_HASH: 'KT1LhTpwSGcFAUUM3JYjW8XW74UHP82YzERy',
     NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH:
-      'KT1TNX1YLCmPJN4rbwAUsUAdnqVYrZ5X5YNB',
+      'KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT',
     NEXT_PUBLIC_LOCAL_STORAGE_KEY_STATE: 'batcher-state',
     NEXT_PUBLIC_GA_TRACKING_ID: 'G-2K59PEELC8',
   },

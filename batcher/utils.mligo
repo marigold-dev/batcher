@@ -25,9 +25,6 @@ type token_amount = Types.token_amount
 type ordertype = Types.ordertype
 type swap_order = Types.swap_order
 
-
-
-
 [@inline]
 let get_vault () : address = Tezos.get_self_address ()
 
@@ -195,12 +192,26 @@ let get_clearing_price (exchange_rate : exchange_rate) (buy_side : buy_side) (se
   }
 
 [@inline]
+let side_to_nat
+  (side:Types.side): nat =
+  match side with
+  | Buy -> 0n
+  | Sell -> 1n
+
+[@inline]
 let nat_to_side
 (order_side : nat) : side =
   if order_side = 0n then Buy
   else
     if order_side = 1n then Sell
     else failwith Errors.unable_to_parse_side_from_external_order
+
+[@inline]
+let tolerance_to_nat (tolerance:tolerance) : nat = 
+  match tolerance with
+  | Minus -> 0n
+  | Exact -> 1n
+  | Plus-> 2n
 
 [@inline]
 let nat_to_tolerance (tolerance : nat) : tolerance =
@@ -254,13 +265,19 @@ let get_highest_batch_index
   in
   Map.fold return_highest batch_indices 0n
 
+(** [rev list] should return the same list reversed. *)
+let rev1 (type a) (list: a list) : a list =
+  List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
+
 (** [concat a b] concat [a] and [b]. *)
 let concat1 (type a) (left: a list) (right: a list) : a list =
   List.fold_right (fun (x, xs: a * a list) -> x :: xs) left right
 
-(** [rev list] should return the same list reversed. *)
-let rev1 (type a) (list: a list) : a list =
-  List.fold_left (fun (xs, x : a list * a) -> x :: xs) ([] : a list) list
+(** concat two list but preserve order *)
+let concatlo (type a) (left: a list) (right: a list) : a list =
+  let right_rev = rev1 right in
+  let to_rev = List.fold_right (fun (x, xs: a * a list) -> x :: xs) left right_rev in
+  rev1 to_rev
 
 [@inline]
 let update_if_more_recent
