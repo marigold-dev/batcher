@@ -144,6 +144,7 @@ export type MarketMakerStorage = {
   user_holdings: UserHoldings;
   vault_holdings: VaultHoldings;
 };
+
 export type BatcherStorage = {
   metadata: number; //! ID of metadata bigmap
   valid_tokens: Record<TokenNames, ContractToken>;
@@ -257,3 +258,4 @@ export type VaultsBigMapItem = {
     holdings: Array<string>; // Array<number>
   }; // number
 };
+
