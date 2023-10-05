@@ -2,7 +2,11 @@ import React, { useCallback, useContext, useEffect } from 'react';
 import { TezosToolkitContext } from 'src/contexts/tezos-toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import { getHoldings, userAddressSelector } from 'src/reducers';
-import { getHoldings as getHoldingsAction } from 'src/actions';
+import {
+  getHoldings as getHoldingsAction,
+  newError,
+  newInfo,
+} from 'src/actions';
 
 const Holdings = () => {
   const { tezos } = useContext(TezosToolkitContext);
@@ -35,19 +39,20 @@ const Holdings = () => {
 
       if (redeemTransaction) {
         //?useless
+        dispatch(newInfo('Attempting to redeem holdings...'));
         // message.loading('Attempting to redeem holdings...', 0);
         const confirm = await redeemTransaction.confirmation();
-        if (!confirm.completed) {
-          console.error('Failed to redeem holdings' + confirm);
+        if (!confirm || !confirm.completed) {
+          dispatch(newError('Failed to redeem holdings.'));
         } else {
-          // setOpenHoldings(new Map<string, number>());
-          // setClearedHoldings(new Map<string, number>());
-          console.info('Successfully redeemed holdings');
+          dispatch(newInfo('Successfully redeemed holdings.'));
         }
       } else {
+        dispatch(newError('Failed to redeem tokens.'));
         throw new Error('Failed to redeem tokens');
       }
-    } catch (error: any) {
+    } catch (error) {
+      dispatch(newError('Unable to redeem holdings.'));
       console.error('Unable to redeem holdings' + error);
     }
   };
@@ -72,7 +77,7 @@ const Holdings = () => {
             {Object.values(open).map((b, i) => {
               return (
                 <td
-                  className="border border-white p-2 text-center bg-lightgray"
+                  className="border border-white p-2 text-center bg-lightgray w-[33%]"
                   key={i}>
                   {b}
                 </td>
@@ -101,7 +106,7 @@ const Holdings = () => {
             {Object.values(cleared).map((b, i) => {
               return (
                 <td
-                  className="border border-white p-2 text-center bg-lightgray"
+                  className="border border-white p-2 text-center bg-lightgray w-[33%]"
                   key={i}>
                   {b}
                 </td>
@@ -113,7 +118,7 @@ const Holdings = () => {
       <>
         {hasClearedHoldings() && (
           <button
-            className="text-white bg-primary rounded py-2 px-4 m-2 hidden md:flex hover:bg-red-500"
+            className="text-white bg-primary rounded py-2 px-4 m-2 md:flex hover:bg-red-500"
             type="button"
             onClick={redeem}>
             Redeem

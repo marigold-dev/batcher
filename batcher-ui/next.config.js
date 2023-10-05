@@ -11,10 +11,17 @@ const nextConfig = {
   swcMinify: true,
   env: config[env],
   webpack: (config, { isServer, webpack }) => {
-    console.log(isServer);
     if (!isServer) config.resolve.fallback['fs'] = false;
 
     return config;
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ipfs.io',
+      },
+    ],
   },
 };
 

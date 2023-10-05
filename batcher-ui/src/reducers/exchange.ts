@@ -1,11 +1,11 @@
 import { Cmd, loop } from 'redux-loop';
 import {
   ExchangeActions,
-  getBatcherStatus,
+  batcherUnsetup,
   getCurrentBatchNumber,
   getOraclePrice,
   getPairsInfos,
-  getVolumes,
+  newError,
 } from '../../src/actions';
 import {
   BatcherStatus,
@@ -18,7 +18,7 @@ import {
   fetchCurrentBatchNumberCmd,
   fetchPairInfosCmd,
   fetchVolumesCmd,
-  getOraclePriceCmd,
+  fetchOraclePriceCmd,
   setupBatcherCmd,
 } from '../../src/commands/exchange';
 import { getTimeDifference } from 'src/utils/utils';
@@ -27,7 +27,7 @@ const initialSwap: CurrentSwap = {
   swap: {
     from: {
       token: {
-        token_id: 0,
+        tokenId: 0,
         name: 'tzBTC',
         address: undefined,
         decimals: 0,
@@ -36,7 +36,7 @@ const initialSwap: CurrentSwap = {
       amount: 0,
     },
     to: {
-      token_id: 0,
+      tokenId: 0,
       name: 'USDT',
       address: undefined,
       decimals: 0,
@@ -78,11 +78,17 @@ const exchangeReducer = (
   if (!state) return initialState;
   switch (action.type) {
     case 'BATCHER_SETUP':
-      return loop(state, setupBatcherCmd(state.swapPairName));
+      return loop(
+        state,
+        setupBatcherCmd(
+          state.batcherStatus.startTime,
+          state.batcherStatus.status
+        )
+      );
     case 'BATCHER_TIMER_ID':
       return { ...state, batcherTimerId: action.payload.timerId };
     case 'BATCHER_UNSETUP':
-      return loop(state, Cmd.clearInterval(state.batcherTimerId));
+      return loop(state, Cmd.clearTimeout(state.batcherTimerId));
     case 'CHANGE_PAIR':
       return loop(
         {
@@ -111,17 +117,20 @@ const exchangeReducer = (
               from: {
                 token: {
                   ...action.payload.currentSwap.swap.from.token,
-                  token_id: 0,
+                  tokenId: 0,
                 },
               },
               to: {
                 ...action.payload.currentSwap.swap.to,
-                token_id: 0,
+                tokenId: 0,
               },
             },
           },
         },
-        Cmd.list([Cmd.action(getCurrentBatchNumber())])
+        Cmd.list([
+          Cmd.action(getOraclePrice()),
+          Cmd.action(getCurrentBatchNumber()),
+        ])
       );
     }
     case 'UDPATE_PRICE_STATEGY':
@@ -142,15 +151,31 @@ const exchangeReducer = (
     case 'UDPATE_BATCHER_STATUS': {
       const startTime =
         action.payload.startTime || state.batcherStatus.startTime;
+      return loop(
+        {
+          ...state,
+          batcherStatus: {
+            ...action.payload,
+            startTime,
+            remainingTime: getTimeDifference(action.payload.status, startTime),
+          },
+        },
+        action.payload.status === BatcherStatus.CLOSED
+          ? Cmd.action(batcherUnsetup())
+          : Cmd.none
+      );
+    }
+    case 'UPDATE_REMAINING_TIME':
       return {
         ...state,
         batcherStatus: {
-          ...action.payload,
-          startTime,
-          remainingTime: getTimeDifference(action.payload.status, startTime),
+          ...state.batcherStatus,
+          remainingTime: getTimeDifference(
+            state.batcherStatus.status,
+            state.batcherStatus.startTime
+          ),
         },
       };
-    }
     case 'GET_CURRENT_BATCHER_NUMBER':
       return loop(state, fetchCurrentBatchNumberCmd(state.swapPairName));
     case 'UDPATE_BATCH_NUMBER':
@@ -158,31 +183,34 @@ const exchangeReducer = (
         {
           ...state,
           batchNumber: action.payload.batchNumber,
-          batcherStatus: !action.payload.batchNumber && {
-            status: BatcherStatus.NONE,
-            remainingTime: 0,
-            startTime: null,
-          },
         },
-        action.payload.batchNumber
-          ? Cmd.list([
-              Cmd.action(getBatcherStatus()),
-              Cmd.action(getVolumes()),
-              Cmd.action(getOraclePrice()),
-            ])
-          : Cmd.none
+        fetchBatcherStatusCmd(action.payload.batchNumber)
       );
     case 'GET_ORACLE_PRICE':
       return loop(
         state,
-        getOraclePriceCmd(state.swapPairName, state.currentSwap)
+        fetchOraclePriceCmd(state.swapPairName, state.currentSwap)
       );
     case 'UPDATE_ORACLE_PRICE':
       return { ...state, oraclePrice: action.payload.oraclePrice };
     case 'GET_VOLUMES':
-      return loop(state, fetchVolumesCmd(state.batchNumber, state.currentSwap));
+      return loop(state, fetchVolumesCmd(state.batchNumber));
     case 'UPDATE_VOLUMES':
       return { ...state, volumes: action.payload.volumes };
+    case 'NO_BATCH_ERROR':
+      return loop(
+        {
+          ...state,
+          batcherStatus: {
+            status: BatcherStatus.NONE,
+            at: null,
+            startTime: null,
+            remainingTime: 0,
+          },
+          batchNumber: 0,
+        },
+        Cmd.action(newError('No batch open for this pair.'))
+      );
     default:
       return state;
   }

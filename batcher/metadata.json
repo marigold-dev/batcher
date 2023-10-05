@@ -1,19 +1,15 @@
 {
   "name": "Batcher",
-  "authors": [
-    "Marigold.dev"
-  ],
+  "authors": ["Marigold.dev"],
   "homepage": "https://marigold.dev/batcher",
   "description": "Batcher - Batch Clearing DEX",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": {
     "name": "MIT",
     "details": "https://github.com/marigold-dev/batcher/blob/main/LICENSE"
   },
   "source": {
-    "tools": [
-      "cameligo"
-    ],
+    "tools": ["cameligo"],
     "location": "https://github.com/marigold-dev/batcher/"
   },
   "errors": [
@@ -319,6 +315,22 @@
       },
       "expansion": {
         "string": "cannot remove swap pair that is not disabled"
+      }
+    },
+    {
+      "error": {
+        "nat": "138"
+      },
+      "expansion": {
+        "string": "incorrect side specified"
+      }
+    },
+    {
+      "error": {
+        "nat": "139"
+      },
+      "expansion": {
+        "string": "token name not in list of valid tokens"
       }
     }
   ]

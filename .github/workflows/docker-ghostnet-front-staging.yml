@@ -1,20 +1,20 @@
-name: Docker ghostnet
+name: Docker ghostnet front staging
 
 on:
   push:
     branches:
-      - 'release-ghostnet'
+      - 'release-ghostnet-staging'
+      - 'release-ghostnet-beta'
   pull_request:
     branches:
-      - 'release-ghostnet'
+      - 'release-ghostnet-staging'
+      - 'release-ghostnet-beta'
     types:
       - closed
   workflow_dispatch:
 
 jobs:
   ui:
-    # Only run this job if it's a direct push or a *merged* pull request
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     strategy:
       matrix:
         network: [ghostnet]
@@ -40,26 +40,28 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push release version of ui
+      - name: Build and push ui version release-ghostnet-staging
+        if: github.ref == 'refs/heads/release-ghostnet-staging'
         uses: docker/build-push-action@v3
         with:
           file: ./batcher-ui/Dockerfile.${{ matrix.network }}
           context: ./batcher-ui/
-          push: true
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-staging' }}
           tags: |
-            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:stable
-            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:staging
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push release version of notification bot
+      - name: Build and push ui version on release-ghostnet-beta
+        if: github.ref == 'refs/heads/release-ghostnet-beta'
         uses: docker/build-push-action@v3
         with:
-          file: ./batcher-bot/notifications/Dockerfile.bot.notifications.${{ matrix.network }}
-          context: ./batcher-bot/notifications
-          push: true
+          file: ./batcher-ui/Dockerfile.${{ matrix.network }}
+          context: ./batcher-ui/
+          push: ${{ github.ref == 'refs/heads/release-ghostnet-beta' }}
           tags: |
-            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:stable
-            ghcr.io/marigold-dev/batcher-bot-notifs-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:beta
+            ghcr.io/marigold-dev/batcher-${{ matrix.network }}:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-beta
           cache-from: type=gha
           cache-to: type=gha,mode=max

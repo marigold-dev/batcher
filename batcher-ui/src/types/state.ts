@@ -1,4 +1,12 @@
-import { BatcherStatus, PriceStrategy, Token } from './contract';
+import { BatcherStatus, PriceStrategy, SwapNames } from './contract';
+
+type Token = {
+  address: string | undefined;
+  name: string;
+  decimals: number;
+  standard: 'FA1.2 token' | 'FA2 token' | undefined;
+  tokenId: 0;
+};
 
 export type CurrentSwap = {
   swap: {
@@ -26,7 +34,7 @@ export type ExchangeState = {
     remainingTime: number;
   };
   batcherTimerId: number;
-  swapPairName: string;
+  swapPairName: SwapNames;
   batchNumber: number;
   oraclePrice: number;
   volumes: VolumesState;
@@ -73,14 +81,20 @@ export type MarketHoldingsState = {
   userVaults: Map<string, UserVault>;
   // current_vault: MVault;
   currentVault: string; // token name (EURL, USDT, tzBTC)
+}
+
+export type EventsState = {
+  toast: {
+    isToastOpen: boolean;
+    toastDescription: string;
+    type: 'info' | 'error';
+  };
 };
 
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
-  event: {};
-  holdings: HoldingsState;
   marketHoldings: MarketHoldingsState;
+  events: EventsState;
+  holdings: HoldingsState;
 };
-
-

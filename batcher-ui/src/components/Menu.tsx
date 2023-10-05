@@ -12,8 +12,7 @@ const Menu = ({ setIsMenuOpen }: MenuProps) => {
 
   return (
     <div
-      className={`w-full text-left border-b-4 border-lightgray border-solid`}
-    >
+      className={`w-full text-left border-b-4 border-lightgray border-solid`}>
       <button
         type="button"
         className="text-white bg-primary rounded py-2 px-4 m-2"
@@ -22,8 +21,7 @@ const Menu = ({ setIsMenuOpen }: MenuProps) => {
           userAddress
             ? walletCtx.disconnectWallet()
             : walletCtx.connectWallet();
-        }}
-      >
+        }}>
         {userAddress ? 'Disconnect Wallet' : 'Connect Wallet'}
       </button>
       <LinkComponent
@@ -39,11 +37,6 @@ const Menu = ({ setIsMenuOpen }: MenuProps) => {
       <LinkComponent
         path="/holdings"
         title={'Redeem Holdings'}
-        onClick={() => setIsMenuOpen(false)}
-      />
-      <LinkComponent
-        path="/marketmaker"
-        title={'Market Maker'}
         onClick={() => setIsMenuOpen(false)}
       />
       <LinkComponent
