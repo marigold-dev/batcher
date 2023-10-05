@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
 import { getFees, scaleAmountUp } from '../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
@@ -15,7 +15,7 @@ import {
 } from '../reducers';
 import { BatcherStatus, PriceStrategy } from '../types';
 import { useDispatch } from 'react-redux';
-import { fetchUserBalances, reverseSwap } from '../actions';
+import { fetchUserBalances, newError, newInfo, reverseSwap } from '../actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -35,59 +35,60 @@ const Exchange = () => {
   const dispatch = useDispatch();
 
   const [amountInput, setAmount] = useState<string>('0');
-  const [fees, setFees] = useState(0);
   const [animate, setAnimate] = useState(false);
 
-  //TODO: rewrite with redux-loop
-  useEffect(() => {
-    getFees(process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH || '').then(f =>
-      setFees(f)
-    );
-  }, []);
-
-  //TODO: rewrite error management
   if (!tezos)
     return (
       <div>
         <p className="text-xxl">
-          {"There is an error with Tezos Tool Kit, can't swap !"}
+          {
+            "There is an error with Tezos Tool Kit, can't swap ! Please contact \
+        Marigold if problem persists."
+          }
         </p>
       </div>
     );
 
   const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
     switch (priceStategy) {
-      case PriceStrategy.EXACT:
-        return 1;
-      case PriceStrategy.BETTER:
         return 2;
       case PriceStrategy.WORSE:
         return 0;
     }
-  };
 
   const depositToken = async () => {
     const amount = parseFloat(amountInput);
     if (!userAddress) {
+      dispatch(newError('Not connected.'));
       return;
     }
-    const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
-    if (!batcherContractHash) return;
 
-    console.warn('swap', swap, isReverse, amount);
+    const batcherContractHash = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
+    if (!batcherContractHash) {
+      dispatch(
+        newError('Batcher contract not found, please contact Marigold.')
+      );
+      return;
+    }
+
     const tokenName = isReverse ? swap.to.name : swap.from.token.name;
 
     const selectedToken = isReverse ? swap.to : swap.from.token;
 
     const batcherContract = await tezos.wallet.at(batcherContractHash);
 
-    if (!selectedToken.address) return; //TODO:improve this
+    if (!selectedToken.address) {
+      dispatch(newError('Token contract not found, please contact Marigold.'));
+      return;
+    }
+
+    const fees = await getFees();
 
     const tokenContract: WalletContract = await tezos.wallet.at(
       selectedToken.address,
       compose(tzip12, tzip16)
     );
-    const tokenId = isReverse ? swap.to.token_id : swap.from.token.token_id;
+    const tokenId = isReverse ? swap.to.tokenId : swap.from.token.tokenId;
 
     const scaled_amount = isReverse
       ? scaleAmountUp(amount, swap.to.decimals)
@@ -118,7 +119,6 @@ const Exchange = () => {
 
     try {
       let order_batcher_op: BatchWalletOperation | undefined = undefined;
-      console.warn(scaleAmountUp(amount, currentSwap.swap.to.decimals));
       const swap_params = {
         swap: isReverse
           ? {
@@ -151,10 +151,15 @@ const Exchange = () => {
         tolerance,
       };
 
-      console.warn(swap_params, fees);
-
       if (selectedToken.standard === 'FA1.2 token') {
-        if (!swap.from.token.address) return; //TODO: improve this
+        if (!swap.from.token.address) {
+          dispatch(
+            newError(
+              `Can\t retrieve token contract address for ${swap.from.token.name}`
+            )
+          );
+          return;
+        }
         const tokenfa12Contract = await tezos?.wallet.at(
           swap.from.token.address,
           compose(tzip12, tzip16)
@@ -210,35 +215,42 @@ const Exchange = () => {
       }
 
       if (!order_batcher_op) {
-        console.error('Order Batcher Operation is not defined...');
+        dispatch(newError('Failed to define order Batcher operation.'));
         throw new Error('Order Batcher Operation is not defined...');
       }
-
+      dispatch(newInfo('Attempt to deposit the order...'));
       const confirm = await order_batcher_op?.confirmation();
 
-      confirm?.completed ? console.log('Successfully deposited !!!!!!') : null;
-
-      if (!confirm.completed) {
+      if (!confirm || !confirm.completed) {
         console.error(confirm);
+        dispatch(
+          newError(
+            `Deposit failed for token ${
+              isReverse ? swap.to.name : swap.from.token.name
+            }`
+          )
+        );
         throw new Error(
           `Failed to deposit ${
             isReverse ? swap.to.name : swap.from.token.name
           } token.`
         );
       } else {
-        console.info(`Successfully deposited ${tokenName}`);
+        dispatch(newInfo(`Successfully deposited ${tokenName}`));
 
         dispatch(fetchUserBalances());
         setAmount('0');
-
-        //   form.resetFields();
-        //   message.success('Successfully deposited ' + tokenName);
       }
-    } catch (error) {
-      console.log('deposit error', error);
-      // const converted_error_message = getErrorMess(error);
-      // message.error(converted_error_message);
-      // message.loading('Attempting to place swap order for ' + tokenName, 0);
+    } catch (error: any) {
+      console.error(error);
+      if (error?.title === 'Aborted') {
+        // Action aborted by user
+        dispatch(newError(error.description));
+      } else {
+        dispatch(
+          newError('Unknown deposit error, please retry or contact Marigold')
+        );
+      }
     }
   };
 
@@ -272,7 +284,7 @@ const Exchange = () => {
               </Form.Label>
             </div>
             <div className="flex">
-              <SelectPair />
+              <SelectPair isFrom />
               <Form.Control asChild>
                 <input
                   className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -349,15 +361,18 @@ const Exchange = () => {
                 </p>
               </Form.Label>
             </div>
-            <Form.Control asChild>
-              <input
-                className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                type="number"
-                min={0}
-                disabled
-                required
-              />
-            </Form.Control>
+            <div className="flex">
+              <SelectPair isFrom={false} />
+              <Form.Control asChild>
+                <input
+                  className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  type="number"
+                  min={0}
+                  disabled
+                  required
+                />
+              </Form.Control>
+            </div>
           </Form.Field>
 
           <Form.Submit asChild>

@@ -1,4 +1,12 @@
-import { BatcherStatus, PriceStrategy, Token } from './contract';
+import { BatcherStatus, PriceStrategy, SwapNames } from './contract';
+
+type Token = {
+  address: string | undefined;
+  name: string;
+  decimals: number;
+  standard: 'FA1.2 token' | 'FA2 token' | undefined;
+  tokenId: 0;
+};
 
 export type CurrentSwap = {
   swap: {
@@ -26,7 +34,7 @@ export type ExchangeState = {
     remainingTime: number;
   };
   batcherTimerId: number;
-  swapPairName: string;
+  swapPairName: SwapNames;
   batchNumber: number;
   oraclePrice: number;
   volumes: VolumesState;
@@ -62,44 +70,31 @@ export type UserVault = {
   unclaimed: number;
 };
 
-export type MVault = {
-  global: GlobalVault;
-  user: UserVault;
-};
+// export type MVault = {
+//   global: GlobalVault;
+//   user: UserVault;
+// };
 
 export type MarketHoldingsState = {
-  vaults: Map<string, MVault>;
-  current_vault: MVault;
+  // vaults: Map<string, MVault>;
+  globalVaults: Map<string, GlobalVault>;
+  userVaults: Map<string, UserVault>;
+  // current_vault: MVault;
+  currentVault: string; // token name (EURL, USDT, tzBTC)
+}
+
+export type EventsState = {
+  toast: {
+    isToastOpen: boolean;
+    toastDescription: string;
+    type: 'info' | 'error';
+  };
 };
 
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
-  event: {};
-  holdings: HoldingsState;
   marketHoldings: MarketHoldingsState;
-};
-
-export const initialMVault: MVault = {
-  global: {
-    total_shares: 0,
-    native: {
-      id: 0,
-      name: 'tzBTC',
-      amount: 0,
-      address: '',
-      decimals: 8,
-      standard: 'FA1.2 token',
-    },
-    foreign: new Map<string, VaultToken>(),
-  },
-  user: {
-    shares: 0,
-    unclaimed: 0,
-  },
-};
-
-export const initialMHState: MarketHoldingsState = {
-  vaults: new Map<string, MVault>(),
-  current_vault: initialMVault,
+  events: EventsState;
+  holdings: HoldingsState;
 };

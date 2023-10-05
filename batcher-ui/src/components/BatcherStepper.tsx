@@ -6,7 +6,7 @@ import { BatcherStatus } from '../types';
 const Square = ({ isActive }: { isActive: boolean }) => (
   <div
     className={`md:w-8 md:h-8 w-6 h-6 ${
-      isActive ? 'bg-[#6FE17A]' : 'bg-[#CECCCC]'
+      isActive ? 'bg-green' : 'bg-[#CECCCC]'
     }`}
   />
 );
@@ -14,7 +14,7 @@ const Square = ({ isActive }: { isActive: boolean }) => (
 const Dot = ({ isActive }: { isActive: boolean }) => (
   <div
     className={`md:text-3xl text-l ${
-      isActive ? 'text-[#6FE17A]' : 'text-[#CECCCC]'
+      isActive ? 'text-green' : 'text-[#CECCCC]'
     }`}>
     -
   </div>

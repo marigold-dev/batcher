@@ -10,22 +10,30 @@ import SelectMMPair from './SelectMMPair';
 import { getMVault } from 'src/utils/utils';
 import { useSelector } from 'react-redux';
 import { fetchUserBalances } from '../actions';
-import { userBalancesSelector, userAddressSelector } from '../reducers';
+import {
+  userBalancesSelector,
+  userAddressSelector,
+  getCurrentGlobalVaultSelector,
+  getCurrentUserVaultSelector,
+} from '../reducers';
 import { useTezosToolkit } from '../contexts/tezos-toolkit';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
 import { useDispatch } from 'react-redux';
 
-interface MMVaultProps {
-  vaults: Map<string, MVault>;
-  current_vault: MVault;
-}
-const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
+// interface MMVaultProps {
+//   vaults: Map<string, MVault>;
+//   current_vault: MVault;
+// }
+const MMVaultComponent = () => {
   const dispatch = useDispatch();
   const marketMakerAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH;
   const userAddress = useSelector(userAddressSelector);
   const { tezos } = useTezosToolkit();
   const userBalances = useSelector(userBalancesSelector);
   const [amountInput, setAmount] = useState<string>('0');
+
+  const currentGlobalVault = useSelector(getCurrentGlobalVaultSelector);
+  const currentUserVault = useSelector(getCurrentUserVaultSelector);
 
   const showTokenAmount = ({ vaultToken }: { vaultToken: VaultToken }) => (
     <div className="p-3">
@@ -230,8 +238,7 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
             claimRewards({
               tokenName: vaultToken.name,
             });
-          }}
-        >
+          }}>
           <Form.Submit asChild>
             <button className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Claim
@@ -279,8 +286,7 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
             removeLiquidity({
               tokenName: vaultToken.name,
             });
-          }}
-        >
+          }}>
           <Form.Submit asChild>
             <button className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Remove
@@ -307,8 +313,7 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
               tokenName: vaultToken.name,
               tokenAmount: parseInt(amountInput),
             });
-          }}
-        >
+          }}>
           <Form.Field name="amount">
             <div className="flex items-baseline justify-between">
               <Form.Label className="text-xl font-medium text-white">
@@ -336,14 +341,12 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
             </div>
             <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
-              match={'valueMissing'}
-            >
+              match={'valueMissing'}>
               Please input your amount
             </Form.Message>
             <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
-              match={'badInput'}
-            >
+              match={'badInput'}>
               Invalid input.
             </Form.Message>
             <Form.Message
@@ -353,8 +356,7 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
                   Number.parseFloat(value) >
                   userBalances[vaultToken.name.toUpperCase()]
                 );
-              }}
-            >
+              }}>
               Greater than the balance.
             </Form.Message>
           </Form.Field>
@@ -376,41 +378,43 @@ const MMVaultComponent = ({ vaults, current_vault }: MMVaultProps) => {
         </div>
       </div>
       <div className="flex md:flex-row flex-col">
-        <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
-          <div className="p-3">
-            <SelectMMPair vaults={vaults} current_vault={current_vault} />
-            {`Total Shares: ${getMVault(current_vault).global.total_shares}`}
-            <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
-              <p className="text-xl text-left">Native Asset</p>
-              {showTokenAmount({
+        {currentGlobalVault && (
+          <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
+            <div className="p-3">
+              <SelectMMPair />
+              {`Total Shares: ${currentGlobalVault.total_shares}`}
+              <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
+                <p className="text-xl text-left">Native Asset</p>
+                {showTokenAmount({
+                  vaultToken: currentGlobalVault.native,
+                })}
+              </div>
+              <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
+                <p className="text-xl text-left">Foreign Assets</p>
+                {showForeignAssets(currentGlobalVault.foreign)}
+              </div>
+            </div>
+          </div>
+        )}
+        {currentUserVault && (
+          <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
+            <div className="p-3">
+              <p className="text-xl text-center">My Liquidity</p>
+              <p>{`Shares: ${currentUserVault.shares}`}</p>
+              {`Unclaimed Rewards: ${currentUserVault.unclaimed} TEZ`}
+              {/* {showAddLiquidity({
+                vaultToken: getMVault(current_vault).global.native,
+                userBalances: userBalances,
+              })}
+              {showRemoveLiquidity({
                 vaultToken: getMVault(current_vault).global.native,
               })}
-            </div>
-            <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
-              <p className="text-xl text-left">Foreign Assets</p>
-              {showForeignAssets(getMVault(current_vault).global.foreign)}
+              {showClaimRewards({
+                vaultToken: getMVault(current_vault).global.native,
+              })} */}
             </div>
           </div>
-        </div>
-        <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
-          <div className="p-3">
-            <p className="text-xl text-center">My Liquidity</p>
-            <p>{`Shares: ${getMVault(current_vault).user.shares}`}</p>
-            {`Unclaimed Rewards: ${
-              getMVault(current_vault).user.unclaimed
-            } TEZ`}
-            {showAddLiquidity({
-              vaultToken: getMVault(current_vault).global.native,
-              userBalances: userBalances,
-            })}
-            {showRemoveLiquidity({
-              vaultToken: getMVault(current_vault).global.native,
-            })}
-            {showClaimRewards({
-              vaultToken: getMVault(current_vault).global.native,
-            })}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

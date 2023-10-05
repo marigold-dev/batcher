@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
 import { PriceStrategy } from 'src/types';
-import { volumesSelector } from 'src/reducers';
+import { batchNumberSelector, volumesSelector } from 'src/reducers';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
-import { getCurrentBatchNumber } from 'src/actions';
+import { getVolumes } from 'src/actions';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);
-
+  const batchNumber = useSelector(batchNumberSelector);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getCurrentBatchNumber());
-  }, [dispatch]);
+    if (batchNumber) dispatch(getVolumes());
+  }, [dispatch, batchNumber]);
 
   const listOfBuyVolumesColumns = [
     {

@@ -4,8 +4,6 @@ import { fetchUserBalancesCmd } from '../commands/wallet';
 import { WalletState } from 'src/types';
 import { TOKENS } from 'src/utils/utils';
 
-// TODO: fp-ts
-
 const initialState: WalletState = {
   userAddress: undefined,
   userBalances: TOKENS.reduce((acc, current) => ({ ...acc, [current]: 0 }), {}),

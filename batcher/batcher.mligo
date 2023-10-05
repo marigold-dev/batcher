@@ -32,7 +32,7 @@ type sell_exact_token = Types.sell_exact_token
 type sell_plus_token = Types.sell_plus_token
 type sell_side = Types.sell_side
 type batch_status = Types.batch_status
-type volumes = Types.volumes 
+type volumes = Types.volumes
 type pair = Types.pair
 type ordertype = Types.ordertype
 type ordertypes = Types.ordertypes
@@ -829,7 +829,7 @@ let progress_batch
   | Closed { closing_time =_ ; start_time = _} ->
     (*  Batches can only be cleared on receipt of rate so here they should just be returned *)
     (batch, batch_set,storage)
-  | Cleared _ -> let  (b,bs) = start_period pair batch_set current_time in 
+  | Cleared _ -> let  (b,bs) = start_period pair batch_set current_time in
                   (b,bs,storage)
 
 
@@ -901,7 +901,7 @@ let get_current_batch
   (batch_set: batch_set) : (batch * batch_set * Storage.t) =
   let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
-  | None ->  let (b, bs) = start_period pair batch_set current_time in 
+  | None ->  let (b, bs) = start_period pair batch_set current_time in
              (b,bs,storage)
   | Some cb ->  progress_batch deposit_time_window pair cb batch_set storage current_time
 
@@ -912,7 +912,7 @@ let update_storage_with_order
     (current_batch_number: nat)
     (batch: batch)
     (batch_set: batch_set)
-    (storage:Storage.t) : batch * Storage.t = 
+    (storage:Storage.t) : batch * Storage.t =
     let updated_volumes = update_volumes order batch in
     let updated_batches = Big_map.update current_batch_number (Some updated_volumes) batch_set.batches in
     let updated_batches = BatchHoldings_Utils.add_batch_holding current_batch_number order.trader storage.user_batch_ordertypes updated_batches in
@@ -921,8 +921,8 @@ let update_storage_with_order
     updated_volumes, {
       storage with batch_set = updated_batch_set;
       last_order_number = next_order_number;
-      user_batch_ordertypes = new_ubot; 
-    } 
+      user_batch_ordertypes = new_ubot;
+    }
 
 
 end
@@ -1228,20 +1228,32 @@ let confirm_swap_pair_is_disabled_prior_to_removal
 [@inline]
 let enforce_correct_side
   (order:external_swap_order)
-  (valid_swap:valid_swap_reduced) : unit = 
+  (valid_swap:valid_swap_reduced) : unit =
   let swap = order.swap in
   let side = Utils.nat_to_side order.side in
   match side with
-  | Buy -> 
+  | Buy ->
     if swap.from.token.name = valid_swap.swap.from then () else failwith Errors.incorrect_side_specified
   | Sell ->
     if swap.from.token.name = valid_swap.swap.to then () else failwith Errors.incorrect_side_specified
+
+[@inline]
+let enforce_correct_side
+  (order:external_swap_order)
+  (valid_swap:valid_swap) : unit =
+  let swap = order.swap in
+  let side = Utils.nat_to_side order.side in
+  match side with
+  | Buy ->
+    if swap.from.token.name = valid_swap.swap.from.token.name then () else failwith incorrect_side_specified
+  | Sell ->
+    if swap.from.token.name = valid_swap.swap.to.name then () else failwith incorrect_side_specified
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order in
+  let pair = Utils.pair_of_external_swap external_order storage.valid_tokens in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
@@ -1266,7 +1278,7 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
-       let _,updated_storage = Batch_Utils.update_storage_with_order order next_order_number current_batch_number current_batch current_batch_set storage in 
+       let _,updated_storage = Batch_Utils.update_storage_with_order order next_order_number current_batch_number current_batch current_batch_set storage in
        let treasury_ops = Treasury.deposit order.trader order.swap.from in
        (treasury_ops, updated_storage)
 
@@ -1464,10 +1476,10 @@ let get_valid_swaps ((), storage : unit * storage) : valid_swaps = storage.valid
 let get_valid_tokens ((), storage : unit * storage) : valid_tokens = storage.valid_tokens
 
 [@view]
-let redeemable_holdings_available ((), storage : unit * storage) : bool = 
+let redeemable_holdings_available ((), storage : unit * storage) : bool =
   let sender = Tezos.get_sender () in
   let find_non_zero_ordertype = fun (has,(_ot,v):bool * (ordertype * nat) ) -> has || v > 0n
-  in                              
+  in
   let find_non_zero_holding = fun (has,(_bn,ots):bool * (nat * ordertypes) ) -> has || Map.fold find_non_zero_ordertype ots false
   in
   match Big_map.find_opt sender storage.user_batch_ordertypes with
@@ -1507,5 +1519,6 @@ let main
    | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
    | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
+
 
 

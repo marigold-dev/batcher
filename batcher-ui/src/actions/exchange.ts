@@ -54,13 +54,17 @@ export const updateBatcherStatus = ({
     payload: { status, at, startTime },
   } as const);
 
+export const updateRemainingTime = () =>
+  ({
+    type: 'UPDATE_REMAINING_TIME',
+  } as const);
+
 export const getCurrentBatchNumber = () =>
   ({
     type: 'GET_CURRENT_BATCHER_NUMBER',
   } as const);
 
-//TODO: fix that
-export const updateBatchNumber = (batchNumber: number | undefined) =>
+export const updateBatchNumber = (batchNumber: number) =>
   ({
     type: 'UDPATE_BATCH_NUMBER',
     payload: { batchNumber },
@@ -104,6 +108,12 @@ export const updateVolumes = (volumes: unknown) =>
     payload: { volumes },
   } as const);
 
+export const noBatchError = (errorMessage: string) =>
+  ({
+    type: 'NO_BATCH_ERROR',
+    payload: { errorMessage },
+  } as const);
+
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
   | ReturnType<typeof reverseSwap>
@@ -116,8 +126,10 @@ export type ExchangeActions =
   | ReturnType<typeof updateBatchNumber>
   | ReturnType<typeof batcherSetup>
   | ReturnType<typeof batcherUnsetup>
+  | ReturnType<typeof updateRemainingTime>
   | ReturnType<typeof batcherTimerId>
   | ReturnType<typeof getOraclePrice>
   | ReturnType<typeof updateOraclePrice>
   | ReturnType<typeof getVolumes>
-  | ReturnType<typeof updateVolumes>;
+  | ReturnType<typeof updateVolumes>
+  | ReturnType<typeof noBatchError>;

@@ -3,6 +3,7 @@ import exchangeReducer from './exchange';
 import walletReducer from './wallet';
 import {
   AppState,
+<<<<<<< HEAD
   ExchangeState,
   WalletState,
   MarketHoldingsState,
@@ -10,6 +11,15 @@ import {
 import { eventReducer } from './events';
 import { holdingsReducer } from './holdings';
 import { marketHoldingsReducer } from './marketholdings';
+=======
+  EventsState,
+  ExchangeState,
+  HoldingsState,
+  WalletState,
+} from '../types';
+import { eventReducer } from './events';
+import { holdingsReducer } from './holdings';
+>>>>>>> release-ghostnet
 
 // Wallet selectors
 export const userAddressSelector = (state: AppState) => {
@@ -52,12 +62,27 @@ export const volumesSelector = (state: AppState) => state.exchange.volumes;
 // Holdings selectors
 export const getHoldings = (state: AppState) => state.holdings;
 
+// Market maker holdings selectors
 export const getMarketHoldingsState = (state: AppState) => state.marketHoldings;
+
+export const getCurrentUserVaultSelector = (state: AppState) =>
+  state.marketHoldings.userVaults.get(state.marketHoldings.currentVault);
+export const getCurrentGlobalVaultSelector = (state: AppState) =>
+  state.marketHoldings.globalVaults.get(state.marketHoldings.currentVault);
+
+export const getCurrentVaultName = (state: AppState) =>
+  state.marketHoldings.currentVault;
+
+export const getGlobalVaults = (state: AppState) =>
+  state.marketHoldings.globalVaults;
+
+// Events selectors
+export const getToastInfosSelector = (state: AppState) => state.events.toast;
 
 export default combineReducers({
   exchange: exchangeReducer as LoopReducer<ExchangeState>,
   wallet: walletReducer as LoopReducer<WalletState>,
-  event: eventReducer as LoopReducer<{}>,
-  holdings: holdingsReducer as LoopReducer<{}>,
   marketHoldings: marketHoldingsReducer as LoopReducer<MarketHoldingsState>,
+  events: eventReducer as LoopReducer<EventsState>,
+  holdings: holdingsReducer as LoopReducer<HoldingsState>,
 });

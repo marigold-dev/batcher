@@ -17,8 +17,10 @@ const Footer = () => (
           <Image
             alt="Marigold Logo"
             src="/marigold-logo.png"
+            loader={({ src }) => src}
             height={32}
             width={32}
+            unoptimized
           />
         </div>
 
@@ -33,15 +35,15 @@ const Footer = () => (
         <div>
           <a
             href={`https://${
-              process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
-                ? 'ghostnet.'
-                : ''
+              process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+                ? ''
+                : 'ghostnet.'
             }batcher.marigold.dev/`}
             target="_blank"
             rel="noreferrer">
-            {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'ghostnet'
-              ? 'Batcher Ghostnet'
-              : 'Batcher Mainnet'}
+            {process.env.NEXT_PUBLIC_NETWORK_TARGET === 'GHOSTNET'
+              ? 'Batcher Mainnet'
+              : 'Batcher Ghostnet'}
           </a>
         </div>
         <div>
