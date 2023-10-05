@@ -414,6 +414,7 @@ let collect_redemptions
 let collect_redemption_payouts
     (holder: address)
     (fees: fees)
+    (specific_batch_opt:nat option)
     (storage: Storage.t):  (fees * user_batch_ordertypes * batch_set * token_amount_map) =
     let fee_in_mutez = storage.fee_in_mutez in
     let batch_set = storage.batch_set in
@@ -422,7 +423,12 @@ let collect_redemption_payouts
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
     | None -> fees, ubots, batch_set, empty_tam
-    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim = Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) in
+    | Some bots -> let u_bots, u_tam, bs, _tkns, u_fees, _fim = match specific_batch_opt with
+                                                                | Some sb -> (match Map.find_opt sb bots  with
+                                                                              | None -> (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez)
+                                                                              | Some opts -> collect_redemptions ((bots, empty_tam, batch_set, tokens, fees, fee_in_mutez),(sb,opts)))
+                                                                | None ->   Map.fold collect_redemptions bots (bots, empty_tam, batch_set, tokens, fees, fee_in_mutez) 
+                   in
                    let updated_ubots = Big_map.update holder (Some u_bots) ubots in
                    u_fees, updated_ubots,  bs, u_tam
 
@@ -475,6 +481,25 @@ let deposit
       let deposit_op = Utils.Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
       [ deposit_op]
 
+[@inline]
+let redeem_by_batch
+    (redeem_address : address)
+    (batch_id: nat)
+    (storage : storage) : operation list * storage =
+      let treasury_vault = Utils.get_vault () in
+      let fees = {
+        to_send = 0mutez;
+        to_refund = 0mutez;
+        to_market_maker = 0mutez;
+        payer = redeem_address;
+        recipient = storage.fee_recipient;
+        market_maker = storage.marketmaker;
+      } in
+      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees (Some batch_id) storage in
+      let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
+      let operations = resolve_fees fees operations in
+      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
+      (operations, updated_storage)
 
 [@inline]
 let redeem
@@ -489,7 +514,7 @@ let redeem
         recipient = storage.fee_recipient;
         market_maker = storage.marketmaker;
       } in
-      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees storage in
+      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees None storage in
       let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let operations = resolve_fees fees operations in
       let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
@@ -1025,6 +1050,7 @@ type entrypoint =
   | Deposit of external_swap_order
   | Tick of string
   | Redeem
+  | RedeemByBatch of nat
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
@@ -1237,23 +1263,12 @@ let enforce_correct_side
   | Sell ->
     if swap.from.token.name = valid_swap.swap.to then () else failwith Errors.incorrect_side_specified
 
-[@inline]
-let enforce_correct_side
-  (order:external_swap_order)
-  (valid_swap:valid_swap) : unit =
-  let swap = order.swap in
-  let side = Utils.nat_to_side order.side in
-  match side with
-  | Buy ->
-    if swap.from.token.name = valid_swap.swap.from.token.name then () else failwith incorrect_side_specified
-  | Sell ->
-    if swap.from.token.name = valid_swap.swap.to.name then () else failwith incorrect_side_specified
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order storage.valid_tokens in
+  let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
@@ -1295,6 +1310,14 @@ let redeem
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
+[@inline]
+let redeem_by_batch
+ (batch_id:nat)
+ (storage : storage) : result =
+  let holder = Tezos.get_sender () in
+  let () = Utils.reject_if_tez_supplied () in
+  let (tokens_transfer_ops, new_storage) = Treasury.redeem_by_batch holder batch_id storage in
+  (tokens_transfer_ops, new_storage)
 
 [@inline]
 let change_oracle_price_source
@@ -1502,6 +1525,7 @@ let main
   (* User endpoints *)
    | Deposit order -> deposit order storage
    | Redeem -> redeem storage
+   | RedeemByBatch i -> redeem_by_batch i  storage
    | Cancel pair -> cancel pair storage
   (* Maintenance endpoint *)
    | Tick r ->  tick r storage
