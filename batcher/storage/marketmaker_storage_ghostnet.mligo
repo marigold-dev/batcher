@@ -96,7 +96,7 @@ let f(_:unit) : MarketMaker.Storage.t = {
       }
     )
   ];
-  batcher = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
+  batcher = ("KT1LhTpwSGcFAUUM3JYjW8XW74UHP82YzERy" :  address);
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   vaults = Big_map.literal [
     ("tzBTC", {
