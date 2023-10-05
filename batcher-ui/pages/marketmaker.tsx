@@ -4,23 +4,24 @@ import { getMarketHoldingsState, userAddressSelector } from 'src/reducers';
 import { getMarketHoldings as getMarketHoldingsAction } from 'src/actions';
 import MMVault from '../src/components/MMVault';
 
-const Holdings = () => {
-  const contractAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH || '';
+const MarketMakerHoldings = () => {
+  const contractAddress =
+    process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH || '';
 
-  const { vaults, current_vault } = useSelector(getMarketHoldingsState);
+  // const { vaults, current_vault } = useSelector(getMarketHoldingsState);
   const userAddress = useSelector(userAddressSelector);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getMarketHoldingsAction(contractAddress, userAddress));
+    dispatch(getMarketHoldingsAction(contractAddress, userAddress || ''));
   }, [userAddress, contractAddress, dispatch]);
 
   return (
     <div className="flex flex-col md:mx-[15%] mx-4">
-      <MMVault vaults={vaults} current_vault={current_vault} />
+      <MMVault />
     </div>
   );
 };
 
-export default Holdings;
+export default MarketMakerHoldings;

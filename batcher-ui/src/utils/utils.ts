@@ -703,16 +703,18 @@ export const getMarketHoldings = async (
     : userAddress;
   console.log('usrAddress', usrAddress);
   return Promise.all(
-    Object.values(storage.valid_tokens).map(
-      async token =>
-        await getVaultFromBigMap(
+    Object.values(storage.valid_tokens).map(async (token: Token) => {
+      console.log('🚀 ~ file: utils.ts:717 ~ Object.values ~ token:', token);
+      return {
+        [token.name]: await getVaultFromBigMap(
           storage.vaults,
           token,
           storage.user_holdings,
           usrAddress,
           storage.vault_holdings
-        )
-    )
+        ),
+      };
+    })
   );
 };
 export const getMVault = (vault: MVault | undefined) => {

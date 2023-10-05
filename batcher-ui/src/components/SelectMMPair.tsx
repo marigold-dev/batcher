@@ -6,34 +6,33 @@ import {
   faCheck,
   faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
-import { MVault } from 'src/types';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { changeVault } from 'src/actions';
-import { getMVault } from 'src/utils/utils';
+import { getCurrentVaultName, getGlobalVaults } from 'src/reducers';
+import { GlobalVault } from 'src/types';
 
-const getTokens = (vaults: Map<string, MVault> | undefined) => {
+const getTokens = (vaults: Map<string, GlobalVault> | undefined) => {
   return !vaults ? [] : Array.from(vaults.keys());
 };
 
-interface SelectMMPairProps {
-  vaults: Map<string, MVault>;
-  current_vault: MVault;
-}
-const SelectMMPair = ({ vaults, current_vault }: SelectMMPairProps) => {
+// interface SelectMMPairProps {
+//   vaults: Map<string, MVault>;
+//   current_vault: MVault;
+// }
+const SelectMMPair = () => {
   const dispatch = useDispatch();
+
+  const currentVaultName = useSelector(getCurrentVaultName);
+  const globalVaults = useSelector(getGlobalVaults);
 
   return (
     <Select.Root
-      value={getMVault(current_vault).global.native.name}
+      value={currentVaultName}
       onValueChange={value => {
-        console.warn(value);
         dispatch(changeVault(value));
-      }}
-    >
+      }}>
       <Select.Trigger className="flex items-center text-dark w-[90px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
-        <Select.Value
-          placeholder={getMVault(current_vault).global.native.name}
-        />
+        <Select.Value placeholder={currentVaultName} />
         <Select.Icon className="text-dark">
           <FontAwesomeIcon icon={faChevronDown} />
         </Select.Icon>
@@ -45,7 +44,7 @@ const SelectMMPair = ({ vaults, current_vault }: SelectMMPairProps) => {
           </Select.ScrollUpButton>
           <Select.Viewport className="p-2">
             <Select.Group>
-              {getTokens(vaults).map((t: string) => (
+              {getTokens(globalVaults).map((t: string) => (
                 <SelectItem value={t} key={t}>
                   {t}
                 </SelectItem>
