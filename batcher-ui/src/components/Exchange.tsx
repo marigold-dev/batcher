@@ -51,10 +51,14 @@ const Exchange = () => {
 
   const toTolerance = (isReverse: boolean, priceStategy: PriceStrategy) => {
     switch (priceStategy) {
+      case PriceStrategy.EXACT:
+        return 1;
+      case PriceStrategy.BETTER:
         return 2;
       case PriceStrategy.WORSE:
         return 0;
     }
+  };
 
   const depositToken = async () => {
     const amount = parseFloat(amountInput);

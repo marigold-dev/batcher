@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import * as Select from '@radix-ui/react-select';
 import * as Form from '@radix-ui/react-form';
-import { MVault, VaultToken } from '../types';
-import { getFees, scaleAmountUp } from '../utils/utils';
+import { VaultToken } from '../types';
+import { scaleAmountUp } from '../utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
-import { compose, OpKind, WalletContract } from '@taquito/taquito';
+import { compose, OpKind } from '@taquito/taquito';
 import SelectMMPair from './SelectMMPair';
-import { getMVault } from 'src/utils/utils';
 import { useSelector } from 'react-redux';
 import { fetchUserBalances } from '../actions';
 import {
@@ -20,10 +18,6 @@ import { useTezosToolkit } from '../contexts/tezos-toolkit';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
 import { useDispatch } from 'react-redux';
 
-// interface MMVaultProps {
-//   vaults: Map<string, MVault>;
-//   current_vault: MVault;
-// }
 const MMVaultComponent = () => {
   const dispatch = useDispatch();
   const marketMakerAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH;
@@ -34,6 +28,22 @@ const MMVaultComponent = () => {
 
   const currentGlobalVault = useSelector(getCurrentGlobalVaultSelector);
   const currentUserVault = useSelector(getCurrentUserVaultSelector);
+
+  useEffect(() => {
+    if (userAddress) dispatch(fetchUserBalances());
+  }, [dispatch, userAddress]);
+
+  if (!tezos)
+    return (
+      <div>
+        <p className="text-xxl">
+          {
+            "There is an error with Tezos Tool Kit, can't swap ! Please contact \
+        Marigold if problem persists."
+          }
+        </p>
+      </div>
+    );
 
   const showTokenAmount = ({ vaultToken }: { vaultToken: VaultToken }) => (
     <div className="p-3">
@@ -59,8 +69,6 @@ const MMVaultComponent = () => {
     tokenName: string;
     tokenAmount: number;
   }) => {
-    console.log(tokenName);
-    console.log(tokenAmount);
     if (!userAddress) {
       console.info('No user address');
       return;
@@ -72,15 +80,11 @@ const MMVaultComponent = () => {
 
     const mmContract = await tezos?.wallet.at(marketMakerAddress);
 
-    console.info(current_vault);
-
-    if (!current_vault.global.native.address) {
-      console.info('No token address');
+    if (!currentGlobalVault.native.address) {
       return; //TODO:improve this
     }
-    const token = current_vault.global.native;
-    console.info(token);
-    const tokenContract: WalletContract = await tezos.wallet.at(
+    const token = currentGlobalVault.native;
+    const tokenContract = await tezos?.wallet.at(
       token.address,
       compose(tzip12, tzip16)
     );
@@ -187,7 +191,7 @@ const MMVaultComponent = () => {
         ? console.log('Successfully added liquidity !!!!!!')
         : null;
 
-      if (!confirm.completed) {
+      if (!confirm?.completed) {
         console.error(confirm);
         throw new Error(`Failed to add liquidity ${token.name} token.`);
       } else {
@@ -215,7 +219,7 @@ const MMVaultComponent = () => {
 
       if (claimTransaction) {
         const confirm = await claimTransaction.confirmation();
-        if (!confirm.completed) {
+        if (!confirm?.completed) {
           console.error('Failed to claimed rewards' + confirm);
         } else {
           console.info('Successfully claimed rewards');
@@ -263,7 +267,7 @@ const MMVaultComponent = () => {
 
       if (claimTransaction) {
         const confirm = await claimTransaction.confirmation();
-        if (!confirm.completed) {
+        if (!confirm?.completed) {
           console.error('Failed to remove liquidity' + confirm);
         } else {
           console.info('Successfully removed liquidity ');
@@ -339,7 +343,7 @@ const MMVaultComponent = () => {
                 />
               </Form.Control>
             </div>
-            <Form.Message
+            {/* <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
               match={'valueMissing'}>
               Please input your amount
@@ -358,7 +362,7 @@ const MMVaultComponent = () => {
                 );
               }}>
               Greater than the balance.
-            </Form.Message>
+            </Form.Message> */}
           </Form.Field>
           <Form.Submit asChild>
             <button className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
@@ -402,16 +406,16 @@ const MMVaultComponent = () => {
               <p className="text-xl text-center">My Liquidity</p>
               <p>{`Shares: ${currentUserVault.shares}`}</p>
               {`Unclaimed Rewards: ${currentUserVault.unclaimed} TEZ`}
-              {/* {showAddLiquidity({
-                vaultToken: getMVault(current_vault).global.native,
+              {showAddLiquidity({
+                vaultToken: currentGlobalVault.native,
                 userBalances: userBalances,
               })}
               {showRemoveLiquidity({
-                vaultToken: getMVault(current_vault).global.native,
+                vaultToken: currentGlobalVault.native,
               })}
               {showClaimRewards({
-                vaultToken: getMVault(current_vault).global.native,
-              })} */}
+                vaultToken: currentGlobalVault.native,
+              })}
             </div>
           </div>
         )}

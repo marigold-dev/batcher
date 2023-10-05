@@ -9,16 +9,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { changeVault } from 'src/actions';
 import { getCurrentVaultName, getGlobalVaults } from 'src/reducers';
-import { GlobalVault } from 'src/types';
 
-const getTokens = (vaults: Map<string, GlobalVault> | undefined) => {
-  return !vaults ? [] : Array.from(vaults.keys());
-};
-
-// interface SelectMMPairProps {
-//   vaults: Map<string, MVault>;
-//   current_vault: MVault;
-// }
 const SelectMMPair = () => {
   const dispatch = useDispatch();
 
@@ -44,7 +35,7 @@ const SelectMMPair = () => {
           </Select.ScrollUpButton>
           <Select.Viewport className="p-2">
             <Select.Group>
-              {getTokens(globalVaults).map((t: string) => (
+              {Object.keys(globalVaults).map(t => (
                 <SelectItem value={t} key={t}>
                   {t}
                 </SelectItem>

@@ -1,31 +1,12 @@
 import { Cmd, loop } from 'redux-loop';
 import { MarketHoldingsActions } from 'src/actions/marketholdings';
 import { fetchMarketHoldingsCmd } from 'src/commands/marketholdings';
-import { MarketHoldingsState, VaultToken } from 'src/types';
-
-// export const initialMVault: MVault = {
-//   global: {
-//     total_shares: 0,
-//     native: {
-//       id: 0,
-//       name: 'tzBTC',
-//       amount: 0,
-//       address: '',
-//       decimals: 8,
-//       standard: 'FA1.2 token',
-//     },
-//     foreign: new Map<string, VaultToken>(),
-//   },
-//   user: {
-//     shares: 0,
-//     unclaimed: 0,
-//   },
-// };
+import { MarketHoldingsState } from 'src/types';
 
 export const initialMHState: MarketHoldingsState = {
-  globalVaults: new Map(),
-  userVaults: new Map(),
-  currentVault: '',
+  globalVaults: {},
+  userVaults: {},
+  currentVault: 'tzBTC',
 };
 
 export const marketHoldingsReducer = (

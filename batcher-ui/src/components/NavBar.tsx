@@ -43,6 +43,10 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
             <LinkComponent path="/" title={'Swap'} />
             <LinkComponent path="/volumes" title={'Volumes'} />
             <LinkComponent path="/holdings" title={'Redeem Holdings'} />
+            <LinkComponent
+              path="/marketmaker"
+              title={'Community Marker Maker'}
+            />
             <LinkComponent path="/about" title={'About'} />
           </div>
         </div>
