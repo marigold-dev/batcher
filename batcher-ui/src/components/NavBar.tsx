@@ -33,14 +33,20 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }: NavBarProps) => {
           <Image
             alt="Batcher Logo"
             src={'/batcher-logo.png'}
+            loader={({ src }) => src}
             height={32}
             width={64}
+            unoptimized
           />
           <p>BATCHER</p>
           <div className="hidden md:flex md:ml-8 md:items-center">
             <LinkComponent path="/" title={'Swap'} />
             <LinkComponent path="/volumes" title={'Volumes'} />
             <LinkComponent path="/holdings" title={'Redeem Holdings'} />
+            <LinkComponent
+              path="/marketmaker"
+              title={'Community Marker Maker'}
+            />
             <LinkComponent path="/about" title={'About'} />
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { BatcherStatus, PriceStrategy, SwapNames } from './contract';
 
-type Token = {
+export type Token = {
   address: string | undefined;
   name: string;
   decimals: number;
@@ -50,6 +50,41 @@ export type HoldingsState = {
   cleared: Record<string, number>;
 };
 
+export type VaultToken = {
+  id: number;
+  name: string;
+  address: string;
+  decimals: number;
+  amount: number;
+  standard: string;
+};
+
+export type GlobalVault = {
+  total_shares: number;
+  native: VaultToken;
+  foreign: Map<string, VaultToken>;
+};
+
+export type UserVault = {
+  shares: number;
+  unclaimed: number;
+};
+
+// export type MVault = {
+//   global: GlobalVault;
+//   user: UserVault;
+// };
+
+export type MarketHoldingsState = {
+  // vaults: Map<string, MVault>;
+  globalVaults: { [key: string]: GlobalVault };
+  // globalVaults: Map<string, GlobalVault>;
+  userVaults: { [key: string]: UserVault };
+  // userVaults: Map<string, UserVault>;
+  // current_vault: MVault;
+  currentVault: string; // token name (EURL, USDT, tzBTC)
+};
+
 export type EventsState = {
   toast: {
     isToastOpen: boolean;
@@ -61,6 +96,7 @@ export type EventsState = {
 export type AppState = {
   exchange: ExchangeState;
   wallet: WalletState;
+  marketHoldings: MarketHoldingsState;
   events: EventsState;
   holdings: HoldingsState;
 };

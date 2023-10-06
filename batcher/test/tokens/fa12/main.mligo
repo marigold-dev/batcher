@@ -1,3 +1,4 @@
+
 type transfer =
   [@layout:comb]
   { [@annot:from] address_from : address;
@@ -32,10 +33,10 @@ type getTotalSupply =
 type tokens = (address, nat) big_map
 type allowances = (allowance_key, nat) big_map
 type data = {
-    token_id : nat; 
+    token_id : nat;
     token_info : (string, bytes) map
   }
-type token_metadata = (nat, data) big_map 
+type token_metadata = (nat, data) big_map
 
 type storage = {
   tokens : tokens;
@@ -128,6 +129,9 @@ let getTotalSupply (param, storage : getTotalSupply * storage) : operation list 
   let total = storage.total_supply in
   [Tezos.transaction total 0mutez param.callback]
 
+
+
+[@entry]
 let main (param, storage : parameter * storage) : result =
   begin
     if Tezos.get_amount () <> 0mutez

@@ -85,10 +85,12 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
                     ) : (
                       <Image
                         src={`/${t.name}-icon.png`}
+                        loader={({ src }) => src}
                         alt={`${t.name} icon`}
                         width={24}
                         height={24}
                         style={{ paddingRight: 4 }}
+                        unoptimized
                       />
                     )}
                     <p>{t.name}</p>
