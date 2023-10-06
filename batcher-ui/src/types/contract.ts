@@ -15,8 +15,13 @@ export enum PriceStrategy {
 
 // ------ BATCHER STORAGE REPRESENTATION ------ //
 
-export type TokenNames = 'tzBTC' | 'EURL' | 'USDT';
-export type SwapNames = 'tzBTC/USDT' | 'tzBTC/EURL';
+export type TokenNames = 'tzBTC' | 'EURL' | 'USDT' | 'BTCtz' | 'USDtz';
+export type SwapNames =
+  | 'tzBTC/USDT'
+  | 'tzBTC/EURL'
+  | 'BTCtz/USDT'
+  | 'BTCtz/USDtz'
+  | 'tzBTC/USDtz';
 
 type Swap = {
   from: {
@@ -194,7 +199,6 @@ export type OrderBookBigmap = {
 
 export type BatcherMarketMakerStorage = {
   metadata: number; //! ID of metadata bigmap
-  // valid_tokens: Record<TokenNames, ContractToken>;
   valid_tokens: Record<string, ContractToken>;
   valid_swaps: Record<
     SwapNames,
@@ -206,20 +210,8 @@ export type BatcherMarketMakerStorage = {
       oracle_asset_name: string;
     }
   >;
-  // rates_current: number; //! ID of rates_current bigmap
-  // fee_in_mutez: number;
-  // batch_set: {
-  //   batches: number; //! ID of batches bigmap
-  //   current_batch_indices: Record<SwapNames, string>; //! Ex: tzBTC/USDT: "300"
-  // };
   administrator: string; //! Address to admin
-  // fee_recipient: string; //! Address
-  // last_order_number: string; //! number in string
-  // user_batch_ordertypes: number; //! ID of order book bigmap
   limit_on_tokens_or_pairs: string; //! 10 per default
-  // deposit_time_window_in_seconds: string; //! 600 at this time
-  // scale_factor_for_oracle_staleness: string; //! "1"
-
   vault_holdings: number; //! ID of vault_holdings bigmap
   vaults: number; //! ID of vaults bigmap
   user_holdings: number; //! ID of user_holdings bigmap
