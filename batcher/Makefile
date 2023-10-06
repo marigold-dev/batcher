@@ -52,11 +52,9 @@ build-ghostnet:
 	$(call compile_contract,batcher.mligo, batcher-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/initial_storage_ghostnet.mligo, batcher-storage-ghostnet.tz)
 build-mm-mainnet:
-	$(call clean_mainnet_files)
 	$(call compile_contract,marketmaker.mligo, marketmaker-mainnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_mainnet.mligo, marketmaker-storage-mainnet.tz)
 build-mm-ghostnet:
-	$(call clean_ghostnet_files)
 	$(call compile_contract,marketmaker.mligo, marketmaker-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_ghostnet.mligo, marketmaker-storage-ghostnet.tz)
 build-tzBTC:

@@ -1262,25 +1262,11 @@ let enforce_correct_side
     if swap.from.token.name = valid_swap.swap.to then () else failwith Errors.incorrect_side_specified
 
 
-
-[@inline]
-let enforce_correct_side
-  (order:external_swap_order)
-  (valid_swap:valid_swap) : unit = 
-  let swap = order.swap in
-  let side = Utils.nat_to_side order.side in
-  match side with
-  | Buy -> 
-    if swap.from.token.name = valid_swap.swap.from.token.name then () else failwith incorrect_side_specified
-  | Sell ->
-    if swap.from.token.name = valid_swap.swap.to.name then () else failwith incorrect_side_specified
-
-
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order storage.valid_tokens in
+  let pair = Utils.pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
   let pair_name = Utils.get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in

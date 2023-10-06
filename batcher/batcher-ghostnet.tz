@@ -710,9 +710,6 @@
                                             DIG 3 ;
                                             CDR ;
                                             DUP ;
-                                            CDR ;
-                                            GET 3 ;
-                                            SWAP ;
                                             CAR ;
                                             DUP ;
                                             CDR ;
@@ -1263,7 +1260,8 @@
                                                               IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
                                                               PUSH mutez 0 ;
                                                               NIL (pair address (list (pair address nat nat))) ;
-                                                              NIL (pair address nat nat) ;                                                              DUP 5 ;
+                                                              NIL (pair address nat nat) ;
+                                                              DUP 5 ;
                                                               CDR ;
                                                               DIG 5 ;
                                                               CAR ;
@@ -1446,7 +1444,8 @@
                      IF_LEFT
                        { IF_LEFT
                            { DUP 2 ;
-                             CAR ;                             CAR ;
+                             CAR ;
+                             CAR ;
                              CAR ;
                              CAR ;
                              SENDER ;
@@ -1470,7 +1469,8 @@
                              DUP 2 ;
                              DIG 2 ;
                              CAR ;
-                             DUP ;                             CDR ;
+                             DUP ;
+                             CDR ;
                              DUP ;
                              CDR ;
                              DIG 4 ;
@@ -1544,11 +1544,6 @@
                              GET 5 ;
                              PUSH nat 0 ;
                              DUP 2 ;
-                             CDR ;
-                             CAR ;
-                             DIG 4 ;
-                             DUP 3 ;
-                             DUP 3 ;
                              COMPARE ;
                              EQ ;
                              IF { DROP ; UNIT ; LEFT unit }
@@ -1607,8 +1602,10 @@
                                       SWAP ;
                                       CAR ;
                                       CAR ;
-                                      SWAP ;                                      CAR ;
-                                      CAR ;                                      GET 3 ;
+                                      SWAP ;
+                                      CAR ;
+                                      CAR ;
+                                      GET 3 ;
                                       COMPARE ;
                                       EQ ;
                                       IF {} { PUSH nat 156 ; FAILWITH } }
@@ -1622,7 +1619,8 @@
                                       GET 3 ;
                                       COMPARE ;
                                       EQ ;
-                                      IF {} { PUSH nat 156 ; FAILWITH } } ;                                  DUP 4 ;
+                                      IF {} { PUSH nat 156 ; FAILWITH } } ;
+                                  DUP 4 ;
                                   CAR ;
                                   CAR ;
                                   CDR ;
