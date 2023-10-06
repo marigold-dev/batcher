@@ -90,5 +90,7 @@ test-all:
 	$(call test_ligo,$(TEST_DIRECTORY)/test-market-maker.mligo)
 measure:
 	$(call measure_contract,batcher.mligo)
+measure-mm:
+	$(call measure_contract,marketmaker.mligo)
 install:
 	$(call install_deps)
