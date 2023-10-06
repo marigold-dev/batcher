@@ -23,7 +23,7 @@ const Swap = () => {
     return () => {
       dispatch(batcherUnsetup());
     };
-  }, [dispatch, tokenPair]);
+  }, []);
 
   useEffect(() => {
     if (userAddress) {

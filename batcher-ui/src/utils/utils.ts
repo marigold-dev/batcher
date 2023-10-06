@@ -726,7 +726,6 @@ const getUserVault = async (
   userVaultId: number,
   holdingsVaultId: number
 ) => {
-  console.warn('🚀 ~ file: utils.ts:730 ~ userAddress:', userAddress);
   if (!userAddress) {
     console.error('No user address ');
     const userVault: UserVault = {

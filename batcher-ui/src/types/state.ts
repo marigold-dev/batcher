@@ -70,19 +70,11 @@ export type UserVault = {
   unclaimed: number;
 };
 
-// export type MVault = {
-//   global: GlobalVault;
-//   user: UserVault;
-// };
 
 export type MarketHoldingsState = {
-  // vaults: Map<string, MVault>;
   globalVaults: { [key: string]: GlobalVault };
-  // globalVaults: Map<string, GlobalVault>;
   userVaults: { [key: string]: UserVault };
-  // userVaults: Map<string, UserVault>;
-  // current_vault: MVault;
-  currentVault: string; // token name (EURL, USDT, tzBTC)
+  currentVault: string; // token name (EURL, USDT, tzBTC, ...)
 };
 
 export type EventsState = {
