@@ -41,6 +41,7 @@ result
 # Ligo files
 .ligoproject
 .ligo/
+.ligo/term_acceptance
 
 # ESY files
 _esy/
@@ -62,8 +63,5 @@ node_modules
 dist
 batcher-bot/notifications/node_modules/
 batcher-bot/liquidity/node_modules/
-<<<<<<< HEAD
 
 book
-=======
->>>>>>> release-ghostnet

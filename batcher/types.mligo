@@ -208,11 +208,166 @@ type oracle_source_change = [@layout:comb] {
   oracle_precision: nat;
 }
 
-(* The tokens that are valid within the contract  *)
-type valid_tokens = (string, token) map
 
-(* The swaps of valid tokens that are accepted by the contract  *)
-type valid_swaps =  (string, valid_swap_reduced) map
+module ValidTokens = struct
+  
+ type key = string 
+ type value = token
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      {object with values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+
+
+
+end
+
+module ValidSwaps = struct
+  
+ type key = string 
+ type value = valid_swap_reduced
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      {object with values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+end
+
 
 (* The current, most up to date exchange rates between tokens  *)
 type rates_current = (string, exchange_rate) big_map
@@ -248,4 +403,5 @@ type user_holding_key = address * string
 type user_holdings =  (user_holding_key, nat) big_map
 
 type vault_holdings = (nat, market_vault_holding) big_map
+
 

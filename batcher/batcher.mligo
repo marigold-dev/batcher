@@ -1,58 +1,8 @@
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
-#import "types.mligo" "Types"
-#import "utils.mligo" "Utils"
-#import "errors.mligo" "Errors"
-#import "constants.mligo" "Constants"
-
-type side = Types.side
-type tolerance = Types.tolerance
-type token = Types.token
-type token_amount = Types.token_amount
-type token_amount_map = Types.token_amount_map
-type token_holding_map = Types.token_holding_map
-type token_holding = Types.token_holding
-type swap =  Types.swap
-type swap_reduced = Types.swap_reduced
-type valid_swap_reduced = Types.valid_swap_reduced
-type valid_swap = Types.valid_swap
-type exchange_rate_full = Types.exchange_rate_full
-type exchange_rate = Types.exchange_rate
-type swap_order =  Types.swap_order
-type external_swap_order = Types.external_swap_order
-type batch_status  = Types.batch_status
-type total_cleared_volumes = Types.total_cleared_volumes
-type clearing_volumes = Types.clearing_volumes
-type clearing =  Types.clearing
-type buy_minus_token = Types.buy_minus_token
-type buy_exact_token = Types.buy_exact_token
-type buy_plus_token = Types.buy_plus_token
-type buy_side = Types.buy_side
-type sell_minus_token = Types.sell_minus_token
-type sell_exact_token = Types.sell_exact_token
-type sell_plus_token = Types.sell_plus_token
-type sell_side = Types.sell_side
-type batch_status = Types.batch_status
-type volumes = Types.volumes
-type pair = Types.pair
-type ordertype = Types.ordertype
-type ordertypes = Types.ordertypes
-type batch_ordertypes = Types.batch_ordertypes
-type user_batch_ordertypes = Types.user_batch_ordertypes
-type batch = Types.batch
-type reduced_batch = Types.reduced_batch
-type batch_indices = Types.batch_indices
-type batches = Types.batches
-type batch_set = Types.batch_set
-type metadata = Types.metadata
-type metadata_update = Types.metadata_update
-type orace_price_update = Types.oracle_price_update
-type oracle_source_change = Types.oracle_source_change
-type valid_tokens = Types.valid_tokens
-type valid_swaps = Types.valid_swaps
-type rates_current = Types.rates_current
-type fees = Types.fees
-
-
+#include "types.mligo"
+#include "utils.mligo"
+#include "errors.mligo"
+#include "constants.mligo"
 
 module BatchHoldings_Utils = struct
 
@@ -61,7 +11,7 @@ let increase_holding
   (batch_number: nat)
   (batches: batches): batches =
   match Big_map.find_opt batch_number batches with
-  | None  -> failwith Errors.cannot_increase_holdings_of_batch_that_does_not_exist
+  | None  -> failwith cannot_increase_holdings_of_batch_that_does_not_exist
   | Some b -> let bh = b.holdings + 1n in
               let b = { b with holdings = bh; } in
               Big_map.update batch_number (Some b) batches
@@ -83,7 +33,7 @@ let remove_batch_holding
   (batch_number: nat)
   (batches: batches): batches =
   match Big_map.find_opt batch_number batches with
-  | None -> failwith Errors.cannot_decrease_holdings_of_removed_batch
+  | None -> failwith cannot_decrease_holdings_of_removed_batch
   | Some b -> let nh = abs(b.holdings - 1n) in
               let b = { b with holdings = nh; } in
               Big_map.update batch_number (Some b) batches
@@ -94,7 +44,7 @@ let can_batch_be_removed
   (batch_number: nat)
   (batches: batches): bool =
   match Big_map.find_opt batch_number batches with
-                | None -> failwith Errors.cannot_decrease_holdings_of_removed_batch
+                | None -> failwith cannot_decrease_holdings_of_removed_batch
                 | Some b -> b.holdings <= 0n
 
 end
@@ -104,8 +54,8 @@ module Storage = struct
 
   type t = {
     metadata: metadata;
-    valid_tokens : valid_tokens;
-    valid_swaps : valid_swaps;
+    valid_tokens : ValidTokens.t;
+    valid_swaps : ValidSwaps.t;
     rates_current : rates_current;
     batch_set : batch_set;
     last_order_number : nat;
@@ -246,7 +196,7 @@ let add_payout_if_not_zero
   (payout: token_amount)
   (tam: token_amount_map) : token_amount_map =
   if payout.amount > 0n then
-    Utils.TokenAmountMap.increase payout tam
+    TokenAmountMap.increase payout tam
   else
     tam
 
@@ -276,17 +226,17 @@ let get_cleared_sell_side_payout
   (* Build payout amount *)
   let fill_payout: token_amount = {
     token = to;
-    amount = Utils.get_rounded_number_lower_bound payout;
+    amount = get_rounded_number_lower_bound payout;
   } in
   (* Add payout to transfers if not zero  *)
   let u_tam = add_payout_if_not_zero fill_payout tam in
   (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
-  if Utils.gt remaining (Rational.new 0) then
+  if gt remaining (Rational.new 0) then
     let token_rem : token_amount = {
         token = from;
-        amount = Utils.get_rounded_number_lower_bound remaining;
+        amount = get_rounded_number_lower_bound remaining;
     } in
-    Utils.TokenAmountMap.increase token_rem u_tam
+    TokenAmountMap.increase token_rem u_tam
   else
     u_tam
 
@@ -315,17 +265,17 @@ let get_cleared_buy_side_payout
   (* Build payout amount *)
   let fill_payout = {
     token = to;
-    amount = Utils.get_rounded_number_lower_bound payout;
+    amount = get_rounded_number_lower_bound payout;
   } in
   (* Add payout to transfers if not zero  *)
   let u_tam = add_payout_if_not_zero fill_payout tam in
   (* Check if there is a partial fill.  If so add partial fill payout plus remainder otherwise just add payout  *)
-  if Utils.gt remaining (Rational.new 0) then
+  if gt remaining (Rational.new 0) then
     let token_rem = {
         token = from;
-        amount = Utils.get_rounded_number_lower_bound remaining;
+        amount = get_rounded_number_lower_bound remaining;
     } in
-    Utils.TokenAmountMap.increase token_rem u_tam
+    TokenAmountMap.increase token_rem u_tam
   else
     u_tam
 
@@ -335,11 +285,11 @@ let get_cleared_payout
   (amt: nat)
   (clearing: clearing)
   (tam: token_amount_map)
-  (tokens: valid_tokens): token_amount_map =
+  (tokens: ValidTokens.t): token_amount_map =
   let s = ot.side in
   let swap = clearing.clearing_rate.swap in
-  let from_token = Utils.get_token swap.from tokens in
-  let to_token = Utils.get_token swap.to tokens in
+  let from_token = get_token swap.from tokens in
+  let to_token = get_token swap.to tokens in
   match s with
   | Buy -> get_cleared_buy_side_payout from_token to_token amt clearing tam
   | Sell -> get_cleared_sell_side_payout to_token from_token amt clearing tam
@@ -347,7 +297,7 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * valid_tokens * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * valid_tokens * fees * tez * bool) =
+  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * ValidTokens.t * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * ValidTokens.t * fees * tez * bool) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
                           if market_vault_used then
@@ -359,10 +309,10 @@ let collect_order_payout_from_clearing
                             let uf = { fees with to_send = f; } in
                             (tm, uf)
                         else
-                          let ta: token_amount = Utils.TokenAmount.recover ot amt c tokens in
+                          let ta: token_amount = TokenAmount.recover ot amt c tokens in
                           let f = fees.to_refund + fee_in_mutez in
                           let uf = { fees with to_refund = f; } in
-                          (Utils.TokenAmountMap.increase ta tam, uf)
+                          (TokenAmountMap.increase ta tam, uf)
   in
   (c, u_tam, vols, tokens, u_fees, fee_in_mutez, market_vault_used)
 
@@ -392,7 +342,7 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * valid_tokens * fees * tez) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t * fees * tez) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
     | None -> bots, tam, bts, tokens, fees, fee_in_mutez
@@ -439,7 +389,7 @@ let is_within_limit
   match Big_map.find_opt holder ubots with
   | None  -> true
   | Some bots -> let outstanding_token_items = Batch_OrderTypes.count bots in
-                 outstanding_token_items <= Constants.limit_of_redeemable_items
+                 outstanding_token_items <= limit_of_redeemable_items
 
 end
 
@@ -457,18 +407,18 @@ let resolve_fees
   (token_ops: operation list): operation list =
   let token_ops =
     if fees.to_refund > 0mutez then
-      Utils.Treasury_Utils.transfer_fee fees.payer fees.to_refund :: token_ops
+      Treasury_Utils.transfer_fee fees.payer fees.to_refund :: token_ops
     else
       token_ops
   in
   let token_ops =
     if fees.to_market_maker > 0mutez then
-      Utils.Treasury_Utils.transfer_fee fees.market_maker fees.to_market_maker :: token_ops
+      Treasury_Utils.transfer_fee fees.market_maker fees.to_market_maker :: token_ops
     else
       token_ops
   in
   if fees.to_send > 0mutez then
-    Utils.Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
+    Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
   else
     token_ops
 
@@ -476,8 +426,8 @@ let resolve_fees
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount) : operation list  =
-      let treasury_vault = Utils.get_vault () in
-      let deposit_op = Utils.Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
+      let treasury_vault = get_vault () in
+      let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
       [ deposit_op]
 
 [@inline]
@@ -485,7 +435,7 @@ let redeem_by_batch
     (redeem_address : address)
     (batch_id: nat)
     (storage : storage) : operation list * storage =
-      let treasury_vault = Utils.get_vault () in
+      let treasury_vault = get_vault () in
       let fees = {
         to_send = 0mutez;
         to_refund = 0mutez;
@@ -495,7 +445,7 @@ let redeem_by_batch
         market_maker = storage.marketmaker;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees (Some batch_id) storage in
-      let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
+      let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let operations = resolve_fees fees operations in
       let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
       (operations, updated_storage)
@@ -504,7 +454,7 @@ let redeem_by_batch
 let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
-      let treasury_vault = Utils.get_vault () in
+      let treasury_vault = get_vault () in
       let fees = {
         to_send = 0mutez;
         to_refund = 0mutez;
@@ -514,7 +464,7 @@ let redeem
         market_maker = storage.marketmaker;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees None storage in
-      let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
+      let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
       let operations = resolve_fees fees operations in
       let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
       (operations, updated_storage)
@@ -527,79 +477,79 @@ module Token_Utils = struct
 let is_valid_swap_pair
   (side: side)
   (swap: swap_reduced)
-  (valid_swaps: valid_swaps): swap_reduced =
-  let token_pair = Utils.pair_of_swap side swap in
-  let rate_name = Utils.get_rate_name_from_pair token_pair in
-  if Map.mem rate_name valid_swaps then swap else failwith Errors.unsupported_swap_type
+  (valid_swaps: ValidSwaps.t): swap_reduced =
+  let token_pair = pair_of_swap side swap in
+  let rate_name = get_rate_name_from_pair token_pair in
+  if ValidSwaps.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
 
 [@inline]
 let remove_token
   (token: token)
-  (valid_tokens: valid_tokens) : valid_tokens =
-  match Map.find_opt token.name valid_tokens with
-  | Some existing_token -> if Utils.are_equivalent_tokens existing_token token then
-                             Map.remove token.name valid_tokens
+  (valid_tokens: ValidTokens.t) : ValidTokens.t =
+  match ValidTokens.find_opt token.name valid_tokens with
+  | Some existing_token -> if are_equivalent_tokens existing_token token then
+                             ValidTokens.remove token.name valid_tokens
                            else
-                             failwith Errors.token_already_exists_but_details_are_different
+                             failwith token_already_exists_but_details_are_different
   | None -> valid_tokens
 
 [@inline]
 let add_token
   (token: token)
-  (valid_tokens: valid_tokens) : valid_tokens =
-  match Map.find_opt token.name valid_tokens with
-  | Some existing_token -> if Utils.are_equivalent_tokens existing_token token then
+  (valid_tokens: ValidTokens.t) : ValidTokens.t =
+  match ValidTokens.find_opt token.name valid_tokens with
+  | Some existing_token -> if are_equivalent_tokens existing_token token then
                              valid_tokens
                            else
-                             failwith Errors.token_already_exists_but_details_are_different
-  | None -> Map.add token.name token valid_tokens
+                             failwith token_already_exists_but_details_are_different
+  | None -> ValidTokens.upsert token.name token valid_tokens
 
 [@inline]
 let is_token_used
   (token: token)
-  (valid_tokens: valid_tokens) : bool =
+  (valid_tokens: ValidTokens.t) : bool =
   let is_token_in_tokens (acc, (_i, t) : bool * (string * token)) : bool =
-    Utils.are_equivalent_tokens token t ||
+    are_equivalent_tokens token t ||
     acc
   in
-  Map.fold is_token_in_tokens valid_tokens false
+  ValidTokens.fold is_token_in_tokens valid_tokens false
 
 [@inline]
 let is_token_used_in_swaps
   (token: token)
-  (valid_swaps: valid_swaps)
-  (tokens: valid_tokens): bool =
+  (valid_swaps: ValidSwaps.t)
+  (tokens: ValidTokens.t): bool =
   let is_token_used_in_swap (acc, (_i, valid_swap) : bool * (string * valid_swap_reduced)) : bool =
     let swap = valid_swap.swap in
-    let to_token = Utils.get_token swap.to tokens in
-    let from_token = Utils.get_token swap.from tokens in
-    Utils.are_equivalent_tokens token to_token ||
-    Utils.are_equivalent_tokens token from_token ||
+    let to_token = get_token swap.to tokens in
+    let from_token = get_token swap.from tokens in
+    are_equivalent_tokens token to_token ||
+    are_equivalent_tokens token from_token ||
     acc
   in
-  Map.fold is_token_used_in_swap valid_swaps false
+  ValidSwaps.fold is_token_used_in_swap valid_swaps false
 
 [@inline]
 let add_swap
   (valid_swap: valid_swap)
-  (valid_swaps: valid_swaps) : valid_swaps =
+  (valid_swaps: ValidSwaps.t) : ValidSwaps.t =
   let swap = valid_swap.swap in
-  let swap_reduced = Utils.swap_to_swap_reduced(swap) in
-  let rate_name = Utils.get_rate_name_from_swap swap_reduced in
-  let valid_swap_reduced = Utils.valid_swap_to_valid_swap_reduced valid_swap in
-  Map.add rate_name valid_swap_reduced valid_swaps
+  let swap_reduced = swap_to_swap_reduced(swap) in
+  let rate_name = get_rate_name_from_swap swap_reduced in
+  let valid_swap_reduced = valid_swap_to_valid_swap_reduced valid_swap in
+  ValidSwaps.upsert rate_name valid_swap_reduced valid_swaps
 
 [@inline]
 let remove_swap
   (valid_swap: valid_swap)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps) : (valid_swaps * valid_tokens) =
+  (valid_tokens: ValidTokens.t)
+  (valid_swaps: ValidSwaps.t) : (ValidSwaps.t * ValidTokens.t) =
   let swap = valid_swap.swap in
-  let swap_reduced = Utils.swap_to_swap_reduced(swap) in
-  let rate_name = Utils.get_rate_name_from_swap swap_reduced in
-  let valid_swaps = Map.remove rate_name valid_swaps in
-  let from = Utils.get_token swap_reduced.from valid_tokens in
-  let to = Utils.get_token swap_reduced.to valid_tokens in
+  let swap_reduced = swap_to_swap_reduced(swap) in
+  let rate_name = get_rate_name_from_swap swap_reduced in
+  let valid_swaps = ValidSwaps.remove rate_name valid_swaps in
+  let from = get_token swap_reduced.from valid_tokens in
+  let to = get_token swap_reduced.to valid_tokens in
   let valid_tokens = if is_token_used_in_swaps from valid_swaps valid_tokens then
                        valid_tokens
                     else
@@ -621,36 +571,36 @@ module Tokens = struct
 let validate
   (side: side)
   (swap: swap)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): swap_reduced =
+  (valid_tokens: ValidTokens.t)
+  (valid_swaps: ValidSwaps.t): swap_reduced =
   let from = swap.from.token in
   let to = swap.to in
-  match Map.find_opt from.name valid_tokens with
-  | None ->  failwith Errors.unsupported_swap_type
-  | Some ft -> (match Map.find_opt to.name valid_tokens with
-                | None -> failwith Errors.unsupported_swap_type
-                | Some tt -> if (Utils.are_equivalent_tokens from ft) && (Utils.are_equivalent_tokens to tt) then
-                              let sr = Utils.swap_to_swap_reduced swap in
+  match ValidTokens.find_opt from.name valid_tokens with
+  | None ->  failwith unsupported_swap_type
+  | Some ft -> (match ValidTokens.find_opt to.name valid_tokens with
+                | None -> failwith unsupported_swap_type
+                | Some tt -> if (are_equivalent_tokens from ft) && (are_equivalent_tokens to tt) then
+                              let sr = swap_to_swap_reduced swap in
                               Token_Utils.is_valid_swap_pair side sr valid_swaps
                             else
-                              failwith Errors.unsupported_swap_type)
+                              failwith unsupported_swap_type)
 
 [@inline]
 let check_tokens_size_or_fail
   (tokens_size: nat)
   (limit_on_tokens_or_pairs: nat)
-  (num_tokens: nat) : unit =  if tokens_size + num_tokens > limit_on_tokens_or_pairs then failwith Errors.upper_limit_on_tokens_has_been_reached else ()
+  (num_tokens: nat) : unit =  if tokens_size + num_tokens > limit_on_tokens_or_pairs then failwith upper_limit_on_tokens_has_been_reached else ()
 
 [@inline]
 let can_add
   (to: token)
   (from: token)
   (limit_on_tokens_or_pairs: nat)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): unit =
-  let pairs_size = Map.size valid_swaps in
-  if pairs_size + 1n > limit_on_tokens_or_pairs then failwith Errors.upper_limit_on_swap_pairs_has_been_reached else
-  let tokens_size = Map.size valid_tokens in
+  (valid_tokens: ValidTokens.t)
+  (valid_swaps: ValidSwaps.t): unit =
+  let pairs_size = ValidSwaps.size valid_swaps in
+  if pairs_size + 1n > limit_on_tokens_or_pairs then failwith upper_limit_on_swap_pairs_has_been_reached else
+  let tokens_size = ValidTokens.size valid_tokens in
   let unused_tokens_being_added =
     if Token_Utils.is_token_used to valid_tokens && Token_Utils.is_token_used from valid_tokens then 0n else
     if Token_Utils.is_token_used to valid_tokens || Token_Utils.is_token_used from valid_tokens then 1n else
@@ -661,31 +611,31 @@ let can_add
 [@inline]
 let remove_pair
   (valid_swap: valid_swap)
-  (valid_swaps: valid_swaps)
-  (valid_tokens: valid_tokens) : valid_swaps * valid_tokens =
+  (valid_swaps: ValidSwaps.t)
+  (valid_tokens: ValidTokens.t) : ValidSwaps.t * ValidTokens.t =
   let swap = valid_swap.swap in
-  let swap_reduced = Utils.swap_to_swap_reduced swap in
-  let rate_name = Utils.get_rate_name_from_swap swap_reduced in
-  let rate_found =  Map.find_opt rate_name valid_swaps in
+  let swap_reduced = swap_to_swap_reduced swap in
+  let rate_name = get_rate_name_from_swap swap_reduced in
+  let rate_found =  ValidSwaps.find_opt rate_name valid_swaps in
   match rate_found with
   | Some _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
-  | None ->  failwith Errors.swap_does_not_exist
+  | None ->  failwith swap_does_not_exist
 
 [@inline]
 let add_pair
   (limit_on_tokens_or_pairs: nat)
   (valid_swap: valid_swap)
-  (valid_swaps: valid_swaps)
-  (valid_tokens: valid_tokens) : valid_swaps * valid_tokens =
+  (valid_swaps: ValidSwaps.t)
+  (valid_tokens: ValidTokens.t) : ValidSwaps.t * ValidTokens.t =
   let swap = valid_swap.swap in
   let from = swap.from.token in
   let to = swap.to in
   let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
-  let swap_reduced = Utils.swap_to_swap_reduced swap in
-  let rate_name = Utils.get_rate_name_from_swap swap_reduced in
-  let rate_found =  Map.find_opt rate_name valid_swaps in
+  let swap_reduced = swap_to_swap_reduced swap in
+  let rate_name = get_rate_name_from_swap swap_reduced in
+  let rate_found =  ValidSwaps.find_opt rate_name valid_swaps in
   match rate_found with
-  | Some _  -> failwith Errors.swap_already_exists
+  | Some _  -> failwith swap_already_exists
   | None -> let valid_tokens = Token_Utils.add_token from valid_tokens in
                   let valid_tokens = Token_Utils.add_token to valid_tokens in
                   let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
@@ -783,7 +733,7 @@ let update_current_batch_in_set
   (batch : batch)
   (batch_set : batch_set) : (batch * batch_set)=
   let updated_batches = Big_map.update batch.batch_number (Some batch) batch_set.batches in
-  let name = Utils.get_rate_name_from_pair batch.pair in
+  let name = get_rate_name_from_pair batch.pair in
   let updated_batch_indices = Map.update name (Some batch.batch_number) batch_set.current_batch_indices in
   batch, { batch_set with batches = updated_batches; current_batch_indices = updated_batch_indices; }
 
@@ -793,7 +743,7 @@ let should_be_cleared
   (current_time : timestamp) : bool =
   match batch.status with
     | Closed { start_time = _; closing_time } ->
-      current_time > closing_time + Constants.price_wait_window_in_seconds
+      current_time > closing_time + price_wait_window_in_seconds
     | _ -> false
 
 
@@ -809,7 +759,7 @@ let start_period
   (pair : pair)
   (batch_set : batch_set)
   (current_time : timestamp) : (batch * batch_set) =
-  let highest_batch_index = Utils.get_highest_batch_index batch_set.current_batch_indices in
+  let highest_batch_index = get_highest_batch_index batch_set.current_batch_indices in
   let new_batch_number = highest_batch_index + 1n in
   let new_batch = make new_batch_number current_time pair in
   update_current_batch_in_set new_batch batch_set
@@ -824,7 +774,7 @@ let close
       let batch_close_time = start_time + (int deposit_time_window) in
       let new_status = Closed { start_time = start_time; closing_time = batch_close_time } in
       storage,{ batch with status = new_status }
-    | _ -> failwith Errors.trying_to_close_batch_which_is_not_open
+    | _ -> failwith trying_to_close_batch_which_is_not_open
 
 [@inline]
 let new_batch_set : batch_set =
@@ -905,7 +855,7 @@ let get_current_batch_without_opening
   (current_time: timestamp)
   (storage: Storage.t)
   (batch_set: batch_set) : (batch option * batch_set * Storage.t) =
-  let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
+  let current_batch_index = get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  None, batch_set,storage
   | Some cb -> let is_cleared = is_cleared cb in
@@ -922,7 +872,7 @@ let get_current_batch
   (current_time: timestamp)
   (storage: Storage.t)
   (batch_set: batch_set) : (batch * batch_set * Storage.t) =
-  let current_batch_index = Utils.get_current_batch_index pair batch_set.current_batch_indices in
+  let current_batch_index = get_current_batch_index pair batch_set.current_batch_indices in
   match Big_map.find_opt current_batch_index batch_set.batches with
   | None ->  let (b, bs) = start_period pair batch_set current_time in
              (b,bs,storage)
@@ -961,9 +911,9 @@ let get_clearing_rate
   (exchange_rate: exchange_rate) : exchange_rate =
   match clearing.clearing_tolerance with
   | Exact -> exchange_rate
-  | Plus -> let rate = Rational.mul (exchange_rate.rate) Constants.ten_bips_constant in
+  | Plus -> let rate = Rational.mul (exchange_rate.rate) ten_bips_constant in
             { exchange_rate with rate = rate}
-  | Minus -> let rate = Rational.div (exchange_rate.rate) Constants.ten_bips_constant in
+  | Minus -> let rate = Rational.div (exchange_rate.rate) ten_bips_constant in
              { exchange_rate with rate = rate}
 
 [@inline]
@@ -983,9 +933,9 @@ let filter_volumes
 let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (is_sell_side: bool) : nat =
   let float_amount = Rational.new (int (amount)) in
   if is_sell_side then
-    Utils.get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
+    get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
   else
-    Utils.get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
+    get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
 
 (*
   This function builds the order equivalence for the pro-rata redeemption.
@@ -1007,7 +957,7 @@ let build_total_cleared_volumes
   in
   (* Convert cleared volume to sell side units to assist in payout claculations later *)
   let sell_side_total_cleared_volume_as_rational = Rational.mul (Rational.new (int buy_side_total_cleared_volume)) clearing_rate.rate in
-  let sell_side_total_cleared_volume = Utils.get_rounded_number_lower_bound sell_side_total_cleared_volume_as_rational in
+  let sell_side_total_cleared_volume = get_rounded_number_lower_bound sell_side_total_cleared_volume_as_rational in
   (* Build total volumes objects which represents the TOTAL cleared volume on each side of the swap along which will be used in the payout calculations  *)
   let total_volumes = {
     buy_side_total_cleared_volume = buy_side_total_cleared_volume;
@@ -1030,7 +980,7 @@ let compute_clearing_prices
   let buy_cp_plus = int (volumes.buy_plus_volume) in
   let buy_side : buy_side = buy_cp_minus, buy_cp_exact, buy_cp_plus in
   let sell_side : sell_side = sell_cp_minus, sell_cp_exact, sell_cp_plus in
-  let clearing = Utils.get_clearing_price rate buy_side sell_side in
+  let clearing = get_clearing_price rate buy_side sell_side in
   let with_total_cleared_vols = build_total_cleared_volumes volumes clearing rate in
   with_total_cleared_vols
 
@@ -1054,14 +1004,8 @@ type entrypoint =
   | Change_admin_address of address
   | Change_marketmaker_address of address
   | Change_fee_recipient_address of address
-  | Add_token_swap_pair of valid_swap
-  | Remove_token_swap_pair of valid_swap
-  | Amend_token_and_pair_limit of nat
   | Add_or_update_metadata of metadata_update
   | Remove_metadata of string
-  | Enable_swap_pair_for_deposit of string
-  | Disable_swap_pair_for_deposit of string
-  | Change_oracle_source_of_pair of oracle_source_change
   | Change_deposit_time_window of nat
 
 
@@ -1078,7 +1022,7 @@ let get_oracle_price
 let admin_and_fee_recipient_address_are_different
   (admin : address)
   (fee_recipient : address ): unit =
-  if admin = fee_recipient then failwith Errors.admin_and_fee_recipient_address_cannot_be_the_same else ()
+  if admin = fee_recipient then failwith admin_and_fee_recipient_address_cannot_be_the_same else ()
 
 
 [@inline]
@@ -1099,10 +1043,10 @@ let external_to_order
   (order: external_swap_order)
   (order_number: nat)
   (batch_number: nat)
-  (valid_tokens: valid_tokens)
-  (valid_swaps: valid_swaps): swap_order =
-  let side = Utils.nat_to_side order.side in
-  let tolerance = Utils.nat_to_tolerance order.tolerance in
+  (valid_tokens: ValidTokens.t)
+  (valid_swaps: ValidSwaps.t): swap_order =
+  let side = nat_to_side order.side in
+  let tolerance = nat_to_tolerance order.tolerance in
   let sender = Tezos.get_sender () in
   let converted_order : swap_order =
     {
@@ -1121,12 +1065,11 @@ let external_to_order
 let get_valid_swap_reduced
  (pair_name: string)
  (storage : storage) : valid_swap_reduced =
- match Map.find_opt pair_name storage.valid_swaps with
+ match ValidSwaps.find_opt pair_name storage.valid_swaps with
  | Some vswp -> vswp
- | None -> failwith Errors.swap_does_not_exist
+ | None -> failwith swap_does_not_exist
 
 [@inline]
-
 let remove_orders_from_batch
   (ots: ordertypes)
   (batch: batch): batch =
@@ -1153,7 +1096,7 @@ let remove_order_types
   (bot: batch_ordertypes)
   (storage:storage) : ordertypes * storage =
   match Map.find_opt batch_number bot with
-  | None -> failwith Errors.no_orders_for_user_address
+  | None -> failwith no_orders_for_user_address
   | Some ots -> let bot = Map.remove batch_number bot in
                 let ubots = Big_map.update holder (Some bot) storage.user_batch_ordertypes in
                 let storage = { storage with user_batch_ordertypes = ubots;} in
@@ -1175,14 +1118,14 @@ let refund_orders
        token = token;
        amount = amt;
     } in
-    let tam = Utils.TokenAmountMap.increase ta tam in
+    let tam = TokenAmountMap.increase ta tam in
     let mutez_to_ref = mutez_to_ref + fee in
     tam, mutez_to_ref
   in
   let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
-  let treasury_vault = Utils.get_vault () in
-  let operations = Utils.Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
-  let operations = if tez_refunds > 0mutez then Utils.Treasury_Utils.transfer_fee storage.fee_recipient tez_refunds :: operations else operations in
+  let treasury_vault = get_vault () in
+  let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
+  let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee storage.fee_recipient tez_refunds :: operations else operations in
   operations, storage
 
 [@inline]
@@ -1194,9 +1137,9 @@ let cancel_order
   let ubots = storage.user_batch_ordertypes in
   let current_time = Tezos.get_now () in
   let (batch, batch_set, storage) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage storage.batch_set in
-  let () = if not (Batch_Utils.is_batch_open batch) then failwith Errors.cannot_cancel_orders_for_a_batch_that_is_not_open in
+  let () = if not (Batch_Utils.is_batch_open batch) then failwith cannot_cancel_orders_for_a_batch_that_is_not_open in
   match Big_map.find_opt holder ubots with
-  | None -> failwith Errors.no_orders_for_user_address
+  | None -> failwith no_orders_for_user_address
   | Some bot -> let orders_to_remove, storage = remove_order_types batch.batch_number holder bot storage in
                 let storage = remove_orders orders_to_remove batch batch_set storage in
                 refund_orders holder orders_to_remove valid_swap storage
@@ -1205,13 +1148,13 @@ let cancel_order
 let cancel
   (pair: pair)
   (storage: storage): result =
-  let () = Utils.reject_if_tez_supplied () in
+  let () = reject_if_tez_supplied () in
   let sender = Tezos.get_sender () in
   let token_one, token_two = pair in
-  let pair_name = Utils.find_lexicographical_pair_name token_one token_two in
-  match Map.find_opt pair_name storage.valid_swaps with
-  | None -> failwith Errors.swap_does_not_exist
-  | Some vswpr -> let vswp = Utils.valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
+  let pair_name = find_lexicographical_pair_name token_one token_two in
+  match ValidSwaps.find_opt pair_name storage.valid_swaps with
+  | None -> failwith swap_does_not_exist
+  | Some vswpr -> let vswp = valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
                   cancel_order pair sender vswp storage
 
 [@inline]
@@ -1219,7 +1162,7 @@ let oracle_price_is_not_stale
   (deposit_time_window: nat)
   (oracle_price_timestamp: timestamp) : unit =
   let dtw_i = int deposit_time_window in
-  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith Errors.oracle_price_is_stale
+  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
 
 [@inline]
 let is_oracle_price_newer_than_current
@@ -1228,7 +1171,7 @@ let is_oracle_price_newer_than_current
   (storage: storage): unit =
   let rates = storage.rates_current in
   match Big_map.find_opt rate_name rates with
-  | Some r -> if r.when >=oracle_price_timestamp then failwith Errors.oracle_price_is_not_timely
+  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
   | None   -> ()
 
 
@@ -1238,15 +1181,15 @@ let confirm_oracle_price_is_available_before_deposit
   (batch:batch)
   (storage:storage) : unit =
   if Batch_Utils.is_batch_open batch then () else
-  let pair_name = Utils.get_rate_name_from_pair pair in
+  let pair_name = get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
-  let (lastupdated, _price)  = get_oracle_price Errors.oracle_price_should_be_available_before_deposit valid_swap_reduced in
+  let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
   oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
 
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
   (valid_swap:valid_swap) : unit =
-  if valid_swap.is_disabled_for_deposits then () else failwith Errors.cannot_remove_swap_pair_that_is_not_disabled
+  if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
 
 
 [@inline]
@@ -1254,28 +1197,28 @@ let enforce_correct_side
   (order:external_swap_order)
   (valid_swap:valid_swap_reduced) : unit =
   let swap = order.swap in
-  let side = Utils.nat_to_side order.side in
+  let side = nat_to_side order.side in
   match side with
   | Buy ->
-    if swap.from.token.name = valid_swap.swap.from then () else failwith Errors.incorrect_side_specified
+    if swap.from.token.name = valid_swap.swap.from then () else failwith incorrect_side_specified
   | Sell ->
-    if swap.from.token.name = valid_swap.swap.to then () else failwith Errors.incorrect_side_specified
+    if swap.from.token.name = valid_swap.swap.to then () else failwith incorrect_side_specified
 
 
 (* Register a deposit during a valid (Open) deposit time; fails otherwise.
    Updates the current_batch if the time is valid but the new batch was not initialized. *)
 [@inline]
 let deposit (external_order: external_swap_order) (storage : storage) : result =
-  let pair = Utils.pair_of_external_swap external_order in
+  let pair = pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
-  let pair_name = Utils.get_rate_name_from_pair pair in
+  let pair_name = get_rate_name_from_pair pair in
   let valid_swap = get_valid_swap_reduced pair_name storage in
-  if valid_swap.is_disabled_for_deposits then failwith Errors.swap_is_disabled_for_deposits else
+  if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else
   let () = enforce_correct_side external_order valid_swap in
   let fee_amount_in_mutez = storage.fee_in_mutez in
   let fee_provided = Tezos.get_amount () in
-  if fee_provided < fee_amount_in_mutez then failwith Errors.insufficient_swap_fee else
-  if fee_provided > fee_amount_in_mutez then failwith Errors.more_tez_sent_than_fee_cost else
+  if fee_provided < fee_amount_in_mutez then failwith insufficient_swap_fee else
+  if fee_provided > fee_amount_in_mutez then failwith more_tez_sent_than_fee_cost else
   let (current_batch, current_batch_set, storage) = Batch_Utils.get_current_batch storage.deposit_time_window_in_seconds pair current_time storage storage.batch_set in
   if Batch_Utils.can_deposit current_batch then
      let () = confirm_oracle_price_is_available_before_deposit pair current_batch storage in
@@ -1296,15 +1239,15 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
        (treasury_ops, updated_storage)
 
       else
-        failwith Errors.too_many_unredeemed_orders
+        failwith too_many_unredeemed_orders
   else
-    failwith Errors.no_open_batch
+    failwith no_open_batch
 
 [@inline]
 let redeem
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  let () = Utils.reject_if_tez_supplied () in
+  let () = reject_if_tez_supplied () in
   let (tokens_transfer_ops, new_storage) = Treasury.redeem holder storage in
   (tokens_transfer_ops, new_storage)
 
@@ -1313,36 +1256,24 @@ let redeem_by_batch
  (batch_id:nat)
  (storage : storage) : result =
   let holder = Tezos.get_sender () in
-  let () = Utils.reject_if_tez_supplied () in
+  let () = reject_if_tez_supplied () in
   let (tokens_transfer_ops, new_storage) = Treasury.redeem_by_batch holder batch_id storage in
   (tokens_transfer_ops, new_storage)
 
-[@inline]
-let change_oracle_price_source
-  (source_change: oracle_source_change)
-  (storage: storage) : result =
-  let _ = Utils.is_administrator storage.administrator in
-  let () = Utils.reject_if_tez_supplied () in
-   let valid_swap_reduced = get_valid_swap_reduced source_change.pair_name storage in
-  let valid_swap = { valid_swap_reduced with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name; oracle_precision = source_change.oracle_precision;  } in
-  let _ = get_oracle_price Errors.unable_to_get_price_from_new_oracle_source valid_swap_reduced in
-  let updated_swaps = Map.update source_change.pair_name (Some valid_swap) storage.valid_swaps in
-  let storage = { storage with valid_swaps = updated_swaps} in
-  no_op (storage)
 
 [@inline]
 let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
   (storage : storage) : storage =
-  let valid_swap_reduced = Utils.valid_swap_to_valid_swap_reduced valid_swap in
-  let (lastupdated, price) = Utils.get_oracle_price Errors.unable_to_get_price_from_oracle valid_swap_reduced in
+  let valid_swap_reduced = valid_swap_to_valid_swap_reduced valid_swap in
+  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
-  let oracle_rate = Utils.convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
-  let rates_current = Utils.update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
+  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
+  let rates_current = update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
   let storage = { storage with rates_current = rates_current; } in
-  let pair = Utils.pair_of_rate oracle_rate in
+  let pair = pair_of_rate oracle_rate in
   let current_time = Tezos.get_now () in
   let batch_set = storage.batch_set in
   let (batch_opt, batch_set, storage) = Batch_Utils.get_current_batch_without_opening storage.deposit_time_window_in_seconds pair current_time storage batch_set in
@@ -1357,19 +1288,19 @@ let tick_price
 let tick
  (rate_name: string)
  (storage : storage) : result =
- let () = Utils.reject_if_tez_supplied () in
- match Map.find_opt rate_name storage.valid_swaps with
- | Some vswpr -> let vswp = Utils.valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
+ let () = reject_if_tez_supplied () in
+ match ValidSwaps.find_opt rate_name storage.valid_swaps with
+ | Some vswpr -> let vswp = valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
                 let storage = tick_price rate_name vswp storage in
                 no_op (storage)
- | None -> failwith Errors.swap_does_not_exist
+ | None -> failwith swap_does_not_exist
 
 [@inline]
 let change_fee
     (new_fee: tez)
     (storage: storage) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
+    let () = is_administrator storage.administrator in
+    let () = reject_if_tez_supplied () in
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op storage
 
@@ -1377,8 +1308,8 @@ let change_fee
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
+    let () = is_administrator storage.administrator in
+    let () = reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_admin_address storage.fee_recipient in
     let storage = { storage with administrator = new_admin_address; } in
     no_op storage
@@ -1387,8 +1318,8 @@ let change_admin_address
 let change_mm_address
     (new_marketmaker_address: address)
     (storage: storage) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
+    let () = is_administrator storage.administrator in
+    let () = reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_marketmaker_address storage.fee_recipient in
     let storage = { storage with marketmaker = new_marketmaker_address; } in
     no_op storage
@@ -1397,42 +1328,19 @@ let change_mm_address
 let change_fee_recipient_address
     (new_fee_recipient_address: address)
     (storage: storage) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
+    let () = is_administrator storage.administrator in
+    let () = reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_fee_recipient_address storage.administrator in
     let storage = { storage with fee_recipient = new_fee_recipient_address; } in
     no_op storage
 
-[@inline]
-let add_token_swap_pair
-  (valid_swap: valid_swap)
-  (storage: storage) : result =
-   let () = Utils.is_administrator storage.administrator in
-   let () = Utils.reject_if_tez_supplied () in
-   if valid_swap.swap.from.token.decimals < Constants.minimum_precision then failwith Errors.swap_precision_is_less_than_minimum else
-   if valid_swap.swap.to.decimals < Constants.minimum_precision then failwith Errors.swap_precision_is_less_than_minimum else
-   if valid_swap.oracle_precision <> Constants.minimum_precision then failwith Errors.oracle_must_be_equal_to_minimum_precision else
-   let (u_swaps,u_tokens) = Tokens.add_pair storage.limit_on_tokens_or_pairs valid_swap storage.valid_swaps storage.valid_tokens in
-   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
-   no_op storage
-
-[@inline]
-let remove_token_swap_pair
-  (swap: valid_swap)
-  (storage: storage) : result =
-   let () = Utils.is_administrator storage.administrator in
-   let () = Utils.reject_if_tez_supplied () in
-   let () = confirm_swap_pair_is_disabled_prior_to_removal swap in
-   let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
-   let storage = { storage with valid_swaps = u_swaps; valid_tokens = u_tokens; } in
-   no_op storage
 
 [@inline]
 let add_or_update_metadata
   (metadata_update: metadata_update)
   (storage:storage) : result =
-   let () = Utils.is_administrator storage.administrator in
-   let () = Utils.reject_if_tez_supplied () in
+   let () = is_administrator storage.administrator in
+   let () = reject_if_tez_supplied () in
   let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
                          | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
                          | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
@@ -1444,57 +1352,27 @@ let add_or_update_metadata
 let remove_metadata
   (key: string)
   (storage:storage) : result =
-   let () = Utils.is_administrator storage.administrator in
-   let () = Utils.reject_if_tez_supplied () in
+   let () = is_administrator storage.administrator in
+   let () = reject_if_tez_supplied () in
   let updated_metadata = Big_map.remove key storage.metadata in
   let storage = {storage with metadata = updated_metadata } in
   no_op storage
 
-[@inline]
-let set_deposit_status
-  (pair_name: string)
-  (disabled: bool)
-  (storage: storage) : result =
-   let () = Utils.is_administrator storage.administrator in
-   let () = Utils.reject_if_tez_supplied () in
-   let valid_swap = get_valid_swap_reduced pair_name storage in
-   let valid_swap = { valid_swap with is_disabled_for_deposits = disabled; } in
-   let valid_swaps = Map.update pair_name (Some valid_swap) storage.valid_swaps in
-   let storage = { storage with valid_swaps = valid_swaps; } in
-   no_op (storage)
-
-[@inline]
-let amend_token_and_pair_limit
-  (limit: nat)
-  (storage: storage) : result =
-  let () = Utils.is_administrator storage.administrator in
-  let () = Utils.reject_if_tez_supplied () in
-  let token_count = Map.size storage.valid_tokens in
-  let pair_count =  Map.size storage.valid_swaps in
-  if limit < token_count then failwith Errors.cannot_reduce_limit_on_tokens_to_less_than_already_exists else
-  if limit < pair_count then failwith Errors.cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists else
-  let storage = { storage with limit_on_tokens_or_pairs = limit} in
-  no_op (storage)
 
 [@inline]
 let change_deposit_time_window
   (new_window: nat)
   (storage: storage) : result =
-  let () = Utils.is_administrator storage.administrator in
-  let () = Utils.reject_if_tez_supplied () in
-  if new_window < Constants.minimum_deposit_time_in_seconds then failwith Errors.cannot_update_deposit_window_to_less_than_the_minimum else
-  if new_window > Constants.maximum_deposit_time_in_seconds then failwith Errors.cannot_update_deposit_window_to_more_than_the_maximum else
+  let () = is_administrator storage.administrator in
+  let () = reject_if_tez_supplied () in
+  if new_window < minimum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_less_than_the_minimum else
+  if new_window > maximum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_more_than_the_maximum else
   let storage = { storage with deposit_time_window_in_seconds = new_window; } in
   no_op storage
 
 [@view]
 let get_fee_in_mutez ((), storage : unit * storage) : tez = storage.fee_in_mutez
 
-[@view]
-let get_valid_swaps ((), storage : unit * storage) : valid_swaps = storage.valid_swaps
-
-[@view]
-let get_valid_tokens ((), storage : unit * storage) : valid_tokens = storage.valid_tokens
 
 [@view]
 let redeemable_holdings_available ((), storage : unit * storage) : bool =
@@ -1532,14 +1410,8 @@ let main
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Change_marketmaker_address new_mm_address -> change_mm_address new_mm_address storage
    | Change_fee_recipient_address new_fee_recipient_address -> change_fee_recipient_address new_fee_recipient_address storage
-   | Add_token_swap_pair valid_swap -> add_token_swap_pair valid_swap storage
-   | Remove_token_swap_pair valid_swap -> remove_token_swap_pair valid_swap storage
-   | Change_oracle_source_of_pair source_update -> change_oracle_price_source source_update storage
-   | Amend_token_and_pair_limit l -> amend_token_and_pair_limit l storage
    | Add_or_update_metadata mu -> add_or_update_metadata mu storage
    | Remove_metadata k -> remove_metadata k storage
-   | Enable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name false storage
-   | Disable_swap_pair_for_deposit pair_name -> set_deposit_status pair_name true storage
    | Change_deposit_time_window t -> change_deposit_time_window t storage
 
 

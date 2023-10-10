@@ -57,6 +57,12 @@ build-mm-mainnet:
 build-mm-ghostnet:
 	$(call compile_contract,marketmaker.mligo, marketmaker-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_ghostnet.mligo, marketmaker-storage-ghostnet.tz)
+build-tm-mainnet:
+	$(call compile_contract,tokenmanager.mligo, tokenmanager-mainnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/tokenmanager_storage_mainnet.mligo, tokenmanager-storage-mainnet.tz)
+build-tm-ghostnet:
+	$(call compile_contract,tokenmanager.mligo, tokenmanager-ghostnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/tokenmanager_storage_ghostnet.mligo, tokenmanager-storage-ghostnet.tz)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, tzBTC_token.tz)
@@ -92,5 +98,8 @@ measure:
 	$(call measure_contract,batcher.mligo)
 measure-mm:
 	$(call measure_contract,marketmaker.mligo)
+measure-tm:
+	$(call measure_contract,tokenmanager.mligo)
 install:
 	$(call install_deps)
+
