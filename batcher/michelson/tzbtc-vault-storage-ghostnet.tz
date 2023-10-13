@@ -1,0 +1,9 @@
+(Pair (Pair (Pair "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+            {}
+            "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+      (Pair (Pair (Pair 0 "tzBTC" (Some "KT1P8RdJ5MfHMK5phKJ5JsfNfask5v2b2NQS") 8 (Some "FA1.2 token"))
+                  0)
+            "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+      0
+      {})
+

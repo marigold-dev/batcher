@@ -837,6 +837,7 @@ let remove_swap
   valid_swaps, valid_tokens
 
 end
+
 module Tokens = struct
 
 
@@ -913,6 +914,18 @@ let add_pair
                   let valid_tokens = Token_Utils.add_token to valid_tokens in
                   let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
                   valid_swaps, valid_tokens
+
+
+end
+
+module TokensManagerUtils = struct
+
+[@inline]
+let get_valid_tokens
+  (tokenmanager: address) : (string,token) map = 
+  match Tezos.call_view "get_valid_tokens" () tokenmanager with
+  | Some tokns -> tokns
+  | None -> failwith unable_to_get_tokens_from_token_manager
 
 
 end

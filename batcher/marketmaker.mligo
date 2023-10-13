@@ -41,6 +41,7 @@ module Storage = struct
   }
 end
 
+
 module MarketVaultUtils = struct
 
 [@inline]
@@ -530,63 +531,7 @@ let deposit
 
 end
 
-type result = operation list * Storage.t
 
-[@inline]
-let no_op (s : Storage.t) : result =  (([] : operation list), s)
-
-type entrypoint =
-  | RemoveLiquidity of string
-  | AddLiquidity of token_amount
-  | Claim of string
-  | Tick
-  | Change_admin_address of address
-  | Change_batcher_address of address
-
-(* Add Liquidity into a market vault *)
-[@inline]
-let add_liquidity
-  (token_amount: token_amount)
-  (storage: Storage.t) : result = 
-  let () = Utils.reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.add_liquidity_to_market_maker holder token_amount storage
-
-(* Add Liquidity into a market vault *)
-[@inline]
-let claim
-  (token_name: string)
-  (storage: Storage.t) : result = 
-  let () = Utils.reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.claim_rewards holder token_name storage
-
-(* Remove Liquidity into a market vault *)
-[@inline]
-let remove_liquidity
-  (token_name: string)
-  (storage: Storage.t) : result = 
-  let () = Utils.reject_if_tez_supplied () in
-  let holder = Tezos.get_sender () in
-  MarketVaultUtils.remove_liquidity_from_market_maker holder token_name storage
-
-[@inline]
-let change_admin_address
-    (new_admin_address: address)
-    (storage: Storage.t) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
-    let storage = { storage with administrator = new_admin_address; } in
-    no_op storage
-
-[@inline]
-let change_batcher_address
-    (new_batcher_address: address)
-    (storage: Storage.t) : result =
-    let () = Utils.is_administrator storage.administrator in
-    let () = Utils.reject_if_tez_supplied () in
-    let storage = { storage with batcher = new_batcher_address; } in
-    no_op storage
 
 [@inline]
 let get_batches

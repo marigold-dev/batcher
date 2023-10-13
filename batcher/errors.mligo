@@ -61,3 +61,4 @@
 [@inline] let unable_to_get_oracle_price                                         = 159n
 [@inline] let contract_does_not_exist                                            = 160n
 [@inline] let unable_to_call_on_chain_view                                       = 161n
+[@inline] let unable_to_get_tokens_from_token_manager                            = 162n

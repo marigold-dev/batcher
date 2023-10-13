@@ -7,6 +7,7 @@
 #import "../mocks/oracle.mligo" "Oracle"
 #import "./storage.mligo" "TestStorage"
 #import "../../marketmaker.mligo" "MarketMaker"
+#import "../../tokenmanager.mligo" "TokenManager"
 
 type level = Breath.Logger.level
 let log = Breath.Logger.log
@@ -43,6 +44,28 @@ let originate
     level
     "batcher"
     (Batcher.main)
+    (storage)
+    (0tez)
+
+let originate_mm
+(storage: mm_storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    "marketmaker"
+    (MarketMaker.main)
+    (storage)
+    (0tez)
+
+let originate_tm
+(storage: TokenManager.TokenManager.storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    "tokenmanager"
+    (TokenManager.main)
     (storage)
     (0tez)
 

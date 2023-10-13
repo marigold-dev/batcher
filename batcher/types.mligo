@@ -381,27 +381,13 @@ type fees = {
    market_maker: address;
 }
 
-type market_maker_vault = {
-  total_shares: nat;
-  holdings: nat set;
-  native_token: token_amount;
-  foreign_tokens: token_amount_map;
-}
 
-type market_vaults = (string, market_maker_vault) big_map
-
-type market_vault_holding = {   
-   id: nat;
-   token: string;
+type vault_holding = {   
    holder: address;
    shares: nat;
    unclaimed: tez;
 }
 
-type user_holding_key = address * string
-
-type user_holdings =  (user_holding_key, nat) big_map
-
-type vault_holdings = (nat, market_vault_holding) big_map
+type vault_holdings = (address, vault_holding) big_map
 
 

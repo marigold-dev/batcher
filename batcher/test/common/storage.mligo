@@ -3,6 +3,7 @@
 #import "../tokens/fa12/main.mligo" "TZBTC"
 #import "../tokens/fa2/main.mligo" "USDT"
 #import "../tokens/fa2/main.mligo" "EURL"
+#import "../../tokenmanager.mligo" "TokenManager"
 #import "../mocks/oracle.mligo" "Oracle"
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
@@ -170,7 +171,7 @@ let initial_mm_storage_with_admin
       }
     )
   ];
-  administrator = admin;
+  administrator = admin;"tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address
   limit_on_tokens_or_pairs = 10n;
   batcher = batcher;
   vaults = (Big_map.empty: MarketMaker.market_vaults);
@@ -178,6 +179,72 @@ let initial_mm_storage_with_admin
   user_holdings = (Big_map.empty: MarketMaker.user_holdings);
   vault_holdings = (Big_map.empty: MarketMaker.vault_holdings);
 }
+
+let initial_tokenmanager_storage
+  (administrator: address)
+  (oracle_address: address)
+  (tzbtc_address: address)
+  (usdt_address:address)
+  (eurl_address:address): TokenManager.TokenManager.storage = 
+  {
+    valid_tokens = {
+      keys  = Set.literal ["tzBTC";EURL";"USDT"];   
+      values = Big_map.literal [
+    (("tzBTC"), {
+      token_id = 0n;
+      name = "tzBTC";
+      address = Some(tzbtc_address);
+      decimals = 8n;
+      standard = Some "FA1.2 token"
+    });
+    (("EURL"),{
+      token_id = 0n;
+      name = "EURL";
+      address = Some(eurl_address);
+      decimals = 6n;
+      standard = Some "FA2 token"
+    });
+    (("USDT"),{
+      token_id = 0n;
+      name = "USDT";
+      address = Some(usdt_address);
+      decimals = 6n;
+      standard = Some "FA2 token"
+    });
+  ];
+  };
+  valid_swaps  = {
+   keys = Set.literal ["tzBTC/USDT";tzBTC/EURL"] ;
+   values = Big_map.literal [
+    ("tzBTC/USDT", {
+        swap = {
+            from =  "tzBTC";
+            to =  "USDT";
+        };
+        oracle_address = oracle_address;
+        oracle_asset_name = "BTC-USDT";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    );
+    ("tzBTC/EURL", {
+        swap = {
+          from = "tzBTC";
+          to = "EURL";
+        };
+        oracle_address = oracle_address;
+        oracle_asset_name = "BTC-EUR";
+        oracle_precision = 6n;
+        is_disabled_for_deposits = false
+      }
+    )
+  ];
+  };
+  administrator = administrator;
+  limit_on_tokens_or_pairs = 10n;
+}
+
+
 
 
 let initial_mm_storage

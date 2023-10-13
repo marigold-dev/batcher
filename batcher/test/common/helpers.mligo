@@ -1,5 +1,7 @@
 #import "../../batcher.mligo" "Batcher"
 #import "../../marketmaker.mligo" "MarketMaker"
+#import "../../tokenmanager.mligo" "TokenManager"
+#import "../../vault.mligo" "Vault"
 #import "../tokens/fa12/main.mligo" "TZBTC"
 #import "../tokens/fa2/main.mligo" "USDT"
 #import "../tokens/fa2/main.mligo" "EURL"
@@ -24,11 +26,15 @@ type level = Breath.Logger.level
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
    marketmaker:  (MarketMaker.entrypoint, MarketMaker.Storage.t) originated;
+   tokenmanager:  (TokenManager.entrypoint, TokenManager.TokenManager.storage) originated;
    oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    additional_oracle:  (Oracle.entrypoint, Oracle.storage) originated;
    tzbtc:  (TZBTC.parameter, TZBTC.storage) originated;
    usdt:  (USDT.parameter, USDT.storage) originated;
    eurl:  (EURL.parameter, EURL.storage) originated;
+   tzbtc_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
+   usdt_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
+   eurl_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
 }
 
 type context = {
@@ -82,6 +88,31 @@ let originate_eurl
   (level: Breath.Logger.level)  =
   let storage = TestStorage.fa2_initial_storage trader in
   TestUtils.originate_eurl storage level
+
+let originate_tokens
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor) =
+  let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
+  let usdt = originate_usdt usdt_trader level in
+  let eurl = originate_eurl eurl_trader level
+  (tzbtc,usdt, eurl)
+
+let originate_tm
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor)
+  (admin: Breath.Context.actor)
+  (oracle:address) =
+  let (tzbtc,usdt,eurl) = originate_tokens level tzbtc_trader usdt_trader eurl_trader in
+  let oracle = originate_oracle level in
+  let additional_oracle = originate_oracle level in
+  let initial_tm_storage = TestStorage.initial_tokenmanager_storage admin.address oracle tzbtc.originated_address  usdt.originated_address eurl.originated_address in
+  let tm =TestUtils.originate_tm initial_tm_storage level in
+  (tm,oracle,additional_oracle,tzbtc,usdt,eurl)
+
 
 let originate
   (level: Breath.Logger.level)
