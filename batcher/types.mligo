@@ -511,3 +511,10 @@ let mem_map
    Map.fold find m false
 
 end
+
+type liquidity_injection_request = {
+  side:side;
+  from_token:token;
+  to_token:token;
+  amount:nat;
+}

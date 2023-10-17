@@ -189,7 +189,7 @@ let remove_liquidity
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with administrator = new_admin_address; } in
     no_op storage
@@ -198,16 +198,48 @@ let change_admin_address
 let change_batcher_address
     (new_batcher_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with batcher = new_batcher_address; } in
     no_op storage
 
 [@inline]
+let construct_order
+  (side:side)
+  (from_token:token)
+  (to_token:token)
+  (amount:nat) : external_swap_order = 
+  let side_nat = side_to_nat side in
+  let tolerance = tolerance_to_nat Exact in 
+  let swap = {
+    from= {
+          token = from_token;
+          amount= amount
+          };
+    to = to_token;
+  } in
+  {
+  swap = swap;
+  created_at = Tezos.get_now ();
+  side = side_nat;
+  tolerance = tolerance;
+  }
+
+[@inline]
+let inject_liquidity
+    (lir: liquidity_injection_request)
+    (storage: storage) : result =
+    let () = is_known_sender storage.marketmaker sender_not_marketmaker in
+    let () = reject_if_tez_supplied () in
+    let o = construct_order lir.side lir.from_token lir.to_token lir.amount in
+    let ops = execute_deposit o storage.batcher in
+    ops, storage
+
+[@inline]
 let change_marketmaker_address
     (new_marketmaker_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with marketmaker = new_marketmaker_address; } in
     no_op storage
@@ -216,7 +248,7 @@ let change_marketmaker_address
 let change_tokenmanager_address
     (new_tokenmanager_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with tokenmanager = new_tokenmanager_address; } in
     no_op storage
@@ -235,6 +267,7 @@ type entrypoint =
   | AddLiquidity of nat
   | RemoveLiquidity
   | Claim
+  | InjectLiquidity of liquidity_injection_request
   | Change_admin_address of address
   | Change_batcher_address of address
   | Change_marketmaker_address of address
@@ -247,6 +280,8 @@ let main
    | AddLiquidity a ->  Vault.add_liquidity a storage
    | RemoveLiquidity ->  Vault.remove_liquidity storage
    | Claim  -> Vault.claim storage
+  (* MarketMaker endpoints *)
+   | InjectLiquidity lir ->  Vault.inject_liquidity lir storage
   (* Admin endpoints *)
    | Change_admin_address new_admin_address -> Vault.change_admin_address new_admin_address storage
    | Change_batcher_address new_batcher_address -> Vault.change_batcher_address new_batcher_address storage

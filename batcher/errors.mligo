@@ -66,3 +66,6 @@
 [@inline] let unable_to_get_native_token_from_vault                              = 164n
 [@inline] let unable_to_get_swaps_from_token_manager                             = 165n
 [@inline] let unable_to_get_vaults_from_marketmaker                              = 166n
+[@inline] let unable_to_get_current_batches_from_batcher                         = 167n
+[@inline] let sender_not_marketmaker : nat                                       = 168n
+

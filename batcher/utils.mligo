@@ -404,10 +404,7 @@ let are_equivalent_tokens
 let reject_if_tez_supplied(): unit =
   if Tezos.get_amount () < 1mutez then () else failwith endpoint_does_not_accept_tez
 
-[@inline]
-let is_administrator
-  (administrator : address) : unit =
-  if Tezos.get_sender () = administrator then () else failwith sender_not_administrator
+
 
 type orace_price_update = oracle_price_update
 
@@ -587,33 +584,6 @@ let transfer_fee (receiver : address) (amount : tez) : operation =
 
 end
 
-[@inline]
-let convert_oracle_price
-  (precision: nat)
-  (swap: swap)
-  (lastupdated: timestamp)
-  (price: nat)
-  (tokens: ValidTokens.t_map): exchange_rate =
-  let prc,den : nat * int =  if swap.from.token.decimals > precision then
-                               let diff:int = swap.from.token.decimals - precision in
-                               let diff_pow = pow 10 diff in
-                               let adj_price = to_nat (price * diff_pow) in
-                               let denom  = pow 10 (int swap.from.token.decimals) in
-                               (adj_price, denom)
-                             else
-                               let denom = pow 10 (int precision) in
-                               (price, denom)
-  in
-  let rational_price = Rational.new (int prc) in
-  let rational_denom = Rational.new den in
-  let rational_rate: Rational.t = Rational.div rational_price rational_denom in
-  let swap_reduced: swap_reduced = swap_to_swap_reduced swap in
-  let rate = {
-   swap = swap_reduced;
-   rate = rational_rate;
-   when = lastupdated;
-  } in
-  scale_on_receive_for_token_precision_difference rate tokens
 
 [@inline]
 let add_token_amounts
@@ -983,9 +953,84 @@ let get_current_vaults
 
 end
 
+module BatcherUtils = struct
+
+[@inline]
+let get_batches_needing_liquidity
+  (batcher:address): batch list = 
+  match Tezos.call_view "get_current_batches" () batcher with
+  | Some batches -> batches
+  | None -> failwith unable_to_get_current_batches_from_batcher
+
+end
+
+
+module OracleUtils = struct 
+
+[@inline]
+let get_oracle_price
+  (failure_code: nat)
+  (valid_swap: valid_swap_reduced) : orace_price_update =
+  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
+  | Some opu -> opu
+  | None -> failwith failure_code
+
+[@inline]
+let oracle_price_is_not_stale
+  (deposit_time_window: nat)
+  (oracle_price_timestamp: timestamp) : unit =
+  let dtw_i = int deposit_time_window in
+  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
+
+[@inline]
+let is_oracle_price_newer_than_current
+  (rate_name: string)
+  (oracle_price_timestamp: timestamp)
+  (rates: rates_current): unit =
+  match Big_map.find_opt rate_name rates with
+  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
+  | None   -> ()
+
+[@inline]
+let convert_oracle_price
+  (precision: nat)
+  (swap: swap)
+  (lastupdated: timestamp)
+  (price: nat)
+  (tokens: ValidTokens.t_map): exchange_rate =
+  let prc,den : nat * int =  if swap.from.token.decimals > precision then
+                               let diff:int = swap.from.token.decimals - precision in
+                               let diff_pow = pow 10 diff in
+                               let adj_price = to_nat (price * diff_pow) in
+                               let denom  = pow 10 (int swap.from.token.decimals) in
+                               (adj_price, denom)
+                             else
+                               let denom = pow 10 (int precision) in
+                               (price, denom)
+  in
+  let rational_price = Rational.new (int prc) in
+  let rational_denom = Rational.new den in
+  let rational_rate: Rational.t = Rational.div rational_price rational_denom in
+  let swap_reduced: swap_reduced = swap_to_swap_reduced swap in
+  let rate = {
+   swap = swap_reduced;
+   rate = rational_rate;
+   when = lastupdated;
+  } in
+  scale_on_receive_for_token_precision_difference rate tokens
+
+end
+
+
 [@inline]
 let get_native_token_from_vault 
   (vault_address: address) : token = 
   match Tezos.call_view "get_native_token_from_vault" () vault_address with
   | Some tokn -> tokn
   | None -> failwith unable_to_get_native_token_from_vault
+  
+[@inline]
+let is_known_sender
+  (addr : address)
+  (error: nat): unit =
+  if Tezos.get_sender () = addr then () else failwith error

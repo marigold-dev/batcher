@@ -818,16 +818,6 @@ type entrypoint =
   | Remove_metadata of string
   | Change_deposit_time_window of nat
 
-
-[@inline]
-let get_oracle_price
-  (failure_code: nat)
-  (valid_swap: valid_swap_reduced) : orace_price_update =
-  match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
-  | Some opu -> opu
-  | None -> failwith failure_code
-
-
 [@inline]
 let admin_and_fee_recipient_address_are_different
   (admin : address)
@@ -933,7 +923,7 @@ let refund_orders
     let mutez_to_ref = mutez_to_ref + fee in
     tam, mutez_to_ref
   in
-  let token_refunds, tez_refunds= Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
+  let token_refunds, tez_refunds = Map.fold collect_refunds ots ((Map.empty: token_amount_map), 0mutez) in
   let treasury_vault = get_vault () in
   let operations = Treasury_Utils.transfer_holdings treasury_vault refund_address token_refunds in
   let operations = if tez_refunds > 0mutez then Treasury_Utils.transfer_fee storage.fee_recipient tez_refunds :: operations else operations in
@@ -971,24 +961,6 @@ let cancel
                   cancel_order pair sender vswp storage
 
 [@inline]
-let oracle_price_is_not_stale
-  (deposit_time_window: nat)
-  (oracle_price_timestamp: timestamp) : unit =
-  let dtw_i = int deposit_time_window in
-  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
-
-[@inline]
-let is_oracle_price_newer_than_current
-  (rate_name: string)
-  (oracle_price_timestamp: timestamp)
-  (storage: storage): unit =
-  let rates = storage.rates_current in
-  match Big_map.find_opt rate_name rates with
-  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
-  | None   -> ()
-
-
-[@inline]
 let confirm_oracle_price_is_available_before_deposit
   (pair:pair)
   (batch:batch)
@@ -996,14 +968,13 @@ let confirm_oracle_price_is_available_before_deposit
   if Batch_Utils.is_batch_open batch then () else
   let pair_name = get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
-  let (lastupdated, _price)  = get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
-  oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
+  let (lastupdated, _price)  = OracleUtils.get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
+  OracleUtils.oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
 
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
   (valid_swap:valid_swap) : unit =
   if valid_swap.is_disabled_for_deposits then () else failwith cannot_remove_swap_pair_that_is_not_disabled
-
 
 [@inline]
 let enforce_correct_side
@@ -1073,11 +1044,11 @@ let tick_price
   (valid_swap : valid_swap)
   (storage : storage) : storage =
   let valid_swap_reduced = valid_swap_to_valid_swap_reduced valid_swap in
-  let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
-  let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
-  let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
+  let (lastupdated, price) = OracleUtils.get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
+  let () = OracleUtils.is_oracle_price_newer_than_current rate_name lastupdated storage.rates_current in
+  let () = OracleUtils.oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
   let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in 
-  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price valid_tokens in
+  let oracle_rate = OracleUtils.convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price valid_tokens in
   let rates_current = update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
   let storage = { storage with rates_current = rates_current; } in
   let pair = pair_of_rate oracle_rate in
@@ -1108,7 +1079,7 @@ let tick
 let change_fee
     (new_fee: tez)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with fee_in_mutez = new_fee; } in
     no_op storage
@@ -1117,7 +1088,7 @@ let change_fee
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_admin_address storage.fee_recipient in
     let storage = { storage with administrator = new_admin_address; } in
@@ -1127,7 +1098,7 @@ let change_admin_address
 let change_mm_address
     (new_marketmaker_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with marketmaker = new_marketmaker_address; } in
     no_op storage
@@ -1136,7 +1107,7 @@ let change_mm_address
 let change_tm_address
     (new_tokenmanager_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with tokenmanager = new_tokenmanager_address; } in
     no_op storage
@@ -1145,7 +1116,7 @@ let change_tm_address
 let change_fee_recipient_address
     (new_fee_recipient_address: address)
     (storage: storage) : result =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let () = admin_and_fee_recipient_address_are_different new_fee_recipient_address storage.administrator in
     let storage = { storage with fee_recipient = new_fee_recipient_address; } in
@@ -1156,7 +1127,7 @@ let change_fee_recipient_address
 let add_or_update_metadata
   (metadata_update: metadata_update)
   (storage:storage) : result =
-   let () = is_administrator storage.administrator in
+   let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
   let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
                          | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
@@ -1169,7 +1140,7 @@ let add_or_update_metadata
 let remove_metadata
   (key: string)
   (storage:storage) : result =
-   let () = is_administrator storage.administrator in
+   let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
   let updated_metadata = Big_map.remove key storage.metadata in
   let storage = {storage with metadata = updated_metadata } in
@@ -1180,7 +1151,7 @@ let remove_metadata
 let change_deposit_time_window
   (new_window: nat)
   (storage: storage) : result =
-  let () = is_administrator storage.administrator in
+  let () = is_known_sender storage.administrator sender_not_administrator in
   let () = reject_if_tez_supplied () in
   if new_window < minimum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_less_than_the_minimum else
   if new_window > maximum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_more_than_the_maximum else
@@ -1202,12 +1173,19 @@ let redeemable_holdings_available ((), storage : unit * storage) : bool =
   | None -> false
   | Some bots -> Map.fold find_non_zero_holding bots false
 
+(* TODO  put liq clause in *)
+[@inline]
+let does_batch_need_liquidity
+  (batch: batch): batch option = Some batch
+
 [@view]
-let get_current_batches ((),storage: unit * storage) : batch list=
+let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
   let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
      match Big_map.find_opt i storage.batch_set.batches with
      | None   -> acc
-     | Some b -> b :: acc
+     | Some b -> (match does_batch_need_liquidity b with
+                 | None  -> acc
+                 | Some bl -> bl :: acc)
     in
     Map.fold collect_batches storage.batch_set.current_batch_indices []
 

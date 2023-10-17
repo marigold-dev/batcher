@@ -25,7 +25,7 @@ let confirm_swap_pair_is_disabled_prior_to_removal
 let change_admin_address
     (new_admin_address: address)
     (storage: storage) : operation list * storage =
-    let () = is_administrator storage.administrator in
+    let () = is_known_sender storage.administrator sender_not_administrator in
     let () = reject_if_tez_supplied () in
     let storage = { storage with administrator = new_admin_address; } in
     no_op storage
@@ -36,7 +36,7 @@ let set_deposit_status
   (pair_name: string)
   (disabled: bool)
   (storage: storage) : result =
-   let () = is_administrator storage.administrator in
+   let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
    let valid_swap = get_valid_swap_reduced pair_name storage.valid_swaps in
    let valid_swap = { valid_swap with is_disabled_for_deposits = disabled; } in
@@ -49,7 +49,7 @@ let set_deposit_status
 let amend_token_and_pair_limit
   (limit: nat)
   (storage: storage) : result =
-  let () = is_administrator storage.administrator in
+  let () = is_known_sender storage.administrator sender_not_administrator in
   let () = reject_if_tez_supplied () in
   let token_count = ValidTokens.size storage.valid_tokens in
   let pair_count =  ValidSwaps.size storage.valid_swaps in
@@ -63,7 +63,7 @@ let amend_token_and_pair_limit
 let add_token_swap_pair
   (valid_swap: valid_swap)
   (storage: storage) : result =
-   let () = is_administrator storage.administrator in
+   let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
    if valid_swap.swap.from.token.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
    if valid_swap.swap.to.decimals < minimum_precision then failwith swap_precision_is_less_than_minimum else
@@ -77,7 +77,7 @@ let add_token_swap_pair
 let remove_token_swap_pair
   (swap: valid_swap)
   (storage: storage) : result =
-   let () = is_administrator storage.administrator in
+   let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
    let () = confirm_swap_pair_is_disabled_prior_to_removal swap in
    let (u_swaps,u_tokens) = Tokens.remove_pair swap storage.valid_swaps storage.valid_tokens in
@@ -90,7 +90,7 @@ let remove_token_swap_pair
 let change_oracle_price_source
   (source_change: oracle_source_change)
   (storage: storage) : result =
-  let _ = is_administrator storage.administrator in
+  let () = is_known_sender storage.administrator sender_not_administrator in
   let () = reject_if_tez_supplied () in
   let valid_swap_reduced = get_valid_swap_reduced source_change.pair_name storage.valid_swaps in
   let valid_swap = { valid_swap_reduced with oracle_address = source_change.oracle_address; oracle_asset_name = source_change.oracle_asset_name; oracle_precision = source_change.oracle_precision;  } in
