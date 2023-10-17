@@ -10,8 +10,8 @@ import { useSelector } from 'react-redux';
 import { currentSwapSelector } from 'src/reducers';
 import { useDispatch } from 'react-redux';
 import { changePair } from 'src/actions';
-import { getTokensMetadata } from 'src/utils/utils';
 import Image from 'next/image';
+import { getTokensMetadata } from 'src/utils/token-manager';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -33,8 +33,11 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
 
   useEffect(() => {
     getTokensMetadata().then(
-      (tokens: { name: string; address: string; icon: string | undefined }[]) =>
-        setAvailableTokens(tokens)
+      (
+        tokens: { name: string; address: string; icon: string | undefined }[]
+      ) => {
+        setAvailableTokens(tokens);
+      }
     );
   }, []);
 
