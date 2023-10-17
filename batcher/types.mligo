@@ -167,6 +167,9 @@ type batch_ordertypes = (nat,  ordertypes) map
 (* Associated user address to a given set of batches and ordertypes  *)
 type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
+type market_vault_used = address option
+
+
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
   batch_number: nat;
@@ -174,13 +177,13 @@ type batch = [@layout:comb] {
   volumes : volumes;
   pair : pair;
   holdings : nat;
-  market_vault_used : bool;
+  market_vault_used : market_vault_used;
 }
 
 type reduced_batch = [@layout:comb] {
   status: batch_status;
   volumes: volumes;
-  market_vault_used : bool;
+  market_vault_used : market_vault_used;
 }
 
 type batch_indices = (string,  nat) map
@@ -402,10 +405,9 @@ type rates_current = (string, exchange_rate) big_map
 type fees = {
    to_send: tez;
    to_refund: tez;
-   to_market_maker: tez;
+   to_market_makers: (address,tez) map;
    payer: address;
    recipient: address;
-   market_maker: address;
 }
 
 
@@ -499,5 +501,13 @@ let fold
    (seed: a): a =
    let mp = to_map object in
    Map.fold folder mp seed
+
+
+[@inline]
+let mem_map
+  (to_find:value)
+  (m: (key, value) map) : bool =
+   let find (found, (_k,v): (bool * (key * value))) : bool = if found then found else to_find = v in
+   Map.fold find m false
 
 end

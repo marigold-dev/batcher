@@ -285,17 +285,28 @@ let get_cleared_payout
   | Buy -> get_cleared_buy_side_payout from_token to_token amt clearing tam
   | Sell -> get_cleared_sell_side_payout to_token from_token amt clearing tam
 
+[@inline]
+let add_to_mm_map
+  (v:address)
+  (fee:tez)
+  (mmm: (address, tez) map) = 
+  match Map.find_opt v mmm with
+  | None -> Map.add v fee mmm
+  | Some t -> let nf = t + fee in
+              Map.update v (Some nf) mmm
+
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * bool) =
+  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * market_vault_used) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * market_vault_used) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
-                          if market_vault_used then
-                            let f = fees.to_market_maker + fee_in_mutez in
-                            let uf = { fees with to_market_maker = f; } in
+                          match market_vault_used with
+                          | Some mva -> 
+                            let nmmf = add_to_mm_map mva fee_in_mutez fees.to_market_makers in 
+                            let uf = { fees with to_market_makers = nmmf; } in
                             (tm, uf)
-                          else
+                          | None ->
                             let f = fees.to_send + fee_in_mutez in
                             let uf = { fees with to_send = f; } in
                             (tm, uf)
@@ -393,6 +404,19 @@ type storage = Storage.t
 
 
 [@inline]
+let resolve_fees_to_mms
+  (to_mms:  (address,tez) map)
+  (token_ops: operation list): operation list =
+  let pay_mms (ops, (addr, amt) : operation list * (address * tez)) : operation list =
+    if amt > 0mutez then
+      Treasury_Utils.transfer_fee addr amt :: ops
+    else
+      ops
+  in
+  Map.fold pay_mms to_mms token_ops
+
+
+[@inline]
 let resolve_fees
   (fees: fees)
   (token_ops: operation list): operation list =
@@ -402,12 +426,7 @@ let resolve_fees
     else
       token_ops
   in
-  let token_ops =
-    if fees.to_market_maker > 0mutez then
-      Treasury_Utils.transfer_fee fees.market_maker fees.to_market_maker :: token_ops
-    else
-      token_ops
-  in
+  let token_ops = resolve_fees_to_mms fees.to_market_makers token_ops in
   if fees.to_send > 0mutez then
     Treasury_Utils.transfer_fee fees.recipient fees.to_send :: token_ops
   else
@@ -426,13 +445,12 @@ let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
       let treasury_vault = get_vault () in
-      let fees = {
+      let fees:fees = {
         to_send = 0mutez;
         to_refund = 0mutez;
-        to_market_maker = 0mutez;
+        to_market_makers = (Map.empty: (address,tez) map);
         payer = redeem_address;
         recipient = storage.fee_recipient;
-        market_maker = storage.marketmaker;
       } in
       let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees None storage in
       let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
@@ -524,7 +542,7 @@ let make
     pair = pair;
     volumes = volumes;
     holdings = 0n;
-    market_vault_used = false;
+    market_vault_used = (None: address option);
   }
 
 [@inline]
@@ -794,6 +812,7 @@ type entrypoint =
   | Change_fee of tez
   | Change_admin_address of address
   | Change_marketmaker_address of address
+  | Change_tokenmanager_address of address
   | Change_fee_recipient_address of address
   | Add_or_update_metadata of metadata_update
   | Remove_metadata of string
@@ -1019,8 +1038,9 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
      let storage = { storage with batch_set = current_batch_set } in
      let current_batch_number = current_batch.batch_number in
      let depositor = Tezos.get_sender () in
-     let current_batch = if depositor = storage.marketmaker then
-                            { current_batch with market_vault_used = true; }
+     let vaults = MarketMakerUtils.get_current_vaults storage.marketmaker in
+     let current_batch = if Vaults.mem_map depositor vaults then
+                            { current_batch with market_vault_used = Some depositor; }
                          else
                             current_batch
      in
@@ -1109,8 +1129,16 @@ let change_mm_address
     (storage: storage) : result =
     let () = is_administrator storage.administrator in
     let () = reject_if_tez_supplied () in
-    let () = admin_and_fee_recipient_address_are_different new_marketmaker_address storage.fee_recipient in
     let storage = { storage with marketmaker = new_marketmaker_address; } in
+    no_op storage
+
+[@inline]
+let change_tm_address
+    (new_tokenmanager_address: address)
+    (storage: storage) : result =
+    let () = is_administrator storage.administrator in
+    let () = reject_if_tez_supplied () in
+    let storage = { storage with tokenmanager = new_tokenmanager_address; } in
     no_op storage
 
 [@inline]
@@ -1197,6 +1225,7 @@ let main
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Change_marketmaker_address new_mm_address -> change_mm_address new_mm_address storage
+   | Change_tokenmanager_address new_tm_address -> change_tm_address new_tm_address storage
    | Change_fee_recipient_address new_fee_recipient_address -> change_fee_recipient_address new_fee_recipient_address storage
    | Add_or_update_metadata mu -> add_or_update_metadata mu storage
    | Remove_metadata k -> remove_metadata k storage

@@ -10,7 +10,7 @@
                   (Pair (Pair "tzBTC" "USDT") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) ;
               Elt "tzBTC/USDtz"
                   (Pair (Pair "tzBTC" "USDtz") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) })
-      { "BTZtz" ; "EURL" ; "USDT" ; "USDtz" ; "tzBTC" }
+      { "BTCtz" ; "EURL" ; "USDT" ; "USDtz" ; "tzBTC" }
       { Elt "BTCtz"
             (Pair 0 "BTCtz" (Some "KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe") 8 (Some "FA2 token")) ;
         Elt "EURL" (Pair 0 "EURL" (Some "KT1RcHjqDWWycYQGrz4KBYoGZSMmMuVpkmuS") 6 (Some "FA2 token")) ;

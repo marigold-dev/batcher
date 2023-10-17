@@ -65,3 +65,4 @@
 [@inline] let vault_name_is_incorrect                                            = 163n
 [@inline] let unable_to_get_native_token_from_vault                              = 164n
 [@inline] let unable_to_get_swaps_from_token_manager                             = 165n
+[@inline] let unable_to_get_vaults_from_marketmaker                              = 166n

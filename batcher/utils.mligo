@@ -962,11 +962,24 @@ let get_valid_tokens
   | Some tokns -> tokns
   | None -> failwith unable_to_get_tokens_from_token_manager
 
+[@inline]
 let get_valid_swaps
   (tokenmanager: address) : ValidSwaps.t_map = 
   match Tezos.call_view "get_valid_swaps" () tokenmanager with
   | Some swaps -> swaps
   | None -> failwith unable_to_get_swaps_from_token_manager
+
+end
+
+module MarketMakerUtils = struct
+
+[@inline]
+let get_current_vaults
+  (marketmaker: address) : Vaults.t_map = 
+  match Tezos.call_view "get_vaults" () marketmaker with
+  | Some vaults -> vaults
+  | None -> failwith unable_to_get_vaults_from_marketmaker
+
 
 end
 

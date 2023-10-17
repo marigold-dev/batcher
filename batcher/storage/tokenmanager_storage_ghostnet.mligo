@@ -1,7 +1,7 @@
 #import "../tokenmanager.mligo" "TokenManager"
 let f(_:unit) : TokenManager.TokenManager.storage = {
   valid_tokens = {
-    keys  = Set.literal ["tzBTC";"BTZtz";"EURL";"USDT";"USDtz"];   
+    keys  = Set.literal ["tzBTC";"BTCtz";"EURL";"USDT";"USDtz"];   
     values = Big_map.literal [
     (("tzBTC"), {
       token_id = 0n;
