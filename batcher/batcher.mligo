@@ -54,8 +54,6 @@ module Storage = struct
 
   type t = {
     metadata: metadata;
-    valid_tokens : ValidTokens.t;
-    valid_swaps : ValidSwaps.t;
     rates_current : rates_current;
     batch_set : batch_set;
     last_order_number : nat;
@@ -63,6 +61,7 @@ module Storage = struct
     fee_in_mutez: tez;
     fee_recipient : address;
     administrator : address;
+    tokenmanager : address;
     marketmaker : address;
     limit_on_tokens_or_pairs : nat;
     deposit_time_window_in_seconds : nat;
@@ -285,11 +284,11 @@ let get_cleared_payout
   (amt: nat)
   (clearing: clearing)
   (tam: token_amount_map)
-  (tokens: ValidTokens.t): token_amount_map =
+  (tokens: ValidTokens.t_map): token_amount_map =
   let s = ot.side in
   let swap = clearing.clearing_rate.swap in
-  let from_token = get_token swap.from tokens in
-  let to_token = get_token swap.to tokens in
+  let from_token = get_token_from_map swap.from tokens in
+  let to_token = get_token_from_map swap.to tokens in
   match s with
   | Buy -> get_cleared_buy_side_payout from_token to_token amt clearing tam
   | Sell -> get_cleared_sell_side_payout to_token from_token amt clearing tam
@@ -297,7 +296,7 @@ let get_cleared_payout
 
 [@inline]
 let collect_order_payout_from_clearing
-  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * ValidTokens.t * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * ValidTokens.t * fees * tez * bool) =
+  ((c, tam, vols, tokens, fees, fee_in_mutez, market_vault_used), (ot, amt): (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * bool) * (ordertype * nat)) :  (clearing * token_amount_map * volumes * ValidTokens.t_map * fees * tez * bool) =
   let (u_tam, u_fees) = if was_in_clearing vols ot c then
                           let tm = get_cleared_payout ot amt c tam tokens in
                           if market_vault_used then
@@ -342,7 +341,7 @@ let get_clearing
 
 [@inline]
 let collect_redemptions
-    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t * fees * tez) =
+    ((bots, tam, bts, tokens, fees, fee_in_mutez),(batch_number,otps) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t_map * fees * tez) * (nat * ordertypes)) : (batch_ordertypes * token_amount_map * batch_set * ValidTokens.t_map * fees * tez) =
     let batches = bts.batches in
     match Big_map.find_opt batch_number batches with
     | None -> bots, tam, bts, tokens, fees, fee_in_mutez
@@ -368,7 +367,7 @@ let collect_redemption_payouts
     let fee_in_mutez = storage.fee_in_mutez in
     let batch_set = storage.batch_set in
     let ubots = storage.user_batch_ordertypes in
-    let tokens = storage.valid_tokens in
+    let tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
     let empty_tam = (Map.empty : token_amount_map) in
     match Big_map.find_opt holder ubots with
     | None -> fees, ubots, batch_set, empty_tam
@@ -477,13 +476,13 @@ module Token_Utils = struct
 let is_valid_swap_pair
   (side: side)
   (swap: swap_reduced)
-  (valid_swaps: ValidSwaps.t): swap_reduced =
+  (valid_swaps: ValidSwaps.t_map): swap_reduced =
   let token_pair = pair_of_swap side swap in
   let rate_name = get_rate_name_from_pair token_pair in
-  if ValidSwaps.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
+  if Map.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
 
 [@inline]
-let remove_token
+let remove_token_old
   (token: token)
   (valid_tokens: ValidTokens.t) : ValidTokens.t =
   match ValidTokens.find_opt token.name valid_tokens with
@@ -528,119 +527,6 @@ let is_token_used_in_swaps
     acc
   in
   ValidSwaps.fold is_token_used_in_swap valid_swaps false
-
-[@inline]
-let add_swap
-  (valid_swap: valid_swap)
-  (valid_swaps: ValidSwaps.t) : ValidSwaps.t =
-  let swap = valid_swap.swap in
-  let swap_reduced = swap_to_swap_reduced(swap) in
-  let rate_name = get_rate_name_from_swap swap_reduced in
-  let valid_swap_reduced = valid_swap_to_valid_swap_reduced valid_swap in
-  ValidSwaps.upsert rate_name valid_swap_reduced valid_swaps
-
-[@inline]
-let remove_swap
-  (valid_swap: valid_swap)
-  (valid_tokens: ValidTokens.t)
-  (valid_swaps: ValidSwaps.t) : (ValidSwaps.t * ValidTokens.t) =
-  let swap = valid_swap.swap in
-  let swap_reduced = swap_to_swap_reduced(swap) in
-  let rate_name = get_rate_name_from_swap swap_reduced in
-  let valid_swaps = ValidSwaps.remove rate_name valid_swaps in
-  let from = get_token swap_reduced.from valid_tokens in
-  let to = get_token swap_reduced.to valid_tokens in
-  let valid_tokens = if is_token_used_in_swaps from valid_swaps valid_tokens then
-                       valid_tokens
-                    else
-                       remove_token from valid_tokens
-  in
-  let valid_tokens = if is_token_used_in_swaps to valid_swaps valid_tokens then
-                       valid_tokens
-                    else
-                       remove_token to valid_tokens
-  in
-  valid_swaps, valid_tokens
-
-end
-
-module Tokens = struct
-
-
-[@inline]
-let validate
-  (side: side)
-  (swap: swap)
-  (valid_tokens: ValidTokens.t)
-  (valid_swaps: ValidSwaps.t): swap_reduced =
-  let from = swap.from.token in
-  let to = swap.to in
-  match ValidTokens.find_opt from.name valid_tokens with
-  | None ->  failwith unsupported_swap_type
-  | Some ft -> (match ValidTokens.find_opt to.name valid_tokens with
-                | None -> failwith unsupported_swap_type
-                | Some tt -> if (are_equivalent_tokens from ft) && (are_equivalent_tokens to tt) then
-                              let sr = swap_to_swap_reduced swap in
-                              Token_Utils.is_valid_swap_pair side sr valid_swaps
-                            else
-                              failwith unsupported_swap_type)
-
-[@inline]
-let check_tokens_size_or_fail
-  (tokens_size: nat)
-  (limit_on_tokens_or_pairs: nat)
-  (num_tokens: nat) : unit =  if tokens_size + num_tokens > limit_on_tokens_or_pairs then failwith upper_limit_on_tokens_has_been_reached else ()
-
-[@inline]
-let can_add
-  (to: token)
-  (from: token)
-  (limit_on_tokens_or_pairs: nat)
-  (valid_tokens: ValidTokens.t)
-  (valid_swaps: ValidSwaps.t): unit =
-  let pairs_size = ValidSwaps.size valid_swaps in
-  if pairs_size + 1n > limit_on_tokens_or_pairs then failwith upper_limit_on_swap_pairs_has_been_reached else
-  let tokens_size = ValidTokens.size valid_tokens in
-  let unused_tokens_being_added =
-    if Token_Utils.is_token_used to valid_tokens && Token_Utils.is_token_used from valid_tokens then 0n else
-    if Token_Utils.is_token_used to valid_tokens || Token_Utils.is_token_used from valid_tokens then 1n else
-    2n
-  in
-  check_tokens_size_or_fail tokens_size limit_on_tokens_or_pairs unused_tokens_being_added
-
-[@inline]
-let remove_pair
-  (valid_swap: valid_swap)
-  (valid_swaps: ValidSwaps.t)
-  (valid_tokens: ValidTokens.t) : ValidSwaps.t * ValidTokens.t =
-  let swap = valid_swap.swap in
-  let swap_reduced = swap_to_swap_reduced swap in
-  let rate_name = get_rate_name_from_swap swap_reduced in
-  let rate_found =  ValidSwaps.find_opt rate_name valid_swaps in
-  match rate_found with
-  | Some _ -> Token_Utils.remove_swap valid_swap valid_tokens valid_swaps
-  | None ->  failwith swap_does_not_exist
-
-[@inline]
-let add_pair
-  (limit_on_tokens_or_pairs: nat)
-  (valid_swap: valid_swap)
-  (valid_swaps: ValidSwaps.t)
-  (valid_tokens: ValidTokens.t) : ValidSwaps.t * ValidTokens.t =
-  let swap = valid_swap.swap in
-  let from = swap.from.token in
-  let to = swap.to in
-  let () = can_add to from limit_on_tokens_or_pairs valid_tokens valid_swaps in
-  let swap_reduced = swap_to_swap_reduced swap in
-  let rate_name = get_rate_name_from_swap swap_reduced in
-  let rate_found =  ValidSwaps.find_opt rate_name valid_swaps in
-  match rate_found with
-  | Some _  -> failwith swap_already_exists
-  | None -> let valid_tokens = Token_Utils.add_token from valid_tokens in
-                  let valid_tokens = Token_Utils.add_token to valid_tokens in
-                  let valid_swaps = Token_Utils.add_swap valid_swap valid_swaps in
-                  valid_swaps, valid_tokens
-
 
 end
 
@@ -1043,8 +929,8 @@ let external_to_order
   (order: external_swap_order)
   (order_number: nat)
   (batch_number: nat)
-  (valid_tokens: ValidTokens.t)
-  (valid_swaps: ValidSwaps.t): swap_order =
+  (valid_tokens: ValidTokens.t_map)
+  (valid_swaps: ValidSwaps.t_map): swap_order =
   let side = nat_to_side order.side in
   let tolerance = nat_to_tolerance order.tolerance in
   let sender = Tezos.get_sender () in
@@ -1058,14 +944,15 @@ let external_to_order
       tolerance = tolerance;
       redeemed = false;
     } in
-  let _ = Tokens.validate side order.swap valid_tokens valid_swaps in
+  let _ = Tokens.validate_from_map side order.swap valid_tokens valid_swaps in
   converted_order
 
 [@inline]
 let get_valid_swap_reduced
  (pair_name: string)
  (storage : storage) : valid_swap_reduced =
- match ValidSwaps.find_opt pair_name storage.valid_swaps with
+ let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
+ match Map.find_opt pair_name valid_swaps with
  | Some vswp -> vswp
  | None -> failwith swap_does_not_exist
 
@@ -1152,9 +1039,11 @@ let cancel
   let sender = Tezos.get_sender () in
   let token_one, token_two = pair in
   let pair_name = find_lexicographical_pair_name token_one token_two in
-  match ValidSwaps.find_opt pair_name storage.valid_swaps with
+  let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
+  match Map.find_opt pair_name valid_swaps with
   | None -> failwith swap_does_not_exist
-  | Some vswpr -> let vswp = valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
+  | Some vswpr -> let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
+                  let vswp = valid_swap_reduced_to_valid_swap vswpr 1n valid_tokens in
                   cancel_order pair sender vswp storage
 
 [@inline]
@@ -1231,7 +1120,9 @@ let deposit (external_order: external_swap_order) (storage : storage) : result =
                             current_batch
      in
      let next_order_number = storage.last_order_number + 1n in
-     let order : swap_order = external_to_order external_order next_order_number current_batch_number storage.valid_tokens storage.valid_swaps in
+     let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in 
+     let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in 
+     let order : swap_order = external_to_order external_order next_order_number current_batch_number valid_tokens valid_swaps in
      (* We intentionally limit the amount of distinct orders that can be placed whilst unredeemed orders exist for a given user  *)
      if Ubots.is_within_limit order.trader storage.user_batch_ordertypes then
        let _,updated_storage = Batch_Utils.update_storage_with_order order next_order_number current_batch_number current_batch current_batch_set storage in
@@ -1270,7 +1161,8 @@ let tick_price
   let (lastupdated, price) = get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
   let () = is_oracle_price_newer_than_current rate_name lastupdated storage in
   let () = oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
-  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price storage.valid_tokens in
+  let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in 
+  let oracle_rate = convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price valid_tokens in
   let rates_current = update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
   let storage = { storage with rates_current = rates_current; } in
   let pair = pair_of_rate oracle_rate in
@@ -1289,10 +1181,12 @@ let tick
  (rate_name: string)
  (storage : storage) : result =
  let () = reject_if_tez_supplied () in
- match ValidSwaps.find_opt rate_name storage.valid_swaps with
- | Some vswpr -> let vswp = valid_swap_reduced_to_valid_swap vswpr 1n storage.valid_tokens in
-                let storage = tick_price rate_name vswp storage in
-                no_op (storage)
+ let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
+ match Map.find_opt rate_name valid_swaps with
+ | Some vswpr -> let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
+                 let vswp = valid_swap_reduced_to_valid_swap vswpr 1n valid_tokens in
+                 let storage = tick_price rate_name vswp storage in
+                 no_op (storage)
  | None -> failwith swap_does_not_exist
 
 [@inline]

@@ -282,6 +282,13 @@ let to_map
    in 
    Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
 
+[@inline]
+let fold_map
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t_map)
+   (seed: a): a =
+   Map.fold folder object seed
 
 [@inline]
 let fold
@@ -369,6 +376,13 @@ let to_map
    in 
    Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
 
+[@inline]
+let fold_map
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t_map)
+   (seed: a): a =
+   Map.fold folder object seed
 
 [@inline]
 let fold

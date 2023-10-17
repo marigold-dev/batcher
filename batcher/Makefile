@@ -52,11 +52,11 @@ clean:
 build-mainnet:
 	$(call clean_mainnet_files)
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-mainnet.tz)
-	$(call compile_storage,$(STORAGE_DIRECTORY)/initial_storage_mainnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-mainnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_mainnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-mainnet.tz)
 build-ghostnet:
 	$(call clean_ghostnet_files)
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-ghostnet.tz)
-	$(call compile_storage,$(STORAGE_DIRECTORY)/initial_storage_ghostnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-ghostnet.tz)
+	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_ghostnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-ghostnet.tz)
 build-mm-mainnet:
 	$(call compile_contract,marketmaker.mligo, $(MICHELSON_DIRECTORY)/marketmaker-mainnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/marketmaker_storage_mainnet.mligo, $(MICHELSON_DIRECTORY)/marketmaker-storage-mainnet.tz)

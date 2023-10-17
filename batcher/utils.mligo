@@ -11,6 +11,15 @@ let no_op (type storage) (s : storage) : operation list * storage =  (([] : oper
 let get_vault () : address = Tezos.get_self_address ()
 
 [@inline]
+let get_token_from_map
+  (token_name: string)
+  (tokens: ValidTokens.t_map): token =
+  let tok_opt = Map.find_opt token_name tokens in
+  match tok_opt with
+  | Some t -> t
+  | None -> failwith unable_to_reduce_token_amount_to_less_than_zero
+
+[@inline]
 let get_token
   (token_name: string)
   (tokens: ValidTokens.t): token =
@@ -43,9 +52,9 @@ let valid_swap_to_valid_swap_reduced
 let swap_reduced_to_swap
   (swap_reduced: swap_reduced)
   (from_amount: nat)
-  (tokens: ValidTokens.t) : swap =
-  let from = get_token swap_reduced.from tokens in
-  let to = get_token swap_reduced.to tokens in
+  (tokens: ValidTokens.t_map) : swap =
+  let from = get_token_from_map swap_reduced.from tokens in
+  let to = get_token_from_map swap_reduced.to tokens in
   {
     from = {
         token = from;
@@ -58,7 +67,7 @@ let swap_reduced_to_swap
 let valid_swap_reduced_to_valid_swap
   (valid_swap_reduced: valid_swap_reduced)
   (from_amount: nat)
-  (tokens: ValidTokens.t) : valid_swap =
+  (tokens: ValidTokens.t_map) : valid_swap =
   let swap = swap_reduced_to_swap valid_swap_reduced.swap from_amount tokens in
   {
    swap = swap;
@@ -280,10 +289,10 @@ let update_current_rate (rate_name : string) (rate : exchange_rate) (rates_curre
 [@inline]
 let get_rate_scaling_power_of_10
   (rate : exchange_rate)
-  (tokens: ValidTokens.t): Rational.t =
+  (tokens: ValidTokens.t_map): Rational.t =
   let swap = rate.swap in
-  let from_token = get_token swap.from tokens in
-  let to_token = get_token swap.to tokens in
+  let from_token = get_token_from_map swap.from tokens in
+  let to_token = get_token_from_map swap.to tokens in
   let from_decimals = from_token.decimals in
   let to_decimals = to_token.decimals in
   let diff = to_decimals - from_decimals in
@@ -300,7 +309,7 @@ let get_rate_scaling_power_of_10
 [@inline]
 let scale_on_receive_for_token_precision_difference
   (rate : exchange_rate)
-  (tokens: ValidTokens.t): exchange_rate =
+  (tokens: ValidTokens.t_map): exchange_rate =
   let scaling_rate = get_rate_scaling_power_of_10 rate tokens in
   let adjusted_rate = Rational.mul rate.rate scaling_rate in
   { rate with rate = adjusted_rate }
@@ -448,11 +457,11 @@ module TokenAmount = struct
   (ot: ordertype)
   (amt: nat)
   (c: clearing)
-  (tokens: ValidTokens.t): token_amount =
+  (tokens: ValidTokens.t_map): token_amount =
   let swap = c.clearing_rate.swap in
   let token = match ot.side with
-             | Buy -> get_token swap.from tokens
-             | Sell -> get_token swap.to tokens
+             | Buy -> get_token_from_map swap.from tokens
+             | Sell -> get_token_from_map swap.to tokens
   in
   {
     token = token;
@@ -584,7 +593,7 @@ let convert_oracle_price
   (swap: swap)
   (lastupdated: timestamp)
   (price: nat)
-  (tokens: ValidTokens.t): exchange_rate =
+  (tokens: ValidTokens.t_map): exchange_rate =
   let prc,den : nat * int =  if swap.from.token.decimals > precision then
                                let diff:int = swap.from.token.decimals - precision in
                                let diff_pow = pow 10 diff in
@@ -757,6 +766,15 @@ let is_valid_swap_pair
   if ValidSwaps.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
 
 [@inline]
+let is_valid_swap_map_pair
+  (side: side)
+  (swap: swap_reduced)
+  (valid_swaps: ValidSwaps.t_map): swap_reduced =
+  let token_pair = pair_of_swap side swap in
+  let rate_name = get_rate_name_from_pair token_pair in
+  if Map.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
+
+[@inline]
 let remove_token
   (token: token)
   (valid_tokens: ValidTokens.t) : ValidTokens.t =
@@ -840,6 +858,23 @@ end
 
 module Tokens = struct
 
+[@inline]
+let validate_from_map
+  (side: side)
+  (swap: swap)
+  (valid_tokens: ValidTokens.t_map)
+  (valid_swaps: ValidSwaps.t_map): swap_reduced =
+  let from = swap.from.token in
+  let to = swap.to in
+  match Map.find_opt from.name valid_tokens with
+  | None ->  failwith unsupported_swap_type
+  | Some ft -> (match Map.find_opt to.name valid_tokens with
+                | None -> failwith unsupported_swap_type
+                | Some tt -> if (are_equivalent_tokens from ft) && (are_equivalent_tokens to tt) then
+                              let sr = swap_to_swap_reduced swap in
+                              Token_Utils.is_valid_swap_map_pair side sr valid_swaps
+                            else
+                              failwith unsupported_swap_type)
 
 [@inline]
 let validate
@@ -922,11 +957,16 @@ module TokenManagerUtils = struct
 
 [@inline]
 let get_valid_tokens
-  (tokenmanager: address) : (string,token) map = 
+  (tokenmanager: address) : ValidTokens.t_map = 
   match Tezos.call_view "get_valid_tokens" () tokenmanager with
   | Some tokns -> tokns
   | None -> failwith unable_to_get_tokens_from_token_manager
 
+let get_valid_swaps
+  (tokenmanager: address) : ValidSwaps.t_map = 
+  match Tezos.call_view "get_valid_swaps" () tokenmanager with
+  | Some swaps -> swaps
+  | None -> failwith unable_to_get_swaps_from_token_manager
 
 end
 
