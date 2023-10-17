@@ -1,3 +1,6 @@
+
+module Oracle = struct
+
 type rate_update =  {
     name: string;
     value: nat;
@@ -10,9 +13,6 @@ type result = (operation list) * storage
 
 let no_op (s : storage) : result =  (([] : operation list), s)
 
-type entrypoint =
-  | Update of rate_update
-
 let update
   (update: rate_update)
   (storage: storage) : result =
@@ -22,15 +22,21 @@ let update
   in
   no_op storage
 
+end
+
+
+type entrypoint =
+  | Update of Oracle.rate_update
+
 [@entry]
 let main
-  (action, storage : entrypoint * storage) : result =
+  (action, storage : entrypoint * Oracle.storage) : Oracle.result =
   match action with
-   | Update ru -> update ru storage
+   | Update ru -> Oracle.update ru storage
 
 
 [@view]
-let getPrice (asset, storage : string * storage) =
+let getPrice (asset, storage : string * Oracle.storage) =
   match Map.find_opt asset storage with
   | None -> failwith "No rate available"
   | Some r -> (r.timestamp, r.value)

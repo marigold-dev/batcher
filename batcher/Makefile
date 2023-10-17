@@ -73,6 +73,22 @@ build-tzbtc-vault-mainnet:
 	$(call build_vault,tzbtc,mainnet)
 build-tzbtc-vault-ghostnet:
 	$(call build_vault,tzbtc,ghostnet)
+build-btctz-vault-mainnet:
+	$(call build_vault,btctz,mainnet)
+build-btctz-vault-ghostnet:
+	$(call build_vault,btctz,ghostnet)
+build-eurl-vault-mainnet:
+	$(call build_vault,eurl,mainnet)
+build-eurl-vault-ghostnet:
+	$(call build_vault,eurl,ghostnet)
+build-usdt-vault-mainnet:
+	$(call build_vault,usdt,mainnet)
+build-usdt-vault-ghostnet:
+	$(call build_vault,usdt,ghostnet)
+build-usdtz-vault-mainnet:
+	$(call build_vault,usdtz,mainnet)
+build-usdtz-vault-ghostnet:
+	$(call build_vault,usdtz,ghostnet)
 build-tzBTC:
 	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/tzBTC_token.tz)
@@ -99,6 +115,8 @@ build-fa12-tzBTC:
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/tzBTC_storage.mligo, $(MICHELSON_DIRECTORY)/tzBTC_fa12_token_storage.tz)
 test-mm:
 	$(call test_ligo,$(TEST_DIRECTORY)/test-market-maker.mligo)
+test-tm:
+	$(call test_ligo,$(TEST_DIRECTORY)/test-tokenmanager.mligo)
 test-batcher:
 	$(call test_ligo,$(TEST_DIRECTORY)/test-batcher.mligo)
 test-all:

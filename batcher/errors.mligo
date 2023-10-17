@@ -62,3 +62,5 @@
 [@inline] let contract_does_not_exist                                            = 160n
 [@inline] let unable_to_call_on_chain_view                                       = 161n
 [@inline] let unable_to_get_tokens_from_token_manager                            = 162n
+[@inline] let vault_name_is_incorrect                                            = 163n
+[@inline] let unable_to_get_native_token_from_vault                              = 164n

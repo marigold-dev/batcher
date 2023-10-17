@@ -221,7 +221,15 @@ let change_tokenmanager_address
     let storage = { storage with tokenmanager = new_tokenmanager_address; } in
     no_op storage
 
+
 end
+
+[@view]
+let get_native_token_of_vault ((),storage: unit * Vault.storage) : token = storage.native_token.token
+
+(* TODO - Need to verify on-chain data for token balances prior to returning balances *)
+[@view]
+let get_vault_balances ((),storage: unit * Vault.storage) : (token_amount * token_amount_map) = (storage.native_token, storage.foreign_tokens)
 
 type entrypoint =
   | AddLiquidity of nat

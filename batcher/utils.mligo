@@ -1,6 +1,6 @@
-#include "types.mligo" 
-#include "errors.mligo"
-#include "constants.mligo"
+#include "./types.mligo" 
+#include "./errors.mligo"
+#include "./constants.mligo"
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 
@@ -918,7 +918,7 @@ let add_pair
 
 end
 
-module TokensManagerUtils = struct
+module TokenManagerUtils = struct
 
 [@inline]
 let get_valid_tokens
@@ -929,3 +929,10 @@ let get_valid_tokens
 
 
 end
+
+[@inline]
+let get_native_token_from_vault 
+  (vault_address: address) : token = 
+  match Tezos.call_view "get_native_token_from_vault" () vault_address with
+  | Some tokn -> tokn
+  | None -> failwith unable_to_get_native_token_from_vault
