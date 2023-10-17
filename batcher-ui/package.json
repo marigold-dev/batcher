@@ -13,7 +13,7 @@
     "start": "ENV=mainnet next start -p 80",
     "start:ghostnet": "ENV=ghostnet next start -p 80",
     "build:ghostnet": "ENV=ghostnet next build",
-    "lint": "next lint"
+    "lint": "ENV=ghostnet next lint"
   },
   "lint-staged": {
     "**/*.{js,jsx,tsx,ts,less,md,json}": [

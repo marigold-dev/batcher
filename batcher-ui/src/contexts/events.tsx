@@ -15,7 +15,7 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const socket = new HubConnectionBuilder()
-      .withUrl(process.env.NEXT_PUBLIC_TZKT_URI_API + '/v1/ws')
+      .withUrl(process.env.NEXT_PUBLIC_TZKT_API_URI + '/v1/ws')
       .build();
     setup(socket);
     // setSocket(socket);

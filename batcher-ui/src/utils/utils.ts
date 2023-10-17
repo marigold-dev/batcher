@@ -140,7 +140,7 @@ export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
 export const getTokensBalancesByAccount = (userAddress: string) =>
   fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens/balances?account=${userAddress}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens/balances?account=${userAddress}`
   ).then(checkStatus);
 
 export const getBalances = async (userAddress: string): Promise<Balances> => {
@@ -165,7 +165,7 @@ export const getBalances = async (userAddress: string): Promise<Balances> => {
 
 export const getStorage = (): Promise<BatcherStorage> =>
   fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
   ).then(checkStatus);
 
 export const getBigMapByIdAndUserAddress = (
@@ -176,7 +176,7 @@ export const getBigMapByIdAndUserAddress = (
     return Promise.reject('No address or no bigmap ID for order book.');
   return (
     fetch(
-      `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
+      `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
     )
       // TODO: improve that by parseStatus function
       .then(response => checkStatus(response, { value: [] }))
@@ -190,7 +190,7 @@ export const getBigMapByIdAndBatchNumber = (
   const bigMapId: string | null = getByKey('batches');
   if (!bigMapId) return Promise.reject('No bigmap ID for batches.');
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
   )
     .then(checkStatus)
     .then(r => r.value);
@@ -203,7 +203,7 @@ export const getBigMapByIdAndTokenPair = (
   if (!bigMapId) return Promise.reject('No bigmap ID for rates_current.');
 
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys`
   )
     .then(checkStatus)
     .then(response =>
@@ -217,7 +217,7 @@ export const getTokensMetadata = async () => {
   return Promise.all(
     Object.values(validTokens).map(async token => {
       const icon = await fetch(
-        `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens?contract=${token.address}`
+        `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${token.address}`
       )
         .then(t => t.json())
         .then(([t]) =>
@@ -690,7 +690,7 @@ const getDepositAmount = (depositAmount: number, decimals: number) =>
 
 const getMarketMakerStorage = (): Promise<BatcherMarketMakerStorage> => {
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH}/storage`
   ).then(checkStatus);
 };
 
@@ -699,7 +699,7 @@ const getUserVaultFromBigmap = (
   userKey: string
 ): Promise<UserHoldingsBigMapItem> => {
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${userKey}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigmapId}/keys/${userKey}`
   ).then(checkStatus);
 };
 
@@ -708,7 +708,7 @@ const getHoldingsVaultFromBigmap = (
   key: string
 ): Promise<VaultHoldingsBigMapItem> => {
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${key}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigmapId}/keys/${key}`
   ).then(checkStatus);
 };
 const getVaultsFromBigmap = (
@@ -716,7 +716,7 @@ const getVaultsFromBigmap = (
   tokenName: string
 ): Promise<VaultsBigMapItem> => {
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${tokenName}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigmapId}/keys/${tokenName}`
   ).then(checkStatus);
 };
 
