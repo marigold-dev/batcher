@@ -181,14 +181,6 @@ let was_in_clearing
   | Sell -> was_in_clearing_for_sell clearing_tolerance order_tolerance
 
 
-[@inline]
-let get_clearing_volume
-  (clearing:clearing) : nat =
-  match clearing.clearing_tolerance with
-  | Minus -> clearing.clearing_volumes.minus
-  | Exact -> clearing.clearing_volumes.exact
-  | Plus -> clearing.clearing_volumes.plus
-
 (* Filter 0 amount transfers out *)
 [@inline]
 let add_payout_if_not_zero
@@ -430,26 +422,6 @@ let deposit
       [ deposit_op]
 
 [@inline]
-let redeem_by_batch
-    (redeem_address : address)
-    (batch_id: nat)
-    (storage : storage) : operation list * storage =
-      let treasury_vault = get_vault () in
-      let fees = {
-        to_send = 0mutez;
-        to_refund = 0mutez;
-        to_market_maker = 0mutez;
-        payer = redeem_address;
-        recipient = storage.fee_recipient;
-        market_maker = storage.marketmaker;
-      } in
-      let fees, updated_ubots, updated_batch_set,  payout_token_map = Ubots.collect_redemption_payouts redeem_address fees (Some batch_id) storage in
-      let operations = Treasury_Utils.transfer_holdings treasury_vault redeem_address payout_token_map in
-      let operations = resolve_fees fees operations in
-      let updated_storage = { storage with user_batch_ordertypes = updated_ubots; batch_set = updated_batch_set;  } in
-      (operations, updated_storage)
-
-[@inline]
 let redeem
     (redeem_address : address)
     (storage : storage) : operation list * storage =
@@ -470,65 +442,6 @@ let redeem
 
 end
 
-module Token_Utils = struct
-
-[@inline]
-let is_valid_swap_pair
-  (side: side)
-  (swap: swap_reduced)
-  (valid_swaps: ValidSwaps.t_map): swap_reduced =
-  let token_pair = pair_of_swap side swap in
-  let rate_name = get_rate_name_from_pair token_pair in
-  if Map.mem rate_name valid_swaps then swap else failwith unsupported_swap_type
-
-[@inline]
-let remove_token_old
-  (token: token)
-  (valid_tokens: ValidTokens.t) : ValidTokens.t =
-  match ValidTokens.find_opt token.name valid_tokens with
-  | Some existing_token -> if are_equivalent_tokens existing_token token then
-                             ValidTokens.remove token.name valid_tokens
-                           else
-                             failwith token_already_exists_but_details_are_different
-  | None -> valid_tokens
-
-[@inline]
-let add_token
-  (token: token)
-  (valid_tokens: ValidTokens.t) : ValidTokens.t =
-  match ValidTokens.find_opt token.name valid_tokens with
-  | Some existing_token -> if are_equivalent_tokens existing_token token then
-                             valid_tokens
-                           else
-                             failwith token_already_exists_but_details_are_different
-  | None -> ValidTokens.upsert token.name token valid_tokens
-
-[@inline]
-let is_token_used
-  (token: token)
-  (valid_tokens: ValidTokens.t) : bool =
-  let is_token_in_tokens (acc, (_i, t) : bool * (string * token)) : bool =
-    are_equivalent_tokens token t ||
-    acc
-  in
-  ValidTokens.fold is_token_in_tokens valid_tokens false
-
-[@inline]
-let is_token_used_in_swaps
-  (token: token)
-  (valid_swaps: ValidSwaps.t)
-  (tokens: ValidTokens.t): bool =
-  let is_token_used_in_swap (acc, (_i, valid_swap) : bool * (string * valid_swap_reduced)) : bool =
-    let swap = valid_swap.swap in
-    let to_token = get_token swap.to tokens in
-    let from_token = get_token swap.from tokens in
-    are_equivalent_tokens token to_token ||
-    are_equivalent_tokens token from_token ||
-    acc
-  in
-  ValidSwaps.fold is_token_used_in_swap valid_swaps false
-
-end
 
 module Batch_Utils = struct
 
@@ -815,13 +728,6 @@ let filter_volumes
   | Plus -> let buy_vol = volumes.buy_minus_volume + volumes.buy_exact_volume + volumes.buy_plus_volume in
             buy_vol, volumes.sell_plus_volume
 
-[@inline]
-let compute_equivalent_amount (amount : nat) (rate : exchange_rate) (is_sell_side: bool) : nat =
-  let float_amount = Rational.new (int (amount)) in
-  if is_sell_side then
-    get_rounded_number_lower_bound (Rational.div float_amount rate.rate)
-  else
-    get_rounded_number_lower_bound (Rational.mul float_amount rate.rate)
 
 (*
   This function builds the order equivalence for the pro-rata redeemption.
@@ -884,7 +790,6 @@ type entrypoint =
   | Deposit of external_swap_order
   | Tick of string
   | Redeem
-  | RedeemByBatch of nat
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
@@ -1143,16 +1048,6 @@ let redeem
   (tokens_transfer_ops, new_storage)
 
 [@inline]
-let redeem_by_batch
- (batch_id:nat)
- (storage : storage) : result =
-  let holder = Tezos.get_sender () in
-  let () = reject_if_tez_supplied () in
-  let (tokens_transfer_ops, new_storage) = Treasury.redeem_by_batch holder batch_id storage in
-  (tokens_transfer_ops, new_storage)
-
-
-[@inline]
 let tick_price
   (rate_name: string)
   (valid_swap : valid_swap)
@@ -1295,7 +1190,6 @@ let main
   (* User endpoints *)
    | Deposit order -> deposit order storage
    | Redeem -> redeem storage
-   | RedeemByBatch i -> redeem_by_batch i  storage
    | Cancel pair -> cancel pair storage
   (* Maintenance endpoint *)
    | Tick r ->  tick r storage
