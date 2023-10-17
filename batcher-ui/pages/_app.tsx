@@ -34,7 +34,7 @@ const App = ({ Component }: AppProps) => {
         <meta property="og:site_name" content="Batcher DEX" />
         <meta
           property="og:image"
-          content={process.env.NEXT_PUBLIC_PATH_TO_BATCHER_LOGO}
+          content={process.env.NEXT_PUBLIC_BATCHER_LOGO_PATH}
         />
         <meta property="twitter:card" content="summary" />
         <meta
@@ -46,7 +46,7 @@ const App = ({ Component }: AppProps) => {
         <meta property="twitter:creator" content="@Marigold_Dev" />
         <meta
           property="twitter:image"
-          content={process.env.NEXT_PUBLIC_PATH_TO_BATCHER_LOGO}
+          content={process.env.NEXT_PUBLIC_BATCHER_LOGO_PATH}
         />
       </Head>
       <Provider store={store}>
