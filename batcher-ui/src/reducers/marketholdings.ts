@@ -1,12 +1,24 @@
 import { Cmd, loop } from 'redux-loop';
-import { MarketHoldingsActions } from 'src/actions/marketholdings';
-import { fetchMarketHoldingsCmd } from 'src/commands/marketholdings';
-import { MarketHoldingsState } from 'src/types';
+import { MarketHoldingsActions } from '@/actions';
+import {
+  fetchGlobalVaultCmd,
+  fetchMarketHoldingsCmd,
+  fetchUserVaultCmd,
+} from '@/commands/marketholdings';
+import { MarketHoldingsState } from '@/types';
 
 export const initialMHState: MarketHoldingsState = {
   globalVaults: {},
   userVaults: {},
   currentVault: 'tzBTC',
+
+  currentUserVault: {
+    shares: 0,
+    unclaimed: 0,
+  },
+  currentGlobalVault: {
+    shares: 0,
+  },
 };
 
 export const marketHoldingsReducer = (
@@ -38,6 +50,28 @@ export const marketHoldingsReducer = (
           action.payload.userAddress
         )
       );
+    case 'GET_USER_VAULT':
+      return loop(
+        state,
+        fetchUserVaultCmd(action.payload.userAddress, state.currentVault)
+      );
+    case 'UPDATE_USER_VAULT':
+      return {
+        ...state,
+        currentUserVault: {
+          shares: action.payload.vault.shares,
+          unclaimed: action.payload.vault.unclaimed,
+        },
+      };
+    case 'GET_GLOBAL_VAULT':
+      return loop(state, fetchGlobalVaultCmd(state.currentVault));
+    case 'UPDATE_GLOBAL_VAULT':
+      return {
+        ...state,
+        currentGlobalVault: {
+          shares: action.payload.vault.shares,
+        },
+      };
     default:
       return state;
   }

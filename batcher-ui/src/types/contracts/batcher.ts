@@ -1,4 +1,4 @@
-import { Token } from '../state';
+import type { Token } from '@/types/state';
 
 export enum BatcherStatus {
   OPEN = 'OPEN',

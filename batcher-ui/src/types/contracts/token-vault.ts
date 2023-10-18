@@ -35,3 +35,15 @@ export type TokenVaultStorage = {
    */
   vault_holdings: number;
 };
+
+export type VaultHoldingsBigmapItem = {
+  holder: string;
+  /**
+   * Number corresponding to shares for user
+   */
+  shares: string;
+  /**
+   * Number corresponding to amount of tez unclaimed
+   */
+  unclaimed: string;
+};

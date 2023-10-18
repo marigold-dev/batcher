@@ -1,12 +1,8 @@
 import React, { useCallback, useContext, useEffect } from 'react';
-import { TezosToolkitContext } from 'src/contexts/tezos-toolkit';
+import { TezosToolkitContext } from '@/contexts/tezos-toolkit';
 import { useDispatch, useSelector } from 'react-redux';
-import { getHoldings, userAddressSelector } from 'src/reducers';
-import {
-  getHoldings as getHoldingsAction,
-  newError,
-  newInfo,
-} from 'src/actions';
+import { getHoldings, userAddressSelector } from '@/reducers';
+import { getHoldings as getHoldingsAction, newError, newInfo } from '@/actions';
 
 const Holdings = () => {
   const { tezos } = useContext(TezosToolkitContext);

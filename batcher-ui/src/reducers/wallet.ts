@@ -1,8 +1,8 @@
-import { WalletActions } from 'src/actions';
+import { WalletActions } from '@/actions';
 import { Loop, liftState, loop } from 'redux-loop';
-import { fetchUserBalancesCmd } from '../commands/wallet';
-import { WalletState } from 'src/types';
-import { TOKENS } from 'src/utils/utils';
+import { fetchUserBalancesCmd } from '@/commands/wallet';
+import { WalletState } from '@/types';
+import { TOKENS } from '@/utils/utils';
 
 const initialState: WalletState = {
   userAddress: undefined,

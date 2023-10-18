@@ -4,17 +4,21 @@ import {
   updateVolumes,
   updateOraclePrice,
   updateBatcherStatus,
-} from 'src/actions';
-import { updateHoldings } from 'src/actions/holdings';
-import { userAddressSelector } from 'src/reducers';
-import { BatchBigmap, OrderBookBigmap, RatesCurrentBigmap } from 'src/types';
-import { BigMapEvent } from 'src/types/events';
+} from '@/actions';
+import { updateHoldings } from '@/actions/holdings';
+import { userAddressSelector } from '@/reducers';
+import type {
+  BatchBigmap,
+  OrderBookBigmap,
+  RatesCurrentBigmap,
+  BigMapEvent,
+} from '@/types';
 import {
   computeAllHoldings,
   computeOraclePrice,
   mapStatus,
   toVolumes,
-} from 'src/utils/utils';
+} from '@/utils/utils';
 
 export const newEventCmd = (event: BigMapEvent) => {
   return Cmd.run(

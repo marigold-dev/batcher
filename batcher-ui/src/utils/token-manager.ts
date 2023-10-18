@@ -1,5 +1,5 @@
-import { TokenManagerStorage, ValidTokensBigmapItem } from 'src/types';
-import { checkStatus } from './utils';
+import { TokenManagerStorage, ValidTokensBigmapItem } from '@/types';
+import { checkStatus } from '@/utils/utils';
 
 const getTokenManagerStorage = (): Promise<TokenManagerStorage> =>
   fetch(

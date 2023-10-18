@@ -1,4 +1,8 @@
-import { BatcherStatus, PriceStrategy, SwapNames } from './contract';
+import {
+  BatcherStatus,
+  PriceStrategy,
+  SwapNames,
+} from '@/types/contracts/batcher';
 
 export type Token = {
   address: string | undefined;
@@ -83,6 +87,16 @@ export type MarketHoldingsState = {
   // userVaults: Map<string, UserVault>;
   // current_vault: MVault;
   currentVault: string; // token name (EURL, USDT, tzBTC)
+
+  currentUserVault: {
+    shares: number;
+    unclaimed: number;
+  };
+
+  currentGlobalVault: {
+    shares: number;
+    //TODO: fill with others informations needed
+  };
 };
 
 export type EventsState = {

@@ -1,12 +1,20 @@
 // MARKET MAKER HOLDINGS
 
-import { ContractToken, GlobalVault, UserVault, VaultToken } from 'src/types';
-import { checkStatus, scaleAmountDown } from './utils';
+import type {
+  ContractToken,
+  GlobalVault,
+  MarketMakerStorage,
+  TokenVaultStorage,
+  UserVault,
+  VaultToken,
+} from '@/types';
+import { checkStatus, scaleAmountDown } from '@/utils/utils';
+import { tokenVaultsConfig } from '@/config/token-vaults';
 
-const getMarketMakerStorage = (): Promise<any> => {
+const getMarketMakerStorage = (): Promise<MarketMakerStorage> => {
   // const getMarketMakerStorage = (): Promise<BatcherMarketMakerStorage> => {
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${process.env.NEXT_PUBLIC_MARKET_MAKER_CONTRACT_HASH}/storage`
   ).then(checkStatus);
 };
 
@@ -85,6 +93,10 @@ const getUserVault = async (
 
 export const getMarketHoldings = async (userAddress: string) => {
   const storage = await getMarketMakerStorage();
+  console.log(
+    '🚀 ~ file: market-maker.ts:88 ~ getMarketHoldings ~ storage:',
+    storage
+  );
   const userVaults = await Promise.all(
     Object.keys(storage.valid_tokens).map(async token => {
       const userVaultKey: string = `{"string":"${token}","address":"${userAddress}"}`;
@@ -139,3 +151,43 @@ export const getMarketHoldings = async (userAddress: string) => {
   }, {});
   return { globalVaults: x, userVaults: y };
 };
+
+// ---- WIP ---- //
+
+const getTokenVaultStorage = async (
+  tokenName: string
+): Promise<TokenVaultStorage> =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${tokenVaultsConfig[tokenName]}/storage`
+  ).then(checkStatus);
+
+const getUserVaultFromBigmap2 = async (bigmapId: number, userAddress: string) =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigmapId}/keys/${userAddress}`
+  ).then(checkStatus).then(vault => parseUserVault(vault.value))
+
+const getUserVault2 = async (userAddress: string, tokenName: string) => {
+  console.log("🚀 ~ file: market-maker.ts:170 ~ getUserVault2 ~ userAddress: string, tokenName: string:", userAddress, tokenName)
+  const storage =await getTokenVaultStorage(tokenName);
+  const userVault = await getUserVaultFromBigmap2(storage.vault_holdings, userAddress)
+  console.warn("🚀 ~ file: market-maker.ts:172 ~ getUserVault2 ~ userVault:", userVault)
+  return userVault
+};
+
+const parseUserVault = (rawUserVault: any) => ({
+  holder: rawUserVault.holder,
+  shares: parseInt(rawUserVault.shares, 10),
+  unclaimed: parseInt(rawUserVault.unclaimed)
+})
+
+const getGlobalVault = async (tokenName: string)=> {
+  const storage = await getTokenVaultStorage(tokenName)
+  return {shares : parseInt(storage.total_shares, 10)}
+}
+
+export {getUserVault2, getGlobalVault};
+
+// getTokenVaultStorage('tzBTC').then(console.warn);
+// getUserVaultFromBigmap2(375834, 'tz1R2EoKLoJuyccMesBYGewEKCKmqqyBnYLc').then(
+//   console.warn
+// );

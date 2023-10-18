@@ -7,7 +7,7 @@ import {
   getPairsInformations,
   getVolumes,
   getTimeDifferenceInMs,
-} from '../utils/utils';
+} from '@/utils/utils';
 import {
   updateBatchNumber,
   updateBatcherStatus,
@@ -18,8 +18,8 @@ import {
   updateRemainingTime,
   noBatchError,
   newError,
-} from '../actions';
-import { BatcherStatus, CurrentSwap, SwapNames } from 'src/types';
+} from '@/actions';
+import { BatcherStatus, CurrentSwap, SwapNames } from '@/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(

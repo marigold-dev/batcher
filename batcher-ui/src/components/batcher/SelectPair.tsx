@@ -7,11 +7,11 @@ import {
   faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
-import { currentSwapSelector } from 'src/reducers';
+import { currentSwapSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
-import { changePair } from 'src/actions';
+import { changePair } from '@/actions';
 import Image from 'next/image';
-import { getTokensMetadata } from 'src/utils/token-manager';
+import { getTokensMetadata } from '@/utils/token-manager';
 
 interface SelectPairProps {
   isFrom: boolean;

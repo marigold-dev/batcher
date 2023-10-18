@@ -1,4 +1,8 @@
-import { BatchBigmap, OrderBookBigmap, RatesCurrentBigmap } from "./contract";
+import {
+  BatchBigmap,
+  OrderBookBigmap,
+  RatesCurrentBigmap,
+} from '@/types/contracts/batcher';
 
 export type BigMapEvent = {
   data: Array<BigMapEventData>;
