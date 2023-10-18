@@ -1,5 +1,4 @@
-// import { Option } from 'fp-ts/Option';
-import { Balances } from 'src/utils/utils';
+import { Balances } from '@/utils/utils';
 
 const connectedWallet = ({ userAddress }: { userAddress: string }) =>
   ({

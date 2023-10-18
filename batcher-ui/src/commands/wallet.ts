@@ -1,6 +1,6 @@
 import { Cmd } from 'redux-loop';
-import { getBalances } from '../utils/utils';
-import { gotUserBalances } from '../actions';
+import { getBalances } from '@/utils/utils';
+import { gotUserBalances } from '@/actions';
 
 const fetchUserBalancesCmd = (userAddress?: string) => {
   return Cmd.run(

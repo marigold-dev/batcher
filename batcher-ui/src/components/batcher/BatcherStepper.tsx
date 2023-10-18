@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { batcherStatusSelector } from '../reducers';
-import { BatcherStatus } from '../types';
+import { batcherStatusSelector } from '@/reducers';
+import { BatcherStatus } from '@/types';
 
 const Square = ({ isActive }: { isActive: boolean }) => (
   <div

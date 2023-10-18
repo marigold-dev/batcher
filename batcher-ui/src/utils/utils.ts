@@ -18,13 +18,9 @@ import {
   TokenNames,
   SwapNames,
   RatesCurrentBigmap,
-  UserVault,
-  GlobalVault,
-  VaultToken,
-  ContractToken,
-} from '../types';
+} from '@/types';
 import { NetworkType } from '@airgap/beacon-sdk';
-import { getByKey } from './local-storage';
+import { getByKey } from '@/utils/local-storage';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;

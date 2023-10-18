@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import Image from 'next/image';
-import { connectedWallet, disconnectedWallet } from '../actions';
-import { useWallet } from '../contexts/wallet';
+import { connectedWallet, disconnectedWallet } from '@/actions';
+import { useWallet } from '@/contexts/wallet';
 import Menu from './Menu';
-import LinkComponent from './Link';
+import LinkComponent from '@/components/common/Link';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Copy from './Copy';
+import Copy from '@/components/common/Copy';
 
 interface NavBarProps {
   isMenuOpen: boolean;

@@ -25,6 +25,11 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "module": "esnext",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
     "src/**/*",
@@ -34,7 +39,7 @@
     ".eslintrc.json",
     ".prettierrc.json",
     "jest.config.js",
-    "pages/*",
+    "src/pages/*",
     "global.d.ts"
   ],
   "exclude": [

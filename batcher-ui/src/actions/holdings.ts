@@ -1,4 +1,4 @@
-import { HoldingsState } from 'src/types';
+import { HoldingsState } from '@/types';
 
 export const redeem = () =>
   ({

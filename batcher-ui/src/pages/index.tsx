@@ -1,15 +1,11 @@
 import React, { useEffect } from 'react';
-import Exchange from '../src/components/Exchange';
-import BatcherInfo from '../src/components/BatcherInfo';
-import PriceStrategy from '../src/components/PriceStrategy';
+import Exchange from '@/components/batcher/Exchange';
+import BatcherInfo from '@/components/batcher/BatcherInfo';
+import PriceStrategy from '@/components/batcher/PriceStrategy';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { currentPairSelector, userAddressSelector } from '../src/reducers';
-import {
-  fetchUserBalances,
-  batcherUnsetup,
-  getPairsInfos,
-} from '../src/actions';
+import { currentPairSelector, userAddressSelector } from '@/reducers';
+import { fetchUserBalances, batcherUnsetup, getPairsInfos } from '@/actions';
 
 const Swap = () => {
   const userAddress = useSelector(userAddressSelector);

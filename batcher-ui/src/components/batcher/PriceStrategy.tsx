@@ -1,9 +1,9 @@
 import React from 'react';
 import * as RadioGroup from '@radix-ui/react-radio-group';
 import { useDispatch } from 'react-redux';
-import { PriceStrategy } from 'src/types';
-import { updatePriceStrategy } from 'src/actions';
-import Tooltip from './Tooltip';
+import { PriceStrategy } from '@/types';
+import { updatePriceStrategy } from '@/actions';
+import Tooltip from '@/components/common/Tooltip';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 

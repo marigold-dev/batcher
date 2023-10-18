@@ -1,7 +1,7 @@
 import { loop } from 'redux-loop';
-import { EventActions } from 'src/actions/events';
-import { newEventCmd } from 'src/commands/events';
-import { EventsState } from 'src/types';
+import { EventActions } from '@/actions/events';
+import { newEventCmd } from '@/commands/events';
+import { EventsState } from '@/types';
 
 const initialState: EventsState = {
   toast: {
