@@ -39,22 +39,24 @@ define install_deps
 endef
 
 define clean_mainnet_files
-   rm -rf *mainnet.tz
+   rm -rf $(MICHELSON_DIRECTORY)/*mainnet.tz
 endef
 
 define clean_ghostnet_files
-   rm -rf *ghostnet.tz
+   rm -rf $(MICHELSON_DIRECTORY)/*ghostnet.tz
 endef
 
+clean-mainnet:
+	$(call clean_mainnet_files)
+clean-ghostnet:
+	$(call clean_ghostnet_files)
 clean:
 	$(call clean_mainnet_files)
 	$(call clean_ghostnet_files)
 build-mainnet:
-	$(call clean_mainnet_files)
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-mainnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_mainnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-mainnet.tz)
 build-ghostnet:
-	$(call clean_ghostnet_files)
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_ghostnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-ghostnet.tz)
 build-mm-mainnet:
@@ -90,27 +92,21 @@ build-usdtz-vault-mainnet:
 build-usdtz-vault-ghostnet:
 	$(call build_vault,usdtz,ghostnet)
 build-tzBTC:
-	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/tzBTC_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/tzBTC_storage.mligo, $(MICHELSON_DIRECTORY)/tzBTC_token_storage.tz)
 build-USDT:
-	$(call clean_files)
 	$(call compile_contract,$(FA2_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/USDT_token.tz)
 	$(call compile_storage,$(FA2_STORAGE_DIRECTORY)/USDT_storage.mligo, $(MICHELSON_DIRECTORY)/USDT_token_storage.tz)
 build-CTEZ:
-	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/CTEZ_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/CTEZ_storage.mligo, $(MICHELSON_DIRECTORY)/CTEZ_token_storage.tz)
 build-KUSD:
-	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/KUSD_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/KUSD_storage.mligo, $(MICHELSON_DIRECTORY)/KUSD_token_storage.tz)
 build-EURL:
-	$(call clean_files)
 	$(call compile_contract, $(FA2_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/EURL_token.tz)
 	$(call compile_storage, $(FA2_STORAGE_DIRECTORY)/EURL_storage.mligo, $(MICHELSON_DIRECTORY)/EURL_token_storage.tz)
 build-fa12-tzBTC:
-	$(call clean_files)
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/tzBTC_fa12_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/tzBTC_storage.mligo, $(MICHELSON_DIRECTORY)/tzBTC_fa12_token_storage.tz)
 test-mm:
