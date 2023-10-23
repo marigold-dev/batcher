@@ -417,8 +417,104 @@ type vault_holding = {
    unclaimed: tez;
 }
 
-type vault_holdings = (address, vault_holding) big_map
 
+module VaultHoldings = struct
+  
+ type key = address
+ type value = vault_holding
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let empty:t = {
+    keys = Set.empty;
+    values = Big_map.empty;
+}
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let find_or_fail (key:key) (object:t): value =
+   match find_opt key object with
+   | None -> failwith token_name_not_in_list_of_valid_tokens
+   | Some v -> v
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      {object with values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+
+[@inline]
+let mem_map
+  (to_find:value)
+  (m: (key, value) map) : bool =
+   let find (found, (_k,v): (bool * (key * value))) : bool = if found then found else to_find = v in
+   Map.fold find m false
+
+end
 
 module Vaults = struct
   

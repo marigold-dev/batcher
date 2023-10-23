@@ -1,4 +1,5 @@
 #import "../vault.mligo" "Vault"
+#import "../types.mligo" "Types"
 let f(_:unit) : Vault.Vault.storage = {
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   batcher = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
@@ -16,6 +17,6 @@ let f(_:unit) : Vault.Vault.storage = {
     amount = 0n;
     };
   foreign_tokens = (Map.empty:(string, Vault.token_amount) map );
-  vault_holdings = (Big_map.empty: (address, Vault.vault_holding) big_map);
+  vault_holdings = Types.VaultHoldings.empty ;
 }
 

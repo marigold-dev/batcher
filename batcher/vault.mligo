@@ -14,7 +14,7 @@ type storage = {
   batcher : address;
   marketmaker : address;
   tokenmanager : address;
-  vault_holdings: vault_holdings;
+  vault_holdings: VaultHoldings.t;
 }
 
 type result = operation list * storage
@@ -73,7 +73,7 @@ let add_or_update_liquidity
     if not are_equivalent_tokens token_amount.token nt.token then failwith token_already_exists_but_details_are_different else
     let shares = storage.total_shares + token_amount.amount in
     let native_token = { nt with amount =  nt.amount + token_amount.amount; } in
-    let new_holding = match Big_map.find_opt holder storage.vault_holdings with
+    let new_holding = match VaultHoldings.find_opt holder storage.vault_holdings with
                       | None -> {
                                   holder = holder;
                                   shares = token_amount.amount;
@@ -82,7 +82,7 @@ let add_or_update_liquidity
                       | Some ph -> let nshares = ph.shares + token_amount.amount in 
                                    { ph with shares = nshares;}
     in
-    let vhs = Big_map.add holder new_holding storage.vault_holdings in
+    let vhs = VaultHoldings.upsert holder new_holding storage.vault_holdings in
     { storage with
         total_shares = shares ;
         vault_holdings = vhs;
@@ -123,7 +123,7 @@ let collect_tokens_for_redemption
 let remove_liquidity_from_market_maker
    (holder: address)
    (storage: storage): ( operation list * storage) =
-   match Big_map.find_opt holder storage.vault_holdings with 
+   match VaultHoldings.find_opt holder storage.vault_holdings with 
    | None -> failwith no_holding_in_market_maker_for_holder
    | Some holding  ->  let unclaimed_tez = holding.unclaimed in
                        let shares  = holding.shares in
@@ -133,7 +133,7 @@ let remove_liquidity_from_market_maker
                        let tez_op = Treasury_Utils.transfer_fee holder unclaimed_tez in
                        let treasury_vault =  get_vault () in
                        let tok_ops = Treasury_Utils.transfer_holdings treasury_vault holder tam in
-                       let vault_holdings = Big_map.remove holder storage.vault_holdings in 
+                       let vault_holdings = VaultHoldings.remove holder storage.vault_holdings in 
                        let ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
                        let storage = { storage with vault_holdings = vault_holdings;  } in
                        (ops, storage)
@@ -145,14 +145,14 @@ let claim_from_holding
   if unclaimed_tez = 0mutez then failwith no_holdings_to_claim else
   let holding = { holding with unclaimed = 0tez; } in
   let tez_op = Treasury_Utils.transfer_fee holding.holder unclaimed_tez in
-  let vault_holdings = Big_map.update holding.holder (Some holding) storage.vault_holdings in
+  let vault_holdings = VaultHoldings.upsert holding.holder holding storage.vault_holdings in
   let storage = {storage with vault_holdings = vault_holdings;} in
   ([tez_op], storage)
 
 let claim_rewards
   (holder:address)
   (storage:storage) : (operation list * storage) =
-   match Big_map.find_opt holder storage.vault_holdings with
+   match VaultHoldings.find_opt holder storage.vault_holdings with
    | None -> failwith no_holdings_to_claim
    | Some h -> claim_from_holding h storage 
 
@@ -236,6 +236,27 @@ let inject_liquidity
     ops, storage
 
 [@inline]
+let add_reward
+    (reward: tez)
+    (storage: storage) : result =
+    let rat_total_shares = Rational.new (int storage.total_shares) in
+    let int_tez_reward: int = int (reward / 1mutez) in
+    let rat_tez_reward = Rational.new int_tez_reward in
+    let add_rewards = fun (holdings,(addr,holding):VaultHoldings.t * (VaultHoldings.key * VaultHoldings.value)) -> 
+                      let rat_shares = Rational.new (int holding.shares) in
+                      let perc_share = Rational.div rat_shares rat_total_shares in
+                      let rew_to_user = Rational.mul perc_share rat_tez_reward in 
+                      let rew_to_user_in_tez = 1mutez * (get_rounded_number_lower_bound rew_to_user) in
+                      let updated_rewards =if rew_to_user_in_tez > 0mutez then holding.unclaimed + rew_to_user_in_tez else holding.unclaimed in
+                      let new_holding = { holding with unclaimed = updated_rewards; } in
+                      VaultHoldings.upsert addr new_holding holdings
+    in
+    let vault_holdings = VaultHoldings.fold add_rewards storage.vault_holdings VaultHoldings.empty in
+    let storage = { storage with  vault_holdings=vault_holdings; } in
+    no_op storage
+
+
+[@inline]
 let change_marketmaker_address
     (new_marketmaker_address: address)
     (storage: storage) : result =
@@ -267,6 +288,7 @@ type entrypoint =
   | AddLiquidity of nat
   | RemoveLiquidity
   | Claim
+  | AddReward of tez
   | InjectLiquidity of liquidity_injection_request
   | Change_admin_address of address
   | Change_batcher_address of address
@@ -280,6 +302,8 @@ let main
    | AddLiquidity a ->  Vault.add_liquidity a storage
    | RemoveLiquidity ->  Vault.remove_liquidity storage
    | Claim  -> Vault.claim storage
+  (* Batcher endpoints *)
+   | AddReward r ->  Vault.add_reward r storage
   (* MarketMaker endpoints *)
    | InjectLiquidity lir ->  Vault.inject_liquidity lir storage
   (* Admin endpoints *)
