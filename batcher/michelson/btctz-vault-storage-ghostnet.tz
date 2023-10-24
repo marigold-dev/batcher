@@ -1,0 +1,9 @@
+(Pair (Pair (Pair "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+            {}
+            "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+      (Pair (Pair (Pair 0 "BTCtz" (Some "KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe") 8 (Some "FA2 token")) 0)
+            "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx")
+      0
+      {}
+      {})
+

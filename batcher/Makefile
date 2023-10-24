@@ -53,10 +53,10 @@ clean-ghostnet:
 clean:
 	$(call clean_mainnet_files)
 	$(call clean_ghostnet_files)
-build-mainnet:
+build-batcher-mainnet:
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-mainnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_mainnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-mainnet.tz)
-build-ghostnet:
+build-batcher-ghostnet:
 	$(call compile_contract,batcher.mligo, $(MICHELSON_DIRECTORY)/batcher-ghostnet.tz)
 	$(call compile_storage,$(STORAGE_DIRECTORY)/batcher_storage_ghostnet.mligo, $(MICHELSON_DIRECTORY)/batcher-storage-ghostnet.tz)
 build-mm-mainnet:
@@ -109,6 +109,8 @@ build-EURL:
 build-fa12-tzBTC:
 	$(call compile_contract,$(FA12_DIRECTORY)/main.mligo, $(MICHELSON_DIRECTORY)/tzBTC_fa12_token.tz)
 	$(call compile_storage,$(FA12_STORAGE_DIRECTORY)/tzBTC_storage.mligo, $(MICHELSON_DIRECTORY)/tzBTC_fa12_token_storage.tz)
+build-all-ghostnet: build-tm-ghostnet build-btctz-vault-ghostnet build-eurl-vault-ghostnet build-usdt-vault-ghostnet build-btctz-vault-ghostnet build-usdtz-vault-ghostnet build-mm-ghostnet build-batcher-ghostnet
+build-all-mainnet: build-tm-mainnet build-btctz-vault-mainnet build-eurl-vault-mainnet build-usdt-vault-mainnet build-btctz-vault-mainnet build-usdtz-vault-mainnet build-mm-mainnet build-batcher-mainnet
 test-mm:
 	$(call test_ligo,$(TEST_DIRECTORY)/test-market-maker.mligo)
 test-tm:
