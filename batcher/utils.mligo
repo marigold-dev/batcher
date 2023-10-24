@@ -1025,7 +1025,7 @@ end
 [@inline]
 let get_native_token_from_vault 
   (vault_address: address) : token = 
-  match Tezos.call_view "get_native_token_from_vault" () vault_address with
+  match Tezos.call_view "get_native_token_of_vault" () vault_address with
   | Some tokn -> tokn
   | None -> failwith unable_to_get_native_token_from_vault
   
