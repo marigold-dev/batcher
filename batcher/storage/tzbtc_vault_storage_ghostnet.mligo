@@ -2,7 +2,7 @@
 #import "../types.mligo" "Types"
 let f(_:unit) : Vault.Vault.storage = {
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
-  batcher = ("" : address);
+  batcher = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   marketmaker = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   tokenmanager = ("KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx" : address);
   total_shares = 0n;
