@@ -253,7 +253,8 @@ let upsert (key:key) (value:value) (object:t): t =
       {object with values = values;}
     else
       let values = Big_map.add key value object.values in
-      {object with values = values;}
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
 
 [@inline]
 let remove (key:key) (object:t): t = 
@@ -348,7 +349,8 @@ let upsert (key:key) (value:value) (object:t): t =
       {object with values = values;}
     else
       let values = Big_map.add key value object.values in
-      {object with values = values;}
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
 
 [@inline]
 let remove (key:key) (object:t): t = 
@@ -465,7 +467,8 @@ let upsert (key:key) (value:value) (object:t): t =
       {object with values = values;}
     else
       let values = Big_map.add key value object.values in
-      {object with values = values;}
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
 
 [@inline]
 let remove (key:key) (object:t): t = 
@@ -557,7 +560,8 @@ let upsert (key:key) (value:value) (object:t): t =
       {object with values = values;}
     else
       let values = Big_map.add key value object.values in
-      {object with values = values;}
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
 
 [@inline]
 let remove (key:key) (object:t): t = 
