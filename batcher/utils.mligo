@@ -1034,3 +1034,14 @@ let is_known_sender
   (addr : address)
   (error: nat): unit =
   if Tezos.get_sender () = addr then () else failwith error
+
+[@inline]
+let send_liquidity_injection_request
+  (liq_request: liquidity_injection_request)
+  (vault:address) : operation = 
+  let liq_req_ent = match Tezos.get_entrypoint_opt "%injectliquidity" vault with
+                | Some ep -> ep
+                | None -> failwith entrypoint_does_not_exist
+  in
+  Tezos.transaction liq_request 0mutez liq_req_ent 
+  

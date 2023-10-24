@@ -15,7 +15,7 @@ let f(_:unit) : Batcher.Storage.t = {
   fee_recipient = ("tz1burnburnburnburnburnburnburjAYjjX" :  address);
   administrator = ("tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" : address);
   marketmaker = ("KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT" : address);
-  tokenmanager = ("KT19JLvQdDGUnssfL5n6rBozZpnaej3Xfvjy" : address);
+  tokenmanager = ("KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx" : address);
   limit_on_tokens_or_pairs = 10n;
   deposit_time_window_in_seconds = 600n;
 }
