@@ -1045,3 +1045,13 @@ let send_liquidity_injection_request
   in
   Tezos.transaction liq_request 0mutez liq_req_ent 
   
+[@inline]
+let send_add_reward
+  (amount: tez)
+  (vault:address) : operation = 
+  let rew_req_ent = match Tezos.get_entrypoint_opt "%addreward" vault with
+                | Some ep -> ep
+                | None -> failwith entrypoint_does_not_exist
+  in
+  Tezos.transaction amount amount rew_req_ent 
+  

@@ -3244,12 +3244,11 @@
                             DUP 3 ;
                             COMPARE ;
                             GT ;
-                            IF { DIG 2 ;
-                                 SWAP ;
-                                 CONTRACT unit ;
-                                 IF_NONE
-                                   { SWAP ; DROP ; PUSH nat 102 ; FAILWITH }
-                                   { DIG 2 ; UNIT ; TRANSFER_TOKENS } ;
+                            IF { CONTRACT %addreward mutez ;
+                                 IF_NONE { PUSH nat 157 ; FAILWITH } {} ;
+                                 DUP 2 ;
+                                 DIG 2 ;
+                                 TRANSFER_TOKENS ;
                                  CONS }
                                { DROP 2 } } ;
                      PUSH mutez 0 ;

@@ -395,13 +395,9 @@ let is_within_limit
 
 end
 
-
-
-
 module Treasury = struct
 
 type storage = Storage.t
-
 
 [@inline]
 let resolve_fees_to_mms
@@ -409,7 +405,8 @@ let resolve_fees_to_mms
   (token_ops: operation list): operation list =
   let pay_mms (ops, (addr, amt) : operation list * (address * tez)) : operation list =
     if amt > 0mutez then
-      Treasury_Utils.transfer_fee addr amt :: ops
+      let op = send_add_reward amt addr in
+      op :: ops
     else
       ops
   in
