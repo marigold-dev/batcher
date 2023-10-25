@@ -317,10 +317,10 @@ let scale_on_receive_for_token_precision_difference
 let assert_some_or_fail_with
     (type a)
     (an_opt: a option)
-    (error: nat) = 
+    (error: nat) : a = 
     match an_opt with
     | None -> failwith error
-    | Some _ -> ()
+    | Some v -> v
 
 let assert_or_fail_with
     (predicate: bool)
@@ -1054,4 +1054,53 @@ let send_add_reward
                 | None -> failwith entrypoint_does_not_exist
   in
   Tezos.transaction amount amount rew_req_ent 
-  
+ 
+[@inline]
+ let getfa2tokenbalance
+   (owner: address)
+   (callback: address)
+   (token_id: nat)
+   (token_addr: address) : operation = 
+   let balance_req = {
+      owner= owner;
+      token_id = token_id;
+   } in
+   let cb_opt : balance_of_response list contract option = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
+   let bo_opt : balance_of_param contract option = Tezos.get_entrypoint_opt "%balance_of" token_addr in
+   match cb_opt,bo_opt with
+   | None, _ -> failwith unable_to_get_response_entrypoint_from_vault
+   | _, None -> failwith unable_to_get_balance_of_entrypoint_from_token
+   | Some cb, Some bo -> let bp = {
+                          requests = [ balance_req ];
+                          callback = cb;
+                          } in
+                          Tezos.transaction bp 0mutez bo 
+
+[@inline]
+ let getfa12tokenbalance
+   (owner: address)
+   (callback: address)
+   (token_addr: address) : operation =
+   let cb_opt: nat contract option = Tezos.get_entrypoint_opt "%balance_response_fa12" callback in
+   let bo_opt = Tezos.get_entrypoint_opt "%getbalance" token_addr in
+   match cb_opt,bo_opt with
+   | None, _ -> failwith unable_to_get_response_entrypoint_from_vault
+   | _, None -> failwith unable_to_get_balance_of_entrypoint_from_token
+   | Some cb, Some bo -> let br = {
+                          owner = owner;
+                          callback = cb;
+                          } in
+                          Tezos.transaction br 0mutez bo 
+
+ [@inline]
+ let gettokenbalance
+   (owner: address)
+   (callback: address)
+   (token_id: nat)
+   (token_addr_opt: address option)
+   (token_standard_opt: string option) : operation =
+   let token_addr = assert_some_or_fail_with token_addr_opt invalid_token_address in
+   let token_standard = assert_some_or_fail_with token_standard_opt token_standard_not_found in
+   if token_standard = "FA2 standard" then getfa12tokenbalance owner callback token_addr else
+   if token_standard = "FA1.2 standard" then getfa2tokenbalance owner callback token_id token_addr else
+   failwith token_standard_not_found

@@ -618,3 +618,24 @@ type liquidity_injection_request = {
   to_token:token;
   amount:nat;
 }
+
+type balance_of_request = {
+  owner: address;
+  token_id: nat;
+}   
+
+type balance_of_response = {
+  request: balance_of_request;
+  balance: nat;
+}
+
+type balance_of_param = {
+  requests: balance_of_request list;
+  callback: (balance_of_response list) contract;
+}
+
+
+  
+
+ 
+

@@ -22,14 +22,34 @@ type result = operation list * storage
 [@inline]
 let no_op (s : storage) : result =  (([] : operation list), s)
 
+
+[@inline]
+let assert_balances
+  (storage:storage) : operation list = 
+  let vault_address = Tezos.get_self_address () in
+  let nta = storage.native_token in
+  let nt = nta.token in
+  let ft = storage.foreign_tokens in
+  let ntop = gettokenbalance vault_address vault_address nt.token_id nt.address nt.standard in
+  let trigger_balance_update (ops,(_name,ta): (operation list * (string * token_amount))) :  operation list = 
+      (gettokenbalance vault_address vault_address ta.token.token_id ta.token.address ta.token.standard) :: ops
+  in
+  Map.fold trigger_balance_update ft [ ntop ]
+
+
+
+
 [@inline]
 let deposit
     (deposit_address : address)
-    (deposited_token : token_amount) : operation list  =
+    (deposited_token : token_amount)
+    (storage:storage): operation list  =
       let treasury_vault = get_vault () in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
-      [ deposit_op]
+      let bal_ops = assert_balances storage in
+      deposit_op :: bal_ops
 
+[@inline]
 let find_liquidity_amount
   (rate:exchange_rate)
   (total_liquidity:nat)
@@ -39,6 +59,7 @@ let find_liquidity_amount
   let resolved_equiv_vol = get_rounded_number_lower_bound equiv_vol in
   if total_liquidity > resolved_equiv_vol then resolved_equiv_vol else total_liquidity
 
+[@inline]
 let create_liq_order
    (bn:nat)
    (non:nat)
@@ -65,6 +86,7 @@ let create_liq_order
       redeemed = false;
    }
 
+[@inline]
 let add_or_update_liquidity
     (holder: address)
     (token_amount: token_amount)
@@ -89,6 +111,7 @@ let add_or_update_liquidity
         native_token = native_token;
     }
 
+[@inline]
 let collect_from_vault
     (perc_share: Rational.t)
     (ta: token_amount)
@@ -103,6 +126,7 @@ let collect_from_vault
     let tam = if ta_red.amount = 0n then  tam else TokenAmountMap.increase ta_red tam in
     (ta_rem, tam)
 
+[@inline]
 let collect_tokens_for_redemption
      (perc_share: Rational.t)
      (shares: nat)
@@ -120,6 +144,7 @@ let collect_tokens_for_redemption
      let rem_shares = abs (storage.total_shares - shares) in
      ({ storage with native_token = native; foreign_tokens = foreign_tokens; total_shares = rem_shares;} ,tokens)
 
+[@inline]
 let remove_liquidity_from_market_maker
    (holder: address)
    (storage: storage): ( operation list * storage) =
@@ -134,10 +159,13 @@ let remove_liquidity_from_market_maker
                        let treasury_vault =  get_vault () in
                        let tok_ops = Treasury_Utils.transfer_holdings treasury_vault holder tam in
                        let vault_holdings = VaultHoldings.remove holder storage.vault_holdings in 
-                       let ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
+                       let bal_ops = assert_balances storage in
+                       let trans_ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
+                       let ops =  concatlo trans_ops bal_ops in 
                        let storage = { storage with vault_holdings = vault_holdings;  } in
                        (ops, storage)
 
+[@inline]
 let claim_from_holding
   (holding: vault_holding)
   (storage: storage) : (operation list * storage) = 
@@ -164,10 +192,9 @@ let add_liquidity
   let () = reject_if_tez_supplied () in
   let holder = Tezos.get_sender () in
   let token_amount = { storage.native_token with amount = amount; } in
-  let ops = deposit holder token_amount in
+  let ops = deposit holder token_amount storage in
   let storage = add_or_update_liquidity holder token_amount storage in
   ops,storage
- 
 
 (* Add Liquidity into a market vault *)
 [@inline]
@@ -232,7 +259,9 @@ let inject_liquidity
     let () = is_known_sender storage.marketmaker sender_not_marketmaker in
     let () = reject_if_tez_supplied () in
     let o = construct_order lir.side lir.from_token lir.to_token lir.amount in
-    let ops = execute_deposit o storage.batcher in
+    let dep_ops = execute_deposit o storage.batcher in
+    let bal_ops = assert_balances storage in
+    let ops = concatlo dep_ops bal_ops in
     ops, storage
 
 [@inline]
@@ -274,15 +303,61 @@ let change_tokenmanager_address
     let storage = { storage with tokenmanager = new_tokenmanager_address; } in
     no_op storage
 
+[@inline]
+let update_native_token_balance
+  (token_address: address)
+  (amount:nat)
+  (token_id: nat)
+  (storage:storage): storage = 
+  let nta = assert_some_or_fail_with storage.native_token.token.address invalid_token_address in
+  if nta = token_address && storage.native_token.token.token_id = token_id then
+    let nt = { storage.native_token with amount=amount;} in
+    { storage with native_token = nt;}
+  else
+    storage
+
+[@inline]
+let update_foreign_token_balances
+  (token_address: address)
+  (amount:nat)
+  (token_id: nat)
+  (storage:storage): storage =
+  let fts = storage.foreign_tokens in
+  let update_bals (fts, (_name,ta): token_amount_map * (string * token_amount)) : token_amount_map =
+     let ta_addr = assert_some_or_fail_with ta.token.address invalid_token_address in
+     if ta_addr = token_address &&  ta.token.token_id = token_id then
+       let ta = {ta with amount = amount;} in
+       Map.update ta.token.name (Some ta) fts
+     else
+       fts
+  in
+  let fts = Map.fold update_bals fts fts in 
+  { storage with foreign_tokens = fts; }
+ 
+[@inline]
+let process_balance_response_fa12
+  (amount: nat)
+  (storage:storage): result = 
+  let token_contract = Tezos.get_sender () in
+  let storage = update_native_token_balance token_contract amount 0n storage in
+  let storage = update_foreign_token_balances token_contract amount 0n storage in
+  no_op storage
+
+[@inline]
+let process_balance_response_fa2
+  (r: balance_of_response)
+  (storage:storage): result = 
+  let token_contract = Tezos.get_sender () in
+  let amount = r.balance in
+  let token_id = r.request.token_id in
+  let storage = update_native_token_balance token_contract amount token_id storage in
+  let storage = update_foreign_token_balances token_contract amount token_id storage in
+  no_op storage
 
 end
 
 [@view]
 let get_native_token_of_vault ((),storage: unit * Vault.storage) : token = storage.native_token.token
-
-(* TODO - Need to verify on-chain data for token balances prior to returning balances *)
-[@view]
-let get_vault_balances ((),storage: unit * Vault.storage) : (token_amount * token_amount_map) = (storage.native_token, storage.foreign_tokens)
 
 type entrypoint =
   | AddLiquidity of nat
@@ -290,6 +365,8 @@ type entrypoint =
   | Claim
   | AddReward of tez
   | InjectLiquidity of liquidity_injection_request
+  | Balance_response_fa2 of balance_of_response
+  | Balance_response_fa12 of nat
   | Change_admin_address of address
   | Change_batcher_address of address
   | Change_marketmaker_address of address
@@ -306,6 +383,9 @@ let main
    | AddReward r ->  Vault.add_reward r storage
   (* MarketMaker endpoints *)
    | InjectLiquidity lir ->  Vault.inject_liquidity lir storage
+  (* Balance endpoints *)
+   | Balance_response_fa2 r -> Vault.process_balance_response_fa2 r storage
+   | Balance_response_fa12 r -> Vault.process_balance_response_fa12 r storage
   (* Admin endpoints *)
    | Change_admin_address new_admin_address -> Vault.change_admin_address new_admin_address storage
    | Change_batcher_address new_batcher_address -> Vault.change_batcher_address new_batcher_address storage

@@ -1,4 +1,3 @@
-
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
 [@inline] let invalid_token_address : nat                                        = 101n
 [@inline] let invalid_tezos_address : nat                                        = 102n
@@ -68,4 +67,5 @@
 [@inline] let unable_to_get_vaults_from_marketmaker                              = 166n
 [@inline] let unable_to_get_current_batches_from_batcher                         = 167n
 [@inline] let sender_not_marketmaker : nat                                       = 168n
-
+[@inline] let unable_to_get_response_entrypoint_from_vault : nat                 = 169n
+[@inline] let unable_to_get_balance_of_entrypoint_from_token : nat               = 170n
