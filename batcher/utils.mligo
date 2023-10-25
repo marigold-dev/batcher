@@ -319,8 +319,8 @@ let assert_some_or_fail_with
     (an_opt: a option)
     (error: nat) : a = 
     match an_opt with
-    | None -> failwith error
     | Some v -> v
+    | None -> failwith error
 
 let assert_or_fail_with
     (predicate: bool)

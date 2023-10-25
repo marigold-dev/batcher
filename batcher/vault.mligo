@@ -43,11 +43,12 @@ let assert_balances
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (storage:storage): operation list  =
+    (_storage:storage): operation list  =
       let treasury_vault = get_vault () in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
-      let bal_ops = assert_balances storage in
-      deposit_op :: bal_ops
+      [ deposit_op ]
+      (* let bal_ops = assert_balances storage in
+      deposit_op :: bal_ops *)
 
 [@inline]
 let find_liquidity_amount
