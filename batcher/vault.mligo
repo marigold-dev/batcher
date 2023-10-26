@@ -31,11 +31,10 @@ let assert_balances
   let nt = nta.token in
   let _ft = storage.foreign_tokens in
   let ntop = gettokenbalance vault_address vault_address nt.token_id nt.address nt.standard in
- (* let trigger_balance_update (ops,(_name,ta): (operation list * (string * token_amount))) :  operation list = 
+  let trigger_balance_update (ops,(_name,ta): (operation list * (string * token_amount))) :  operation list = 
       (gettokenbalance vault_address vault_address ta.token.token_id ta.token.address ta.token.standard) :: ops
   in
-  Map.fold trigger_balance_update ft [ ntop ] *)
-  [ntop]
+  Map.fold trigger_balance_update ft [ ntop ]
 
 
 
@@ -44,12 +43,12 @@ let assert_balances
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (_storage:storage): operation list  =
+    (storage:storage): operation list  =
       let treasury_vault = get_vault () in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
       [ deposit_op ]
-      (* let bal_ops = assert_balances storage in
-      deposit_op :: bal_ops *)
+      let bal_ops = assert_balances storage in
+      deposit_op :: bal_ops
 
 [@inline]
 let find_liquidity_amount

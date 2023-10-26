@@ -1101,6 +1101,6 @@ let send_add_reward
    (token_standard_opt: string option) : operation =
    let token_addr = assert_some_or_fail_with token_addr_opt invalid_token_address in
    let token_standard = assert_some_or_fail_with token_standard_opt token_standard_not_found in
-   if token_standard = "FA2 standard" then getfa12tokenbalance owner callback token_addr else
-   if token_standard = "FA1.2 standard" then getfa2tokenbalance owner callback token_id token_addr else
+   if token_standard = "FA1.2 token" then getfa12tokenbalance owner callback token_addr else
+   if token_standard = "FA2 token" then getfa2tokenbalance owner callback token_id token_addr else
    failwith token_standard_not_found
