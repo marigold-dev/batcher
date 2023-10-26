@@ -96,11 +96,12 @@
          IF_LEFT
            { DIG 2 ;
              DIG 3 ;
-             DIG 4 ;
-             DROP 3 ;
+             DROP 2 ;
              IF_LEFT
                { IF_LEFT
-                   { IF_LEFT
+                   { DIG 2 ;
+                     DROP ;
+                     IF_LEFT
                        { PUSH mutez 1 ;
                          AMOUNT ;
                          COMPARE ;
@@ -161,13 +162,138 @@
                                            CONS ;
                                            TRANSFER_TOKENS }
                                          { DROP 2 ; PUSH nat 108 ; FAILWITH } } } } ;
-                         DUP 4 ;
+                         SELF_ADDRESS ;
+                         DUP 5 ;
+                         CDR ;
+                         CAR ;
+                         CAR ;
+                         CAR ;
+                         DUP ;
+                         GET 5 ;
+                         IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                         DUP 2 ;
+                         GET 8 ;
+                         IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
+                         PUSH string "FA1.2 token" ;
+                         DUP 2 ;
+                         COMPARE ;
+                         EQ ;
+                         IF { DIG 2 ;
+                              DROP 2 ;
+                              DUP 2 ;
+                              CONTRACT %balance_response_fa12 nat ;
+                              SWAP ;
+                              CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                              SWAP ;
+                              IF_NONE
+                                { DROP ; PUSH nat 169 ; FAILWITH }
+                                { SWAP ;
+                                  IF_NONE
+                                    { DROP ; PUSH nat 170 ; FAILWITH }
+                                    { PUSH mutez 0 ; DUP 4 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                            { PUSH string "FA2 token" ;
+                              SWAP ;
+                              COMPARE ;
+                              EQ ;
+                              IF { DUP 3 ;
+                                   CONTRACT %balance_response_fa2
+                                     (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
+                                   SWAP ;
+                                   CONTRACT %balance_of
+                                     (pair (contract %callback
+                                              (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                           (list %requests (pair (address %owner) (nat %token_id)))) ;
+                                   SWAP ;
+                                   IF_NONE
+                                     { DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                     { SWAP ;
+                                       IF_NONE
+                                         { DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                         { PUSH mutez 0 ;
+                                           NIL (pair address nat) ;
+                                           DIG 4 ;
+                                           CAR ;
+                                           DUP 6 ;
+                                           PAIR ;
+                                           CONS ;
+                                           DIG 3 ;
+                                           PAIR ;
+                                           TRANSFER_TOKENS } } }
+                                 { DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
+                         NIL operation ;
+                         SWAP ;
+                         CONS ;
+                         DUP 6 ;
+                         CAR ;
+                         CDR ;
+                         CAR ;
+                         ITER { CDR ;
+                                SWAP ;
+                                DUP 2 ;
+                                CAR ;
+                                GET 5 ;
+                                IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                                DUP 3 ;
+                                CAR ;
+                                GET 8 ;
+                                IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
+                                PUSH string "FA1.2 token" ;
+                                DUP 2 ;
+                                COMPARE ;
+                                EQ ;
+                                IF { DIG 3 ;
+                                     DROP 2 ;
+                                     DUP 3 ;
+                                     CONTRACT %balance_response_fa12 nat ;
+                                     SWAP ;
+                                     CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                                     SWAP ;
+                                     IF_NONE
+                                       { DROP ; PUSH nat 169 ; FAILWITH }
+                                       { SWAP ;
+                                         IF_NONE
+                                           { DROP ; PUSH nat 170 ; FAILWITH }
+                                           { PUSH mutez 0 ; DUP 5 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                                   { PUSH string "FA2 token" ;
+                                     SWAP ;
+                                     COMPARE ;
+                                     EQ ;
+                                     IF { DUP 4 ;
+                                          CONTRACT %balance_response_fa2
+                                            (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
+                                          SWAP ;
+                                          CONTRACT %balance_of
+                                            (pair (contract %callback
+                                                     (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                                  (list %requests (pair (address %owner) (nat %token_id)))) ;
+                                          SWAP ;
+                                          IF_NONE
+                                            { DIG 2 ; DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                            { SWAP ;
+                                              IF_NONE
+                                                { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                                { PUSH mutez 0 ;
+                                                  NIL (pair address nat) ;
+                                                  DIG 5 ;
+                                                  CAR ;
+                                                  CAR ;
+                                                  DUP 7 ;
+                                                  PAIR ;
+                                                  CONS ;
+                                                  DIG 3 ;
+                                                  PAIR ;
+                                                  TRANSFER_TOKENS } } }
+                                        { DIG 2 ; DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
+                                CONS } ;
+                         SWAP ;
+                         DROP ;
+                         DUP 5 ;
                          CDR ;
                          CAR ;
                          CAR ;
                          DUP ;
                          CAR ;
-                         DUP 4 ;
+                         DUP 5 ;
                          CAR ;
                          DUP 2 ;
                          GET 8 ;
@@ -204,37 +330,37 @@
                          AND ;
                          AND ;
                          NOT ;
-                         IF { DIG 2 ; DIG 3 ; DIG 4 ; DROP 4 ; PUSH nat 115 ; FAILWITH }
-                            { DUP 3 ;
+                         IF { DIG 3 ; DIG 4 ; DIG 5 ; DROP 4 ; PUSH nat 115 ; FAILWITH }
+                            { DUP 4 ;
                               CDR ;
-                              DUP 6 ;
+                              DUP 7 ;
                               CDR ;
                               CDR ;
                               CAR ;
                               ADD ;
                               DUP 2 ;
-                              DUP 5 ;
+                              DUP 6 ;
                               CDR ;
                               DIG 3 ;
                               CDR ;
                               ADD ;
                               UPDATE 2 ;
-                              DUP 6 ;
+                              DUP 7 ;
                               CDR ;
                               CDR ;
                               CDR ;
                               DUP ;
                               CAR ;
-                              DUP 7 ;
+                              DUP 8 ;
                               MEM ;
                               IF { CDR ;
-                                   DUP 6 ;
+                                   DUP 7 ;
                                    GET ;
                                    IF_NONE { NONE (pair (pair address nat) mutez) } { SOME } }
                                  { DROP ; NONE (pair (pair address nat) mutez) } ;
                               IF_NONE
-                                { PUSH mutez 0 ; DIG 4 ; CDR ; DUP 6 ; PAIR ; PAIR }
-                                { DIG 4 ;
+                                { PUSH mutez 0 ; DIG 5 ; CDR ; DUP 7 ; PAIR ; PAIR }
+                                { DIG 5 ;
                                   CDR ;
                                   DUP 2 ;
                                   CAR ;
@@ -246,8 +372,8 @@
                                   DIG 2 ;
                                   UPDATE 2 ;
                                   UPDATE 1 } ;
-                              DUP 6 ;
                               DUP 7 ;
+                              DUP 8 ;
                               CDR ;
                               DUP ;
                               CDR ;
@@ -259,19 +385,19 @@
                               CDR ;
                               DUP ;
                               CDR ;
-                              DIG 7 ;
+                              DIG 8 ;
                               CDR ;
                               CDR ;
                               CDR ;
                               DUP ;
                               CAR ;
-                              DUP 9 ;
+                              DUP 10 ;
                               MEM ;
-                              IF { DUP ; CDR ; DIG 5 ; SOME ; DIG 8 ; UPDATE ; UPDATE 2 }
+                              IF { DUP ; CDR ; DIG 5 ; SOME ; DIG 9 ; UPDATE ; UPDATE 2 }
                                  { DUP ;
                                    DUP 2 ;
                                    CAR ;
-                                   DUP 10 ;
+                                   DUP 11 ;
                                    PUSH bool True ;
                                    SWAP ;
                                    UPDATE ;
@@ -279,7 +405,7 @@
                                    SWAP ;
                                    CDR ;
                                    DIG 5 ;
-                                   DIG 8 ;
+                                   DIG 9 ;
                                    SWAP ;
                                    SOME ;
                                    SWAP ;
@@ -296,7 +422,7 @@
                               UPDATE 1 ;
                               UPDATE 1 ;
                               UPDATE 2 } ;
-                         NIL operation ;
+                         SWAP ;
                          DIG 2 ;
                          CONS }
                        { DUP 2 ;
@@ -304,12 +430,18 @@
                          CDR ;
                          CAR ;
                          INT ;
+                         PUSH int 1 ;
+                         SWAP ;
+                         PAIR ;
                          PUSH mutez 1 ;
                          DIG 2 ;
                          EDIV ;
                          IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
                          CAR ;
                          INT ;
+                         PUSH int 1 ;
+                         SWAP ;
+                         PAIR ;
                          DUP 3 ;
                          CDR ;
                          CDR ;
@@ -335,31 +467,25 @@
                                 CDR ;
                                 INT ;
                                 PUSH int 1 ;
-                                DUP 7 ;
-                                PAIR ;
-                                PUSH int 1 ;
-                                DIG 2 ;
-                                PAIR ;
-                                DUP 2 ;
-                                CAR ;
-                                DUP 2 ;
-                                CDR ;
-                                MUL ;
-                                DIG 2 ;
-                                CDR ;
-                                DIG 2 ;
-                                CAR ;
-                                MUL ;
-                                PAIR ;
-                                PUSH int 1 ;
-                                DUP 6 ;
-                                PAIR ;
-                                DUP ;
-                                CDR ;
-                                DUP 3 ;
-                                CDR ;
-                                MUL ;
                                 SWAP ;
+                                PAIR ;
+                                DUP 6 ;
+                                CAR ;
+                                DUP 2 ;
+                                CDR ;
+                                MUL ;
+                                DUP 7 ;
+                                CDR ;
+                                DIG 2 ;
+                                CAR ;
+                                MUL ;
+                                PAIR ;
+                                DUP 5 ;
+                                CDR ;
+                                DUP 2 ;
+                                CDR ;
+                                MUL ;
+                                DUP 6 ;
                                 CAR ;
                                 DIG 2 ;
                                 CAR ;
@@ -501,10 +627,14 @@
                          CAR ;
                          DUP ;
                          ITER { CDR ;
-                                DUP ;
+                                PUSH nat 101 ;
+                                DUP 2 ;
                                 CAR ;
                                 GET 5 ;
-                                IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                                PAIR ;
+                                DUP 7 ;
+                                SWAP ;
+                                EXEC ;
                                 PUSH nat 0 ;
                                 DUP 3 ;
                                 CAR ;
@@ -520,7 +650,8 @@
                                    { DROP } } ;
                          DIG 2 ;
                          DIG 3 ;
-                         DROP 2 ;
+                         DIG 4 ;
+                         DROP 3 ;
                          DUP 2 ;
                          DIG 2 ;
                          CAR ;
@@ -578,10 +709,14 @@
                          CAR ;
                          DUP ;
                          ITER { CDR ;
-                                DUP ;
+                                PUSH nat 101 ;
+                                DUP 2 ;
                                 CAR ;
                                 GET 5 ;
-                                IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                                PAIR ;
+                                DUP 8 ;
+                                SWAP ;
+                                EXEC ;
                                 DUP 5 ;
                                 DUP 3 ;
                                 CAR ;
@@ -598,7 +733,8 @@
                          DIG 2 ;
                          DIG 3 ;
                          DIG 4 ;
-                         DROP 3 ;
+                         DIG 5 ;
+                         DROP 4 ;
                          DUP 2 ;
                          DIG 2 ;
                          CAR ;
@@ -609,7 +745,9 @@
                          UPDATE 2 ;
                          UPDATE 1 } ;
                      NIL operation } }
-               { IF_LEFT
+               { DIG 2 ;
+                 DROP ;
+                 IF_LEFT
                    { IF_LEFT
                        { DUP 2 ;
                          CAR ;
@@ -702,13 +840,14 @@
                          UPDATE 2 } } ;
                  NIL operation } ;
              PAIR }
-           { IF_LEFT
+           { DIG 4 ;
+             DROP ;
+             IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
                  DROP 2 ;
                  IF_LEFT
-                   { DIG 2 ;
-                     DROP 2 ;
+                   { DROP ;
                      PUSH mutez 1 ;
                      AMOUNT ;
                      COMPARE ;
@@ -949,17 +1088,13 @@
                      CAR ;
                      CAR ;
                      CAR ;
-                     PUSH nat 101 ;
-                     DUP 2 ;
+                     DUP ;
                      GET 5 ;
-                     PAIR ;
-                     DIG 5 ;
-                     SWAP ;
-                     EXEC ;
+                     IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
                      DUP 2 ;
                      GET 8 ;
                      IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
-                     PUSH string "FA2 standard" ;
+                     PUSH string "FA1.2 token" ;
                      DUP 2 ;
                      COMPARE ;
                      EQ ;
@@ -971,12 +1106,12 @@
                           CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
                           SWAP ;
                           IF_NONE
-                            { DROP 2 ; PUSH nat 169 ; FAILWITH }
+                            { DROP ; PUSH nat 169 ; FAILWITH }
                             { SWAP ;
                               IF_NONE
-                                { DROP 2 ; PUSH nat 170 ; FAILWITH }
-                                { PUSH mutez 0 ; DIG 3 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
-                        { PUSH string "FA1.2 standard" ;
+                                { DROP ; PUSH nat 170 ; FAILWITH }
+                                { PUSH mutez 0 ; DUP 4 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                        { PUSH string "FA2 token" ;
                           SWAP ;
                           COMPARE ;
                           EQ ;
@@ -990,25 +1125,90 @@
                                        (list %requests (pair (address %owner) (nat %token_id)))) ;
                                SWAP ;
                                IF_NONE
-                                 { DROP 3 ; PUSH nat 169 ; FAILWITH }
+                                 { DROP 2 ; PUSH nat 169 ; FAILWITH }
                                  { SWAP ;
                                    IF_NONE
-                                     { DROP 3 ; PUSH nat 170 ; FAILWITH }
+                                     { DROP 2 ; PUSH nat 170 ; FAILWITH }
                                      { PUSH mutez 0 ;
                                        NIL (pair address nat) ;
                                        DIG 4 ;
                                        CAR ;
-                                       DIG 5 ;
+                                       DUP 6 ;
                                        PAIR ;
                                        CONS ;
                                        DIG 3 ;
                                        PAIR ;
                                        TRANSFER_TOKENS } } }
-                             { DROP 3 ; PUSH nat 108 ; FAILWITH } } ;
+                             { DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
                      NIL operation ;
-                     NIL operation ;
-                     DIG 2 ;
+                     SWAP ;
                      CONS ;
+                     DUP 4 ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     ITER { CDR ;
+                            SWAP ;
+                            DUP 2 ;
+                            CAR ;
+                            GET 5 ;
+                            IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                            DUP 3 ;
+                            CAR ;
+                            GET 8 ;
+                            IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
+                            PUSH string "FA1.2 token" ;
+                            DUP 2 ;
+                            COMPARE ;
+                            EQ ;
+                            IF { DIG 3 ;
+                                 DROP 2 ;
+                                 DUP 3 ;
+                                 CONTRACT %balance_response_fa12 nat ;
+                                 SWAP ;
+                                 CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                                 SWAP ;
+                                 IF_NONE
+                                   { DROP ; PUSH nat 169 ; FAILWITH }
+                                   { SWAP ;
+                                     IF_NONE
+                                       { DROP ; PUSH nat 170 ; FAILWITH }
+                                       { PUSH mutez 0 ; DUP 5 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                               { PUSH string "FA2 token" ;
+                                 SWAP ;
+                                 COMPARE ;
+                                 EQ ;
+                                 IF { DUP 4 ;
+                                      CONTRACT %balance_response_fa2
+                                        (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
+                                      SWAP ;
+                                      CONTRACT %balance_of
+                                        (pair (contract %callback
+                                                 (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                              (list %requests (pair (address %owner) (nat %token_id)))) ;
+                                      SWAP ;
+                                      IF_NONE
+                                        { DIG 2 ; DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                        { SWAP ;
+                                          IF_NONE
+                                            { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                            { PUSH mutez 0 ;
+                                              NIL (pair address nat) ;
+                                              DIG 5 ;
+                                              CAR ;
+                                              CAR ;
+                                              DUP 7 ;
+                                              PAIR ;
+                                              CONS ;
+                                              DIG 3 ;
+                                              PAIR ;
+                                              TRANSFER_TOKENS } } }
+                                    { DIG 2 ; DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
+                            CONS } ;
+                     SWAP ;
+                     DROP ;
+                     NIL operation ;
+                     SWAP ;
                      ITER { CONS } ;
                      SWAP ;
                      NIL operation ;
@@ -1040,7 +1240,7 @@
                       IF_NONE { NONE (pair (pair address nat) mutez) } { SOME } }
                     { DROP ; NONE (pair (pair address nat) mutez) } ;
                  IF_NONE
-                   { DROP 5 ; PUSH nat 151 ; FAILWITH }
+                   { DROP 4 ; PUSH nat 151 ; FAILWITH }
                    { UNPAIR ;
                      CDR ;
                      DUP 4 ;
@@ -1386,17 +1586,13 @@
                      CAR ;
                      CAR ;
                      CAR ;
-                     PUSH nat 101 ;
-                     DUP 2 ;
+                     DUP ;
                      GET 5 ;
-                     PAIR ;
-                     DIG 9 ;
-                     SWAP ;
-                     EXEC ;
+                     IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
                      DUP 2 ;
                      GET 8 ;
                      IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
-                     PUSH string "FA2 standard" ;
+                     PUSH string "FA1.2 token" ;
                      DUP 2 ;
                      COMPARE ;
                      EQ ;
@@ -1408,12 +1604,12 @@
                           CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
                           SWAP ;
                           IF_NONE
-                            { DROP 2 ; PUSH nat 169 ; FAILWITH }
+                            { DROP ; PUSH nat 169 ; FAILWITH }
                             { SWAP ;
                               IF_NONE
-                                { DROP 2 ; PUSH nat 170 ; FAILWITH }
-                                { PUSH mutez 0 ; DIG 3 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
-                        { PUSH string "FA1.2 standard" ;
+                                { DROP ; PUSH nat 170 ; FAILWITH }
+                                { PUSH mutez 0 ; DUP 4 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                        { PUSH string "FA2 token" ;
                           SWAP ;
                           COMPARE ;
                           EQ ;
@@ -1427,25 +1623,90 @@
                                        (list %requests (pair (address %owner) (nat %token_id)))) ;
                                SWAP ;
                                IF_NONE
-                                 { DROP 3 ; PUSH nat 169 ; FAILWITH }
+                                 { DROP 2 ; PUSH nat 169 ; FAILWITH }
                                  { SWAP ;
                                    IF_NONE
-                                     { DROP 3 ; PUSH nat 170 ; FAILWITH }
+                                     { DROP 2 ; PUSH nat 170 ; FAILWITH }
                                      { PUSH mutez 0 ;
                                        NIL (pair address nat) ;
                                        DIG 4 ;
                                        CAR ;
-                                       DIG 5 ;
+                                       DUP 6 ;
                                        PAIR ;
                                        CONS ;
                                        DIG 3 ;
                                        PAIR ;
                                        TRANSFER_TOKENS } } }
-                             { DROP 3 ; PUSH nat 108 ; FAILWITH } } ;
+                             { DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
                      NIL operation ;
-                     NIL operation ;
-                     DIG 2 ;
+                     SWAP ;
                      CONS ;
+                     DUP 6 ;
+                     CAR ;
+                     CDR ;
+                     CAR ;
+                     ITER { CDR ;
+                            SWAP ;
+                            DUP 2 ;
+                            CAR ;
+                            GET 5 ;
+                            IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
+                            DUP 3 ;
+                            CAR ;
+                            GET 8 ;
+                            IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
+                            PUSH string "FA1.2 token" ;
+                            DUP 2 ;
+                            COMPARE ;
+                            EQ ;
+                            IF { DIG 3 ;
+                                 DROP 2 ;
+                                 DUP 3 ;
+                                 CONTRACT %balance_response_fa12 nat ;
+                                 SWAP ;
+                                 CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                                 SWAP ;
+                                 IF_NONE
+                                   { DROP ; PUSH nat 169 ; FAILWITH }
+                                   { SWAP ;
+                                     IF_NONE
+                                       { DROP ; PUSH nat 170 ; FAILWITH }
+                                       { PUSH mutez 0 ; DUP 5 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                               { PUSH string "FA2 token" ;
+                                 SWAP ;
+                                 COMPARE ;
+                                 EQ ;
+                                 IF { DUP 4 ;
+                                      CONTRACT %balance_response_fa2
+                                        (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
+                                      SWAP ;
+                                      CONTRACT %balance_of
+                                        (pair (contract %callback
+                                                 (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                              (list %requests (pair (address %owner) (nat %token_id)))) ;
+                                      SWAP ;
+                                      IF_NONE
+                                        { DIG 2 ; DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                        { SWAP ;
+                                          IF_NONE
+                                            { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                            { PUSH mutez 0 ;
+                                              NIL (pair address nat) ;
+                                              DIG 5 ;
+                                              CAR ;
+                                              CAR ;
+                                              DUP 7 ;
+                                              PAIR ;
+                                              CONS ;
+                                              DIG 3 ;
+                                              PAIR ;
+                                              TRANSFER_TOKENS } } }
+                                    { DIG 2 ; DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
+                            CONS } ;
+                     SWAP ;
+                     DROP ;
+                     NIL operation ;
+                     SWAP ;
                      ITER { CONS } ;
                      PUSH mutez 0 ;
                      DIG 6 ;
