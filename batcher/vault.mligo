@@ -29,12 +29,13 @@ let assert_balances
   let vault_address = Tezos.get_self_address () in
   let nta = storage.native_token in
   let nt = nta.token in
-  let ft = storage.foreign_tokens in
+  let _ft = storage.foreign_tokens in
   let ntop = gettokenbalance vault_address vault_address nt.token_id nt.address nt.standard in
-  let trigger_balance_update (ops,(_name,ta): (operation list * (string * token_amount))) :  operation list = 
+ (* let trigger_balance_update (ops,(_name,ta): (operation list * (string * token_amount))) :  operation list = 
       (gettokenbalance vault_address vault_address ta.token.token_id ta.token.address ta.token.standard) :: ops
   in
-  Map.fold trigger_balance_update ft [ ntop ]
+  Map.fold trigger_balance_update ft [ ntop ] *)
+  [ntop]
 
 
 
