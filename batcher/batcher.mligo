@@ -1182,7 +1182,6 @@ let redeemable_holdings_available ((), storage : unit * storage) : bool =
   | None -> false
   | Some bots -> Map.fold find_non_zero_holding bots false
 
-(* TODO  put liq clause in *)
 [@inline]
 let does_batch_need_liquidity
   (batch: batch)
