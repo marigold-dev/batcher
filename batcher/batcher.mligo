@@ -64,6 +64,7 @@ module Storage = struct
     tokenmanager : address;
     marketmaker : address;
     limit_on_tokens_or_pairs : nat;
+    liquidity_injection_limit_in_seconds : nat;
     deposit_time_window_in_seconds : nat;
   }
 
@@ -808,6 +809,7 @@ type entrypoint =
   | Cancel of pair
   | Change_fee of tez
   | Change_admin_address of address
+  | Change_liquidity_injection_time_limit of nat
   | Change_marketmaker_address of address
   | Change_tokenmanager_address of address
   | Change_fee_recipient_address of address
@@ -1126,12 +1128,12 @@ let add_or_update_metadata
   (storage:storage) : result =
    let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
-  let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
+   let updated_metadata = match Big_map.find_opt metadata_update.key storage.metadata with
                          | None -> Big_map.add metadata_update.key metadata_update.value storage.metadata
                          | Some _ -> Big_map.update metadata_update.key (Some metadata_update.value) storage.metadata
-  in
-  let storage = {storage with metadata = updated_metadata } in
-  no_op storage
+   in
+   let storage = {storage with metadata = updated_metadata } in
+   no_op storage
 
 [@inline]
 let remove_metadata
@@ -1139,9 +1141,9 @@ let remove_metadata
   (storage:storage) : result =
    let () = is_known_sender storage.administrator sender_not_administrator in
    let () = reject_if_tez_supplied () in
-  let updated_metadata = Big_map.remove key storage.metadata in
-  let storage = {storage with metadata = updated_metadata } in
-  no_op storage
+   let updated_metadata = Big_map.remove key storage.metadata in
+   let storage = {storage with metadata = updated_metadata } in
+   no_op storage
 
 
 [@inline]
@@ -1153,6 +1155,16 @@ let change_deposit_time_window
   if new_window < minimum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_less_than_the_minimum else
   if new_window > maximum_deposit_time_in_seconds then failwith cannot_update_deposit_window_to_more_than_the_maximum else
   let storage = { storage with deposit_time_window_in_seconds = new_window; } in
+  no_op storage
+
+[@inline]
+let change_liquidity_injection_limit_in_seconds
+  (new_time_limit: nat)
+  (storage: storage) : result =
+  let () = is_known_sender storage.administrator sender_not_administrator in
+  let () = reject_if_tez_supplied () in
+  if new_time_limit > storage.deposit_time_window_in_seconds then failwith cannot_update_liquidity_injection_limit_to_more_than_deposit_window else
+  let storage = { storage with liquidity_injection_limit_in_seconds = new_time_limit; } in
   no_op storage
 
 [@view]
@@ -1173,14 +1185,27 @@ let redeemable_holdings_available ((), storage : unit * storage) : bool =
 (* TODO  put liq clause in *)
 [@inline]
 let does_batch_need_liquidity
-  (batch: batch): batch option = Some batch
+  (batch: batch)
+  (storage:storage): batch option = 
+  let volumes = batch.volumes in
+  match batch.status with
+  | Open st -> let now = Tezos.get_now () in
+               let trig_liq = st.start_time + (int storage.liquidity_injection_limit_in_seconds) in
+               let batch_end = st.start_time + (int storage.deposit_time_window_in_seconds) in
+               if now < trig_liq && now > batch_end then (None: batch option) else
+               if volumes.buy_total_volume = 0n && volumes.sell_total_volume = 0n then (None: batch option) else 
+               if volumes.buy_total_volume > 0n && volumes.sell_total_volume > 0n then (None: batch option) else 
+               Some batch
+  | _ -> (None: batch option)
+                
+  
 
 [@view]
 let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
   let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
      match Big_map.find_opt i storage.batch_set.batches with
      | None   -> acc
-     | Some b -> (match does_batch_need_liquidity b with
+     | Some b -> (match does_batch_need_liquidity b storage with
                  | None  -> acc
                  | Some bl -> bl :: acc)
     in
@@ -1198,6 +1223,7 @@ let main
    | Tick r ->  tick r storage
   (* Admin endpoints *)
    | Change_fee new_fee -> change_fee new_fee storage
+   | Change_liquidity_injection_time_limit new_time_limit -> change_liquidity_injection_limit_in_seconds new_time_limit storage
    | Change_admin_address new_admin_address -> change_admin_address new_admin_address storage
    | Change_marketmaker_address new_mm_address -> change_mm_address new_mm_address storage
    | Change_tokenmanager_address new_tm_address -> change_tm_address new_tm_address storage

@@ -69,3 +69,4 @@
 [@inline] let sender_not_marketmaker : nat                                       = 168n
 [@inline] let unable_to_get_response_entrypoint_from_vault : nat                 = 169n
 [@inline] let unable_to_get_balance_of_entrypoint_from_token : nat               = 170n
+[@inline] let cannot_update_liquidity_injection_limit_to_more_than_deposit_window= 171n

@@ -17,6 +17,7 @@ let f(_:unit) : Batcher.Storage.t = {
   marketmaker = ("KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT" : address);
   tokenmanager = ("KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx" : address);
   limit_on_tokens_or_pairs = 10n;
+  liquidity_injection_limit_in_seconds = 420n;
   deposit_time_window_in_seconds = 600n;
 }
 

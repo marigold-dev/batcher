@@ -1,8 +1,9 @@
 (Pair (Pair (Pair (Pair "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" {} {}) 600 10000)
             (Pair "tz1burnburnburnburnburnburnburjAYjjX" 0)
             10
-            "KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT")
-      (Pair {} {})
-      "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx"
+            420)
+      (Pair (Pair "KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT" {})
+            {}
+            "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx")
       {})
 
