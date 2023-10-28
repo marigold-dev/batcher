@@ -1066,7 +1066,7 @@ let send_add_reward
       token_id = token_id;
    } in
    let cb_opt : balance_of_response list contract option = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
-   let bo_opt : balance_of_param contract option = Tezos.get_entrypoint_opt "%balance_of" token_addr in
+   let bo_opt = Tezos.get_entrypoint_opt "%balance_of" token_addr in
    match cb_opt,bo_opt with
    | None, _ -> failwith unable_to_get_response_entrypoint_from_vault
    | _, None -> failwith unable_to_get_balance_of_entrypoint_from_token

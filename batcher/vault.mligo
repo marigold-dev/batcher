@@ -43,11 +43,12 @@ let assert_balances
 let deposit
     (deposit_address : address)
     (deposited_token : token_amount)
-    (storage:storage): operation list  =
+    (_storage:storage): operation list  =
       let treasury_vault = get_vault () in
       let deposit_op = Treasury_Utils.handle_transfer deposit_address treasury_vault deposited_token in
-      let bal_ops = assert_balances storage in
-      deposit_op :: bal_ops
+      (* let bal_ops = assert_balances storage in 
+      deposit_op :: bal_ops *)
+      [ deposit_op ]
 
 [@inline]
 let find_liquidity_amount
@@ -159,9 +160,9 @@ let remove_liquidity_from_market_maker
                        let treasury_vault =  get_vault () in
                        let tok_ops = Treasury_Utils.transfer_holdings treasury_vault holder tam in
                        let vault_holdings = VaultHoldings.remove holder storage.vault_holdings in 
-                       let bal_ops = assert_balances storage in
-                       let trans_ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
-                       let ops =  concatlo trans_ops bal_ops in 
+                       (* let bal_ops = assert_balances storage in *)
+                       let ops: operation list =if  unclaimed_tez > 0mutez then tez_op :: tok_ops else tok_ops in 
+                       (* let ops =  concatlo trans_ops bal_ops in  *)
                        let storage = { storage with vault_holdings = vault_holdings;  } in
                        (ops, storage)
 
@@ -365,6 +366,7 @@ type entrypoint =
   | Claim
   | AddReward of tez
   | InjectLiquidity of liquidity_injection_request
+  | AssertBalances
   | Balance_response_fa2 of balance_of_response
   | Balance_response_fa12 of nat
   | Change_admin_address of address
@@ -384,6 +386,7 @@ let main
   (* MarketMaker endpoints *)
    | InjectLiquidity lir ->  Vault.inject_liquidity lir storage
   (* Balance endpoints *)
+   | AssertBalances -> (Vault.assert_balances storage, storage)
    | Balance_response_fa2 r -> Vault.process_balance_response_fa2 r storage
    | Balance_response_fa12 r -> Vault.process_balance_response_fa12 r storage
   (* Admin endpoints *)
