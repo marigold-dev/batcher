@@ -1107,10 +1107,7 @@ let entrypoints_exist
    match cb_opt,bo_opt with
    | None, _ -> failwith unable_to_get_balance_response_fa12_entrypoint_from_vault
    | _, None -> failwith unable_to_get_get_balance_entrypoint_from_fa12_token
-   | Some cb, Some bo -> let br = {
-                          owner = owner;
-                          callback = cb;
-                          } in
+   | Some cb, Some bo -> let br = (owner, cb) in
                           Tezos.transaction br 0mutez bo 
 
 

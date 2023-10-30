@@ -619,9 +619,7 @@ type liquidity_injection_request = {
   amount:nat;
 }
 
-type get_balance_request =
-  { owner : address;
-    callback : nat contract }
+type get_balance_request = address * nat contract
 
 type balance_request = {
   owner : address;
