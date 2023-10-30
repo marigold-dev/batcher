@@ -944,7 +944,7 @@
                          DUP 2 ;
                          COMPARE ;
                          GT ;
-                         IF { DROP 2 ; PUSH nat 171 ; FAILWITH }
+                         IF { DROP 2 ; PUSH nat 169 ; FAILWITH }
                             { DUP 2 ;
                               DIG 2 ;
                               CAR ;

@@ -2,8 +2,8 @@
     (or (or (or (or (nat %addLiquidity) (mutez %addReward))
                 (or (unit %assertBalances) (nat %balance_response_fa12)))
             (or (or (pair %balance_response_fa2
-                       (nat %balance)
-                       (pair %request (address %owner) (nat %token_id)))
+                       (pair %request (address %owner) (nat %token_id))
+                       (nat %balance))
                     (address %change_admin_address))
                 (or (address %change_batcher_address) (address %change_marketmaker_address))))
         (or (or (address %change_tokenmanager_address) (unit %claim))
@@ -51,10 +51,6 @@
                 address
                 (pair (pair (address %holder) (nat %shares)) (mutez %unclaimed))))) ;
   code { LAMBDA
-           (pair (option string) nat)
-           string
-           { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
-         LAMBDA
            (pair (option address) nat)
            address
            { UNPAIR ; IF_NONE { FAILWITH } { SWAP ; DROP } } ;
@@ -95,7 +91,7 @@
                  SOME ;
                  DIG 2 ;
                  UPDATE } } ;
-         DIG 4 ;
+         DIG 3 ;
          UNPAIR ;
          IF_LEFT
            { DIG 2 ;
@@ -104,8 +100,7 @@
              IF_LEFT
                { IF_LEFT
                    { DIG 2 ;
-                     DIG 3 ;
-                     DROP 2 ;
+                     DROP ;
                      IF_LEFT
                        { PUSH mutez 1 ;
                          AMOUNT ;
@@ -476,48 +471,40 @@
                          DUP ;
                          GET 5 ;
                          IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
-                         PUSH nat 108 ;
-                         DUP 3 ;
+                         DUP 2 ;
                          GET 8 ;
-                         PAIR ;
-                         DUP 7 ;
-                         SWAP ;
-                         EXEC ;
+                         IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
                          PUSH string "FA1.2 token" ;
                          DUP 2 ;
                          COMPARE ;
                          EQ ;
                          IF { DIG 2 ;
                               DROP 2 ;
+                              CONTRACT %getbalance (pair (address %owner) (contract %callback nat)) ;
                               DUP 2 ;
                               CONTRACT %balance_response_fa12 nat ;
-                              SWAP ;
-                              CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
-                              SWAP ;
                               IF_NONE
-                                { DROP ; PUSH nat 169 ; FAILWITH }
+                                { DROP ; PUSH nat 172 ; FAILWITH }
                                 { SWAP ;
                                   IF_NONE
-                                    { DROP ; PUSH nat 170 ; FAILWITH }
-                                    { PUSH mutez 0 ; DUP 4 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                                    { DROP ; PUSH nat 173 ; FAILWITH }
+                                    { PUSH mutez 0 ; DIG 2 ; DUP 4 ; PAIR ; TRANSFER_TOKENS } } }
                             { PUSH string "FA2 token" ;
                               SWAP ;
                               COMPARE ;
                               EQ ;
-                              IF { DUP 3 ;
-                                   CONTRACT %balance_response_fa2
-                                     (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
-                                   SWAP ;
-                                   CONTRACT %balance_of
+                              IF { CONTRACT %balance_of
                                      (pair (contract %callback
-                                              (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                              (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))
                                            (list %requests (pair (address %owner) (nat %token_id)))) ;
-                                   SWAP ;
+                                   DUP 3 ;
+                                   CONTRACT %balance_response_fa2
+                                     (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
                                    IF_NONE
-                                     { DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                     { DROP 2 ; PUSH nat 170 ; FAILWITH }
                                      { SWAP ;
                                        IF_NONE
-                                         { DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                         { DROP 2 ; PUSH nat 171 ; FAILWITH }
                                          { PUSH mutez 0 ;
                                            NIL (pair address nat) ;
                                            DIG 4 ;
@@ -542,49 +529,41 @@
                                 CAR ;
                                 GET 5 ;
                                 IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
-                                PUSH nat 108 ;
-                                DUP 4 ;
+                                DUP 3 ;
                                 CAR ;
                                 GET 8 ;
-                                PAIR ;
-                                DUP 7 ;
-                                SWAP ;
-                                EXEC ;
+                                IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
                                 PUSH string "FA1.2 token" ;
                                 DUP 2 ;
                                 COMPARE ;
                                 EQ ;
                                 IF { DIG 3 ;
                                      DROP 2 ;
+                                     CONTRACT %getbalance (pair (address %owner) (contract %callback nat)) ;
                                      DUP 3 ;
                                      CONTRACT %balance_response_fa12 nat ;
-                                     SWAP ;
-                                     CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
-                                     SWAP ;
                                      IF_NONE
-                                       { DROP ; PUSH nat 169 ; FAILWITH }
+                                       { DROP ; PUSH nat 172 ; FAILWITH }
                                        { SWAP ;
                                          IF_NONE
-                                           { DROP ; PUSH nat 170 ; FAILWITH }
-                                           { PUSH mutez 0 ; DUP 5 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                                           { DROP ; PUSH nat 173 ; FAILWITH }
+                                           { PUSH mutez 0 ; DIG 2 ; DUP 5 ; PAIR ; TRANSFER_TOKENS } } }
                                    { PUSH string "FA2 token" ;
                                      SWAP ;
                                      COMPARE ;
                                      EQ ;
-                                     IF { DUP 4 ;
-                                          CONTRACT %balance_response_fa2
-                                            (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
-                                          SWAP ;
-                                          CONTRACT %balance_of
+                                     IF { CONTRACT %balance_of
                                             (pair (contract %callback
-                                                     (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                                     (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))
                                                   (list %requests (pair (address %owner) (nat %token_id)))) ;
-                                          SWAP ;
+                                          DUP 4 ;
+                                          CONTRACT %balance_response_fa2
+                                            (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
                                           IF_NONE
-                                            { DIG 2 ; DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                            { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
                                             { SWAP ;
                                               IF_NONE
-                                                { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                                { DIG 2 ; DROP 2 ; PUSH nat 171 ; FAILWITH }
                                                 { PUSH mutez 0 ;
                                                   NIL (pair address nat) ;
                                                   DIG 5 ;
@@ -599,11 +578,8 @@
                                         { DIG 2 ; DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
                                 CONS } ;
                          SWAP ;
-                         DIG 3 ;
-                         DROP 2 }
-                       { DIG 3 ;
-                         DROP ;
-                         SENDER ;
+                         DROP }
+                       { SENDER ;
                          DUP 3 ;
                          CDR ;
                          CAR ;
@@ -681,15 +657,13 @@
                          UPDATE 2 ;
                          UPDATE 1 ;
                          NIL operation } } }
-               { DIG 3 ;
-                 DROP ;
-                 IF_LEFT
+               { IF_LEFT
                    { IF_LEFT
                        { SENDER ;
                          DUP 2 ;
-                         CAR ;
-                         DIG 2 ;
                          CDR ;
+                         DIG 2 ;
+                         CAR ;
                          CDR ;
                          DUP 4 ;
                          CDR ;
@@ -846,8 +820,7 @@
              IF_LEFT
                { DIG 2 ;
                  DIG 3 ;
-                 DIG 4 ;
-                 DROP 3 ;
+                 DROP 2 ;
                  IF_LEFT
                    { DUP 2 ;
                      CAR ;
@@ -1121,48 +1094,40 @@
                      DUP ;
                      GET 5 ;
                      IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
-                     PUSH nat 108 ;
-                     DUP 3 ;
+                     DUP 2 ;
                      GET 8 ;
-                     PAIR ;
-                     DUP 7 ;
-                     SWAP ;
-                     EXEC ;
+                     IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
                      PUSH string "FA1.2 token" ;
                      DUP 2 ;
                      COMPARE ;
                      EQ ;
                      IF { DIG 2 ;
                           DROP 2 ;
+                          CONTRACT %getbalance (pair (address %owner) (contract %callback nat)) ;
                           DUP 2 ;
                           CONTRACT %balance_response_fa12 nat ;
-                          SWAP ;
-                          CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
-                          SWAP ;
                           IF_NONE
-                            { DROP ; PUSH nat 169 ; FAILWITH }
+                            { DROP ; PUSH nat 172 ; FAILWITH }
                             { SWAP ;
                               IF_NONE
-                                { DROP ; PUSH nat 170 ; FAILWITH }
-                                { PUSH mutez 0 ; DUP 4 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                                { DROP ; PUSH nat 173 ; FAILWITH }
+                                { PUSH mutez 0 ; DIG 2 ; DUP 4 ; PAIR ; TRANSFER_TOKENS } } }
                         { PUSH string "FA2 token" ;
                           SWAP ;
                           COMPARE ;
                           EQ ;
-                          IF { DUP 3 ;
-                               CONTRACT %balance_response_fa2
-                                 (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
-                               SWAP ;
-                               CONTRACT %balance_of
+                          IF { CONTRACT %balance_of
                                  (pair (contract %callback
-                                          (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                          (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))
                                        (list %requests (pair (address %owner) (nat %token_id)))) ;
-                               SWAP ;
+                               DUP 3 ;
+                               CONTRACT %balance_response_fa2
+                                 (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
                                IF_NONE
-                                 { DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                 { DROP 2 ; PUSH nat 170 ; FAILWITH }
                                  { SWAP ;
                                    IF_NONE
-                                     { DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                     { DROP 2 ; PUSH nat 171 ; FAILWITH }
                                      { PUSH mutez 0 ;
                                        NIL (pair address nat) ;
                                        DIG 4 ;
@@ -1187,49 +1152,41 @@
                             CAR ;
                             GET 5 ;
                             IF_NONE { PUSH nat 101 ; FAILWITH } {} ;
-                            PUSH nat 108 ;
-                            DUP 4 ;
+                            DUP 3 ;
                             CAR ;
                             GET 8 ;
-                            PAIR ;
-                            DUP 8 ;
-                            SWAP ;
-                            EXEC ;
+                            IF_NONE { PUSH nat 108 ; FAILWITH } {} ;
                             PUSH string "FA1.2 token" ;
                             DUP 2 ;
                             COMPARE ;
                             EQ ;
                             IF { DIG 3 ;
                                  DROP 2 ;
+                                 CONTRACT %getbalance (pair (address %owner) (contract %callback nat)) ;
                                  DUP 3 ;
                                  CONTRACT %balance_response_fa12 nat ;
-                                 SWAP ;
-                                 CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
-                                 SWAP ;
                                  IF_NONE
-                                   { DROP ; PUSH nat 169 ; FAILWITH }
+                                   { DROP ; PUSH nat 172 ; FAILWITH }
                                    { SWAP ;
                                      IF_NONE
-                                       { DROP ; PUSH nat 170 ; FAILWITH }
-                                       { PUSH mutez 0 ; DUP 5 ; DIG 3 ; PAIR ; TRANSFER_TOKENS } } }
+                                       { DROP ; PUSH nat 173 ; FAILWITH }
+                                       { PUSH mutez 0 ; DIG 2 ; DUP 5 ; PAIR ; TRANSFER_TOKENS } } }
                                { PUSH string "FA2 token" ;
                                  SWAP ;
                                  COMPARE ;
                                  EQ ;
-                                 IF { DUP 4 ;
-                                      CONTRACT %balance_response_fa2
-                                        (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))) ;
-                                      SWAP ;
-                                      CONTRACT %balance_of
+                                 IF { CONTRACT %balance_of
                                         (pair (contract %callback
-                                                 (list (pair (nat %balance) (pair %request (address %owner) (nat %token_id)))))
+                                                 (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))
                                               (list %requests (pair (address %owner) (nat %token_id)))) ;
-                                      SWAP ;
+                                      DUP 4 ;
+                                      CONTRACT %balance_response_fa2
+                                        (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
                                       IF_NONE
-                                        { DIG 2 ; DROP 2 ; PUSH nat 169 ; FAILWITH }
+                                        { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
                                         { SWAP ;
                                           IF_NONE
-                                            { DIG 2 ; DROP 2 ; PUSH nat 170 ; FAILWITH }
+                                            { DIG 2 ; DROP 2 ; PUSH nat 171 ; FAILWITH }
                                             { PUSH mutez 0 ;
                                               NIL (pair address nat) ;
                                               DIG 5 ;
@@ -1244,8 +1201,7 @@
                                     { DIG 2 ; DROP 2 ; PUSH nat 108 ; FAILWITH } } ;
                             CONS } ;
                      SWAP ;
-                     DIG 4 ;
-                     DROP 2 ;
+                     DROP ;
                      NIL operation ;
                      SWAP ;
                      ITER { CONS } ;
@@ -1258,8 +1214,7 @@
                      SWAP ;
                      ITER { CONS } ;
                      PAIR }
-                   { DIG 4 ;
-                     DROP 2 ;
+                   { DROP ;
                      PUSH mutez 1 ;
                      AMOUNT ;
                      COMPARE ;
@@ -1654,5 +1609,33 @@
              (option %address address)
              (nat %decimals)
              (option %standard string))
-       { CDR ; CDR ; CAR ; CAR ; CAR } }
+       { CDR ; CDR ; CAR ; CAR ; CAR } ;
+  view "check_entrypoints"
+       (pair address address)
+       (pair (pair bool bool) bool bool)
+       { CAR ;
+         UNPAIR ;
+         SELF_ADDRESS ;
+         SWAP ;
+         CONTRACT %balance_of
+           (pair (list %requests (pair (address %owner) (nat %token_id)))
+                 (contract %callback
+                    (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))) ;
+         DUP 2 ;
+         CONTRACT %balance_response_fa2
+           (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)) ;
+         DIG 3 ;
+         CONTRACT %getbalance (pair (address %owner) (contract %callback nat)) ;
+         DIG 3 ;
+         CONTRACT %balance_response_fa12 nat ;
+         IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
+         SWAP ;
+         IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
+         PAIR ;
+         SWAP ;
+         IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
+         DIG 2 ;
+         IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
+         PAIR ;
+         PAIR } }
 

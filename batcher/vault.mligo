@@ -360,6 +360,13 @@ end
 [@view]
 let get_native_token_of_vault ((),storage: unit * Vault.storage) : token = storage.native_token.token
 
+[@view]
+let check_entrypoints ((fa2token,fa12token),_storage: (address * address) * Vault.storage) : bool * bool * bool * bool =
+  let vault_address = Tezos.get_self_address () in
+  entrypoints_exist vault_address fa12token fa2token
+
+
+
 type entrypoint =
   | AddLiquidity of nat
   | RemoveLiquidity

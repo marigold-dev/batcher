@@ -619,23 +619,25 @@ type liquidity_injection_request = {
   amount:nat;
 }
 
-type balance_of_request = {
-  owner: address;
-  token_id: nat;
-}   
+type get_balance_request =
+  [@layout:comb]
+  { owner : address;
+    callback : nat contract }
 
-type balance_of_response = {
-  request: balance_of_request;
-  balance: nat;
+type balance_request = {
+  owner : address;
+  token_id : nat;
 }
 
-type balance_of_param = {
-  requests: balance_of_request list;
-  callback: (balance_of_response list) contract;
+type balance_of_response = 
+[@layout:comb] {
+  request : balance_request;
+  balance : nat;
 }
 
-
-  
-
- 
+type balance_of = 
+[@layout:comb] {
+  requests : balance_request list;
+  callback : balance_of_response list contract;
+}
 

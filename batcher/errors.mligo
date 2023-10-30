@@ -67,6 +67,8 @@
 [@inline] let unable_to_get_vaults_from_marketmaker                              = 166n
 [@inline] let unable_to_get_current_batches_from_batcher                         = 167n
 [@inline] let sender_not_marketmaker : nat                                       = 168n
-[@inline] let unable_to_get_response_entrypoint_from_vault : nat                 = 169n
-[@inline] let unable_to_get_balance_of_entrypoint_from_token : nat               = 170n
-[@inline] let cannot_update_liquidity_injection_limit_to_more_than_deposit_window= 171n
+[@inline] let cannot_update_liquidity_injection_limit_to_more_than_deposit_window= 169n
+[@inline] let unable_to_get_balance_response_fa2_entrypoint_from_vault : nat     = 170n
+[@inline] let unable_to_get_balance_of_entrypoint_from_fa2_token : nat           = 171n
+[@inline] let unable_to_get_balance_response_fa12_entrypoint_from_vault : nat    = 172n
+[@inline] let unable_to_get_get_balance_entrypoint_from_fa12_token : nat         = 173n

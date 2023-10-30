@@ -314,6 +314,14 @@ let scale_on_receive_for_token_precision_difference
   let adjusted_rate = Rational.mul rate.rate scaling_rate in
   { rate with rate = adjusted_rate }
 
+
+let is_some
+    (type a)
+    (an_opt: a option): bool = 
+    match an_opt with
+    | Some _ -> true
+    | None -> false
+
 let assert_some_or_fail_with
     (type a)
     (an_opt: a option)
@@ -1054,7 +1062,20 @@ let send_add_reward
                 | None -> failwith entrypoint_does_not_exist
   in
   Tezos.transaction amount amount rew_req_ent 
- 
+
+
+[@inline]
+let entrypoints_exist
+   (callback: address)
+   (token_fa12_addr: address)  
+   (token_fa2_addr: address) : bool * bool * bool * bool = 
+   let bo_fa2_opt: balance_of contract option = Tezos.get_entrypoint_opt "%balance_of" token_fa2_addr in
+   let cb_fa2_opt: balance_of_response contract option  = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
+   let bo_fa12_opt: get_balance_request contract option = Tezos.get_entrypoint_opt "%getbalance" token_fa12_addr in
+   let cb_fa12_opt: nat contract option = Tezos.get_entrypoint_opt "%balance_response_fa12" callback in
+   (is_some bo_fa2_opt),(is_some cb_fa2_opt),(is_some bo_fa12_opt),(is_some cb_fa12_opt)
+
+
 [@inline]
  let getfa2tokenbalance
    (owner: address)
@@ -1065,11 +1086,11 @@ let send_add_reward
       owner= owner;
       token_id = token_id;
    } in
-   let cb_opt : balance_of_response list contract option = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
    let bo_opt = Tezos.get_entrypoint_opt "%balance_of" token_addr in
+   let cb_opt : balance_of_response list contract option = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
    match cb_opt,bo_opt with
-   | None, _ -> failwith unable_to_get_response_entrypoint_from_vault
-   | _, None -> failwith unable_to_get_balance_of_entrypoint_from_token
+   | None, _ -> failwith unable_to_get_balance_response_fa2_entrypoint_from_vault
+   | _, None -> failwith unable_to_get_balance_of_entrypoint_from_fa2_token
    | Some cb, Some bo -> let bp = {
                           requests = [ balance_req ];
                           callback = cb;
@@ -1081,16 +1102,17 @@ let send_add_reward
    (owner: address)
    (callback: address)
    (token_addr: address) : operation =
-   let cb_opt: nat contract option = Tezos.get_entrypoint_opt "%balance_response_fa12" callback in
    let bo_opt = Tezos.get_entrypoint_opt "%getbalance" token_addr in
+   let cb_opt: nat contract option = Tezos.get_entrypoint_opt "%balance_response_fa12" callback in
    match cb_opt,bo_opt with
-   | None, _ -> failwith unable_to_get_response_entrypoint_from_vault
-   | _, None -> failwith unable_to_get_balance_of_entrypoint_from_token
+   | None, _ -> failwith unable_to_get_balance_response_fa12_entrypoint_from_vault
+   | _, None -> failwith unable_to_get_get_balance_entrypoint_from_fa12_token
    | Some cb, Some bo -> let br = {
                           owner = owner;
                           callback = cb;
                           } in
                           Tezos.transaction br 0mutez bo 
+
 
  [@inline]
  let gettokenbalance
