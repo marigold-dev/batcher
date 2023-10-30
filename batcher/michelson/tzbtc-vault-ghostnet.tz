@@ -482,7 +482,7 @@
                               DUP 2 ;
                               CONTRACT %balance_response_fa12 nat ;
                               SWAP ;
-                              CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                              CONTRACT %getBalance (pair (contract %callback nat) (address %owner)) ;
                               SWAP ;
                               IF_NONE
                                 { DROP ; PUSH nat 172 ; FAILWITH }
@@ -543,7 +543,7 @@
                                      DUP 3 ;
                                      CONTRACT %balance_response_fa12 nat ;
                                      SWAP ;
-                                     CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                                     CONTRACT %getBalance (pair (contract %callback nat) (address %owner)) ;
                                      SWAP ;
                                      IF_NONE
                                        { DROP ; PUSH nat 172 ; FAILWITH }
@@ -1111,7 +1111,7 @@
                           DUP 2 ;
                           CONTRACT %balance_response_fa12 nat ;
                           SWAP ;
-                          CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                          CONTRACT %getBalance (pair (contract %callback nat) (address %owner)) ;
                           SWAP ;
                           IF_NONE
                             { DROP ; PUSH nat 172 ; FAILWITH }
@@ -1172,7 +1172,7 @@
                                  DUP 3 ;
                                  CONTRACT %balance_response_fa12 nat ;
                                  SWAP ;
-                                 CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+                                 CONTRACT %getBalance (pair (contract %callback nat) (address %owner)) ;
                                  SWAP ;
                                  IF_NONE
                                    { DROP ; PUSH nat 172 ; FAILWITH }
@@ -1634,7 +1634,7 @@
          CONTRACT %balance_response_fa2
            (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
          DIG 3 ;
-         CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
+         CONTRACT %getBalance (pair (contract %callback nat) (address %owner)) ;
          DIG 3 ;
          CONTRACT %balance_response_fa12 nat ;
          IF_NONE { PUSH bool False } { DROP ; PUSH bool True } ;
