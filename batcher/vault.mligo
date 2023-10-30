@@ -346,13 +346,15 @@ let process_balance_response_fa12
 
 [@inline]
 let process_balance_response_fa2
-  (r: balance_of_response)
+  (rs: balance_of_response list)
   (storage:storage): result = 
   let token_contract = Tezos.get_sender () in
-  let amount = r.balance in
-  let token_id = r.request.token_id in
-  let storage = update_native_token_balance token_contract amount token_id storage in
-  let storage = update_foreign_token_balances token_contract amount token_id storage in
+  let process_responses (s,r:storage * balance_of_response):storage = 
+    let amount = r.balance in
+    let token_id = r.request.token_id in
+    let s = update_native_token_balance token_contract amount token_id s in
+    update_foreign_token_balances token_contract amount token_id s in
+  let storage = List.fold process_responses rs storage in
   no_op storage
 
 end
@@ -374,7 +376,7 @@ type entrypoint =
   | AddReward of tez
   | InjectLiquidity of liquidity_injection_request
   | AssertBalances
-  | Balance_response_fa2 of balance_of_response
+  | Balance_response_fa2 of balance_of_responses
   | Balance_response_fa12 of nat
   | Change_admin_address of address
   | Change_batcher_address of address

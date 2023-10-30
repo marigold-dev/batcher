@@ -634,9 +634,10 @@ type balance_of_response =
   balance : nat;
 }
 
+type balance_of_responses = balance_of_response list
+
 type balance_of = 
 [@layout:comb] {
   requests : balance_request list;
-  callback : balance_of_response contract;
+  callback : balance_of_response list contract;
 }
-
