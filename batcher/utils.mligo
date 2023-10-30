@@ -1086,12 +1086,12 @@ let entrypoints_exist
       owner= owner;
       token_id = token_id;
    } in
-   let bo_opt = Tezos.get_entrypoint_opt "%balance_of" token_addr in
-   let cb_opt : balance_of_response list contract option = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
+   let bo_opt: balance_of contract option = Tezos.get_entrypoint_opt "%balance_of" token_addr in
+   let cb_opt: balance_of_response contract option  = Tezos.get_entrypoint_opt "%balance_response_fa2" callback in
    match cb_opt,bo_opt with
    | None, _ -> failwith unable_to_get_balance_response_fa2_entrypoint_from_vault
    | _, None -> failwith unable_to_get_balance_of_entrypoint_from_fa2_token
-   | Some cb, Some bo -> let bp = {
+   | Some cb, Some bo -> let bp : balance_of = {
                           requests = [ balance_req ];
                           callback = cb;
                           } in
@@ -1102,8 +1102,8 @@ let entrypoints_exist
    (owner: address)
    (callback: address)
    (token_addr: address) : operation =
-   let bo_opt = Tezos.get_entrypoint_opt "%getbalance" token_addr in
    let cb_opt: nat contract option = Tezos.get_entrypoint_opt "%balance_response_fa12" callback in
+   let bo_opt = Tezos.get_entrypoint_opt "%getbalance" token_addr in
    match cb_opt,bo_opt with
    | None, _ -> failwith unable_to_get_balance_response_fa12_entrypoint_from_vault
    | _, None -> failwith unable_to_get_get_balance_entrypoint_from_fa12_token

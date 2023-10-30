@@ -620,7 +620,6 @@ type liquidity_injection_request = {
 }
 
 type get_balance_request =
-  [@layout:comb]
   { owner : address;
     callback : nat contract }
 
@@ -638,6 +637,6 @@ type balance_of_response =
 type balance_of = 
 [@layout:comb] {
   requests : balance_request list;
-  callback : balance_of_response list contract;
+  callback : balance_of_response contract;
 }
 
