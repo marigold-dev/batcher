@@ -639,5 +639,5 @@ type balance_of_responses = balance_of_response list
 type balance_of = 
 [@layout:comb] {
   requests : balance_request list;
-  callback : balance_of_response list contract;
+  callback : balance_of_responses contract;
 }

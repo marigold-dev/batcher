@@ -1632,7 +1632,7 @@
                     (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))))) ;
          DUP 2 ;
          CONTRACT %balance_response_fa2
-           (pair (pair %request (address %owner) (nat %token_id)) (nat %balance)) ;
+           (list (pair (pair %request (address %owner) (nat %token_id)) (nat %balance))) ;
          DIG 3 ;
          CONTRACT %getbalance (pair (contract %callback nat) (address %owner)) ;
          DIG 3 ;
