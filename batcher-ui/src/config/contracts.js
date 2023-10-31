@@ -15,14 +15,14 @@ const CONTRACTS_NAMES = [
 ];
 
 const ghostnet = {
-  batcher: 'KT1LhTpwSGcFAUUM3JYjW8XW74UHP82YzERy',
-  market_maker: 'KT1BbDTB4BJWTH1CKfxYC5eB8TgrwB7WuNGF',
-  token_manager: 'KT19JLvQdDGUnssfL5n6rBozZpnaej3Xfvjy',
-  tzBTC_vault: 'KT1L4dArtU44J2uuneHHn1fjRfd7K6XDDuW3',
-  USDT_vault: 'KT18qMEmNgvSSPEUoChDnxkVCg7eEy9UoQfj',
-  USDtz_vault: 'KT1EFFWgmyu6npNZTRzB8zzuKBRnMaW8bpyN',
-  BTCtz_vault: 'KT1VUVHxMjXpdQYM38hVAncUSGCz9fv78ZnP',
-  EURL_vault: 'KT1RkAdLQtyKZQBCxYieH2ds4YbrLEsoDGGk',
+  batcher: 'KT1GSDzo6PU8i732m8WuY9XcTyxiGRaYBsv2',
+  market_maker: 'KT1T4dbnaNKpGLV89R6drrupy5HVE74bQE3r',
+  token_manager: 'KT1HLQ4kk4nUjXxBBR4PE3sAQzv4fHRMoBGD',
+  tzBTC_vault: 'KT1Jr5jTm2VG9eyosoqZwZYuN95PjUpysNyS',
+  USDT_vault: 'KT1A2uq9zMgXGJGhXRiHvUa8PGEKMn9dyyJN',
+  USDtz_vault: 'KT1CRgudfxt4sqdqZtFEGJpJxZrJ6LtSY5Yp',
+  BTCtz_vault: 'KT1HV7xrS8nvNfWt4ANLfVCBhACRzHKb2nEa',
+  EURL_vault: 'KT1Gy8BPpJdAR6ZwgBaVeXrMW2pyX2NL8LSp',
 };
 
 const mainnet = {
