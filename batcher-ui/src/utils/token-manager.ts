@@ -20,14 +20,6 @@ export const getTokensMetadata = async () => {
   const names = validTokens.keys;
   return Promise.all(
     names.map(async token => {
-      //TODO !!!! PATCH FOR BTZTZ
-      if (token === 'BTZtz')
-        return {
-          name: 'btztz...',
-          address: 'nowhere',
-          icon: 'https://www.svgrepo.com/show/352388/random.svg',
-        };
-
       const t = await getTokenFromBigmap(validTokens.values, token);
       const icon = await fetch(
         `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${t.value.address}`
