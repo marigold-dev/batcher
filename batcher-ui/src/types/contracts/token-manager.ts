@@ -34,6 +34,11 @@ export type ValidToken = {
   standard: string;
 };
 
+export type ValidTokenAmount = {
+  token: ValidToken;
+  amount: number;
+}
+
 export type ValidTokensBigmapItem = {
   key: string;
   value: ValidToken;

@@ -1,23 +1,25 @@
 import { Cmd, loop } from 'redux-loop';
 import { MarketHoldingsActions } from '@/actions';
-import {
-  fetchGlobalVaultCmd,
-  fetchMarketHoldingsCmd,
-  fetchUserVaultCmd,
-} from '@/commands/marketholdings';
+import { fetchMarketHoldingsCmd } from '@/commands/marketholdings';
 import { MarketHoldingsState } from '@/types';
 
 export const initialMHState: MarketHoldingsState = {
-  globalVaults: {},
-  userVaults: {},
-  currentVault: 'tzBTC',
-
-  currentUserVault: {
+  shares: 0,
+  nativeToken: {
+    token: {
+      name: 'tzBTC',
+      address: '',
+      token_id: '0',
+      decimals: '8',
+      standard: '',
+    },
+    amount: 0,
+  },
+  foreignTokens: [],
+  userVault: {
+    holder: '',
     shares: 0,
     unclaimed: 0,
-  },
-  currentGlobalVault: {
-    shares: 0,
   },
 };
 
@@ -35,43 +37,13 @@ export const marketHoldingsReducer = (
     case 'CLAIMREWARDS':
       //TODO
       return loop(state, Cmd.none);
-    case 'CHANGE_VAULT':
-      return {
-        ...state,
-        currentVault: action.payload.vault,
-      };
     case 'UPDATE_MARKET_HOLDINGS':
-      return { ...state, ...action.payload.vaults };
+      return { ...state, ...action.payload.holdings };
     case 'GET_MARKET_HOLDINGS':
       return loop(
         state,
-        fetchMarketHoldingsCmd(
-          action.payload.contractAddress,
-          action.payload.userAddress
-        )
+        fetchMarketHoldingsCmd(action.payload.token, action.payload.userAddress)
       );
-    case 'GET_USER_VAULT':
-      return loop(
-        state,
-        fetchUserVaultCmd(action.payload.userAddress, state.currentVault)
-      );
-    case 'UPDATE_USER_VAULT':
-      return {
-        ...state,
-        currentUserVault: {
-          shares: action.payload.vault.shares,
-          unclaimed: action.payload.vault.unclaimed,
-        },
-      };
-    case 'GET_GLOBAL_VAULT':
-      return loop(state, fetchGlobalVaultCmd(state.currentVault));
-    case 'UPDATE_GLOBAL_VAULT':
-      return {
-        ...state,
-        currentGlobalVault: {
-          shares: action.payload.vault.shares,
-        },
-      };
     default:
       return state;
   }

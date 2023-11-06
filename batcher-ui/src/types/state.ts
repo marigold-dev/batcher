@@ -3,13 +3,14 @@ import {
   PriceStrategy,
   SwapNames,
 } from '@/types/contracts/batcher';
+import { ValidTokenAmount } from './contracts/token-manager';
 
 export type Token = {
   address: string | undefined;
   name: string;
   decimals: number;
   standard: 'FA1.2 token' | 'FA2 token' | undefined;
-  tokenId: 0;
+  tokenId: number;
 };
 
 export type CurrentSwap = {
@@ -63,39 +64,26 @@ export type VaultToken = {
   standard: string;
 };
 
-export type GlobalVault = {
-  total_shares: number;
-  native: VaultToken;
-  foreign: Map<string, VaultToken>;
-};
-
 export type UserVault = {
   shares: number;
   unclaimed: number;
 };
-
-// export type MVault = {
-//   global: GlobalVault;
-//   user: UserVault;
-// };
+export type GlobalVault = {
+  total_shares: number;
+  native: VaultToken;
+  foreign: Map<string, VaultToken>;
+  userVault: UserVault;
+};
 
 export type MarketHoldingsState = {
-  // vaults: Map<string, MVault>;
-  globalVaults: { [key: string]: GlobalVault };
-  // globalVaults: Map<string, GlobalVault>;
-  userVaults: { [key: string]: UserVault };
-  // userVaults: Map<string, UserVault>;
-  // current_vault: MVault;
-  currentVault: string; // token name (EURL, USDT, tzBTC)
-
-  currentUserVault: {
+  vault_address: string,
+  shares: number;
+  nativeToken: ValidTokenAmount | undefined;
+  foreignTokens: Array<ValidTokenAmount>;
+  userVault: {
+    holder: string | undefined;
     shares: number;
     unclaimed: number;
-  };
-
-  currentGlobalVault: {
-    shares: number;
-    //TODO: fill with others informations needed
   };
 };
 

@@ -4,8 +4,7 @@ import { useSelector } from 'react-redux';
 import { fetchUserBalances } from '@/actions';
 import { userAddressSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
-import GlobalVault from './GlobalVault';
-import UserVault from './UserVault';
+import Vault from './Vault';
 
 const MMVaultComponent = () => {
   const dispatch = useDispatch();
@@ -22,11 +21,8 @@ const MMVaultComponent = () => {
           <p className="text-xl text-center">Market Maker Vaults</p>
         </div>
       </div>
-      <div className="flex md:flex-row flex-col">
-        <SelectMMPair />
-        <GlobalVault />
-        <UserVault />
-      </div>
+      <SelectMMPair />
+      <Vault />
     </div>
   );
 };

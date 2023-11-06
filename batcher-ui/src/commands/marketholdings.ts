@@ -1,22 +1,11 @@
 import { Cmd } from 'redux-loop';
-import {
-  getGlobalVault,
-  getMarketHoldings,
-  getUserVault2,
-} from '@/utils/market-maker';
-import {
-  updateGlobalVault,
-  updateMarketHoldings,
-  updateUserVault,
-} from '@/actions';
+import { getMarketHoldings } from '@/utils/market-maker';
+import { updateMarketHoldings } from '@/actions';
 
-const fetchMarketHoldingsCmd = (
-  contractAddress: string,
-  userAddress: string
-) => {
+const fetchMarketHoldingsCmd = (token: string, userAddress: string | undefined) => {
   return Cmd.run(
     async () => {
-      const vaults = await getMarketHoldings(userAddress || '');
+      const vaults = await getMarketHoldings(token, userAddress || '');
       return vaults;
     },
     {
@@ -25,29 +14,4 @@ const fetchMarketHoldingsCmd = (
   );
 };
 
-const fetchUserVaultCmd = (userAddress: string, tokenName: string) => {
-  return Cmd.run(
-    async () => {
-      const userVault = await getUserVault2(userAddress, tokenName);
-      return userVault;
-    },
-    {
-      successActionCreator: updateUserVault,
-    }
-  );
-};
-
-const fetchGlobalVaultCmd = (tokenName: string) => {
-  return Cmd.run(
-    async () => {
-      const globalVault = await getGlobalVault(tokenName);
-
-      return globalVault;
-    },
-    {
-      successActionCreator: updateGlobalVault,
-    }
-  );
-};
-
-export { fetchMarketHoldingsCmd, fetchUserVaultCmd, fetchGlobalVaultCmd };
+export { fetchMarketHoldingsCmd };

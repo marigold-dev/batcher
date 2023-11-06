@@ -58,21 +58,17 @@ export const getHoldings = (state: AppState) => state.holdings;
 export const getMarketHoldingsState = (state: AppState) => state.marketHoldings;
 
 export const getCurrentUserVaultSelector = (state: AppState) =>
-  state.marketHoldings.userVaults[state.marketHoldings.currentVault];
+  state.marketHoldings.userVault;
 export const getCurrentGlobalVaultSelector = (state: AppState) =>
-  state.marketHoldings.globalVaults[state.marketHoldings.currentVault];
-
-export const getGlobalVaults = (state: AppState) =>
-  state.marketHoldings.globalVaults;
+  state.marketHoldings;
 
 export const selectUserVault = (state: AppState) =>
-  state.marketHoldings.currentUserVault;
+  state.marketHoldings.userVault;
 
-export const selectGlobalVault = (state: AppState) =>
-  state.marketHoldings.currentGlobalVault;
+export const selectHoldings = (state: AppState) => state.marketHoldings;
 
 export const selectCurrentVaultName = (state: AppState) =>
-  state.marketHoldings.currentVault;
+  state.marketHoldings.nativeToken?.token.name;
 
 // Events selectors
 export const getToastInfosSelector = (state: AppState) => state.events.toast;

@@ -6,7 +6,6 @@ import {
 } from 'date-fns';
 import {
   BatcherStatus,
-  CurrentSwap,
   UserOrder,
   HoldingsState,
   VolumesState,
@@ -15,10 +14,10 @@ import {
   BatcherStorage,
   BatchBigmap,
   OrderBookBigmap,
-  TokenNames,
   SwapNames,
   RatesCurrentBigmap,
 } from '@/types';
+import { getTokenManagerStorage } from '@/utils/token-manager';
 import { NetworkType } from '@airgap/beacon-sdk';
 import { getByKey } from '@/utils/local-storage';
 
@@ -33,80 +32,80 @@ export const scaleAmountUp = (amount: number, decimals: number) => {
 
 // Contract error codes
 var error_codes = new Map([
-  [100, "no_rate_available_for_swap"],
-  [101, "invalid_token_address"],
-  [102, "invalid_tezos_address"],
-  [103, "no_open_batch"],
-  [104, "batch_should_be_cleared"],
-  [105, "trying_to_close_batch_which_is_not_open"],
-  [106, "unable_to_parse_side_from_external_order"],
-  [107, "unable_to_parse_tolerance_from_external_order"],
-  [108, "token_standard_not_found"],
-  [109, "xtz_not_currently_supported"],
-  [110, "unsupported_swap_type"],
-  [111, "unable_to_reduce_token_amount_to_less_than_zero"],
-  [112, "too_many_unredeemed_orders"],
-  [113, "insufficient_swap_fee"],
-  [114, "sender_not_administrator"],
-  [115, "token_already_exists_but_details_are_different"],
-  [116, "swap_already_exists"],
-  [117, "swap_does_not_exist"],
-  [118, "endpoint_does_not_accept_tez"],
-  [119, "number_is_not_a_nat"],
-  [120, "oracle_price_is_stale"],
-  [121, "oracle_price_is_not_timely"],
-  [122, "unable_to_get_price_from_oracle"],
-  [123, "unable_to_get_price_from_new_oracle_source"],
-  [124, "oracle_price_should_be_available_before_deposit"],
-  [125, "swap_is_disabled_for_deposits"],
-  [126, "upper_limit_on_tokens_has_been_reached"],
-  [127, "upper_limit_on_swap_pairs_has_been_reached"],
-  [128, "cannot_reduce_limit_on_tokens_to_less_than_already_exists"],
-  [129, "cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists"],
-  [130, "more_tez_sent_than_fee_cost"],
-  [131, "cannot_update_deposit_window_to_less_than_the_minimum"],
-  [132, "cannot_update_deposit_window_to_more_than_the_maximum"],
-  [133, "oracle_must_be_equal_to_minimum_precision"],
-  [134, "swap_precision_is_less_than_minimum"],
-  [135, "cannot_update_scale_factor_to_less_than_the_minimum"],
-  [136, "cannot_update_scale_factor_to_more_than_the_maximum"],
-  [137, "cannot_remove_swap_pair_that_is_not_disabled"],
-  [138, "token_name_not_in_list_of_valid_tokens"],
-  [139, "no_orders_for_user_address"],
-  [140, "cannot_cancel_orders_for_a_batch_that_is_not_open"],
-  [141, "cannot_decrease_holdings_of_removed_batch"],
-  [142, "cannot_increase_holdings_of_batch_that_does_not_exist"],
-  [143, "batch_already_removed"],
-  [144, "admin_and_fee_recipient_address_cannot_be_the_same"],
-  [145, "incorrect_market_vault_holder"],
-  [146, "incorrect_market_vault_id"],
-  [147, "market_vault_tokens_are_different"],
-  [148, "unable_to_find_user_holding_for_id"],
-  [149, "unable_to_find_vault_holding_for_id"],
-  [150, "user_in_holding_is_incorrect"],
-  [151, "no_holding_in_market_maker_for_holder"],
-  [152, "no_market_vault_for_token"],
-  [153, "holding_amount_to_redeem_is_larger_than_holding"],
-  [154, "holding_shares_greater_than_total_shares_remaining"],
-  [155, "no_holdings_to_claim"],
-  [156, "incorrect_side_specified"],
-  [157, "entrypoint_does_not_exist"],
-  [158, "unable_to_get_batches_from_batcher"],
-  [159, "unable_to_get_oracle_price"],
-  [160, "contract_does_not_exist"],
-  [161, "unable_to_call_on_chain_view"],
-  [162, "unable_to_get_tokens_from_token_manager"],
-  [163, "vault_name_is_incorrect"],
-  [164, "unable_to_get_native_token_from_vault"],
-  [165, "unable_to_get_swaps_from_token_manager"],
-  [166, "unable_to_get_vaults_from_marketmaker"],
-  [167, "unable_to_get_current_batches_from_batcher"],
-  [168, "sender_not_marketmaker"],
-  [169, "cannot_update_liquidity_injection_limit_to_more_than_deposit_window"],
-  [170, "unable_to_get_balance_response_fa2_entrypoint_from_vault"],
-  [171, "unable_to_get_balance_of_entrypoint_from_fa2_token"],
-  [172, "unable_to_get_balance_response_fa12_entrypoint_from_vault"],
-  [173, "unable_to_get_get_balance_entrypoint_from_fa12_token"]
+  [100, 'no_rate_available_for_swap'],
+  [101, 'invalid_token_address'],
+  [102, 'invalid_tezos_address'],
+  [103, 'no_open_batch'],
+  [104, 'batch_should_be_cleared'],
+  [105, 'trying_to_close_batch_which_is_not_open'],
+  [106, 'unable_to_parse_side_from_external_order'],
+  [107, 'unable_to_parse_tolerance_from_external_order'],
+  [108, 'token_standard_not_found'],
+  [109, 'xtz_not_currently_supported'],
+  [110, 'unsupported_swap_type'],
+  [111, 'unable_to_reduce_token_amount_to_less_than_zero'],
+  [112, 'too_many_unredeemed_orders'],
+  [113, 'insufficient_swap_fee'],
+  [114, 'sender_not_administrator'],
+  [115, 'token_already_exists_but_details_are_different'],
+  [116, 'swap_already_exists'],
+  [117, 'swap_does_not_exist'],
+  [118, 'endpoint_does_not_accept_tez'],
+  [119, 'number_is_not_a_nat'],
+  [120, 'oracle_price_is_stale'],
+  [121, 'oracle_price_is_not_timely'],
+  [122, 'unable_to_get_price_from_oracle'],
+  [123, 'unable_to_get_price_from_new_oracle_source'],
+  [124, 'oracle_price_should_be_available_before_deposit'],
+  [125, 'swap_is_disabled_for_deposits'],
+  [126, 'upper_limit_on_tokens_has_been_reached'],
+  [127, 'upper_limit_on_swap_pairs_has_been_reached'],
+  [128, 'cannot_reduce_limit_on_tokens_to_less_than_already_exists'],
+  [129, 'cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists'],
+  [130, 'more_tez_sent_than_fee_cost'],
+  [131, 'cannot_update_deposit_window_to_less_than_the_minimum'],
+  [132, 'cannot_update_deposit_window_to_more_than_the_maximum'],
+  [133, 'oracle_must_be_equal_to_minimum_precision'],
+  [134, 'swap_precision_is_less_than_minimum'],
+  [135, 'cannot_update_scale_factor_to_less_than_the_minimum'],
+  [136, 'cannot_update_scale_factor_to_more_than_the_maximum'],
+  [137, 'cannot_remove_swap_pair_that_is_not_disabled'],
+  [138, 'token_name_not_in_list_of_valid_tokens'],
+  [139, 'no_orders_for_user_address'],
+  [140, 'cannot_cancel_orders_for_a_batch_that_is_not_open'],
+  [141, 'cannot_decrease_holdings_of_removed_batch'],
+  [142, 'cannot_increase_holdings_of_batch_that_does_not_exist'],
+  [143, 'batch_already_removed'],
+  [144, 'admin_and_fee_recipient_address_cannot_be_the_same'],
+  [145, 'incorrect_market_vault_holder'],
+  [146, 'incorrect_market_vault_id'],
+  [147, 'market_vault_tokens_are_different'],
+  [148, 'unable_to_find_user_holding_for_id'],
+  [149, 'unable_to_find_vault_holding_for_id'],
+  [150, 'user_in_holding_is_incorrect'],
+  [151, 'no_holding_in_market_maker_for_holder'],
+  [152, 'no_market_vault_for_token'],
+  [153, 'holding_amount_to_redeem_is_larger_than_holding'],
+  [154, 'holding_shares_greater_than_total_shares_remaining'],
+  [155, 'no_holdings_to_claim'],
+  [156, 'incorrect_side_specified'],
+  [157, 'entrypoint_does_not_exist'],
+  [158, 'unable_to_get_batches_from_batcher'],
+  [159, 'unable_to_get_oracle_price'],
+  [160, 'contract_does_not_exist'],
+  [161, 'unable_to_call_on_chain_view'],
+  [162, 'unable_to_get_tokens_from_token_manager'],
+  [163, 'vault_name_is_incorrect'],
+  [164, 'unable_to_get_native_token_from_vault'],
+  [165, 'unable_to_get_swaps_from_token_manager'],
+  [166, 'unable_to_get_vaults_from_marketmaker'],
+  [167, 'unable_to_get_current_batches_from_batcher'],
+  [168, 'sender_not_marketmaker'],
+  [169, 'cannot_update_liquidity_injection_limit_to_more_than_deposit_window'],
+  [170, 'unable_to_get_balance_response_fa2_entrypoint_from_vault'],
+  [171, 'unable_to_get_balance_of_entrypoint_from_fa2_token'],
+  [172, 'unable_to_get_balance_response_fa12_entrypoint_from_vault'],
+  [173, 'unable_to_get_get_balance_entrypoint_from_fa12_token'],
 ]);
 export const getErrorMess = (error: any) => {
   try {
@@ -132,11 +131,13 @@ export const getNetworkType = () => {
 
 // ----- BALANCES ------
 
-export type Balances = {
+export type Balance = {
   name: string;
   balance: number;
   decimals: number;
-}[];
+};
+
+export type Balances = Balance[];
 
 type TokenBalance = {
   address: string;
@@ -175,21 +176,26 @@ export const getTokensBalancesByAccount = (userAddress: string) =>
   ).then(checkStatus);
 
 export const getBalances = async (userAddress: string): Promise<Balances> => {
-  const storage = await getStorage();
-  const validTokens: BatcherStorage['valid_tokens'] = storage['valid_tokens'];
+  const tokenManagerStorage = await getTokenManagerStorage();
+  const validTokens = tokenManagerStorage['valid_tokens'];
   const rawBalances = await getTokensBalancesByAccount(userAddress);
-
-  return Object.values(validTokens).map(token => {
+  console.info('DEBUG: storage', tokenManagerStorage);
+  let bals = new Array<Balance>();
+  for await (const token_name of validTokens.keys) {
+    const token = await getBigMapByIdAndKey(validTokens.values, token_name);
+    console.info('DEBUG: token', token);
     const balance = rawBalances.find(
       (b: TokenBalance) => b.token?.contract?.address === token.address
     )?.balance;
     const decimals = parseInt(token.decimals, 10);
-    return {
+    const bal: Balance = {
       name: token.name,
       decimals,
       balance: balance ? scaleAmountDown(parseFloat(balance), decimals) : 0,
     };
-  });
+    bals.push(bal);
+  }
+  return bals;
 };
 
 // ----- FETCH STORAGE AND BIGMAPS ------
@@ -215,7 +221,20 @@ export const getBigMapByIdAndUserAddress = (
   );
 };
 
-export const getBigMapByIdAndBatchNumber = (
+export const getBigMapByIdAndKey = async (
+  id: number,
+  key: string
+): Promise<any> => {
+  if (!id) return Promise.reject('No bigmap ID .');
+  if (!key) return Promise.reject('No key for bigmap .');
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${id}/keys/${key}`
+  )
+    .then(checkStatus)
+    .then(r => r.value);
+};
+
+export const getBigMapByIdAndBatchNumber = async (
   batchNumber: number
 ): Promise<BatchBigmap> => {
   const bigMapId: string | null = getByKey('batches');
@@ -227,7 +246,7 @@ export const getBigMapByIdAndBatchNumber = (
     .then(r => r.value);
 };
 
-export const getBigMapByIdAndTokenPair = (
+export const getBigMapByIdAndTokenPair = async (
   tokenPair: string
 ): Promise<Array<RatesCurrentBigmap>> => {
   const bigMapId: string | null = getByKey('rates_current');
@@ -243,35 +262,6 @@ export const getBigMapByIdAndTokenPair = (
 };
 
 // ----- FETCH CONTRACT INFORMATIONS AND PARSING ------
-
-export const getPairsInformations = async (
-  pair: string
-): Promise<{ currentSwap: Omit<CurrentSwap, 'isReverse'>; pair: string }> => {
-  const storage = await getStorage();
-  const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('/') as TokenNames[];
-
-  return {
-    currentSwap: {
-      swap: {
-        from: {
-          token: {
-            ...validTokens[pairs[0]],
-            decimals: parseInt(validTokens[pairs[0]].decimals, 10),
-            tokenId: 0, //! HARD CODED
-          },
-          amount: 0,
-        },
-        to: {
-          ...validTokens[pairs[1]],
-          decimals: parseInt(validTokens[pairs[1]].decimals, 10),
-          tokenId: 0, //! HARD CODED
-        },
-      },
-    },
-    pair,
-  };
-};
 
 export const getFees = async () => {
   const storage = await getStorage();
@@ -657,7 +647,7 @@ const computeHoldingsByBatch = (
   );
 };
 
-export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
+export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
       const batch = await getBigMapByIdAndBatchNumber(

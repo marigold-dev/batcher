@@ -51,8 +51,9 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
         const reversed =
           (!isFrom && value === 'tzBTC') || (isFrom && value !== 'tzBTC');
         dispatch(changePair(pair, reversed));
-      }}>
-      <Select.Trigger className="flex items-center text-dark w-[150px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
+      }}
+    >
+      <Select.Trigger className="flex items-center text-dark w-[200px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
         <Select.Value
           placeholder={isReverse ? swap.to.name : swap.from.token.name}
         />
@@ -75,7 +76,8 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
                     isReverse
                       ? swap.to.name === t.name
                       : swap.from.token.name === t.name
-                  }>
+                  }
+                >
                   <div className="flex items-center">
                     {t.icon ? (
                       <Image
@@ -130,7 +132,8 @@ const SelectItem = React.forwardRef<
           : ''
       } text-base text-dark rounded flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[highlighted]:outline-none data-[highlighted]:bg-hovergray disabled:cursor-not-allowed`}
       {...props}
-      ref={forwardedRef}>
+      ref={forwardedRef}
+    >
       <Select.ItemText>{children}</Select.ItemText>
       <Select.ItemIndicator className="absolute left-0 w-6 inline-flex items-center justify-center">
         <FontAwesomeIcon icon={faCheck} />
