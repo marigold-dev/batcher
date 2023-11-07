@@ -4,10 +4,10 @@ import {
   getBatcherStatus,
   fetchCurrentBatchNumber,
   getCurrentRates,
-  getPairsInformations,
   getVolumes,
   getTimeDifferenceInMs,
-} from '../utils/utils';
+} from '@/utils/utils';
+import { getPairsInformation } from '@/utils/token-manager';
 import {
   updateBatchNumber,
   updateBatcherStatus,
@@ -18,17 +18,18 @@ import {
   updateRemainingTime,
   noBatchError,
   newError,
-} from '../actions';
-import { BatcherStatus, CurrentSwap, SwapNames } from 'src/types';
+} from '@/actions';
+import { BatcherStatus, CurrentSwap, SwapNames } from '@/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
     () => {
-      return getPairsInformations(pair);
+      return getPairsInformation(pair);
     },
     {
       successActionCreator: updatePairsInfos,
-      failActionCreator: () => newError('Fail to get pair informations.'),
+      failActionCreator: (e: any) =>
+        newError('Fail to get pair informations.' + e),
     }
   );
 
@@ -78,7 +79,9 @@ const setupBatcherCmd = (startTime: string | null, status: BatcherStatus) => {
 const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   return Cmd.run(
     async () => {
+      console.info('TokenPair', tokenPair);
       const rates = await getCurrentRates(tokenPair);
+      console.info('Rates', rates);
       return computeOraclePrice(rates[0].rate, {
         buyDecimals: swap.to.decimals,
         sellDecimals: swap.from.token.decimals,

@@ -1,7 +1,7 @@
 import { Cmd } from 'redux-loop';
-import { getOrdersBook } from '../utils/utils';
-import { updateHoldings } from 'src/actions/holdings';
-import { newError } from 'src/actions';
+import { getOrdersBook } from '@/utils/utils';
+import { updateHoldings } from '@/actions/holdings';
+import { newError } from '@/actions';
 
 const fetchHoldingsCmd = (userAddress?: string) => {
   return Cmd.run(

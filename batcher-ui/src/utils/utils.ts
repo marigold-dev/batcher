@@ -6,7 +6,6 @@ import {
 } from 'date-fns';
 import {
   BatcherStatus,
-  CurrentSwap,
   UserOrder,
   HoldingsState,
   VolumesState,
@@ -15,20 +14,12 @@ import {
   BatcherStorage,
   BatchBigmap,
   OrderBookBigmap,
-  TokenNames,
   SwapNames,
   RatesCurrentBigmap,
-  UserVault,
-  GlobalVault,
-  VaultToken,
-  BatcherMarketMakerStorage,
-  UserHoldingsBigMapItem,
-  VaultsBigMapItem,
-  VaultHoldingsBigMapItem,
-  ContractToken,
-} from '../types';
+} from '@/types';
+import { getTokenManagerStorage } from '@/utils/token-manager';
 import { NetworkType } from '@airgap/beacon-sdk';
-import { getByKey } from './local-storage';
+import { getByKey } from '@/utils/local-storage';
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -41,44 +32,80 @@ export const scaleAmountUp = (amount: number, decimals: number) => {
 
 // Contract error codes
 var error_codes = new Map([
-  [100, 'No rate available for swap '],
-  [101, 'Invalid token address '],
-  [102, 'Invalid tezos address'],
-  [103, 'No open batch for deposits'],
-  [104, 'Batch should be cleared'],
-  [105, 'Trying to close batch which is not open'],
-  [106, 'Unable to parse side from external order'],
-  [107, 'Unable to parse tolerance from external order'],
-  [108, 'Token standard not found'],
-  [109, 'Xtz not currently supported'],
-  [110, 'Unsupported swap type'],
-  [111, 'Unable to reduce token amount to less than zero'],
-  [112, 'Too many unredeemed orders'],
-  [113, 'Insufficient swap fee'],
-  [114, 'Sender not administrator'],
-  [115, 'Token already exists but details are different'],
-  [116, 'Swap already exists'],
-  [117, 'Swap does not exist'],
-  [118, 'Endpoint does not accept tez'],
-  [119, 'Number is not a nat'],
-  [120, 'Oracle price is stale'],
-  [121, 'Oracle price is not timely'],
-  [122, 'Unable to get price from oracle'],
-  [123, 'Unable to get price from new oracle source'],
-  [124, 'Oracle price should be available before deposit'],
-  [125, 'Swap is disabled for deposits'],
-  [126, 'Upper limit on tokens has been reached'],
-  [127, 'Upper limit on swap pairs has been reached'],
-  [128, 'Cannot reduce limit on tokens to less than already exists'],
-  [129, 'Cannot reduce limit on swap pairs to less than already exists'],
-  [130, 'More tez sent than fee cost'],
-  [131, 'Cannot update deposit window to less than the minimum'],
-  [132, 'Cannot update deposit window to more than the maximum'],
-  [133, 'Oracle must be equal to minimum precision'],
-  [134, 'Swap precision is less than minimum'],
-  [135, 'Cannot update scale factor to less than the minimum'],
-  [136, 'Cannot update scale factor to more than the maximum'],
-  [137, 'Cannot remove swap pair that is not disabled'],
+  [100, 'no_rate_available_for_swap'],
+  [101, 'invalid_token_address'],
+  [102, 'invalid_tezos_address'],
+  [103, 'no_open_batch'],
+  [104, 'batch_should_be_cleared'],
+  [105, 'trying_to_close_batch_which_is_not_open'],
+  [106, 'unable_to_parse_side_from_external_order'],
+  [107, 'unable_to_parse_tolerance_from_external_order'],
+  [108, 'token_standard_not_found'],
+  [109, 'xtz_not_currently_supported'],
+  [110, 'unsupported_swap_type'],
+  [111, 'unable_to_reduce_token_amount_to_less_than_zero'],
+  [112, 'too_many_unredeemed_orders'],
+  [113, 'insufficient_swap_fee'],
+  [114, 'sender_not_administrator'],
+  [115, 'token_already_exists_but_details_are_different'],
+  [116, 'swap_already_exists'],
+  [117, 'swap_does_not_exist'],
+  [118, 'endpoint_does_not_accept_tez'],
+  [119, 'number_is_not_a_nat'],
+  [120, 'oracle_price_is_stale'],
+  [121, 'oracle_price_is_not_timely'],
+  [122, 'unable_to_get_price_from_oracle'],
+  [123, 'unable_to_get_price_from_new_oracle_source'],
+  [124, 'oracle_price_should_be_available_before_deposit'],
+  [125, 'swap_is_disabled_for_deposits'],
+  [126, 'upper_limit_on_tokens_has_been_reached'],
+  [127, 'upper_limit_on_swap_pairs_has_been_reached'],
+  [128, 'cannot_reduce_limit_on_tokens_to_less_than_already_exists'],
+  [129, 'cannot_reduce_limit_on_swap_pairs_to_less_than_already_exists'],
+  [130, 'more_tez_sent_than_fee_cost'],
+  [131, 'cannot_update_deposit_window_to_less_than_the_minimum'],
+  [132, 'cannot_update_deposit_window_to_more_than_the_maximum'],
+  [133, 'oracle_must_be_equal_to_minimum_precision'],
+  [134, 'swap_precision_is_less_than_minimum'],
+  [135, 'cannot_update_scale_factor_to_less_than_the_minimum'],
+  [136, 'cannot_update_scale_factor_to_more_than_the_maximum'],
+  [137, 'cannot_remove_swap_pair_that_is_not_disabled'],
+  [138, 'token_name_not_in_list_of_valid_tokens'],
+  [139, 'no_orders_for_user_address'],
+  [140, 'cannot_cancel_orders_for_a_batch_that_is_not_open'],
+  [141, 'cannot_decrease_holdings_of_removed_batch'],
+  [142, 'cannot_increase_holdings_of_batch_that_does_not_exist'],
+  [143, 'batch_already_removed'],
+  [144, 'admin_and_fee_recipient_address_cannot_be_the_same'],
+  [145, 'incorrect_market_vault_holder'],
+  [146, 'incorrect_market_vault_id'],
+  [147, 'market_vault_tokens_are_different'],
+  [148, 'unable_to_find_user_holding_for_id'],
+  [149, 'unable_to_find_vault_holding_for_id'],
+  [150, 'user_in_holding_is_incorrect'],
+  [151, 'no_holding_in_market_maker_for_holder'],
+  [152, 'no_market_vault_for_token'],
+  [153, 'holding_amount_to_redeem_is_larger_than_holding'],
+  [154, 'holding_shares_greater_than_total_shares_remaining'],
+  [155, 'no_holdings_to_claim'],
+  [156, 'incorrect_side_specified'],
+  [157, 'entrypoint_does_not_exist'],
+  [158, 'unable_to_get_batches_from_batcher'],
+  [159, 'unable_to_get_oracle_price'],
+  [160, 'contract_does_not_exist'],
+  [161, 'unable_to_call_on_chain_view'],
+  [162, 'unable_to_get_tokens_from_token_manager'],
+  [163, 'vault_name_is_incorrect'],
+  [164, 'unable_to_get_native_token_from_vault'],
+  [165, 'unable_to_get_swaps_from_token_manager'],
+  [166, 'unable_to_get_vaults_from_marketmaker'],
+  [167, 'unable_to_get_current_batches_from_batcher'],
+  [168, 'sender_not_marketmaker'],
+  [169, 'cannot_update_liquidity_injection_limit_to_more_than_deposit_window'],
+  [170, 'unable_to_get_balance_response_fa2_entrypoint_from_vault'],
+  [171, 'unable_to_get_balance_of_entrypoint_from_fa2_token'],
+  [172, 'unable_to_get_balance_response_fa12_entrypoint_from_vault'],
+  [173, 'unable_to_get_get_balance_entrypoint_from_fa12_token'],
 ]);
 export const getErrorMess = (error: any) => {
   try {
@@ -104,11 +131,13 @@ export const getNetworkType = () => {
 
 // ----- BALANCES ------
 
-export type Balances = {
+export type Balance = {
   name: string;
   balance: number;
   decimals: number;
-}[];
+};
+
+export type Balances = Balance[];
 
 type TokenBalance = {
   address: string;
@@ -126,7 +155,10 @@ type TokenBalance = {
   };
 };
 
-const checkStatus = (response: Response, noContentReturnValue?: unknown) => {
+export const checkStatus = (
+  response: Response,
+  noContentReturnValue?: unknown
+) => {
   if (!response.ok) return Promise.reject('FETCH_ERROR');
   if (response.status === 204) {
     //! No content
@@ -140,32 +172,37 @@ export const TOKENS = ['USDT', 'EURL', 'TZBTC'];
 
 export const getTokensBalancesByAccount = (userAddress: string) =>
   fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens/balances?account=${userAddress}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens/balances?account=${userAddress}`
   ).then(checkStatus);
 
 export const getBalances = async (userAddress: string): Promise<Balances> => {
-  const storage = await getStorage();
-  const validTokens: BatcherStorage['valid_tokens'] = storage['valid_tokens'];
+  const tokenManagerStorage = await getTokenManagerStorage();
+  const validTokens = tokenManagerStorage['valid_tokens'];
   const rawBalances = await getTokensBalancesByAccount(userAddress);
-
-  return Object.values(validTokens).map(token => {
+  console.info('DEBUG: storage', tokenManagerStorage);
+  let bals = new Array<Balance>();
+  for await (const token_name of validTokens.keys) {
+    const token = await getBigMapByIdAndKey(validTokens.values, token_name);
+    console.info('DEBUG: token', token);
     const balance = rawBalances.find(
       (b: TokenBalance) => b.token?.contract?.address === token.address
     )?.balance;
     const decimals = parseInt(token.decimals, 10);
-    return {
+    const bal: Balance = {
       name: token.name,
       decimals,
       balance: balance ? scaleAmountDown(parseFloat(balance), decimals) : 0,
     };
-  });
+    bals.push(bal);
+  }
+  return bals;
 };
 
 // ----- FETCH STORAGE AND BIGMAPS ------
 
 export const getStorage = (): Promise<BatcherStorage> =>
   fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/contracts/${process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH}/storage`
   ).then(checkStatus);
 
 export const getBigMapByIdAndUserAddress = (
@@ -176,7 +213,7 @@ export const getBigMapByIdAndUserAddress = (
     return Promise.reject('No address or no bigmap ID for order book.');
   return (
     fetch(
-      `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
+      `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${userAddress}`
     )
       // TODO: improve that by parseStatus function
       .then(response => checkStatus(response, { value: [] }))
@@ -184,26 +221,39 @@ export const getBigMapByIdAndUserAddress = (
   );
 };
 
-export const getBigMapByIdAndBatchNumber = (
-  batchNumber: number
-): Promise<BatchBigmap> => {
-  const bigMapId: string | null = getByKey('batches');
-  if (!bigMapId) return Promise.reject('No bigmap ID for batches.');
+export const getBigMapByIdAndKey = async (
+  id: number,
+  key: string
+): Promise<any> => {
+  if (!id) return Promise.reject('No bigmap ID .');
+  if (!key) return Promise.reject('No key for bigmap .');
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${id}/keys/${key}`
   )
     .then(checkStatus)
     .then(r => r.value);
 };
 
-export const getBigMapByIdAndTokenPair = (
+export const getBigMapByIdAndBatchNumber = async (
+  batchNumber: number
+): Promise<BatchBigmap> => {
+  const bigMapId: string | null = getByKey('batches');
+  if (!bigMapId) return Promise.reject('No bigmap ID for batches.');
+  return fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${batchNumber}`
+  )
+    .then(checkStatus)
+    .then(r => r.value);
+};
+
+export const getBigMapByIdAndTokenPair = async (
   tokenPair: string
 ): Promise<Array<RatesCurrentBigmap>> => {
   const bigMapId: string | null = getByKey('rates_current');
   if (!bigMapId) return Promise.reject('No bigmap ID for rates_current.');
 
   return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigMapId}/keys`
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys`
   )
     .then(checkStatus)
     .then(response =>
@@ -211,60 +261,7 @@ export const getBigMapByIdAndTokenPair = (
     );
 };
 
-export const getTokensMetadata = async () => {
-  const storage = await getStorage();
-  const validTokens = storage['valid_tokens'];
-  return Promise.all(
-    Object.values(validTokens).map(async token => {
-      const icon = await fetch(
-        `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/tokens?contract=${token.address}`
-      )
-        .then(t => t.json())
-        .then(([t]) =>
-          t?.metadata?.thumbnailUri
-            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
-            : undefined
-        );
-
-      return {
-        name: token.name,
-        address: token.address,
-        icon,
-      };
-    })
-  );
-};
-
 // ----- FETCH CONTRACT INFORMATIONS AND PARSING ------
-
-export const getPairsInformations = async (
-  pair: string
-): Promise<{ currentSwap: Omit<CurrentSwap, 'isReverse'>; pair: string }> => {
-  const storage = await getStorage();
-  const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('/') as TokenNames[];
-
-  return {
-    currentSwap: {
-      swap: {
-        from: {
-          token: {
-            ...validTokens[pairs[0]],
-            decimals: parseInt(validTokens[pairs[0]].decimals, 10),
-            tokenId: 0, //! HARD CODED
-          },
-          amount: 0,
-        },
-        to: {
-          ...validTokens[pairs[1]],
-          decimals: parseInt(validTokens[pairs[1]].decimals, 10),
-          tokenId: 0, //! HARD CODED
-        },
-      },
-    },
-    pair,
-  };
-};
 
 export const getFees = async () => {
   const storage = await getStorage();
@@ -650,7 +647,7 @@ const computeHoldingsByBatch = (
   );
 };
 
-export const computeAllHoldings = (orderbook: OrderBookBigmap) => {
+export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
       const batch = await getBigMapByIdAndBatchNumber(
@@ -685,138 +682,3 @@ export const getOrdersBook = async (userAddress: string) => {
 
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
-
-// MARKET MAKER HOLDINGS
-
-const getMarketMakerStorage = (): Promise<BatcherMarketMakerStorage> => {
-  return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/contracts/${process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH}/storage`
-  ).then(checkStatus);
-};
-
-const getUserVaultFromBigmap = (
-  bigmapId: number,
-  userKey: string
-): Promise<UserHoldingsBigMapItem> => {
-  return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${userKey}`
-  ).then(checkStatus);
-};
-
-const getHoldingsVaultFromBigmap = (
-  bigmapId: number,
-  key: string
-): Promise<VaultHoldingsBigMapItem> => {
-  return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${key}`
-  ).then(checkStatus);
-};
-const getVaultsFromBigmap = (
-  bigmapId: number,
-  tokenName: string
-): Promise<VaultsBigMapItem> => {
-  return fetch(
-    `${process.env.NEXT_PUBLIC_TZKT_URI_API}/v1/bigmaps/${bigmapId}/keys/${tokenName}`
-  ).then(checkStatus);
-};
-
-const getUserVault = async (
-  userAddress: string,
-  key: string,
-  userVaultId: number,
-  holdingsVaultId: number
-) => {
-  if (!userAddress) {
-    console.error('No user address ');
-    const userVault: UserVault = {
-      shares: 0,
-      unclaimed: 0,
-    };
-    return userVault;
-  }
-
-  const userHoldings = await getUserVaultFromBigmap(userVaultId, key);
-  if (!userHoldings) {
-    console.error('No user vault ');
-    const userVault: UserVault = {
-      shares: 0,
-      unclaimed: 0,
-    };
-    return userVault;
-  }
-  const holdingsVault = await getHoldingsVaultFromBigmap(
-    holdingsVaultId,
-    userHoldings.value
-  );
-  if (!holdingsVault || !holdingsVault.active) {
-    console.error('No holding vault ');
-    const userVault: UserVault = {
-      shares: 0,
-      unclaimed: 0,
-    };
-    return userVault;
-  }
-  const uv: UserVault = {
-    shares: parseInt(holdingsVault.value.shares, 10),
-    unclaimed: parseInt(holdingsVault.value.unclaimed, 10),
-  };
-  return uv;
-};
-
-
-export const getMarketHoldings = async (userAddress: string) => {
-  const storage = await getMarketMakerStorage();
-  const userVaults = await Promise.all(
-    Object.keys(storage.valid_tokens).map(async token => {
-      const userVaultKey: string = `{"string":"${token}","address":"${userAddress}"}`;
-      const userVault = await getUserVault(
-        userAddress,
-        userVaultKey,
-        storage.user_holdings,
-        storage.vault_holdings
-      );
-      return {
-        [token]: userVault,
-      };
-    })
-  );
-
-  const y = userVaults.reduce((acc, v) => {
-    const name = Object.keys(v)[0];
-    return { ...acc, [name]: v[name] };
-  }, {});
-
-  const globalVaults = await Promise.all(
-    Object.keys(storage.valid_tokens).map(async token => {
-      const t = storage.valid_tokens[token] as ContractToken & {
-        token_id: number;
-      };
-      const b = await getVaultsFromBigmap(storage.vaults, token);
-      const rtk = b.value.native_token;
-
-      const scaleAmount = scaleAmountDown(
-        parseInt(rtk.amount, 10),
-        parseInt(t.decimals, 10)
-      );
-      const globalVault: GlobalVault = {
-        total_shares: parseInt(b.value.total_shares, 10),
-        native: {
-          name: t.name,
-          id: t.token_id,
-          address: t.address,
-          decimals: parseInt(t.decimals, 10),
-          standard: t.standard,
-          amount: scaleAmount,
-        },
-        foreign: new Map<string, VaultToken>(),
-      };
-      return { [token]: globalVault };
-    })
-  );
-
-  const x = globalVaults.reduce((acc, v) => {
-    const name = Object.keys(v)[0];
-    return { ...acc, [name]: v[name] };
-  }, {});
-  return { globalVaults: x, userVaults: y };
-};

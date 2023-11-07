@@ -1,4 +1,4 @@
-import { MarketHoldingsState } from 'src/types';
+import { MarketHoldingsState } from '@/types';
 
 export const addLiquidity = () =>
   ({
@@ -16,32 +16,25 @@ export const claimRewards = () =>
   }) as const;
 
 export const updateMarketHoldings = (
-  vaults: Partial<Omit<MarketHoldingsState, 'currentVault'>>
+  holdings: Partial<Omit<MarketHoldingsState, 'currentVault'>>
 ) =>
   ({
     type: 'UPDATE_MARKET_HOLDINGS',
-    payload: { vaults },
-  } as const);
+    payload: { holdings },
+  }) as const;
 
 export const getMarketHoldings = (
-  contractAddress: string,
-  userAddress: string
+  token: string,
+  userAddress: string | undefined
 ) =>
   ({
     type: 'GET_MARKET_HOLDINGS',
-    payload: { contractAddress, userAddress },
-  }) as const;
-
-export const changeVault = (vault: string) =>
-  ({
-    type: 'CHANGE_VAULT',
-    payload: { vault },
+    payload: { token, userAddress },
   }) as const;
 
 export type MarketHoldingsActions =
   | ReturnType<typeof addLiquidity>
   | ReturnType<typeof removeLiquidity>
   | ReturnType<typeof claimRewards>
-  | ReturnType<typeof changeVault>
   | ReturnType<typeof getMarketHoldings>
   | ReturnType<typeof updateMarketHoldings>;

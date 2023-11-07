@@ -1,15 +1,11 @@
 import { Cmd } from 'redux-loop';
-import { getMarketHoldings } from '../utils/utils';
-import { updateMarketHoldings } from 'src/actions';
+import { getMarketHoldings } from '@/utils/market-maker';
+import { updateMarketHoldings } from '@/actions';
 
-const fetchMarketHoldingsCmd = (
-  contractAddress: string,
-  userAddress: string
-) => {
+const fetchMarketHoldingsCmd = (token: string, userAddress: string | undefined) => {
   return Cmd.run(
     async () => {
-      const vaults = await getMarketHoldings(userAddress || '');
-
+      const vaults = await getMarketHoldings(token, userAddress || '');
       return vaults;
     },
     {

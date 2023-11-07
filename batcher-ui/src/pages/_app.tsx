@@ -1,17 +1,17 @@
 import React from 'react';
 import { AppProps } from 'next/app';
-import { TezosToolkitProvider } from '../src/contexts/tezos-toolkit';
-import { WalletProvider } from '../src/contexts/wallet';
-import { EventsProvider } from '../src/contexts/events';
-import '../styles/globals.css';
+import { TezosToolkitProvider } from '@/contexts/tezos-toolkit';
+import { WalletProvider } from '@/contexts/wallet';
+import { EventsProvider } from '@/contexts/events';
+import '../../styles/globals.css';
 import { Provider } from 'react-redux';
-import { store } from '../src/store';
+import { store } from '@/store';
 import ReactGA from 'react-ga4';
 import Head from 'next/head';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
-import Root from '../src/components/Root';
-import Toast from 'src/components/Toast';
+import Root from '@/components/layout/Root';
+import Toast from '@/components/common/Toast';
 
 config.autoAddCss = false;
 
@@ -34,7 +34,7 @@ const App = ({ Component }: AppProps) => {
         <meta property="og:site_name" content="Batcher DEX" />
         <meta
           property="og:image"
-          content={process.env.NEXT_PUBLIC_PATH_TO_BATCHER_LOGO}
+          content={process.env.NEXT_PUBLIC_BATCHER_LOGO_PATH}
         />
         <meta property="twitter:card" content="summary" />
         <meta
@@ -46,7 +46,7 @@ const App = ({ Component }: AppProps) => {
         <meta property="twitter:creator" content="@Marigold_Dev" />
         <meta
           property="twitter:image"
-          content={process.env.NEXT_PUBLIC_PATH_TO_BATCHER_LOGO}
+          content={process.env.NEXT_PUBLIC_BATCHER_LOGO_PATH}
         />
       </Head>
       <Provider store={store}>

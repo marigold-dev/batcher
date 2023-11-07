@@ -1,4 +1,4 @@
-import { BatcherStatus, CurrentSwap, PriceStrategy } from '../types';
+import { BatcherStatus, CurrentSwap, PriceStrategy } from '@/types';
 
 export const updatePriceStrategy = (priceStrategy: PriceStrategy) =>
   ({

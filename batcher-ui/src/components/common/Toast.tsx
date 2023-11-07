@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ToastBase from '@radix-ui/react-toast';
 import { useSelector } from 'react-redux';
-import { getToastInfosSelector } from 'src/reducers';
+import { getToastInfosSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
-import { closeToast } from 'src/actions';
+import { closeToast } from '@/actions';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo, faCircleXmark } from '@fortawesome/free-solid-svg-icons';

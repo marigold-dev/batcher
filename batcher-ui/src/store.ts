@@ -5,8 +5,8 @@ import {
 } from 'redux';
 import { install, LoopReducer, StoreCreator } from 'redux-loop';
 import { createLogger } from 'redux-logger';
-import rootReducer from './reducers';
-import { AppState } from './types';
+import rootReducer from '@/reducers';
+import { AppState } from '@/types';
 
 const enhancedStore = createStore as StoreCreator;
 

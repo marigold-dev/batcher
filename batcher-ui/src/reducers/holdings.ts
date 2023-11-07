@@ -1,7 +1,7 @@
 import { Cmd, loop } from 'redux-loop';
-import { HoldingsActions } from 'src/actions/holdings';
-import { fetchHoldingsCmd } from 'src/commands/holdings';
-import { HoldingsState } from 'src/types';
+import { HoldingsActions } from '@/actions/holdings';
+import { fetchHoldingsCmd } from '@/commands/holdings';
+import { HoldingsState } from '@/types';
 
 const initialState: HoldingsState = {
   open: { tzBTC: 0, USDT: 0, EURL: 0 },

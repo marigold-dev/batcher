@@ -7,12 +7,11 @@ import {
   faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
-import { currentSwapSelector } from 'src/reducers';
+import { currentSwapSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
-import { changePair } from 'src/actions';
-import { getTokensMetadata } from 'src/utils/utils';
+import { changePair } from '@/actions';
 import Image from 'next/image';
-import { TokenNames } from 'src/types';
+import { getTokensMetadata } from '@/utils/token-manager';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -34,110 +33,26 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
 
   useEffect(() => {
     getTokensMetadata().then(
-      (tokens: { name: string; address: string; icon: string | undefined }[]) =>
-        setAvailableTokens(tokens)
+      (
+        tokens: { name: string; address: string; icon: string | undefined }[]
+      ) => {
+        setAvailableTokens(tokens);
+      }
     );
   }, []);
-
-  const baseToken = ['tzBTC', 'BTCtz'];
-  const swapsAllowed = [
-    'tzBTC/USDT',
-    'tzBTC/EURL',
-    'BTCtz/USDT',
-    'BTCtz/USDtz',
-    'tzBTC/USDtz',
-  ];
-
-  const getOtherToken = () => {
-    if (isReverse && isFrom) return swap.from.token.name;
-    if (isReverse && !isFrom) return swap.to.name;
-    if (!isReverse && isFrom) return swap.to.name;
-    if (!isReverse && !isFrom) return swap.from.token.name;
-    return swap.to.name;
-  };
-
-  /**
-   * TODO
-   * Rewrite this
-   * @param token TokensNames
-   * @returns (string | null) A token pair if allowed else null
-   */
-  const choosePair = (
-    token: TokenNames
-  ): { pair: string; reversed: boolean } | null => {
-    const other = getOtherToken();
-    //! Top selector
-    if (isFrom) {
-      //! chosen token is a base token
-      if (baseToken.includes(token)) {
-        //! user chose the same token so he want to reverse the swap
-        if (token === other) {
-          const t = displayValue();
-          if (swapsAllowed.includes(`${token}/${t}`)) {
-            return { pair: `${token}/${t}`, reversed: false };
-          }
-          return null;
-        }
-        //! chosen tokens are in allowed swaps
-        if (swapsAllowed.includes(`${token}/${other}`)) {
-          return { pair: `${token}/${other}`, reversed: false };
-        }
-        return null;
-      }
-      //! chosen token is NOT a base token
-      if (token === other) {
-        const t = displayValue();
-        if (swapsAllowed.includes(`${t}/${token}`)) {
-          return { pair: `${t}/${token}`, reversed: true };
-        }
-        return null;
-      }
-      if (swapsAllowed.includes(`${other}/${token}`)) {
-        return { pair: `${other}/${token}`, reversed: false };
-      }
-      return null;
-    } else {
-      //! Bottom selector
-      //! Chosen token is a base token
-      if (baseToken.includes(token)) {
-        if (token === other) {
-          const t = displayValue();
-          if (swapsAllowed.includes(`${t}/${other}`)) {
-            return { pair: `${token}/${other}`, reversed: true };
-          }
-          return null;
-        }
-        //! chosen tokens are in allowed swaps
-        if (swapsAllowed.includes(`${token}/${other}`)) {
-          return { pair: `${token}/${other}`, reversed: false };
-        }
-        return null;
-      }
-      //! chosen token is NOT a base token
-      if (token === other) {
-        const t = displayValue();
-        if (swapsAllowed.includes(`${other}/${t}`)) {
-          return { pair: `${other}/${t}`, reversed: true };
-        }
-        return null;
-      }
-      if (swapsAllowed.includes(`${other}/${token}`)) {
-        return { pair: `${other}/${token}`, reversed: false };
-      }
-      return null;
-    }
-  };
 
   return (
     <Select.Root
       value={displayValue()}
       onValueChange={value => {
-        const pairChosen = choosePair(value as TokenNames);
-        if (!pairChosen) dispatch(changePair('tzBTC/USDT', false));
-        else {
-          dispatch(changePair(pairChosen.pair, pairChosen.reversed));
-        }
-      }}>
+        //TODO: change this when we had more pair
+        const pair =
+          value === 'tzBTC' ? `tzBTC/${swap.to.name}` : `tzBTC/${value}`;
+        const reversed =
+          (!isFrom && value === 'tzBTC') || (isFrom && value !== 'tzBTC');
+        dispatch(changePair(pair, reversed));
+      }}
+    >
       <Select.Trigger className="flex items-center text-dark w-[200px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
         <Select.Value
           placeholder={isReverse ? swap.to.name : swap.from.token.name}
@@ -146,7 +61,7 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
           <FontAwesomeIcon icon={faChevronDown} />
         </Select.Icon>
       </Select.Trigger>
-      <Select.Portal className="w-[8rem]">
+      <Select.Portal className="w-[7rem]">
         <Select.Content className="overflow-hidden bg-white rounded-md text-dark">
           <Select.ScrollUpButton className="flex items-center justify-center h-[25px] cursor-default">
             <FontAwesomeIcon icon={faChevronUp} />
@@ -157,7 +72,12 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
                 <SelectItem
                   value={t.name}
                   key={t.name}
-                  disabled={choosePair(t.name) === null ? true : false}>
+                  disabled={
+                    isReverse
+                      ? swap.to.name === t.name
+                      : swap.from.token.name === t.name
+                  }
+                >
                   <div className="flex items-center">
                     {t.icon ? (
                       <Image
@@ -208,11 +128,12 @@ const SelectItem = React.forwardRef<
       disabled={disabled}
       className={`${
         disabled
-          ? 'cursor-not-allowed bg-lightgray text-white'
-          : 'cursor-pointer'
-      } text-base text-dark rounded flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[highlighted]:outline-none data-[highlighted]:bg-hovergray `}
+          ? 'data-[highlighted]:cursor-not-allowed data-[highlighted]:bg-white'
+          : ''
+      } text-base text-dark rounded flex items-center h-[25px] pr-[35px] pl-[25px] relative select-none data-[highlighted]:outline-none data-[highlighted]:bg-hovergray disabled:cursor-not-allowed`}
       {...props}
-      ref={forwardedRef}>
+      ref={forwardedRef}
+    >
       <Select.ItemText>{children}</Select.ItemText>
       <Select.ItemIndicator className="absolute left-0 w-6 inline-flex items-center justify-center">
         <FontAwesomeIcon icon={faCheck} />

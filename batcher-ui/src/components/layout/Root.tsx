@@ -2,13 +2,13 @@ import { NextComponentType, NextPageContext } from 'next';
 import { useEffect, useState } from 'react';
 import Footer from './Footer';
 import NavBar from './NavBar';
-import { batcherSetup, getCurrentBatchNumber } from 'src/actions';
+import { batcherSetup, getCurrentBatchNumber } from '@/actions';
 import { useDispatch } from 'react-redux';
-import { setByKey } from 'src/utils/local-storage';
-import { getStorage } from 'src/utils/utils';
+import { setByKey } from '@/utils/local-storage';
+import { getStorage } from '@/utils/utils';
 import { useSelector } from 'react-redux';
-import { batcherStatusSelector } from 'src/reducers';
-import { BatcherStatus } from 'src/types';
+import { batcherStatusSelector } from '@/reducers';
+import { BatcherStatus } from '@/types';
 
 interface RootProps {
   Component: NextComponentType<NextPageContext, any, any>;

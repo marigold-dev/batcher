@@ -1,60 +1,57 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { getMarketHoldings, fetchUserBalances } from '@/actions';
+import { selectCurrentVaultName } from '@/reducers';
+import { ValidTokenAmount } from '@/types/contracts/token-manager';
+import PrimaryButton from '@/components/common/PrimaryButton';
 import * as Form from '@radix-ui/react-form';
-import { VaultToken } from '../types';
-import { scaleAmountUp } from '../utils/utils';
+import { scaleAmountUp } from '@/utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { compose, OpKind } from '@taquito/taquito';
-import SelectMMPair from './SelectMMPair';
 import { useSelector } from 'react-redux';
-import { fetchUserBalances } from '../actions';
+import { NumericFormat } from 'react-number-format';
 import {
   userBalancesSelector,
   userAddressSelector,
-  getCurrentGlobalVaultSelector,
-  getCurrentUserVaultSelector,
-} from '../reducers';
-import { useTezosToolkit } from '../contexts/tezos-toolkit';
+  selectHoldings,
+} from '@/reducers';
+import { useTezosToolkit } from '@/contexts/tezos-toolkit';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
-import { useDispatch } from 'react-redux';
 
-const MMVaultComponent = () => {
+const Vault = () => {
   const dispatch = useDispatch();
-  const marketMakerAddress = process.env.NEXT_PUBLIC_MARKETMAKER_CONTRACT_HASH;
   const userAddress = useSelector(userAddressSelector);
   const { tezos } = useTezosToolkit();
   const userBalances = useSelector(userBalancesSelector);
+  const marketHoldings = useSelector(selectHoldings);
   const [amountInput, setAmount] = useState<string>('0');
-
-  const currentGlobalVault = useSelector(getCurrentGlobalVaultSelector);
-  const currentUserVault = useSelector(getCurrentUserVaultSelector);
-
+  const tokenName = useSelector(selectCurrentVaultName);
+  const scaleTokenAmount = (ta: ValidTokenAmount): ValidTokenAmount => {
+    const scaledAmount = ta.amount / 10 ** ta?.token.decimals;
+    return {
+      ...ta,
+      amount: scaledAmount,
+    };
+  };
   useEffect(() => {
-    if (userAddress) dispatch(fetchUserBalances());
-  }, [dispatch, userAddress]);
+    dispatch(getMarketHoldings(tokenName || '', userAddress));
+  }, [dispatch, userAddress, tokenName]);
 
-  if (!tezos)
-    return (
-      <div>
-        <p className="text-xxl">
-          {
-            "There is an error with Tezos Tool Kit, can't swap ! Please contact \
-        Marigold if problem persists."
-          }
-        </p>
-      </div>
-    );
-
-  const showTokenAmount = ({ vaultToken }: { vaultToken: VaultToken }) => (
+  const showTokenAmount = ({
+    vaultToken,
+  }: {
+    vaultToken: ValidTokenAmount;
+  }) => (
     <div className="p-3">
       <p className="text-lg text-center">
-        {vaultToken?.name} : {vaultToken?.amount}
+        {vaultToken?.token.name} : {vaultToken?.amount}
       </p>
     </div>
   );
-  const showForeignAssets = (assets: Map<string, VaultToken>) => (
+  const showForeignAssets = (assets: ValidTokenAmount[]) => (
     <div>
-      {assets.size > 0 ? (
+      {assets?.length > 0 ? (
         Object.values(assets).map(a => showTokenAmount({ vaultToken: a }))
       ) : (
         <div></div>
@@ -73,31 +70,32 @@ const MMVaultComponent = () => {
       console.info('No user address');
       return;
     }
-    if (!marketMakerAddress) {
+    if (!marketHoldings.vault_address) {
       console.info('No contract address');
       return;
     }
 
-    const mmContract = await tezos?.wallet.at(marketMakerAddress);
+    console.info('Vault address', marketHoldings.vault_address);
+    const mmContract = await tezos?.wallet.at(marketHoldings.vault_address);
+    const token = marketHoldings.nativeToken?.token;
 
-    if (!currentGlobalVault.native.address) {
+    if (!token?.address) {
       return; //TODO:improve this
     }
-    const token = currentGlobalVault.native;
     const tokenContract = await tezos?.wallet.at(
-      token.address,
+      token?.address,
       compose(tzip12, tzip16)
     );
 
-    const scaled_amount = scaleAmountUp(tokenAmount, token.decimals);
+    const scaled_amount = scaleAmountUp(tokenAmount, parseInt(token?.decimals));
 
     // This is for fa2 token standard. I.e, USDT token
     const fa2_add_operator_params = [
       {
         add_operator: {
           owner: userAddress,
-          operator: marketMakerAddress,
-          token_id: token.id,
+          operator: marketHoldings.vault_address,
+          token_id: token?.token_id,
         },
       },
     ];
@@ -106,28 +104,28 @@ const MMVaultComponent = () => {
       {
         remove_operator: {
           owner: userAddress,
-          operator: marketMakerAddress,
-          token_id: token.id,
+          operator: marketHoldings.vault_address,
+          token_id: token?.token_id,
         },
       },
     ];
 
     try {
       let liq_op: BatchWalletOperation | undefined = undefined;
-      const liq_params = {
-        token: {
-          token_id: token.id,
-          name: token.name,
-          address: token.address,
-          decimals: token.decimals,
-          standard: token.standard,
-        },
-        amount: scaled_amount,
-      };
+      //const liq_params = {
+      //  token: {
+      //    token_id: token?.token_id,
+      //    name: token?.name,
+      //    address: token?.address,
+      //    decimals: token?.decimals,
+      //    standard: token?.standard,
+      //  },
+      //  amount: scaled_amount,
+      //};
 
-      if (token.standard === 'FA1.2 token') {
+      if (token?.standard === 'FA1.2 token') {
         const tokenfa12Contract = await tezos.wallet.at(
-          token.address,
+          token?.address,
           compose(tzip12, tzip16)
         );
 
@@ -136,15 +134,15 @@ const MMVaultComponent = () => {
             {
               kind: OpKind.TRANSACTION,
               ...tokenfa12Contract.methods
-                .approve(marketMakerAddress, scaled_amount)
+                .approve(marketHoldings.vault_address, scaled_amount)
                 .toTransferParams(),
             },
             {
               kind: OpKind.TRANSACTION,
               ...mmContract?.methodsObject
-                .addLiquidity(liq_params)
+                .addLiquidity(scaled_amount)
                 .toTransferParams(),
-              to: marketMakerAddress,
+              to: marketHoldings.vault_address,
               amount: 0,
               mutez: true,
             },
@@ -152,7 +150,7 @@ const MMVaultComponent = () => {
           .send();
       }
 
-      if (token.standard === 'FA2 token') {
+      if (token?.standard === 'FA2 token') {
         liq_op = await tezos?.wallet
           .batch([
             {
@@ -164,9 +162,9 @@ const MMVaultComponent = () => {
             {
               kind: OpKind.TRANSACTION,
               ...mmContract?.methodsObject
-                .addLiquidity(liq_params)
+                .addLiquidity(scaled_amount)
                 .toTransferParams(),
-              to: marketMakerAddress,
+              to: marketHoldings.vault_address,
               amount: 0,
               mutez: true,
             },
@@ -193,7 +191,7 @@ const MMVaultComponent = () => {
 
       if (!confirm?.completed) {
         console.error(confirm);
-        throw new Error(`Failed to add liquidity ${token.name} token.`);
+        throw new Error(`Failed to add liquidity ${token?.name} token.`);
       } else {
         console.info(`Successfully added liquidity ${tokenName}`);
 
@@ -208,10 +206,12 @@ const MMVaultComponent = () => {
   const claimRewards = async ({ tokenName }: { tokenName: string }) => {
     console.log('claiming');
     try {
-      if (!tezos || !marketMakerAddress) {
+      if (!tezos || !marketHoldings.vault_address) {
         throw new Error('Failed to initialize communication with contract.');
       }
-      const contractWallet = await tezos.wallet.at(marketMakerAddress);
+      const contractWallet = await tezos.wallet.at(
+        marketHoldings.vault_address
+      );
 
       let claimTransaction = await contractWallet.methods
         .claim(tokenName)
@@ -232,7 +232,11 @@ const MMVaultComponent = () => {
     }
   };
 
-  const showClaimRewards = ({ vaultToken }: { vaultToken: VaultToken }) => {
+  const showClaimRewards = ({
+    vaultToken,
+  }: {
+    vaultToken: ValidTokenAmount;
+  }) => {
     return (
       <div className="flex flex-col grow my-2">
         <Form.Root
@@ -240,9 +244,10 @@ const MMVaultComponent = () => {
           onSubmit={event => {
             event.preventDefault();
             claimRewards({
-              tokenName: vaultToken.name,
+              tokenName: vaultToken.token.name,
             });
-          }}>
+          }}
+        >
           <Form.Submit asChild>
             <button className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Claim
@@ -256,10 +261,12 @@ const MMVaultComponent = () => {
   const removeLiquidity = async ({ tokenName }: { tokenName: string }) => {
     console.log('removing');
     try {
-      if (!tezos || !marketMakerAddress) {
+      if (!tezos || !marketHoldings.vault_address) {
         throw new Error('Failed to initialize communication with contract.');
       }
-      const contractWallet = await tezos.wallet.at(marketMakerAddress);
+      const contractWallet = await tezos.wallet.at(
+        marketHoldings.vault_address
+      );
 
       let claimTransaction = await contractWallet.methods
         .removeLiquidity(tokenName)
@@ -280,7 +287,11 @@ const MMVaultComponent = () => {
     }
   };
 
-  const showRemoveLiquidity = ({ vaultToken }: { vaultToken: VaultToken }) => {
+  const showRemoveLiquidity = ({
+    vaultToken,
+  }: {
+    vaultToken: ValidTokenAmount;
+  }) => {
     return (
       <div className="flex flex-col grow my-2">
         <Form.Root
@@ -288,9 +299,10 @@ const MMVaultComponent = () => {
           onSubmit={event => {
             event.preventDefault();
             removeLiquidity({
-              tokenName: vaultToken.name,
+              tokenName: vaultToken?.token?.name,
             });
-          }}>
+          }}
+        >
           <Form.Submit asChild>
             <button className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Remove
@@ -304,7 +316,7 @@ const MMVaultComponent = () => {
     vaultToken,
     userBalances,
   }: {
-    vaultToken: VaultToken;
+    vaultToken: ValidTokenAmount;
     userBalances: Record<string, number>;
   }) => {
     return (
@@ -314,16 +326,17 @@ const MMVaultComponent = () => {
           onSubmit={event => {
             event.preventDefault();
             addLiquidity({
-              tokenName: vaultToken.name,
+              tokenName: vaultToken?.token?.name,
               tokenAmount: parseInt(amountInput),
             });
-          }}>
+          }}
+        >
           <Form.Field name="amount">
             <div className="flex items-baseline justify-between">
               <Form.Label className="text-xl font-medium text-white">
                 <p className="text-sm mb-2">
                   {`Balance : ${
-                    userBalances[vaultToken.name.toUpperCase()] || 0
+                    userBalances[vaultToken.token.name.toUpperCase()] || 0
                   }`}
                 </p>
               </Form.Label>
@@ -375,46 +388,47 @@ const MMVaultComponent = () => {
   };
 
   return (
-    <div>
-      <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
-        <div className="p-3">
-          <p className="text-xl text-center">Market Maker Vaults</p>
-        </div>
-      </div>
+    <div className="flex grow flex-col justify-center md:flex-row p-10 border-solid border-2 border-lightgray my-2">
       <div className="flex md:flex-row flex-col">
-        {currentGlobalVault && (
+        {marketHoldings && (
           <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
             <div className="p-3">
-              <SelectMMPair />
-              {`Total Shares: ${currentGlobalVault.total_shares}`}
+              {`Total Shares: ${marketHoldings.shares}`}
               <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
                 <p className="text-xl text-left">Native Asset</p>
-                {showTokenAmount({
-                  vaultToken: currentGlobalVault.native,
-                })}
+                <div className="p-5">
+                  <p className="text-lg text-center">
+                    {marketHoldings.nativeToken?.token.name} :{' '}
+                    {marketHoldings.nativeToken?.amount}
+                  </p>
+                </div>
               </div>
               <div className="p-5 border-lightgray border-t-2 border-2 border-solid justify-between md:text-base text-sm">
                 <p className="text-xl text-left">Foreign Assets</p>
-                {showForeignAssets(currentGlobalVault.foreign)}
+
+                {showForeignAssets(marketHoldings.foreignTokens)}
               </div>
             </div>
           </div>
         )}
-        {currentUserVault && (
+      </div>
+      <div className="flex md:flex-row flex-col"> </div>
+      <div className="flex md:flex-row flex-col">
+        {marketHoldings?.userVault && (
           <div className="flex grow flex-col justify-center md:flex-row p-3 border-solid border-2 border-lightgray my-2">
             <div className="p-3">
               <p className="text-xl text-center">My Liquidity</p>
-              <p>{`Shares: ${currentUserVault.shares}`}</p>
-              {`Unclaimed Rewards: ${currentUserVault.unclaimed} TEZ`}
+              <p>{`Shares: ${marketHoldings?.userVault?.shares}`}</p>
+              {`Unclaimed Rewards: ${marketHoldings?.userVault?.unclaimed} TEZ`}
               {showAddLiquidity({
-                vaultToken: currentGlobalVault.native,
+                vaultToken: marketHoldings?.nativeToken,
                 userBalances: userBalances,
               })}
               {showRemoveLiquidity({
-                vaultToken: currentGlobalVault.native,
+                vaultToken: marketHoldings?.nativeToken,
               })}
               {showClaimRewards({
-                vaultToken: currentGlobalVault.native,
+                vaultToken: marketHoldings?.nativeToken,
               })}
             </div>
           </div>
@@ -423,4 +437,5 @@ const MMVaultComponent = () => {
     </div>
   );
 };
-export default MMVaultComponent;
+
+export default Vault;

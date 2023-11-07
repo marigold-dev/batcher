@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { compose, OpKind, WalletContract } from '@taquito/taquito';
-import { getFees, scaleAmountUp } from '../utils/utils';
+import { getFees, scaleAmountUp } from '@/utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { BatchWalletOperation } from '@taquito/taquito/dist/types/wallet/batch-operation';
-import { useTezosToolkit } from '../contexts/tezos-toolkit';
+import { useTezosToolkit } from '@/contexts/tezos-toolkit';
 import { useSelector } from 'react-redux';
 import {
   batcherStatusSelector,
@@ -12,10 +12,10 @@ import {
   priceStrategySelector,
   userAddressSelector,
   userBalancesSelector,
-} from '../reducers';
-import { BatcherStatus, PriceStrategy } from '../types';
+} from '@/reducers';
+import { BatcherStatus, PriceStrategy } from '@/types';
 import { useDispatch } from 'react-redux';
-import { fetchUserBalances, newError, newInfo, reverseSwap } from '../actions';
+import { fetchUserBalances, newError, newInfo, reverseSwap } from '@/actions';
 import * as Form from '@radix-ui/react-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';

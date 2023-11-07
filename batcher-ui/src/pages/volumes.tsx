@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { PriceStrategy } from 'src/types';
-import { batchNumberSelector, volumesSelector } from 'src/reducers';
+import { PriceStrategy } from '@/types';
+import { batchNumberSelector, volumesSelector } from '@/reducers';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
-import { getVolumes } from 'src/actions';
+import { getVolumes } from '@/actions';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);
