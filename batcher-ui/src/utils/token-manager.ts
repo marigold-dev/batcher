@@ -103,17 +103,37 @@ export const parseToken = (tokenObject: any): ValidToken => {
     };
   } catch (e: any) {
     console.error('Unable to parse valid token', e);
+    return {
+      name: '',
+      address: '',
+      token_id: '0',
+      decimals: '0',
+      standard: '',
+    };
   }
 };
 
 export const parseTokenAmount = (tokenAmountObject: any): ValidTokenAmount => {
   try {
-    const scaledAmount = scaleAmountDown(parseInt(tokenAmountObject.amount),tokenAmountObject.token.decimals);
+    const scaledAmount = scaleAmountDown(
+      parseInt(tokenAmountObject.amount),
+      tokenAmountObject.token.decimals
+    );
     return {
       token: parseToken(tokenAmountObject.token),
       amount: scaledAmount,
     };
   } catch (e: any) {
     console.error('Unable to parse valid token amount', e);
+    return {
+      amount: 0,
+      token: {
+        name: '',
+        address: '',
+        token_id: '0',
+        decimals: '0',
+        standard: '',
+      },
+    };
   }
 };
