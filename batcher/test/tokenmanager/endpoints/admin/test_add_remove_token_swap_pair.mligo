@@ -2,14 +2,15 @@
 #import "./../../../common/helpers.mligo" "Helpers"
 #import "../../../../batcher.mligo" "Batcher"
 #import "../../../../errors.mligo" "Errors"
+#import "../../../../types.mligo" "Types"
 
 let get_tzbtc_eurl_swap_pair
   (disabled: bool)
   (oracle: address)
   (storage: Batcher.Storage.t): (Batcher.valid_swap * Batcher.valid_swap_reduced) = 
   let valid_tokens = storage.valid_tokens in
-  let tzbtc = Option.unopt (Map.find_opt "tzBTC" valid_tokens) in
-  let eurl = Option.unopt (Map.find_opt "EURL" valid_tokens) in
+  let tzbtc = Option.unopt (Types.ValidTokens.find_opt "tzBTC" valid_tokens) in
+  let eurl = Option.unopt (Types.ValidTokens.find_opt "EURL" valid_tokens) in
   let swap : Batcher.swap = {
       from = {
         token = tzbtc;
@@ -47,12 +48,12 @@ let add_swap_pair_should_succeed_if_user_is_admin =
       let context = Helpers.test_context level in 
       let batcher = context.contracts.batcher in
       let bstorage = Breath.Contract.storage_of batcher in
-      let swap_pair_does_not_already_exist = Map.find_opt "tzBTC/EURL" bstorage.valid_swaps in
+      let swap_pair_does_not_already_exist = Types.ValidSwaps.find_opt "tzBTC/EURL" bstorage.valid_swaps in
       let (swap_pair, swap_pair_reduced) = get_tzbtc_eurl_swap_pair true context.contracts.oracle.originated_address bstorage in
       let act_add_swap_pair = Breath.Context.act_as context.admin (fun (_u:unit) -> (Breath.Contract.transfer_to batcher (Add_token_swap_pair swap_pair) 0tez)) in
       
       let new_bstorage = Breath.Contract.storage_of batcher in
-      let added_swap_pair_reduced = Option.unopt (Map.find_opt "tzBTC/EURL" new_bstorage.valid_swaps) in
+      let added_swap_pair_reduced = Option.unopt (Types.ValidSwaps.find_opt "tzBTC/EURL" new_bstorage.valid_swaps) in
 
       Breath.Result.reduce [
         Breath.Assert.is_equal "swap pair should not already exist" None swap_pair_does_not_already_exist 

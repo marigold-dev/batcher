@@ -1,4 +1,3 @@
-
 [@inline] let no_rate_available_for_swap : nat                                   = 100n
 [@inline] let invalid_token_address : nat                                        = 101n
 [@inline] let invalid_tezos_address : nat                                        = 102n
@@ -61,3 +60,15 @@
 [@inline] let unable_to_get_oracle_price                                         = 159n
 [@inline] let contract_does_not_exist                                            = 160n
 [@inline] let unable_to_call_on_chain_view                                       = 161n
+[@inline] let unable_to_get_tokens_from_token_manager                            = 162n
+[@inline] let vault_name_is_incorrect                                            = 163n
+[@inline] let unable_to_get_native_token_from_vault                              = 164n
+[@inline] let unable_to_get_swaps_from_token_manager                             = 165n
+[@inline] let unable_to_get_vaults_from_marketmaker                              = 166n
+[@inline] let unable_to_get_current_batches_from_batcher                         = 167n
+[@inline] let sender_not_marketmaker : nat                                       = 168n
+[@inline] let cannot_update_liquidity_injection_limit_to_more_than_deposit_window= 169n
+[@inline] let unable_to_get_balance_response_fa2_entrypoint_from_vault : nat     = 170n
+[@inline] let unable_to_get_balance_of_entrypoint_from_fa2_token : nat           = 171n
+[@inline] let unable_to_get_balance_response_fa12_entrypoint_from_vault : nat    = 172n
+[@inline] let unable_to_get_get_balance_entrypoint_from_fa12_token : nat         = 173n

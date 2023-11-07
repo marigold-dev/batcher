@@ -1,34 +1,47 @@
 #import "../../batcher.mligo" "Batcher"
 #import "../../marketmaker.mligo" "MarketMaker"
+#import "../../tokenmanager.mligo" "TokenManager"
+#import "../../vault.mligo" "Vault"
 #import "../tokens/fa12/main.mligo" "TZBTC"
 #import "../tokens/fa2/main.mligo" "USDT"
 #import "../tokens/fa2/main.mligo" "EURL"
 #import "../mocks/oracle.mligo" "Oracle"
 #import "./storage.mligo" "TestStorage"
 #import "./utils.mligo" "TestUtils"
+#import "../../utils.mligo" "CommonUtils"
+#import "../../types.mligo" "CommonTypes"
 #import "./batch.mligo" "TestBatch"
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
 
 type originated = Breath.Contract.originated
-type originated_contract = (Batcher.entrypoint, Batcher.storage) originated
-type originated_mm_contract = (MarketMaker.entrypoint, MarketMaker.Storage.t) originated
+type originated_batcher_contract = (Batcher.entrypoint, Batcher.storage) originated
+type originated_mm_contract = (MarketMaker.entrypoint, MarketMaker.MarketMaker.storage) originated
+type originated_tm_contract = (TokenManager.entrypoint, TokenManager.TokenManager.storage) originated
+type originated_vault_contract = (Vault.entrypoint, Vault.Vault.storage) originated
+type originated_tzbtc_contract = (TZBTC.parameter, TZBTC.storage) originated
+type originated_usdt_contract = (USDT.parameter, USDT.storage) originated
+type originated_eurl_contract = (EURL.parameter, EURL.storage) originated
+type originated_oracle_contract = (Oracle.entrypoint, Oracle.Oracle.storage) originated
 
 type swap = Batcher.swap
 type side = Batcher.side
 type storage = Batcher.Storage.t
 type tolerance = Batcher.tolerance
-type valid_tokens = Batcher.valid_tokens
 type level = Breath.Logger.level
 
 type test_contracts = {
    batcher:  (Batcher.entrypoint, Batcher.storage) originated;
-   marketmaker:  (MarketMaker.entrypoint, MarketMaker.Storage.t) originated;
-   oracle:  (Oracle.entrypoint, Oracle.storage) originated;
-   additional_oracle:  (Oracle.entrypoint, Oracle.storage) originated;
-   tzbtc:  (TZBTC.parameter, TZBTC.storage) originated;
-   usdt:  (USDT.parameter, USDT.storage) originated;
-   eurl:  (EURL.parameter, EURL.storage) originated;
+   marketmaker:  (MarketMaker.entrypoint, MarketMaker.MarketMaker.storage) originated;
+   tokenmanager:  (TokenManager.entrypoint, TokenManager.TokenManager.storage) originated;
+   oracle: originated_oracle_contract;
+   additional_oracle: originated_oracle_contract;
+   tzbtc: originated_tzbtc_contract;
+   usdt:  originated_usdt_contract;
+   eurl:  originated_eurl_contract;
+   tzbtc_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
+   usdt_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
+   eurl_vault:  (Vault.entrypoint, Vault.Vault.storage) originated;
 }
 
 type context = {
@@ -59,7 +72,7 @@ let originate_module
   ; originated_address = address }
 
 let originate_oracle
-  (level: Breath.Logger.level)  =
+  (level: Breath.Logger.level) : originated_oracle_contract =
   let storage = TestStorage.oracle_initial_storage in
   TestUtils.originate_oracle storage level
 
@@ -83,28 +96,83 @@ let originate_eurl
   let storage = TestStorage.fa2_initial_storage trader in
   TestUtils.originate_eurl storage level
 
-let originate
+let originate_tokens
   (level: Breath.Logger.level)
   (tzbtc_trader: Breath.Context.actor)
   (usdt_trader: Breath.Context.actor)
   (eurl_trader: Breath.Context.actor) =
-  let oracle = originate_oracle level in
-  let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
-  let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
+  (tzbtc,usdt, eurl)
+
+let originate_tm
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor)
+  (admin: Breath.Context.actor): (originated_tm_contract * originated_oracle_contract * originated_oracle_contract * originated_tzbtc_contract * originated_usdt_contract * originated_eurl_contract) =
+  let (tzbtc,usdt,eurl) = originate_tokens level tzbtc_trader usdt_trader eurl_trader in
+  let oracle = originate_oracle level in
+  let additional_oracle = originate_oracle level in
+  let initial_tm_storage = TestStorage.initial_tokenmanager_storage admin.address oracle.originated_address tzbtc.originated_address  usdt.originated_address eurl.originated_address in
+  let tm =TestUtils.originate_tm initial_tm_storage level in
+  (tm,oracle,additional_oracle,tzbtc,usdt,eurl)
+
+let originate_vault_contract
+  (token:CommonTypes.token)
+  (amount:nat)
+  (batcher: originated_batcher_contract)
+  (marketmaker: originated_mm_contract )
+  (tm:originated_tm_contract )
+  (admin: Breath.Context.actor)
+  (level: Breath.Logger.level): originated_vault_contract =
+  let stor = TestStorage.initial_vault_storage token admin.address batcher.originated_address marketmaker.originated_address  tm.originated_address amount in
+  TestUtils.originate_vault token.name stor level
+
+let originate_vault_contracts
+   (batcher: originated_batcher_contract)
+   (marketmaker: originated_mm_contract )
+   (tm:originated_tm_contract )
+   (admin: Breath.Context.actor) 
+   (level: Breath.Logger.level): (originated_vault_contract * originated_vault_contract * originated_vault_contract)= 
+   let tokens = CommonUtils.TokenManagerUtils.get_valid_tokens tm.originated_address in 
+   let tzbtc_token = Option.unopt (Map.find_opt "tzBTC" tokens) in
+   let usdt_token = Option.unopt (Map.find_opt "USDT" tokens) in
+   let eurl_token = Option.unopt (Map.find_opt "EURL" tokens) in
+   let tzbtc_vault = originate_vault_contract tzbtc_token 0n batcher marketmaker tm admin level in
+   let usdt_vault = originate_vault_contract usdt_token 0n batcher marketmaker tm admin level in
+   let eurl_vault = originate_vault_contract eurl_token 0n batcher marketmaker tm admin level in
+   (tzbtc_vault,usdt_vault, eurl_vault)
+  
+
+let originate_with_admin
+  (level: Breath.Logger.level)
+  (tzbtc_trader: Breath.Context.actor)
+  (usdt_trader: Breath.Context.actor)
+  (eurl_trader: Breath.Context.actor)
+  (admin: Breath.Context.actor) =
+  let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
+  let usdt = originate_usdt usdt_trader level in
+  let eurl = originate_eurl eurl_trader level in
+  let  (tm,oracle,additional_oracle,tzbtc,usdt,eurl) = originate_tm level tzbtc_trader usdt_trader eurl_trader admin in
+  let initial_storage = TestStorage.initial_storage_with_admin oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address in
   let batcher = TestUtils.originate initial_storage level in
-  let initial_mm_storage: MarketMaker.Storage.t = TestStorage.initial_mm_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address initial_storage.administrator in
+  let initial_mm_storage: MarketMaker.MarketMaker.storage = TestStorage.initial_mm_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address batcher.originated_address tm.originated_address in
   let mm: originated_mm_contract = TestUtils.originate_mm initial_mm_storage level in
+  let (tzbtc_vault,usdt_vault, eurl_vault) = originate_vault_contracts batcher mm tm admin level in
   {
    batcher = batcher;
    marketmaker = mm;
+   tokenmanager = tm;
    oracle = oracle;
    additional_oracle = additional_oracle;
    tzbtc = tzbtc;
    usdt = usdt;
    eurl = eurl;
+   tzbtc_vault = tzbtc_vault;
+   usdt_vault = usdt_vault;
+   eurl_vault = eurl_vault;
   }
 
 let originate_with_admin_and_fee_recipient
@@ -114,24 +182,29 @@ let originate_with_admin_and_fee_recipient
   (eurl_trader: Breath.Context.actor)
   (admin: Breath.Context.actor)
   (fee_recipient: address) =
-  let oracle = originate_oracle level in
-  let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
+  let (tm,oracle,additional_oracle,tzbtc,usdt,eurl) = originate_tm level tzbtc_trader usdt_trader eurl_trader admin in
   let initial_storage = TestStorage.initial_storage_with_admin_and_fee_recipient oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address fee_recipient in
   let batcher = TestUtils.originate initial_storage level in
-  let initial_mm_storage : MarketMaker.Storage.t = TestStorage.initial_mm_storage_with_admin oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address batcher.originated_address in
+  let initial_mm_storage = TestStorage.initial_mm_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address batcher.originated_address tm.originated_address in
   let mm : originated_mm_contract = TestUtils.originate_mm initial_mm_storage level in
-  {
+  let (tzbtc_vault,usdt_vault, eurl_vault) = originate_vault_contracts batcher mm tm admin level in
+  let contracts: test_contracts = {
    batcher = batcher;
    marketmaker = mm;
+   tokenmanager = tm;
    oracle = oracle;
    additional_oracle = additional_oracle;
    tzbtc = tzbtc;
    usdt = usdt;
    eurl = eurl;
-  }
+   tzbtc_vault = tzbtc_vault;
+   usdt_vault = usdt_vault;
+   eurl_vault = eurl_vault;
+  } in
+  contracts
 
 let originate_with_batch_for_clearing
   (level: Breath.Logger.level)
@@ -139,12 +212,12 @@ let originate_with_batch_for_clearing
   (usdt_trader: Breath.Context.actor)
   (eurl_trader: Breath.Context.actor)
   (batch: Batcher.batch)
+  (admin: Breath.Context.actor)
   (pair: string)  =
-  let oracle = originate_oracle level in
-  let additional_oracle = originate_oracle level in
   let tzbtc = originate_tzbtc tzbtc_trader usdt_trader eurl_trader level in
   let usdt = originate_usdt usdt_trader level in
   let eurl = originate_eurl eurl_trader level in
+  let  (tm,oracle,additional_oracle,tzbtc,usdt,eurl) = originate_tm level tzbtc_trader usdt_trader eurl_trader admin in
   let initial_storage = TestStorage.initial_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address in
   let batch_set = initial_storage.batch_set in
   let cbi = Map.add pair 1n batch_set.current_batch_indices in
@@ -156,20 +229,28 @@ let originate_with_batch_for_clearing
   let initial_storage = { initial_storage with batch_set = batch_set; }
   in
   let batcher = TestUtils.originate initial_storage level in
+  let initial_mm_storage = TestStorage.initial_mm_storage oracle.originated_address tzbtc.originated_address usdt.originated_address eurl.originated_address admin.address batcher.originated_address tm.originated_address in
+  let mm : originated_mm_contract = TestUtils.originate_mm initial_mm_storage level in
+  let (tzbtc_vault,usdt_vault, eurl_vault) = originate_vault_contracts batcher mm tm admin level in
   {
    batcher = batcher;
+   marketmaker = mm;
+   tokenmanager = tm;
    oracle = oracle;
    additional_oracle = additional_oracle;
    tzbtc = tzbtc;
    usdt = usdt;
    eurl = eurl;
+   tzbtc_vault = tzbtc_vault;
+   usdt_vault = usdt_vault;
+   eurl_vault = eurl_vault;
   }
 
 let test_context
     (level: Breath.Logger.level) = 
       let (_, (btc_trader, usdt_trader, eurl_trader)) = Breath.Context.init_default () in
       let fee_recipient_address = usdt_trader.address in 
-      let contracts = originate_with_admin_and_fee_recipient level btc_trader usdt_trader eurl_trader eurl_trader fee_recipient_address in
+      let contracts:test_contracts = originate_with_admin_and_fee_recipient level btc_trader usdt_trader eurl_trader eurl_trader fee_recipient_address in
       {
         btc_trader = btc_trader;
         usdt_trader = usdt_trader;
@@ -203,9 +284,9 @@ let create_order
   (amount: nat)
   (side: Batcher.side)
   (tolerance: Batcher.tolerance)
-  (valid_tokens: Batcher.valid_tokens) : Batcher.external_swap_order =
-  let fromToken = Map.find from valid_tokens in
-  let toToken = Map.find to valid_tokens in
+  (valid_tokens: CommonTypes.ValidTokens.t) : Batcher.external_swap_order =
+  let fromToken = CommonTypes.ValidTokens.find_or_fail from valid_tokens in
+  let toToken = CommonTypes.ValidTokens.find_or_fail to valid_tokens in
   let nside = TestUtils.side_to_nat side in
   let swap = {
      from = {
@@ -233,28 +314,20 @@ let place_order
   (amount: nat)
   (side: Batcher.side)
   (tolerance: Batcher.tolerance)
-  (valid_tokens: valid_tokens) =
+  (valid_tokens: CommonTypes.ValidTokens.t) =
   let order = create_order from to amount side tolerance valid_tokens in
   Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (Deposit order) fee))
 
 let add_liquidity
   (actor: Breath.Context.actor)
-  (contract: originated_mm_contract)
-  (token_name: string)
-  (amount: nat)
-  (valid_tokens: valid_tokens) =
-  let token = Option.unopt (Map.find_opt token_name valid_tokens) in 
-  let token_amount = {
-     token = token;
-     amount = amount;
-  } in
-  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (AddLiquidity token_amount) 0tez))
+  (contract: originated_vault_contract)
+  (amount: nat) = 
+  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (AddLiquidity amount) 0tez))
 
 let remove_liquidity
   (actor: Breath.Context.actor)
-  (contract: originated_mm_contract)
-  (token_name: string) =
-  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (RemoveLiquidity token_name) 0tez))
+  (contract: originated_vault_contract) =
+  Breath.Context.act_as actor (fun (_u:unit) -> (Breath.Contract.transfer_to contract (RemoveLiquidity ()) 0tez))
 
 let expect_last_order_number
   (storage: storage)
@@ -269,13 +342,11 @@ let expect_rate_value
   | Some r -> Breath.Assert.is_equal "rate value" r.rate rate
 
 let get_swap_pair
-   (contract: originated_contract) 
-   (pair: string): Batcher.valid_swap_reduced option = 
+   (contract: originated_tm_contract) 
+   (pair: string): TokenManager.valid_swap_reduced option = 
    let storage = Breath.Contract.storage_of contract in
    let valid_swaps = storage.valid_swaps in
-   match Map.find_opt pair valid_swaps with 
-   | Some p -> Some p
-   | None -> None 
+   CommonTypes.ValidSwaps.find_opt pair valid_swaps
 
 let get_source_update
   (pair: string)

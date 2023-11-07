@@ -1,4 +1,5 @@
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
+#include "./errors.mligo"
 
 (* Side of an order, either BUY side or SELL side  *)
 type side =
@@ -166,6 +167,9 @@ type batch_ordertypes = (nat,  ordertypes) map
 (* Associated user address to a given set of batches and ordertypes  *)
 type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
+type market_vault_used = address option
+
+
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
   batch_number: nat;
@@ -173,13 +177,13 @@ type batch = [@layout:comb] {
   volumes : volumes;
   pair : pair;
   holdings : nat;
-  market_vault_used : bool;
+  market_vault_used : market_vault_used;
 }
 
 type reduced_batch = [@layout:comb] {
   status: batch_status;
   volumes: volumes;
-  market_vault_used : bool;
+  market_vault_used : market_vault_used;
 }
 
 type batch_indices = (string,  nat) map
@@ -208,11 +212,194 @@ type oracle_source_change = [@layout:comb] {
   oracle_precision: nat;
 }
 
-(* The tokens that are valid within the contract  *)
-type valid_tokens = (string, token) map
 
-(* The swaps of valid tokens that are accepted by the contract  *)
-type valid_swaps =  (string, valid_swap_reduced) map
+module ValidTokens = struct
+  
+ type key = string 
+ type value = token
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let find_or_fail (key:key) (object:t): value =
+   match find_opt key object with
+   | None -> failwith token_name_not_in_list_of_valid_tokens
+   | Some v -> v
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+[@inline]
+let fold_map
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t_map)
+   (seed: a): a =
+   Map.fold folder object seed
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+
+
+
+end
+
+module ValidSwaps = struct
+  
+ type key = string 
+ type value = valid_swap_reduced
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let find_or_fail (key:key) (object:t): value =
+   match find_opt key object with
+   | None -> failwith token_name_not_in_list_of_valid_tokens
+   | Some v -> v
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+[@inline]
+let fold_map
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t_map)
+   (seed: a): a =
+   Map.fold folder object seed
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+end
+
 
 (* The current, most up to date exchange rates between tokens  *)
 type rates_current = (string, exchange_rate) big_map
@@ -220,32 +407,235 @@ type rates_current = (string, exchange_rate) big_map
 type fees = {
    to_send: tez;
    to_refund: tez;
-   to_market_maker: tez;
+   to_market_makers: (address,tez) map;
    payer: address;
    recipient: address;
-   market_maker: address;
 }
 
-type market_maker_vault = {
-  total_shares: nat;
-  holdings: nat set;
-  native_token: token_amount;
-  foreign_tokens: token_amount_map;
-}
 
-type market_vaults = (string, market_maker_vault) big_map
-
-type market_vault_holding = {   
-   id: nat;
-   token: string;
+type vault_holding = {   
    holder: address;
    shares: nat;
    unclaimed: tez;
 }
 
-type user_holding_key = address * string
 
-type user_holdings =  (user_holding_key, nat) big_map
+module VaultHoldings = struct
+  
+ type key = address
+ type value = vault_holding
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
 
-type vault_holdings = (nat, market_vault_holding) big_map
+type t_map = (key,value) map
 
+[@inline]
+let empty:t = {
+    keys = Set.empty;
+    values = Big_map.empty;
+}
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let find_or_fail (key:key) (object:t): value =
+   match find_opt key object with
+   | None -> failwith token_name_not_in_list_of_valid_tokens
+   | Some v -> v
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+
+[@inline]
+let mem_map
+  (to_find:value)
+  (m: (key, value) map) : bool =
+   let find (found, (_k,v): (bool * (key * value))) : bool = if found then found else to_find = v in
+   Map.fold find m false
+
+end
+
+module Vaults = struct
+  
+ type key = string 
+ type value = address
+  
+type t = {
+  keys: key set;
+  values: (key, value) big_map
+}
+
+type t_map = (key,value) map
+
+[@inline]
+let size (object:t) : nat = Set.size object.keys
+
+
+[@inline]
+let mem (key:key) (object:t): bool = Set.mem key object.keys
+
+[@inline]
+let find_opt (key:key) (object:t): value option =
+    if Set.mem key object.keys then
+      match Big_map.find_opt key object.values with
+      | None -> (None:value option)
+      | Some v -> (Some v)
+    else
+      (None: value option)
+
+[@inline]
+let find_or_fail (key:key) (object:t): value =
+   match find_opt key object with
+   | None -> failwith token_name_not_in_list_of_valid_tokens
+   | Some v -> v
+
+[@inline]
+let upsert (key:key) (value:value) (object:t): t =
+    if Set.mem key object.keys then
+      let values = Big_map.update key (Some value) object.values in
+      {object with values = values;}
+    else
+      let values = Big_map.add key value object.values in
+      let keys = Set.add key object.keys in
+      {object with keys = keys; values = values;}
+
+[@inline]
+let remove (key:key) (object:t): t = 
+    if Set.mem key object.keys then
+      let values = Big_map.remove key object.values in
+      {object with values = values;}
+    else
+      object
+
+[@inline]
+let get_and_remove 
+  (key:key) 
+  (object:t): (value option * t) = 
+    if Set.mem key object.keys then
+      let v_opt = Big_map.find_opt key object.values in 
+      let values = Big_map.remove key object.values in
+      v_opt, {object with values = values;}
+    else
+      None, object
+
+[@inline]
+let to_map
+  (object:t) : (key,value) map =
+   let collect_from_bm ((acc, k) : ((key,value) map) * key) : (key,value) map  =
+     match Big_map.find_opt k object.values with
+     | None -> acc
+     | Some v -> Map.add k v acc
+   in 
+   Set.fold collect_from_bm object.keys (Map.empty: (key, value) map)
+
+
+[@inline]
+let fold
+   (type a)
+   (folder: (a * (key * value)) -> a)
+   (object:t)
+   (seed: a): a =
+   let mp = to_map object in
+   Map.fold folder mp seed
+
+
+[@inline]
+let mem_map
+  (to_find:value)
+  (m: (key, value) map) : bool =
+   let find (found, (_k,v): (bool * (key * value))) : bool = if found then found else to_find = v in
+   Map.fold find m false
+
+end
+
+type liquidity_injection_request = {
+  side:side;
+  from_token:token;
+  to_token:token;
+  amount:nat;
+}
+
+type get_balance_request = address * nat contract
+
+type balance_request = {
+  owner : address;
+  token_id : nat;
+}
+
+type balance_of_response = 
+[@layout:comb] {
+  request : balance_request;
+  balance : nat;
+}
+
+type balance_of_responses = balance_of_response list
+
+type balance_of = 
+[@layout:comb] {
+  requests : balance_request list;
+  callback : balance_of_responses contract;
+}

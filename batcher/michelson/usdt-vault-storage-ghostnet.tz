@@ -1,0 +1,9 @@
+(Pair (Pair (Pair "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+            {}
+            "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL")
+      (Pair (Pair (Pair 0 "USDT" (Some "KT1WNrZ7pEbpmYBGPib1e7UVCeC6GA6TkJYR") 6 (Some "FA2 token")) 0)
+            "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx")
+      0
+      {}
+      {})
+

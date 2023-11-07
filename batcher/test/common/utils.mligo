@@ -1,4 +1,5 @@
 #import "../../batcher.mligo" "Batcher"
+#import "../../vault.mligo" "Vault"
 #import "ligo-breathalyzer/lib/lib.mligo" "Breath"
 #import "@ligo/math-lib/rational/rational.mligo" "Rational"
 #import "../tokens/fa12/main.mligo" "TZBTC"
@@ -7,17 +8,18 @@
 #import "../mocks/oracle.mligo" "Oracle"
 #import "./storage.mligo" "TestStorage"
 #import "../../marketmaker.mligo" "MarketMaker"
+#import "../../tokenmanager.mligo" "TokenManager"
 
 type level = Breath.Logger.level
 let log = Breath.Logger.log
 type batcher_storage = Batcher.Storage.t
-type mm_storage = MarketMaker.Storage.t
+type mm_storage = MarketMaker.MarketMaker.storage
 type originated = Breath.Contract.originated
 type valid_swap = Batcher.valid_swap
 type external_order = Batcher.external_swap_order
 type side = Batcher.side
 type tolerance = Batcher.tolerance
-type oracle_storage = Oracle.storage
+type oracle_storage = Oracle.Oracle.storage
 type tzbtc_storage = TZBTC.storage
 type usdt_storage = USDT.storage
 type eurl_storage = EURL.storage
@@ -57,14 +59,49 @@ let originate_mm
     (storage)
     (0tez)
 
+let originate_tm
+(storage: TokenManager.TokenManager.storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    "tokenmanager"
+    (TokenManager.main)
+    (storage)
+    (0tez)
+
+let originate_vault
+(name: string)
+(storage: Vault.Vault.storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    name
+    (Vault.main)
+    (storage)
+    (0tez)
+
+
+let originate_mm
+(storage: mm_storage)
+(level: level) =
+  let () = log level storage in
+  Breath.Contract.originate_uncurried
+    level
+    "marketmaker"
+    (MarketMaker.main)
+    (storage)
+    (0tez)
+
 let originate_oracle
 (storage: oracle_storage)
 (level: level) =
   let () = log level storage in
-  Breath.Contract.originate_module
+  Breath.Contract.originate_uncurried
     level
     "oracle"
-    (contract_of Oracle)
+    (Oracle.main)
     (storage)
     (0tez)
 
