@@ -5,5 +5,5 @@ services:
     container_name: tick-ghostnet
     build:
       context: .
-      dockerfile: Dockerfile.tick.ghostnet
+      dockerfile: Dockerfile.tick.beta.ghostnet
     restart: always
