@@ -13,8 +13,6 @@ done
 
 FREQ=$(($frequency))
 
-# declare -a TICKERS=("tzBTC-USDT" "EURL-tzBTC")
-declare -a TICKERS=("BTCtz/USDT" "BTCtz/USDtz" "tzBTC/EURL" "tzBTC/USDT" "tzBTC/USDtz")
 
 tick_ticker(){
 
@@ -23,7 +21,7 @@ tick_ticker(){
 
   octez-client transfer 0 from oracle_account to $batcher_address \
     --entrypoint tick \
-    --arg "\"${1}\"" \
+    --arg "\"Unit\"" \
     --burn-cap 2
 
   set -e
@@ -44,13 +42,7 @@ tick_mm(){
 
 post_op (){
 
-for i in "${TICKERS[@]}"
-do
-   : 
-   tick_ticker "$i"
-  sleep 5
-done
-
+tick_ticker
 tick_mm
 
 }
