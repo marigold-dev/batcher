@@ -5,7 +5,6 @@ import {
   getCurrentBatchNumber,
   getOraclePrice,
   getPairsInfos,
-  newError,
 } from '../../src/actions';
 import {
   BatcherStatus,

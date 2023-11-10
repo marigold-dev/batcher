@@ -4,6 +4,7 @@ import { fetchMarketHoldingsCmd } from '@/commands/marketholdings';
 import { MarketHoldingsState } from '@/types';
 
 export const initialMHState: MarketHoldingsState = {
+  vault_address:'',
   shares: 0,
   nativeToken: {
     token: {

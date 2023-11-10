@@ -3,14 +3,12 @@ import { useDispatch } from 'react-redux';
 import { getMarketHoldings, fetchUserBalances } from '@/actions';
 import { selectCurrentVaultName } from '@/reducers';
 import { ValidTokenAmount } from '@/types/contracts/token-manager';
-import PrimaryButton from '@/components/common/PrimaryButton';
 import * as Form from '@radix-ui/react-form';
 import { scaleAmountUp } from '@/utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { compose, OpKind } from '@taquito/taquito';
 import { useSelector } from 'react-redux';
-import { NumericFormat } from 'react-number-format';
 import {
   userBalancesSelector,
   userAddressSelector,
@@ -27,13 +25,13 @@ const Vault = () => {
   const marketHoldings = useSelector(selectHoldings);
   const [amountInput, setAmount] = useState<string>('0');
   const tokenName = useSelector(selectCurrentVaultName);
-  const scaleTokenAmount = (ta: ValidTokenAmount): ValidTokenAmount => {
-    const scaledAmount = ta.amount / 10 ** ta?.token.decimals;
-    return {
-      ...ta,
-      amount: scaledAmount,
-    };
-  };
+ // const scaleTokenAmount = (ta: ValidTokenAmount): ValidTokenAmount => {
+ //   const scaledAmount = ta.amount / 10 ** (ta?.token.decimals || 0);
+ //   return {
+ //     ...ta,
+ //     amount: scaledAmount,
+ //   };
+ // };
   useEffect(() => {
     dispatch(getMarketHoldings(tokenName || '', userAddress));
   }, [dispatch, userAddress, tokenName]);

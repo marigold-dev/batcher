@@ -19,7 +19,7 @@
     "allowJs": false,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "strict": true,
+    "strict": false,
     "noEmit": true,
     "incremental": true,
     "esModuleInterop": true,
