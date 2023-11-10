@@ -977,27 +977,38 @@ module OracleUtils = struct
 
 [@inline]
 let get_oracle_price
+  (pair:string)
   (failure_code: nat)
-  (valid_swap: valid_swap_reduced) : orace_price_update =
+  (valid_swap: valid_swap_reduced)
+  (tes:TickErrors.t): orace_price_update option * TickErrors.t  =
   match Tezos.call_view "getPrice" valid_swap.oracle_asset_name valid_swap.oracle_address with
-  | Some opu -> opu
-  | None -> failwith failure_code
+  | Some opu -> Some opu, tes
+  | None -> None, TickErrors.add_tick_error pair failure_code tes
 
 [@inline]
 let oracle_price_is_not_stale
+  (pair:string)
   (deposit_time_window: nat)
-  (oracle_price_timestamp: timestamp) : unit =
+  (oracle_price_timestamp: timestamp)
+  (tes:TickErrors.t): bool * TickErrors.t =
   let dtw_i = int deposit_time_window in
-  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then () else failwith oracle_price_is_stale
+  if (Tezos.get_now () - dtw_i) < oracle_price_timestamp then 
+    true, tes
+  else 
+    false, TickErrors.add_tick_error pair oracle_price_is_stale tes
 
 [@inline]
 let is_oracle_price_newer_than_current
   (rate_name: string)
   (oracle_price_timestamp: timestamp)
-  (rates: rates_current): unit =
+  (rates: rates_current)
+  (tes:TickErrors.t): bool * TickErrors.t =
   match Big_map.find_opt rate_name rates with
-  | Some r -> if r.when >=oracle_price_timestamp then failwith oracle_price_is_not_timely
-  | None   -> ()
+  | Some r -> if r.when >=oracle_price_timestamp then 
+                false, TickErrors.add_tick_error rate_name oracle_price_is_not_timely tes
+              else
+                true, tes
+  | None   -> true, tes
 
 [@inline]
 let convert_oracle_price

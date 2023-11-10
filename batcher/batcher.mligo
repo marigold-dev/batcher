@@ -66,6 +66,7 @@ module Storage = struct
     limit_on_tokens_or_pairs : nat;
     liquidity_injection_limit_in_seconds : nat;
     deposit_time_window_in_seconds : nat;
+    tick_errors: TickErrors.t;
   }
 
 end
@@ -799,12 +800,15 @@ end
 type storage  = Storage.t
 type result = operation list * storage
 
+
+
+
 [@inline]
 let no_op (s : storage) : result =  (([] : operation list), s)
 
 type entrypoint =
   | Deposit of external_swap_order
-  | Tick of string
+  | Tick
   | Redeem
   | Cancel of pair
   | Change_fee of tez
@@ -967,8 +971,14 @@ let confirm_oracle_price_is_available_before_deposit
   if Batch_Utils.is_batch_open batch then () else
   let pair_name = get_rate_name_from_pair pair in
   let valid_swap_reduced = get_valid_swap_reduced pair_name storage in
-  let (lastupdated, _price)  = OracleUtils.get_oracle_price oracle_price_should_be_available_before_deposit valid_swap_reduced in
-  OracleUtils.oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated
+  let (lastupdated_opt, tes) = OracleUtils.get_oracle_price pair_name oracle_price_should_be_available_before_deposit valid_swap_reduced storage.tick_errors in
+  let ou = match lastupdated_opt with
+           | Some pu -> pu
+           | None -> failwith oracle_price_should_be_available_before_deposit
+  in
+  let lastupdated, _p = ou in
+  let succeeded, _tes = OracleUtils.oracle_price_is_not_stale pair_name storage.deposit_time_window_in_seconds lastupdated tes in
+  if succeeded then ()  else failwith oracle_price_is_stale
 
 [@inline]
 let confirm_swap_pair_is_disabled_prior_to_removal
@@ -1043,9 +1053,16 @@ let tick_price
   (valid_swap : valid_swap)
   (storage : storage) : storage =
   let valid_swap_reduced = valid_swap_to_valid_swap_reduced valid_swap in
-  let (lastupdated, price) = OracleUtils.get_oracle_price unable_to_get_price_from_oracle valid_swap_reduced in
-  let () = OracleUtils.is_oracle_price_newer_than_current rate_name lastupdated storage.rates_current in
-  let () = OracleUtils.oracle_price_is_not_stale storage.deposit_time_window_in_seconds lastupdated in
+  let (lastupdated_opt, tes) = OracleUtils.get_oracle_price rate_name unable_to_get_price_from_oracle valid_swap_reduced storage.tick_errors in
+  let storage = {storage with tick_errors = tes; } in
+  if Option.is_none lastupdated_opt then storage else
+  let lastupdated, price = Option.unopt lastupdated_opt in
+  let succeeded,tes = OracleUtils.is_oracle_price_newer_than_current rate_name lastupdated storage.rates_current tes in
+  let storage = {storage with tick_errors = tes; } in
+  if not succeeded then storage else
+  let succeeded, tes = OracleUtils.oracle_price_is_not_stale rate_name storage.deposit_time_window_in_seconds lastupdated tes in
+  let storage = {storage with tick_errors = tes; } in
+  if not succeeded then storage else
   let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in 
   let oracle_rate = OracleUtils.convert_oracle_price valid_swap.oracle_precision valid_swap.swap lastupdated price valid_tokens in
   let rates_current = update_current_rate (rate_name) (oracle_rate) (storage.rates_current) in
@@ -1062,17 +1079,25 @@ let tick_price
 
 
 [@inline]
-let tick
+let tick_rate
  (rate_name: string)
+ (vswpr: valid_swap_reduced) 
+ (valid_tokens: ValidTokens.t_map) 
+ (storage : storage) : storage =
+ let vswp = valid_swap_reduced_to_valid_swap vswpr 1n valid_tokens in
+ tick_price rate_name vswp storage
+
+
+[@inline]
+let tick
  (storage : storage) : result =
  let () = reject_if_tez_supplied () in
  let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
- match Map.find_opt rate_name valid_swaps with
- | Some vswpr -> let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
-                 let vswp = valid_swap_reduced_to_valid_swap vswpr 1n valid_tokens in
-                 let storage = tick_price rate_name vswp storage in
-                 no_op (storage)
- | None -> failwith swap_does_not_exist
+ let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
+ let tick_all_rates (stor,(p,vsr):( storage * (string * valid_swap_reduced))) :  storage = tick_rate p vsr valid_tokens stor
+ in     
+ let storage = Map.fold tick_all_rates valid_swaps storage in
+ no_op storage
 
 [@inline]
 let change_fee
@@ -1219,7 +1244,7 @@ let main
    | Redeem -> redeem storage
    | Cancel pair -> cancel pair storage
   (* Maintenance endpoint *)
-   | Tick r ->  tick r storage
+   | Tick ->  tick storage
   (* Admin endpoints *)
    | Change_fee new_fee -> change_fee new_fee storage
    | Change_liquidity_injection_time_limit new_time_limit -> change_liquidity_injection_limit_in_seconds new_time_limit storage

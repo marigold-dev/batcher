@@ -10,7 +10,6 @@ type side =
 type tolerance =
   Plus | Exact | Minus
 
-
 type mint_burn_request = { 
    name: string;
    amount: nat;
@@ -169,6 +168,11 @@ type user_batch_ordertypes = (address, batch_ordertypes) big_map
 
 type market_vault_used = address option
 
+type tick_error = {
+  time: timestamp;
+  error: nat;
+}
+
 
 (* Batch of orders for the same pair of tokens *)
 type batch = [@layout:comb] {
@@ -212,6 +216,32 @@ type oracle_source_change = [@layout:comb] {
   oracle_precision: nat;
 }
 
+
+module TickErrors = struct
+
+type t = (string,tick_error) big_map
+
+let clear_tick_error
+  (key:string)
+  (tes:t):t = 
+  match Big_map.find_opt key tes with
+        | Some _ -> Big_map.remove key tes
+        | None -> tes
+  
+
+let add_tick_error
+  (key:string)
+  (error:nat) 
+  (tes:t): t = 
+  let tes = clear_tick_error key tes in
+  let now = Tezos.get_now () in
+  let error = {
+   time = now;
+   error = error;
+  } in
+  Big_map.add key error tes
+
+end
 
 module ValidTokens = struct
   
