@@ -2,8 +2,7 @@
             (Pair "tz1burnburnburnburnburnburnburjAYjjX" 0)
             10
             420)
-      (Pair (Pair "KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT" {})
-            {}
-            "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx")
+      (Pair (Pair "KT1XKvKiTTj8N6WKv3MhnZhFjZopFGQGBTdT" {}) {} {})
+      "KT1SG9z3pU1cNh8dSranm5C5HXWphWi2pLwx"
       {})
 

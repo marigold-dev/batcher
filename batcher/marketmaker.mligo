@@ -102,25 +102,27 @@ let execute_liquidity_request
   (opposing_volume: nat)
   (vault_address:address)
   (valid_tokens:ValidTokens.t_map)
-  (valid_swaps:ValidSwaps.t_map) : operation = 
+  (valid_swaps:ValidSwaps.t_map): operation = 
   let pair_name = find_lexicographical_pair_name lt.name ot.name in 
   match Map.find_opt pair_name valid_swaps with
   | None  -> failwith swap_does_not_exist
-  | Some vs -> let (lastupdated, price) = OracleUtils.get_oracle_price unable_to_get_price_from_oracle vs in
-               let swap:swap = swap_reduced_to_swap vs.swap 1n valid_tokens in
-               let oracle_rate = OracleUtils.convert_oracle_price vs.oracle_precision swap lastupdated price valid_tokens in
-               let (side,vol_req) = if lt.name = vs.swap.to then
-                                      (Sell,get_inverse_volume oracle_rate opposing_volume)
-                                    else
-                                      (Buy,get_volume oracle_rate opposing_volume)
-               in
-               let req = {                      
-                  side = side;
-                  from_token = lt;
-                  to_token = ot;
-                  amount = vol_req;
-               } in
-               send_liquidity_injection_request req vault_address
+  | Some vs -> let (lastupdated_opt, _tes) = OracleUtils.get_oracle_price pair_name unable_to_get_price_from_oracle vs (Big_map.empty: TickErrors.t) in
+               (match lastupdated_opt with
+                | None -> failwith unable_to_get_price_from_oracle
+                | Some (lastupdated, price) -> let swap:swap = swap_reduced_to_swap vs.swap 1n valid_tokens in
+                                               let oracle_rate = OracleUtils.convert_oracle_price vs.oracle_precision swap lastupdated price valid_tokens in
+                                               let (side,vol_req) = if lt.name = vs.swap.to then
+                                                                      (Sell,get_inverse_volume oracle_rate opposing_volume)
+                                                                    else
+                                                                      (Buy,get_volume oracle_rate opposing_volume)
+                                               in
+                                               let req = {                      
+                                                  side = side;
+                                                  from_token = lt;
+                                                  to_token = ot;
+                                                  amount = vol_req;
+                                               } in
+                                               send_liquidity_injection_request req vault_address)
 
 
 [@inline]

@@ -1,4 +1,5 @@
 #import "../batcher.mligo" "Batcher"
+#import "../types.mligo" "Types"
 let meta : bytes =
   0x68747470733a2f2f697066732e6763702e6d617269676f6c642e6465762f697066732f516d56375a534b6358324d4e75656938745a3268723555484d5a66737039476b375675345878766d6246734a4e45
 
@@ -19,5 +20,6 @@ let f(_:unit) : Batcher.Storage.t = {
   limit_on_tokens_or_pairs = 10n;
   liquidity_injection_limit_in_seconds = 420n;
   deposit_time_window_in_seconds = 600n;
+  tick_errors = (Big_map.empty: Types.TickErrors.t );
 }
 
