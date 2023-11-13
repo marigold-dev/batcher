@@ -20,7 +20,7 @@ tick_ticker(){
   echo "Tick batcher contract ticker ${1} - $batcher_address"
 
   octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint tick \
+    --entrypoint "tick" \
     --arg "unit" \
     --burn-cap 2
 
@@ -33,7 +33,7 @@ tick_mm(){
   echo "Tick market maker contract - $market_maker_address"
 
   octez-client transfer 0 from oracle_account to $market_maker_address \
-    --entrypoint tick \
+    --entrypoint "tick" \
     --arg "unit" \
     --burn-cap 2
 
