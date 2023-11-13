@@ -15,8 +15,8 @@ const CONTRACTS_NAMES = [
 ];
 
 const ghostnet = {
-  batcher: 'KT1GSDzo6PU8i732m8WuY9XcTyxiGRaYBsv2',
-  market_maker: 'KT1T4dbnaNKpGLV89R6drrupy5HVE74bQE3r',
+  batcher: 'KT1PYcVdp1R6NmTYziQ8a4JTWSEmLgq8xpBV',
+  market_maker: 'KT1WntzAUXtrMB72uBaQLUiQobaqKuHddQFt',
   token_manager: 'KT1HLQ4kk4nUjXxBBR4PE3sAQzv4fHRMoBGD',
   tzBTC_vault: 'KT1Jr5jTm2VG9eyosoqZwZYuN95PjUpysNyS',
   USDT_vault: 'KT1A2uq9zMgXGJGhXRiHvUa8PGEKMn9dyyJN',
