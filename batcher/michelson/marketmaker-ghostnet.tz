@@ -1013,5 +1013,22 @@
                  DIG 5 ;
                  DIG 6 ;
                  DROP 5 ;
-                 PAIR } } } }
+                 PAIR } } } ;
+  view "get_vaults"
+       unit
+       (map string address)
+       { CDR ;
+         CDR ;
+         CDR ;
+         EMPTY_MAP string address ;
+         DUP 2 ;
+         CAR ;
+         ITER { SWAP ;
+                DUP 3 ;
+                CDR ;
+                DUP 3 ;
+                GET ;
+                IF_NONE { SWAP ; DROP } { DIG 2 ; SWAP ; SOME ; SWAP ; UPDATE } } ;
+         SWAP ;
+         DROP } }
 

@@ -196,20 +196,6 @@ const exchangeReducer = (
       return loop(state, fetchVolumesCmd(state.batchNumber));
     case 'UPDATE_VOLUMES':
       return { ...state, volumes: action.payload.volumes };
-   /* case 'NO_BATCH_ERROR':    //TODO - No batch being open isn't an error - the first deposit will open a batch
-      return loop(
-        {
-          ...state,
-          batcherStatus: {
-            status: BatcherStatus.NONE,
-            at: null,
-            startTime: null,
-            remainingTime: 0,
-          },
-          batchNumber: 0,
-        },
-        Cmd.action(newError('No batch open for this pair.'))
-      ); */
     default:
       return state;
   }

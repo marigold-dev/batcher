@@ -40,7 +40,7 @@ const fetchCurrentBatchNumberCmd = (pair: SwapNames) =>
     },
     {
       successActionCreator: updateBatchNumber,
-      failActionCreator: (e: string) => noBatchError(e),
+      //failActionCreator: (e: string) => noBatchError(e),
     }
   );
 

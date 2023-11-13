@@ -165,6 +165,8 @@ let tick
 
 end
 
+[@view]
+let get_vaults ((), storage : unit * MarketMaker.storage)  = Vaults.to_map storage.vaults
 
 type entrypoint =
   | Change_admin_address of address

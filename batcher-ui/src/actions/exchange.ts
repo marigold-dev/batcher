@@ -108,11 +108,6 @@ export const updateVolumes = (volumes: unknown) =>
     payload: { volumes },
   } as const);
 
-export const noBatchError = (errorMessage: string) =>
-  ({
-    type: 'NO_BATCH_ERROR',
-    payload: { errorMessage },
-  } as const);
 
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
@@ -131,5 +126,4 @@ export type ExchangeActions =
   | ReturnType<typeof getOraclePrice>
   | ReturnType<typeof updateOraclePrice>
   | ReturnType<typeof getVolumes>
-  | ReturnType<typeof updateVolumes>
-  | ReturnType<typeof noBatchError>;
+  | ReturnType<typeof updateVolumes>;

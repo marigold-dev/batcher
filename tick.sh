@@ -43,8 +43,9 @@ tick_mm(){
 post_op (){
 
 tick_ticker
+sleep $FREQ
 tick_mm
-
+sleep $FREQ
 }
 
 
@@ -52,5 +53,4 @@ tick_mm
 while true
 do
 	post_op
-	sleep $FREQ
 done
