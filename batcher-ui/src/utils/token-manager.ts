@@ -63,9 +63,9 @@ export const getLexicographicalPairName = (
   from: string
 ): string => {
   if (to > from) {
-    return `${to}/${from}`;
+    return `${to}-${from}`;
   } else {
-    return `${from}/${to}`;
+    return `${from}-${to}`;
   }
 };
 
@@ -74,7 +74,6 @@ export const getSwapsMetadata = async () => {
   const validSwaps = storage['valid_swaps'];
   const names = validSwaps.keys;
   const bm = await api.bigMapsGetBigMapById(validSwaps.values);
-  console.info('DEBUG - validSwaps bm ', bm.value);
   return Promise.all(
     names.map(async swap => {
       const escapedPair = encodeURIComponent(swap);
@@ -110,7 +109,7 @@ export const getPairsInformation = async (
   const storage = await getTokenManagerStorage();
   //const validSwaps = storage['valid_swaps']; //TODO - Only swaps pairs allowed by the contract should be displayed. A token might not be swappable with every other token
   const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('/');
+  const pairs = pair.split('-');
   const left = (await getTokenFromBigmap(validTokens.values, pairs[0])).value;
   const right = (await getTokenFromBigmap(validTokens.values, pairs[1])).value;
 
