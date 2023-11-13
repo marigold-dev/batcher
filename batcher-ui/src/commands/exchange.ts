@@ -16,7 +16,6 @@ import {
   updateVolumes,
   batcherTimerId,
   updateRemainingTime,
-  noBatchError,
   newError,
 } from '@/actions';
 import { BatcherStatus, CurrentSwap, SwapNames } from '@/types';

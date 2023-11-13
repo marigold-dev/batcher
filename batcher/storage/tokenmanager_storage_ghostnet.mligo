@@ -41,9 +41,9 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
   ];
   };
   valid_swaps  = {
-   keys = Set.literal ["tzBTC/USDT";"BTCtz/USDtz";"tzBTC/USDtz";"BTCtz/USDT";"tzBTC/EURL"] ;
+   keys = Set.literal ["tzBTC-USDT";"BTCtz-USDtz";"tzBTC-USDtz";"BTCtz-USDT";"tzBTC-EURL"] ;
    values = Big_map.literal [
-    ("tzBTC/USDT", {
+    ("tzBTC-USDT", {
         swap = {
             from =  "tzBTC";
             to =  "USDT";
@@ -54,7 +54,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz/USDtz", {
+    ("BTCtz-USDtz", {
         swap = {
             from =  "BTCtz";
             to =  "USDtz";
@@ -65,7 +65,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("tzBTC/USDtz", {
+    ("tzBTC-USDtz", {
         swap = {
             from =  "tzBTC";
             to =  "USDtz";
@@ -76,7 +76,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz/USDT", {
+    ("BTCtz-USDT", {
         swap = {
             from =  "BTCtz";
             to =  "USDT";
@@ -87,7 +87,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("tzBTC/EURL", {
+    ("tzBTC-EURL", {
         swap = {
           from = "tzBTC";
           to = "EURL";

@@ -1,11 +1,15 @@
 import {
   TokenManagerStorage,
   ValidTokensBigmapItem,
+  ValidSwapsBigmapItem,
   CurrentSwap,
   ValidToken,
   ValidTokenAmount,
 } from '@/types';
 import { checkStatus, scaleAmountDown } from '@/utils/utils';
+import * as api from '@tzkt/sdk-api';
+
+api.defaults.baseUrl = `${process.env.NEXT_PUBLIC_TZKT_API_URI}`;
 
 export const getTokenManagerStorage = (): Promise<TokenManagerStorage> =>
   fetch(
@@ -18,6 +22,14 @@ const getTokenFromBigmap = (
 ): Promise<ValidTokensBigmapItem> =>
   fetch(
     `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${tokenName}`
+  ).then(checkStatus);
+
+const getSwapFromBigmap = (
+  bigMapId: number,
+  swapName: string
+): Promise<ValidSwapsBigmapItem> =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${swapName}`
   ).then(checkStatus);
 
 export const getTokensMetadata = async () => {
@@ -41,6 +53,40 @@ export const getTokensMetadata = async () => {
         name: t.value.name,
         address: t.value.address,
         icon,
+      };
+    })
+  );
+};
+
+export const getLexicographicalPairName = (
+  to: string,
+  from: string
+): string => {
+  if (to > from) {
+    return `${to}/${from}`;
+  } else {
+    return `${from}/${to}`;
+  }
+};
+
+export const getSwapsMetadata = async () => {
+  const storage = await getTokenManagerStorage();
+  const validSwaps = storage['valid_swaps'];
+  const names = validSwaps.keys;
+  const bm = await api.bigMapsGetBigMapById(validSwaps.values);
+  console.info('DEBUG - validSwaps bm ', bm.value);
+  return Promise.all(
+    names.map(async swap => {
+      const escapedPair = encodeURIComponent(swap);
+      const t = await getSwapFromBigmap(validSwaps.values, escapedPair);
+      const swapname = getLexicographicalPairName(
+        t.value.swap.to,
+        t.value.swap.from
+      );
+      return {
+        name: swapname,
+        to: t.value.swap.to,
+        from: t.value.swap.from,
       };
     })
   );

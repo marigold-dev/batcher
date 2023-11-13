@@ -364,8 +364,8 @@
                                              DUP 2 ;
                                              COMPARE ;
                                              GT ;
-                                             IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                             IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                              DUP 7 ;
                                              DUP 2 ;
                                              GET ;
@@ -702,8 +702,8 @@
                                              DUP 2 ;
                                              COMPARE ;
                                              GT ;
-                                             IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                             IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                              DUP 7 ;
                                              DUP 2 ;
                                              GET ;

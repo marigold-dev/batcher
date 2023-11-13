@@ -11,7 +11,7 @@ import { currentSwapSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
 import { changePair } from '@/actions';
 import Image from 'next/image';
-import { getTokensMetadata } from '@/utils/token-manager';
+import { getTokensMetadata, getSwapsMetadata } from '@/utils/token-manager';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -22,6 +22,8 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   const dispatch = useDispatch();
 
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
+  const [availableSwaps, setAvailableSwaps] = useState<any[]>([]);
+
 
   const displayValue = useCallback(() => {
     if (isReverse && isFrom) return swap.to.name;
@@ -39,17 +41,22 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
         setAvailableTokens(tokens);
       }
     );
+    getSwapsMetadata().then(
+      (swaps: { name: string; to: string; from: string }[]) => {
+        setAvailableSwaps(swaps);
+      }
+    );
   }, []);
 
   return (
     <Select.Root
       value={displayValue()}
       onValueChange={value => {
-        //TODO: change this when we had more pair
-        const pair =
-          value === 'tzBTC' ? `tzBTC/${swap.to.name}` : `tzBTC/${value}`;
-        const reversed =
-          (!isFrom && value === 'tzBTC') || (isFrom && value !== 'tzBTC');
+        //const pair = isFrom ? `${value}/${swap.to.name}` : `${swap.from.name}/${value}`;
+        //const availableSwap = availableSwaps[pair];
+        //  const reversed = (!isFrom && value === ${swap.from.name}) || (isFrom && value === ${swap.to.name});
+        const pair = 'tzBTC/USDT';
+        const reversed = false;
         dispatch(changePair(pair, reversed));
       }}
     >
