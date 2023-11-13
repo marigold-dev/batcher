@@ -2,7 +2,7 @@
 
 set -e
 
-while getopts b:f: flag
+while getopts b:m:f: flag
 do
   case "${flag}" in
     b) batcher_address=${OPTARG};;
