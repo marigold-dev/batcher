@@ -21,7 +21,7 @@ tick_ticker(){
 
   octez-client transfer 0 from oracle_account to $batcher_address \
     --entrypoint "tick" \
-    --arg "unit" \
+    --arg "Unit" \
     --burn-cap 2
 
   set -e
@@ -34,7 +34,7 @@ tick_mm(){
 
   octez-client transfer 0 from oracle_account to $market_maker_address \
     --entrypoint "tick" \
-    --arg "unit" \
+    --arg "Unit" \
     --burn-cap 2
 
   set -e
