@@ -17,7 +17,7 @@ export const eventReducer = (
 ) => {
   switch (action.type) {
     case 'NEW_EVENT':
-      return loop(state, newEventCmd(action.payload.event));
+      return loop(state, newEventCmd(action.payload.event, action.payload.tokens));
     case 'NEW_INFO':
       return {
         ...state,

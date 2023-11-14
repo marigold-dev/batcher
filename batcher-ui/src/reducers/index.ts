@@ -8,7 +8,6 @@ import {
   MarketHoldingsState,
   EventsState,
   HoldingsState,
-  TokensState,
 } from '../types';
 import { marketHoldingsReducer } from '@/reducers/marketholdings';
 import { eventReducer } from '@/reducers/events';

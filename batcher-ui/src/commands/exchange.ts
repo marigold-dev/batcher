@@ -95,10 +95,10 @@ const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   );
 };
 
-const fetchVolumesCmd = (batchNumber: number, tokens:Map<string,Token>) => {
+const fetchVolumesCmd = (batchNumber: number, tokens: Map<string, Token>) => {
   return Cmd.run(
     () => {
-      return getVolumes(batchNumber,tokens);
+      return getVolumes(batchNumber, tokens);
     },
     {
       successActionCreator: updateVolumes,
@@ -111,8 +111,9 @@ const fetchTokensCmd = () => {
   return Cmd.run(
     async () => {
       const tokens = await getTokens();
-
-      return tokens;
+      const mapped: Map<string, Token> = ((tokens as unknown) as Map<string, Token>);
+      console.info('Mapped tokens', mapped);
+      return mapped;
     },
     {
       successActionCreator: updateTokens,

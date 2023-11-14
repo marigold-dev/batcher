@@ -457,14 +457,13 @@ const convertHoldingToPayout = (
   return [scaled_payout, scaled_remainder];
 };
 
-const findTokensForBatch = (batch: BatchBigmap, tokens: any) => {
+const findTokensForBatch = (batch: BatchBigmap, tokens: Map<string,Token>) => {
   const pair = batch.pair;
-  const toks = Object.values(tokens)[0];
-  const buyToken = toks.get(pair.string_0);
-  const sellToken = toks.get(pair.string_1);
+  const buyToken = tokens.get(pair.string_0);
+  const sellToken = tokens.get(pair.string_1);
   const tkns = {
-    to: { name: buyToken.name, decimals: parseInt(buyToken.decimals, 10) },
-    from: { name: sellToken.name, decimals: parseInt(sellToken.decimals, 10) },
+    to: { name: buyToken.name, decimals: buyToken.decimals },
+    from: { name: sellToken.name, decimals: sellToken.decimals },
   };
   return tkns;
 };

@@ -1,9 +1,9 @@
 import { /* HubConnection */ HubConnectionBuilder } from '@microsoft/signalr';
 import React, { createContext, useEffect } from 'react';
-// import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { newEvent } from '@/actions/events';
-// import { userAddressSelector } from 'src/reducers';
+import { tokensSelector } from 'src/reducers';
 import { setup /* subscribeTokenBalances */ } from '@/utils/webSocketUtils';
 
 export const EventsContext = createContext<{}>({});
@@ -12,6 +12,7 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
   // const [socket, setSocket] = useState<HubConnection | undefined>(undefined);
   const dispatch = useDispatch();
   // const userAddress = useSelector(userAddressSelector);
+  const tokens = useSelector(tokensSelector);
 
   useEffect(() => {
     const socket = new HubConnectionBuilder()
@@ -20,9 +21,9 @@ export const EventsProvider = ({ children }: { children: React.ReactNode }) => {
     setup(socket);
     // setSocket(socket);
     socket.on('bigmaps', e => {
-      if (e.data) dispatch(newEvent(e));
+      if (e.data) dispatch(newEvent(e, tokens));
     });
-  }, [dispatch]);
+  }, [dispatch, tokens]);
 
   // useEffect(() => {
   //   console.warn(socket?.state, userAddress);

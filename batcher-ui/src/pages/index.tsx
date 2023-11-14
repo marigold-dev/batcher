@@ -7,7 +7,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   currentPairSelector,
   userAddressSelector,
-  tokensSelector,
 } from '@/reducers';
 import {
   getTokens,
@@ -19,7 +18,7 @@ import {
 const Swap = () => {
   const userAddress = useSelector(userAddressSelector);
   const tokenPair = useSelector(currentPairSelector);
-  const tokens = useSelector(tokensSelector);
+  //const tokens = useSelector(tokensSelector);
 
   const dispatch = useDispatch();
 
@@ -39,7 +38,7 @@ const Swap = () => {
 
   useEffect(() => {
     dispatch(getTokens());
-  }, [ dispatch]);
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col md:mx-[15%] mx-4">

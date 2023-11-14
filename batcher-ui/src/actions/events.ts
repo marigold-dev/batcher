@@ -1,9 +1,9 @@
 import type { BigMapEvent } from '@/types';
 
-export const newEvent = (event: BigMapEvent) =>
+export const newEvent = (event: BigMapEvent, tokens:any) =>
   ({
     type: 'NEW_EVENT',
-    payload: { event },
+    payload: { event, tokens },
   } as const);
 
 export const closeToast = () =>

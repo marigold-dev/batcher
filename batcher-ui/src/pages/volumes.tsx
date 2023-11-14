@@ -8,7 +8,6 @@ import {
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { getVolumes } from '@/actions';
-import { batch } from 'react-redux';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);

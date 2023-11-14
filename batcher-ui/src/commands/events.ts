@@ -12,6 +12,7 @@ import type {
   OrderBookBigmap,
   RatesCurrentBigmap,
   BigMapEvent,
+  Token,
 } from '@/types';
 import {
   computeAllHoldings,
@@ -20,7 +21,7 @@ import {
   toVolumes,
 } from '@/utils/utils';
 
-export const newEventCmd = (event: BigMapEvent) => {
+export const newEventCmd = (event: BigMapEvent, tokens: Map<string, Token>) => {
   return Cmd.run(
     (dispatch, getState) => {
       return event.data.map(async eventData => {
@@ -30,14 +31,17 @@ export const newEventCmd = (event: BigMapEvent) => {
               case 'batch_set.batches': {
                 const data = eventData.content.value as BatchBigmap;
                 const status = mapStatus(data);
+                //const toks = Object.values(tokens)[0];
+                const buyToken = tokens.get(data.pair.string_0);
+                const sellToken = tokens.get(data.pair.string_1);
                 //! new batch
                 dispatch(updateBatchNumber(parseInt(data.batch_number)));
                 dispatch(updateBatcherStatus(status));
                 dispatch(
                   updateVolumes(
                     toVolumes(data.volumes, {
-                      buyDecimals: parseInt(data.pair.decimals_1, 10),
-                      sellDecimals: parseInt(data.pair.decimals_0, 10),
+                      buyDecimals: buyToken.decimals,
+                      sellDecimals: sellToken.decimals,
                     })
                   )
                 );
@@ -49,7 +53,7 @@ export const newEventCmd = (event: BigMapEvent) => {
                 const userAddress = userAddressSelector(getState());
                 //! user addresses are keys of this bigmap so we need to ensure that the key is the user address
                 if (userAddress === eventData.content.key) {
-                  const holdings = await computeAllHoldings(data);
+                  const holdings = await computeAllHoldings(data, tokens);
                   dispatch(updateHoldings(holdings));
                 }
                 return Promise.resolve();
@@ -64,7 +68,7 @@ export const newEventCmd = (event: BigMapEvent) => {
               case 'rates_current': {
                 //! oracle price has changed
                 const data = eventData.content.value as RatesCurrentBigmap;
-                console.info("Oracle change",data);
+                console.info('Oracle change', data);
                 dispatch(
                   updateOraclePrice(
                     computeOraclePrice(data.rate, {
@@ -79,12 +83,14 @@ export const newEventCmd = (event: BigMapEvent) => {
                 //! batch status has changed
                 const data = eventData.content.value as BatchBigmap;
                 const status = mapStatus(data);
+                const buyToken = tokens.get(data.pair.string_0);
+                const sellToken = tokens.get(data.pair.string_1);
                 dispatch(updateBatcherStatus(status));
                 dispatch(
                   updateVolumes(
                     toVolumes(data.volumes, {
-                      buyDecimals: parseInt(data.pair.decimals_1, 10),
-                      sellDecimals: parseInt(data.pair.decimals_0, 10),
+                      buyDecimals: buyToken.decimals,
+                      sellDecimals: sellToken.decimals,
                     })
                   )
                 );
@@ -96,7 +102,7 @@ export const newEventCmd = (event: BigMapEvent) => {
                 const userAddress = userAddressSelector(getState());
                 //! user addresses are keys of this bigmap so we need to ensure that the key is the user address
                 if (userAddress === eventData.content.key) {
-                  const holdings = await computeAllHoldings(data);
+                  const holdings = await computeAllHoldings(data, tokens);
                   dispatch(updateHoldings(holdings));
                 }
                 return Promise.resolve();

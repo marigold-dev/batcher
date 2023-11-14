@@ -200,6 +200,8 @@ const exchangeReducer = (
     case 'UPDATE_VOLUMES':
       return { ...state, volumes: action.payload.volumes };
     case 'UPDATE_TOKENS':
+      console.info('tokens', action.payload.tokens);
+      console.info('state', state);
       return { ...state, tokens: action.payload.tokens };
     case 'GET_TOKENS':
       return loop(state, fetchTokensCmd());

@@ -1,4 +1,3 @@
-import { boolean } from "fp-ts";
 
 export type TokenManagerStorage = {
   valid_swaps: {

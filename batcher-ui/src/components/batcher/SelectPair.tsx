@@ -11,7 +11,7 @@ import { currentSwapSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
 import { changePair } from '@/actions';
 import Image from 'next/image';
-import { getTokensMetadata, getSwapsMetadata } from '@/utils/token-manager';
+import { getTokensMetadata } from '@/utils/token-manager';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -21,8 +21,8 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   const { swap, isReverse } = useSelector(currentSwapSelector);
   const dispatch = useDispatch();
 
+  //const tokens = useSelector(tokensSelector);
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
-  const [availableSwaps, setAvailableSwaps] = useState<any[]>([]);
 
   const displayValue = useCallback(() => {
     if (isReverse && isFrom) return swap.to.name;
@@ -38,11 +38,6 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
         tokens: { name: string; address: string; icon: string | undefined }[]
       ) => {
         setAvailableTokens(tokens);
-      }
-    );
-    getSwapsMetadata().then(
-      (swaps: { name: string; to: string; from: string }[]) => {
-        setAvailableSwaps(swaps);
       }
     );
   }, []);
