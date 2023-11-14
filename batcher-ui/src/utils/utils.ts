@@ -459,13 +459,10 @@ const convertHoldingToPayout = (
 
 const findTokensForBatch = (batch: BatchBigmap, tokens: any) => {
   const pair = batch.pair;
-  console.info("tokens",tokens);
   const toks = Object.values(tokens)[0];
   const buyToken = toks.get(pair.string_0);
   const sellToken = toks.get(pair.string_1);
   const tkns = {
-    // buy_token_name: pair.name_0,
-    // sell_token_name: pair.name_1,
     to: { name: buyToken.name, decimals: parseInt(buyToken.decimals, 10) },
     from: { name: sellToken.name, decimals: parseInt(sellToken.decimals, 10) },
   };
@@ -518,8 +515,6 @@ const computeHoldingsByBatchAndDeposit = (
 ) => {
   const side = getSideFromDeposit(deposit);
   const tokens = findTokensForBatch(batch, tokenMap);
-  console.info('side', side);
-  console.info('tokens', tokens);
 
   if (batchIsCleared(batch.status)) {
     const clearing = batch.status['cleared'].clearing;
@@ -686,8 +681,6 @@ export const computeAllHoldings = async (
 ) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
-      console.info('batch number', batchNumber);
-      console.info('deposits', deposits);
       const batch = await getBigMapByIdAndBatchNumber(
         parseInt(batchNumber, 10)
       );

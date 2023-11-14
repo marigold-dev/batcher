@@ -10,7 +10,6 @@ const Holdings = () => {
   const tokens = useSelector(tokensSelector);
   const { open, cleared } = useSelector(getHoldings);
   const userAddress = useSelector(userAddressSelector);
- console.info("TOKENS", tokens);
   const dispatch = useDispatch();
 
   const hasClearedHoldings = useCallback(
