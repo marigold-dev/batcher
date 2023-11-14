@@ -41,58 +41,58 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
   ];
   };
   valid_swaps  = {
-   keys = Set.literal ["tzBTC/USDT";"BTCtz/USDtz";"tzBTC/USDtz";"BTCtz/USDT";"tzBTC/EURL"] ;
+   keys = Set.literal ["tzBTC-USDT";"BTCtz-USDtz";"tzBTC-USDtz";"BTCtz-USDT";"tzBTC-EURL"] ;
    values = Big_map.literal [
-    ("tzBTC/USDT", {
+    ("tzBTC-USDT", {
         swap = {
             from =  "tzBTC";
             to =  "USDT";
         };
-        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_address = ("KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM": address);
         oracle_asset_name = "BTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz/USDtz", {
+    ("BTCtz-USDtz", {
         swap = {
             from =  "BTCtz";
             to =  "USDtz";
         };
-        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_address = ("KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM": address);
         oracle_asset_name = "BTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
     );
-    ("tzBTC/USDtz", {
+    ("tzBTC-USDtz", {
         swap = {
             from =  "tzBTC";
             to =  "USDtz";
         };
-        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_address = ("KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM": address);
         oracle_asset_name = "BTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz/USDT", {
+    ("BTCtz-USDT", {
         swap = {
             from =  "BTCtz";
             to =  "USDT";
         };
-        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_address = ("KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM": address);
         oracle_asset_name = "BTC-USDT";
         oracle_precision = 6n;
         is_disabled_for_deposits = false
       }
     );
-    ("tzBTC/EURL", {
+    ("tzBTC-EURL", {
         swap = {
           from = "tzBTC";
           to = "EURL";
         };
-        oracle_address = ("KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ": address);
+        oracle_address = ("KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM": address);
         oracle_asset_name = "BTC-EUR";
         oracle_precision = 6n;
         is_disabled_for_deposits = false

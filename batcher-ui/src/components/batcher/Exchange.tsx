@@ -381,7 +381,7 @@ const Exchange = () => {
 
           <Form.Submit asChild>
             <button
-              disabled={!userAddress || batcherStatus !== BatcherStatus.OPEN}
+              disabled={!userAddress || batcherStatus === BatcherStatus.CLOSED}
               className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
               Swap
             </button>

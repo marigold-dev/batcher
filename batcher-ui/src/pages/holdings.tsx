@@ -1,16 +1,15 @@
 import React, { useCallback, useContext, useEffect } from 'react';
 import { TezosToolkitContext } from '@/contexts/tezos-toolkit';
 import { useDispatch, useSelector } from 'react-redux';
-import { getHoldings, userAddressSelector } from '@/reducers';
+import { getHoldings, userAddressSelector, tokensSelector } from '@/reducers';
 import { getHoldings as getHoldingsAction, newError, newInfo } from '@/actions';
 
 const Holdings = () => {
   const { tezos } = useContext(TezosToolkitContext);
   const contractAddress = process.env.NEXT_PUBLIC_BATCHER_CONTRACT_HASH;
-
+  const tokens = useSelector(tokensSelector);
   const { open, cleared } = useSelector(getHoldings);
   const userAddress = useSelector(userAddressSelector);
-
   const dispatch = useDispatch();
 
   const hasClearedHoldings = useCallback(
@@ -20,9 +19,9 @@ const Holdings = () => {
 
   useEffect(() => {
     if (userAddress) {
-      dispatch(getHoldingsAction(userAddress));
+      dispatch(getHoldingsAction(userAddress, tokens));
     }
-  }, [userAddress, dispatch]);
+  }, [userAddress, dispatch, tokens]);
 
   const redeem = async (): Promise<void> => {
     try {
@@ -62,7 +61,8 @@ const Holdings = () => {
             {Object.keys(open).map((b, i) => (
               <th
                 className="border border-white p-2 text-center bg-darkgray"
-                key={i}>
+                key={i}
+              >
                 {b}
               </th>
             ))}
@@ -74,7 +74,8 @@ const Holdings = () => {
               return (
                 <td
                   className="border border-white p-2 text-center bg-lightgray w-[33%]"
-                  key={i}>
+                  key={i}
+                >
                   {b}
                 </td>
               );
@@ -91,7 +92,8 @@ const Holdings = () => {
             {Object.keys(cleared).map((b, i) => (
               <th
                 className="border border-white p-2 text-center bg-darkgray"
-                key={i}>
+                key={i}
+              >
                 {b}
               </th>
             ))}
@@ -103,7 +105,8 @@ const Holdings = () => {
               return (
                 <td
                   className="border border-white p-2 text-center bg-lightgray w-[33%]"
-                  key={i}>
+                  key={i}
+                >
                   {b}
                 </td>
               );
@@ -116,7 +119,8 @@ const Holdings = () => {
           <button
             className="text-white bg-primary rounded py-2 px-4 m-2 md:flex hover:bg-red-500"
             type="button"
-            onClick={redeem}>
+            onClick={redeem}
+          >
             Redeem
           </button>
         )}

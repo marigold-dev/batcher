@@ -292,8 +292,8 @@
                          DUP 3 ;
                          COMPARE ;
                          GT ;
-                         IF { DIG 2 ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT }
-                            { SWAP ; PUSH string "/" ; CONCAT ; DIG 2 ; CONCAT } ;
+                         IF { DIG 2 ; PUSH string "-" ; CONCAT ; DIG 2 ; CONCAT }
+                            { SWAP ; PUSH string "-" ; CONCAT ; DIG 2 ; CONCAT } ;
                          GET ;
                          IF_NONE
                            { DROP 4 ; PUSH nat 117 ; FAILWITH }
@@ -337,8 +337,8 @@
                              DUP 3 ;
                              COMPARE ;
                              GT ;
-                             IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                             IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                              GET ;
                              IF_NONE { PUSH nat 0 } {} ;
                              GET ;
@@ -394,8 +394,8 @@
                                  DUP 3 ;
                                  COMPARE ;
                                  GT ;
-                                 IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                    { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                 IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                    { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                  UPDATE ;
                                  UPDATE 1 }
                                { DUP 9 ;
@@ -461,8 +461,8 @@
                                          DUP 3 ;
                                          COMPARE ;
                                          GT ;
-                                         IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                            { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                         IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                            { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                          UPDATE ;
                                          UPDATE 1 }
                                        { DIG 3 ; DIG 8 ; DROP 3 ; DUP 7 ; DIG 2 } }
@@ -521,8 +521,8 @@
                                           DUP 3 ;
                                           COMPARE ;
                                           GT ;
-                                          IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                             { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                          IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                             { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                           UPDATE ;
                                           UPDATE 1 }
                                         { DROP ; DUP 7 ; DIG 2 } } } ;
@@ -1091,8 +1091,8 @@
                          DUP 3 ;
                          COMPARE ;
                          GT ;
-                         IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                            { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                         IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                            { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                          GET ;
                          IF_NONE { PUSH nat 117 ; FAILWITH } {} ;
                          DUP ;
@@ -1164,8 +1164,8 @@
                                         DUP 3 ;
                                         COMPARE ;
                                         GT ;
-                                        IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                           { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                        IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                           { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                         GET ;
                                         IF_NONE { PUSH nat 0 } {} ;
                                         GET ;
@@ -1221,8 +1221,8 @@
                                             DUP 3 ;
                                             COMPARE ;
                                             GT ;
-                                            IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                               { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                            IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                               { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                             UPDATE ;
                                             UPDATE 1 }
                                           { DUP 6 ;
@@ -1288,8 +1288,8 @@
                                                     DUP 3 ;
                                                     COMPARE ;
                                                     GT ;
-                                                    IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                       { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                    IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                       { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                     UPDATE ;
                                                     UPDATE 1 }
                                                   { DIG 3 ; DROP 2 ; DIG 4 ; DIG 2 } }
@@ -1347,8 +1347,8 @@
                                                      DUP 3 ;
                                                      COMPARE ;
                                                      GT ;
-                                                     IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                        { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                     IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                        { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                      UPDATE ;
                                                      UPDATE 1 }
                                                    { DROP ; DIG 4 ; DIG 2 } } } ;
@@ -1370,8 +1370,8 @@
                                                   DUP 3 ;
                                                   COMPARE ;
                                                   GT ;
-                                                  IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                     { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                  IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                     { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                   DUP 4 ;
                                                   CDR ;
                                                   CDR ;
@@ -1617,8 +1617,8 @@
                                                           DUP 3 ;
                                                           COMPARE ;
                                                           GT ;
-                                                          IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                             { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                          IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                             { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                           MEM ;
                                                           IF {} { PUSH nat 110 ; FAILWITH } }
                                                         { DIG 4 ; DROP 2 ; PUSH nat 110 ; FAILWITH } } } ;
@@ -3962,8 +3962,8 @@
                                        DUP 3 ;
                                        COMPARE ;
                                        GT ;
-                                       IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                          { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                       IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                          { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                        GET ;
                                        IF_NONE { PUSH nat 0 } {} ;
                                        GET ;
@@ -4054,8 +4054,8 @@
                                                         DUP 3 ;
                                                         COMPARE ;
                                                         GT ;
-                                                        IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                           { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                        IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                           { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                         UPDATE ;
                                                         UPDATE 1 }
                                                       { DIG 4 ; DROP 2 ; DIG 3 ; DIG 2 } }
@@ -4115,8 +4115,8 @@
                                                          DUP 3 ;
                                                          COMPARE ;
                                                          GT ;
-                                                         IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                            { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                         IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                            { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                          UPDATE ;
                                                          UPDATE 1 }
                                                        { DROP ; DIG 3 ; DIG 2 } } ;
@@ -4707,8 +4707,8 @@
                                                 DUP 3 ;
                                                 COMPARE ;
                                                 GT ;
-                                                IF { PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                                   { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                                IF { PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                                   { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                                 UPDATE ;
                                                 UPDATE 1 }
                                               { DIG 3 ; DROP 2 } ;

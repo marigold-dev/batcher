@@ -346,8 +346,8 @@
                                     DUP 2 ;
                                     COMPARE ;
                                     GT ;
-                                    IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                       { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                    IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                       { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                     DUP 4 ;
                                     CAR ;
                                     DUP 2 ;
@@ -521,8 +521,8 @@
                                         DUP 2 ;
                                         COMPARE ;
                                         GT ;
-                                        IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                                           { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                                        IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                                           { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                                         SWAP ;
                                         DUP 4 ;
                                         GET 8 ;
@@ -859,8 +859,8 @@
                  DUP 2 ;
                  COMPARE ;
                  GT ;
-                 IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                    { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                 IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                    { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                  DUP 2 ;
                  CAR ;
                  DUP 2 ;
@@ -895,8 +895,8 @@
                      DUP 2 ;
                      COMPARE ;
                      GT ;
-                     IF { SWAP ; PUSH string "/" ; CONCAT ; SWAP ; CONCAT }
-                        { PUSH string "/" ; CONCAT ; SWAP ; CONCAT } ;
+                     IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+                        { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } ;
                      DUP 4 ;
                      CAR ;
                      DUP 2 ;

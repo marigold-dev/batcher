@@ -19,7 +19,10 @@ export const holdingsReducer = (
     case 'UPDATE_HOLDINGS':
       return { ...state, ...action.payload.holdings };
     case 'GET_HOLDINGS':
-      return loop(state, fetchHoldingsCmd(action.payload.userAddress));
+      return loop(
+        state,
+        fetchHoldingsCmd(action.payload.tokens, action.payload.userAddress)
+      );
     default:
       return state;
   }

@@ -6,6 +6,7 @@ import {
   getCurrentRates,
   getVolumes,
   getTimeDifferenceInMs,
+  getTokens,
 } from '@/utils/utils';
 import { getPairsInformation } from '@/utils/token-manager';
 import {
@@ -16,10 +17,10 @@ import {
   updateVolumes,
   batcherTimerId,
   updateRemainingTime,
-  noBatchError,
   newError,
+  updateTokens,
 } from '@/actions';
-import { BatcherStatus, CurrentSwap, SwapNames } from '@/types';
+import { BatcherStatus, CurrentSwap, SwapNames, Token } from '@/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
@@ -40,7 +41,7 @@ const fetchCurrentBatchNumberCmd = (pair: SwapNames) =>
     },
     {
       successActionCreator: updateBatchNumber,
-      failActionCreator: (e: string) => noBatchError(e),
+      //failActionCreator: (e: string) => noBatchError(e),
     }
   );
 
@@ -94,10 +95,10 @@ const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
   );
 };
 
-const fetchVolumesCmd = (batchNumber: number) => {
+const fetchVolumesCmd = (batchNumber: number, tokens: Map<string, Token>) => {
   return Cmd.run(
     () => {
-      return getVolumes(batchNumber);
+      return getVolumes(batchNumber, tokens);
     },
     {
       successActionCreator: updateVolumes,
@@ -106,6 +107,20 @@ const fetchVolumesCmd = (batchNumber: number) => {
   );
 };
 
+const fetchTokensCmd = () => {
+  return Cmd.run(
+    async () => {
+      const tokens = await getTokens();
+      const mapped: Map<string, Token> = ((tokens as unknown) as Map<string, Token>);
+      console.info('Mapped tokens', mapped);
+      return mapped;
+    },
+    {
+      successActionCreator: updateTokens,
+      failActionCreator: (e: string) => newError(e),
+    }
+  );
+};
 export {
   fetchPairInfosCmd,
   fetchCurrentBatchNumberCmd,
@@ -113,4 +128,5 @@ export {
   setupBatcherCmd,
   fetchOraclePriceCmd,
   fetchVolumesCmd,
+  fetchTokensCmd,
 };

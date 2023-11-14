@@ -16,7 +16,7 @@ export enum PriceStrategy {
 // ------ BATCHER STORAGE REPRESENTATION ------ //
 
 export type TokenNames = 'tzBTC' | 'EURL' | 'USDT';
-export type SwapNames = 'tzBTC/USDT' | 'tzBTC/EURL';
+export type SwapNames = 'tzBTC-USDT' | 'tzBTC-EURL';
 
 type Swap = {
   from: {
@@ -43,14 +43,8 @@ export type VolumesStorage = {
 };
 
 export type PairStorage = {
-  address_0: string;
-  address_1: string;
-  decimals_0: string;
-  decimals_1: string;
-  name_0: string;
-  name_1: string;
-  standard_0: string;
-  standard_1: string;
+  string_0: string;
+  string_1: string;
 };
 
 type P<K extends string> = {

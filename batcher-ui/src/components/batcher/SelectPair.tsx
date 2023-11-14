@@ -21,6 +21,7 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   const { swap, isReverse } = useSelector(currentSwapSelector);
   const dispatch = useDispatch();
 
+  //const tokens = useSelector(tokensSelector);
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
 
   const displayValue = useCallback(() => {
@@ -45,11 +46,11 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
     <Select.Root
       value={displayValue()}
       onValueChange={value => {
-        //TODO: change this when we had more pair
-        const pair =
-          value === 'tzBTC' ? `tzBTC/${swap.to.name}` : `tzBTC/${value}`;
-        const reversed =
-          (!isFrom && value === 'tzBTC') || (isFrom && value !== 'tzBTC');
+        //const pair = isFrom ? `${value}-${swap.to.name}` : `${swap.from.name}-${value}`;
+        //const availableSwap = availableSwaps[pair];
+        //  const reversed = (!isFrom && value === ${swap.from.name}) || (isFrom && value === ${swap.to.name});
+        const pair = 'tzBTC-USDT';
+        const reversed = false;
         dispatch(changePair(pair, reversed));
       }}
     >

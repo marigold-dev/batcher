@@ -216,9 +216,9 @@ let find_lexicographical_pair_name
   (token_one_name: string)
   (token_two_name: string) : string =
   if token_one_name > token_two_name then
-    token_one_name ^ "/" ^ token_two_name
+    token_one_name ^ "-" ^ token_two_name
   else
-    token_two_name ^ "/" ^ token_one_name
+    token_two_name ^ "-" ^ token_one_name
 
 [@inline]
 let get_rate_name_from_swap (s : swap_reduced) : string =

@@ -1,3 +1,4 @@
+
 export type TokenManagerStorage = {
   valid_swaps: {
     /**
@@ -34,6 +35,19 @@ export type ValidToken = {
   standard: string;
 };
 
+export type Swap = {
+  from: string;
+  to: string;
+};
+
+export type ValidSwap = {
+  swap: Swap;
+  oracle_address: string;
+  oracle_asset_name: string;
+  oracle_precision: number;
+  is_disabled_for_deposits: boolean;
+};
+
 export type ValidTokenAmount = {
   token: ValidToken;
   amount: number;
@@ -42,4 +56,8 @@ export type ValidTokenAmount = {
 export type ValidTokensBigmapItem = {
   key: string;
   value: ValidToken;
+};
+export type ValidSwapsBigmapItem = {
+  key: string;
+  value: ValidSwap;
 };

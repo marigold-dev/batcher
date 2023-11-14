@@ -16,10 +16,27 @@ import {
   OrderBookBigmap,
   SwapNames,
   RatesCurrentBigmap,
+  Token,
+  ValidToken,
+  ValidTokenAmount,
 } from '@/types';
-import { getTokenManagerStorage } from '@/utils/token-manager';
+import {
+  getTokenManagerStorage,
+  getTokensFromStorage,
+} from '@/utils/token-manager';
 import { NetworkType } from '@airgap/beacon-sdk';
 import { getByKey } from '@/utils/local-storage';
+
+export const getTokens = async () => {
+  const tokens = await getTokensFromStorage();
+  console.info('getTokens tokens', tokens);
+  const tokenMap = new Map(tokens.map((value, index) => [value.name, value]));
+  console.info('getTokens tokenMap', tokenMap);
+
+  return {
+    tokens: tokenMap,
+  };
+};
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -349,6 +366,23 @@ export const getTimeDifference = (
   return 0;
 };
 
+export const ensureMapTypeOnTokens = (
+  tokens: Map<string, Token>
+): Map<string, Token> => {
+  const typeOfTokens = typeof tokens;
+  console.info('tokens type', typeOfTokens);
+  if (tokens instanceof Map) {
+    return tokens;
+  } else {
+    let toks: Map<string, Token> = new Map<string, Token>();
+    Object.values(tokens).forEach(v => {
+      console.info('v', v);
+      toks = v as Map<string, Token>;
+    });
+    return toks;
+  }
+};
+
 export const getTimeDifferenceInMs = (
   status: BatcherStatus,
   startTime: string | null
@@ -406,11 +440,19 @@ export const toVolumes = (
   };
 };
 
-export const getVolumes = async (batchNumber: number) => {
+export const getVolumes = async (
+  batchNumber: number,
+  tokens: Map<string, Token>
+) => {
   const batch = await getBigMapByIdAndBatchNumber(batchNumber);
+  const buyTokenName = batch.pair.string_0;
+  const sellTokenName = batch.pair.string_1;
+  const toks = Object.values(tokens)[0];
+  const buyToken = toks.get(buyTokenName);
+  const sellToken = toks.get(sellTokenName);
   return toVolumes(batch['volumes'], {
-    buyDecimals: parseInt(batch.pair.decimals_0, 10),
-    sellDecimals: parseInt(batch.pair.decimals_1, 10),
+    buyDecimals: parseInt(buyToken.decimals, 10),
+    sellDecimals: parseInt(sellToken.decimals, 10),
   });
 };
 
@@ -434,13 +476,16 @@ const convertHoldingToPayout = (
   return [scaled_payout, scaled_remainder];
 };
 
-const findTokensForBatch = (batch: BatchBigmap) => {
+const findTokensForBatch = (batch: BatchBigmap, toks: Map<string, Token>) => {
   const pair = batch.pair;
+  console.info('TOKS', toks);
+  const tokens = ensureMapTypeOnTokens(toks);
+  console.info('TOKENS', tokens);
+  const buyToken = tokens.get(pair.string_0);
+  const sellToken = tokens.get(pair.string_1);
   const tkns = {
-    // buy_token_name: pair.name_0,
-    // sell_token_name: pair.name_1,
-    to: { name: pair.name_0, decimals: parseInt(pair.decimals_0, 10) },
-    from: { name: pair.name_1, decimals: parseInt(pair.decimals_1, 10) },
+    to: { name: buyToken?.name || "", decimals: buyToken?.decimals || 0 },
+    from: { name: sellToken?.name || "", decimals: sellToken?.decimals || 0 },
   };
   return tkns;
 };
@@ -486,11 +531,12 @@ const getTolerance = (obj: {}) => {
 const computeHoldingsByBatchAndDeposit = (
   deposit: UserOrder,
   batch: BatchBigmap,
-  currentHoldings: HoldingsState
+  currentHoldings: HoldingsState,
+  tokenMap: Map<string, Token>
 ) => {
   const side = getSideFromDeposit(deposit);
+  const tokens = findTokensForBatch(batch, tokenMap);
 
-  const tokens = findTokensForBatch(batch);
   if (batchIsCleared(batch.status)) {
     const clearing = batch.status['cleared'].clearing;
     const clearedVolumes = {
@@ -623,6 +669,7 @@ const addObj = (o1: any, o2: any) => {
 };
 
 const computeHoldingsByBatch = (
+  tokens: Map<string, Token>,
   deposits: UserOrder[], //! depots dans un batch
   batch: BatchBigmap,
   currentHoldings: HoldingsState
@@ -632,11 +679,13 @@ const computeHoldingsByBatch = (
       return {
         open: addObj(
           acc.open,
-          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).open
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings, tokens)
+            .open
         ),
         cleared: addObj(
           acc.cleared,
-          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).cleared
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings, tokens)
+            .cleared
         ),
       };
     },
@@ -647,13 +696,16 @@ const computeHoldingsByBatch = (
   );
 };
 
-export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
+export const computeAllHoldings = async (
+  orderbook: OrderBookBigmap,
+  tokens: Map<string, Token>
+) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
       const batch = await getBigMapByIdAndBatchNumber(
         parseInt(batchNumber, 10)
       );
-      return computeHoldingsByBatch(deposits, batch, {
+      return computeHoldingsByBatch(tokens, deposits, batch, {
         open: { tzBTC: 0, USDT: 0, EURL: 0 },
         cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
       });
@@ -674,11 +726,44 @@ export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
   );
 };
 
-export const getOrdersBook = async (userAddress: string) => {
+export const getOrdersBook = async (
+  userAddress: string,
+  tokens: Map<string, Token>
+) => {
   const orderBookByBatch: { [key: number]: UserOrder[] } =
     await getBigMapByIdAndUserAddress(userAddress);
-  return computeAllHoldings(orderBookByBatch);
+  return computeAllHoldings(orderBookByBatch, tokens);
 };
 
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
+
+export const emptyToken = () => {
+  const t: Token = {
+    address: '',
+    name: '',
+    decimals: 0,
+    standard: 'FA2 token',
+    tokenId: 0,
+  };
+  return t;
+};
+
+export const emptyValidToken = () => {
+  const t: ValidToken = {
+    name: '',
+    address: '',
+    token_id: '0',
+    decimals: '0',
+    standard: '',
+  };
+  return t;
+};
+
+export const emptyValidTokenAmount = () => {
+  const ta: ValidTokenAmount = {
+    token: emptyValidToken(),
+    amount: 0,
+  };
+  return ta;
+};

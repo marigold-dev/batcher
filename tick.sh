@@ -2,7 +2,7 @@
 
 set -e
 
-while getopts b:f: flag
+while getopts b:m:f: flag
 do
   case "${flag}" in
     b) batcher_address=${OPTARG};;
@@ -20,8 +20,8 @@ tick_ticker(){
   echo "Tick batcher contract ticker ${1} - $batcher_address"
 
   octez-client transfer 0 from oracle_account to $batcher_address \
-    --entrypoint tick \
-    --arg "\"Unit\"" \
+    --entrypoint "tick" \
+    --arg "Unit" \
     --burn-cap 2
 
   set -e
@@ -33,8 +33,8 @@ tick_mm(){
   echo "Tick market maker contract - $market_maker_address"
 
   octez-client transfer 0 from oracle_account to $market_maker_address \
-    --entrypoint tick \
-    --arg "\"Unit\"" \
+    --entrypoint "tick" \
+    --arg "Unit" \
     --burn-cap 2
 
   set -e
@@ -44,7 +44,6 @@ post_op (){
 
 tick_ticker
 tick_mm
-
 }
 
 
@@ -52,5 +51,5 @@ tick_mm
 while true
 do
 	post_op
-	sleep $FREQ
+    sleep $FREQ
 done

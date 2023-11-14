@@ -49,6 +49,8 @@ export const batchNumberSelector = (state: AppState) =>
 export const oraclePriceSelector = (state: AppState) =>
   state.exchange.oraclePrice;
 
+export const tokensSelector = (state: AppState) => state.exchange.tokens;
+
 export const volumesSelector = (state: AppState) => state.exchange.volumes;
 
 // Holdings selectors

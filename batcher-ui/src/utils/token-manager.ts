@@ -1,6 +1,7 @@
 import {
   TokenManagerStorage,
   ValidTokensBigmapItem,
+  ValidSwapsBigmapItem,
   CurrentSwap,
   ValidToken,
   ValidTokenAmount,
@@ -20,27 +21,41 @@ const getTokenFromBigmap = (
     `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${tokenName}`
   ).then(checkStatus);
 
-export const getTokensMetadata = async () => {
-  const storage = await getTokenManagerStorage();
-  const validTokens = storage['valid_tokens'];
-  const names = validTokens.keys;
-  return Promise.all(
-    names.map(async token => {
-      const t = await getTokenFromBigmap(validTokens.values, token);
-      const icon = await fetch(
-        `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${t.value.address}`
-      )
-        .then(t => t.json())
-        .then(([t]) =>
-          t?.metadata?.thumbnailUri
-            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
-            : undefined
-        );
+const getSwapFromBigmap = (
+  bigMapId: number,
+  swapName: string
+): Promise<ValidSwapsBigmapItem> =>
+  fetch(
+    `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${swapName}`
+  ).then(checkStatus);
 
+export const getLexicographicalPairName = (
+  to: string,
+  from: string
+): string => {
+  if (to > from) {
+    return `${to}-${from}`;
+  } else {
+    return `${from}-${to}`;
+  }
+};
+
+export const getSwapsMetadata = async () => {
+  const storage = await getTokenManagerStorage();
+  const validSwaps = storage['valid_swaps'];
+  const names = validSwaps.keys;
+  return Promise.all(
+    names.map(async swap => {
+      const escapedPair = encodeURIComponent(swap);
+      const t = await getSwapFromBigmap(validSwaps.values, escapedPair);
+      const swapname = getLexicographicalPairName(
+        t.value.swap.to,
+        t.value.swap.from
+      );
       return {
-        name: t.value.name,
-        address: t.value.address,
-        icon,
+        name: swapname,
+        to: t.value.swap.to,
+        from: t.value.swap.from,
       };
     })
   );
@@ -64,7 +79,7 @@ export const getPairsInformation = async (
   const storage = await getTokenManagerStorage();
   //const validSwaps = storage['valid_swaps']; //TODO - Only swaps pairs allowed by the contract should be displayed. A token might not be swappable with every other token
   const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('/');
+  const pairs = pair.split('-');
   const left = (await getTokenFromBigmap(validTokens.values, pairs[0])).value;
   const right = (await getTokenFromBigmap(validTokens.values, pairs[1])).value;
 
@@ -136,4 +151,49 @@ export const parseTokenAmount = (tokenAmountObject: any): ValidTokenAmount => {
       },
     };
   }
+};
+export const getTokensMetadata = async () => {
+  const storage = await getTokenManagerStorage();
+  const validTokens = storage['valid_tokens'];
+  const names = validTokens.keys;
+  return Promise.all(
+    names.map(async token => {
+      const t = await getTokenFromBigmap(validTokens.values, token);
+      const icon = await fetch(
+        `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${t.value.address}`
+      )
+        .then(t => t.json())
+        .then(([t]) =>
+          t?.metadata?.thumbnailUri
+            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
+            : undefined
+        );
+
+      return {
+        name: t.value.name,
+        address: t.value.address,
+        icon,
+      };
+    })
+  );
+};
+
+
+export const getTokensFromStorage = async () => {
+  const storage = await getTokenManagerStorage();
+  const validTokens = storage['valid_tokens'];
+  const names = validTokens.keys;
+  return Promise.all(
+    names.map(async token => {
+      const t = await getTokenFromBigmap(validTokens.values, token);
+
+      return {
+        name: t.value.name,
+        address: t.value.address,
+        decimals: t.value.decimals,
+        standard: t.value.standard,
+        tokenId: t.value.token_id,
+      };
+    })
+  );
 };

@@ -4,12 +4,21 @@ import BatcherInfo from '@/components/batcher/BatcherInfo';
 import PriceStrategy from '@/components/batcher/PriceStrategy';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { currentPairSelector, userAddressSelector } from '@/reducers';
-import { fetchUserBalances, batcherUnsetup, getPairsInfos } from '@/actions';
+import {
+  currentPairSelector,
+  userAddressSelector,
+} from '@/reducers';
+import {
+  getTokens,
+  fetchUserBalances,
+  batcherUnsetup,
+  getPairsInfos,
+} from '@/actions';
 
 const Swap = () => {
   const userAddress = useSelector(userAddressSelector);
   const tokenPair = useSelector(currentPairSelector);
+  //const tokens = useSelector(tokensSelector);
 
   const dispatch = useDispatch();
 
@@ -26,6 +35,10 @@ const Swap = () => {
       dispatch(fetchUserBalances());
     }
   }, [userAddress, dispatch]);
+
+  useEffect(() => {
+    dispatch(getTokens());
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col md:mx-[15%] mx-4">

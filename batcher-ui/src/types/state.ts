@@ -29,6 +29,7 @@ export type VolumesState = {
   sell: Record<PriceStrategy, number>;
 };
 
+
 export type ExchangeState = {
   priceStrategy: PriceStrategy;
   currentSwap: CurrentSwap;
@@ -43,6 +44,7 @@ export type ExchangeState = {
   batchNumber: number;
   oraclePrice: number;
   volumes: VolumesState;
+  tokens: Map<string, Token>;
 };
 
 export type WalletState = {
@@ -76,7 +78,7 @@ export type GlobalVault = {
 };
 
 export type MarketHoldingsState = {
-  vault_address: string,
+  vault_address: string;
   shares: number;
   nativeToken: ValidTokenAmount | undefined;
   foreignTokens: Array<ValidTokenAmount>;
