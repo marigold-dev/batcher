@@ -7,9 +7,6 @@ import {
   ValidTokenAmount,
 } from '@/types';
 import { checkStatus, scaleAmountDown } from '@/utils/utils';
-import * as api from '@tzkt/sdk-api';
-
-api.defaults.baseUrl = `${process.env.NEXT_PUBLIC_TZKT_API_URI}`;
 
 export const getTokenManagerStorage = (): Promise<TokenManagerStorage> =>
   fetch(
@@ -32,32 +29,6 @@ const getSwapFromBigmap = (
     `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${swapName}`
   ).then(checkStatus);
 
-export const getTokensMetadata = async () => {
-  const storage = await getTokenManagerStorage();
-  const validTokens = storage['valid_tokens'];
-  const names = validTokens.keys;
-  return Promise.all(
-    names.map(async token => {
-      const t = await getTokenFromBigmap(validTokens.values, token);
-      const icon = await fetch(
-        `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${t.value.address}`
-      )
-        .then(t => t.json())
-        .then(([t]) =>
-          t?.metadata?.thumbnailUri
-            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
-            : undefined
-        );
-
-      return {
-        name: t.value.name,
-        address: t.value.address,
-        icon,
-      };
-    })
-  );
-};
-
 export const getLexicographicalPairName = (
   to: string,
   from: string
@@ -73,7 +44,6 @@ export const getSwapsMetadata = async () => {
   const storage = await getTokenManagerStorage();
   const validSwaps = storage['valid_swaps'];
   const names = validSwaps.keys;
-  const bm = await api.bigMapsGetBigMapById(validSwaps.values);
   return Promise.all(
     names.map(async swap => {
       const escapedPair = encodeURIComponent(swap);
@@ -181,4 +151,49 @@ export const parseTokenAmount = (tokenAmountObject: any): ValidTokenAmount => {
       },
     };
   }
+};
+export const getTokensMetadata = async () => {
+  const storage = await getTokenManagerStorage();
+  const validTokens = storage['valid_tokens'];
+  const names = validTokens.keys;
+  return Promise.all(
+    names.map(async token => {
+      const t = await getTokenFromBigmap(validTokens.values, token);
+      const icon = await fetch(
+        `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/tokens?contract=${t.value.address}`
+      )
+        .then(t => t.json())
+        .then(([t]) =>
+          t?.metadata?.thumbnailUri
+            ? `https://ipfs.io/ipfs/${t.metadata.thumbnailUri.split('//')[1]}`
+            : undefined
+        );
+
+      return {
+        name: t.value.name,
+        address: t.value.address,
+        icon,
+      };
+    })
+  );
+};
+
+
+export const getTokensFromStorage = async () => {
+  const storage = await getTokenManagerStorage();
+  const validTokens = storage['valid_tokens'];
+  const names = validTokens.keys;
+  return Promise.all(
+    names.map(async token => {
+      const t = await getTokenFromBigmap(validTokens.values, token);
+
+      return {
+        name: t.value.name,
+        address: t.value.address,
+        decimals: t.value.decimals,
+        standard: t.value.standard,
+        tokenId: t.value.token_id,
+      };
+    })
+  );
 };

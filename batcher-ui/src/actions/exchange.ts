@@ -1,27 +1,27 @@
-import { BatcherStatus, CurrentSwap, PriceStrategy } from '@/types';
+import { BatcherStatus, CurrentSwap, PriceStrategy, Token } from '@/types';
 
 export const updatePriceStrategy = (priceStrategy: PriceStrategy) =>
   ({
     type: 'UDPATE_PRICE_STATEGY',
     payload: { priceStrategy },
-  } as const);
+  }) as const;
 
 export const reverseSwap = () =>
   ({
     type: 'REVERSE_SWAP',
-  } as const);
+  }) as const;
 
 export const changePair = (pair: string, isReverse: boolean) =>
   ({
     type: 'CHANGE_PAIR',
     payload: { pair, isReverse },
-  } as const);
+  }) as const;
 
 export const getPairsInfos = (pair: string) =>
   ({
     type: 'GET_PAIR_INFOS',
     payload: { pair },
-  } as const);
+  }) as const;
 
 export const updatePairsInfos = ({
   currentSwap,
@@ -33,12 +33,12 @@ export const updatePairsInfos = ({
   ({
     type: 'UPDATE_PAIR_INFOS',
     payload: { currentSwap, pair },
-  } as const);
+  }) as const;
 
 export const getBatcherStatus = () =>
   ({
     type: 'GET_BATCHER_STATUS',
-  } as const);
+  }) as const;
 
 export const updateBatcherStatus = ({
   status,
@@ -52,62 +52,72 @@ export const updateBatcherStatus = ({
   ({
     type: 'UDPATE_BATCHER_STATUS',
     payload: { status, at, startTime },
-  } as const);
+  }) as const;
 
 export const updateRemainingTime = () =>
   ({
     type: 'UPDATE_REMAINING_TIME',
-  } as const);
+  }) as const;
 
 export const getCurrentBatchNumber = () =>
   ({
     type: 'GET_CURRENT_BATCHER_NUMBER',
-  } as const);
+  }) as const;
 
 export const updateBatchNumber = (batchNumber: number) =>
   ({
     type: 'UDPATE_BATCH_NUMBER',
     payload: { batchNumber },
-  } as const);
+  }) as const;
 
 export const batcherSetup = () =>
   ({
     type: 'BATCHER_SETUP',
-  } as const);
+  }) as const;
 
 export const batcherTimerId = (timerId: number) =>
   ({
     type: 'BATCHER_TIMER_ID',
     payload: { timerId },
-  } as const);
+  }) as const;
 
 export const batcherUnsetup = () =>
   ({
     type: 'BATCHER_UNSETUP',
-  } as const);
+  }) as const;
 
 export const getOraclePrice = () =>
   ({
     type: 'GET_ORACLE_PRICE',
-  } as const);
+  }) as const;
 
 export const updateOraclePrice = (oraclePrice: number) =>
   ({
     type: 'UPDATE_ORACLE_PRICE',
     payload: { oraclePrice },
-  } as const);
+  }) as const;
 
 export const getVolumes = () =>
   ({
     type: 'GET_VOLUMES',
-  } as const);
+  }) as const;
 
 export const updateVolumes = (volumes: unknown) =>
   ({
     type: 'UPDATE_VOLUMES',
     payload: { volumes },
-  } as const);
+  }) as const;
 
+export const updateTokens = (tokens: Map<string, Token>) =>
+  ({
+    type: 'UPDATE_TOKENS',
+    payload: { tokens },
+  }) as const;
+
+export const getTokens = () =>
+  ({
+    type: 'GET_TOKENS',
+  }) as const;
 
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
@@ -126,4 +136,6 @@ export type ExchangeActions =
   | ReturnType<typeof getOraclePrice>
   | ReturnType<typeof updateOraclePrice>
   | ReturnType<typeof getVolumes>
-  | ReturnType<typeof updateVolumes>;
+  | ReturnType<typeof updateVolumes>
+  | ReturnType<typeof getTokens>
+  | ReturnType<typeof updateTokens>;

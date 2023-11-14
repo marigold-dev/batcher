@@ -16,10 +16,25 @@ import {
   OrderBookBigmap,
   SwapNames,
   RatesCurrentBigmap,
+  Token,
 } from '@/types';
-import { getTokenManagerStorage } from '@/utils/token-manager';
+import {
+  getTokenManagerStorage,
+  getTokensFromStorage,
+} from '@/utils/token-manager';
 import { NetworkType } from '@airgap/beacon-sdk';
 import { getByKey } from '@/utils/local-storage';
+
+export const getTokens = async () => {
+  const tokens = await getTokensFromStorage();
+  console.info('getTokens tokens', tokens);
+  const tokenMap = new Map(tokens.map((value, index) => [value.name, value]));
+  console.info('getTokens tokenMap', tokenMap);
+
+  return {
+    tokens: tokenMap,
+  };
+};
 
 export const scaleAmountDown = (amount: number, decimals: number) => {
   const scale = 10 ** -decimals;
@@ -406,11 +421,19 @@ export const toVolumes = (
   };
 };
 
-export const getVolumes = async (batchNumber: number) => {
+export const getVolumes = async (
+  batchNumber: number,
+  tokens: Map<string, Token>
+) => {
   const batch = await getBigMapByIdAndBatchNumber(batchNumber);
+  const buyTokenName = batch.pair.string_0;
+  const sellTokenName = batch.pair.string_1;
+  const toks = Object.values(tokens)[0];
+  const buyToken = toks.get(buyTokenName);
+  const sellToken = toks.get(sellTokenName);
   return toVolumes(batch['volumes'], {
-    buyDecimals: parseInt(batch.pair.decimals_0, 10),
-    sellDecimals: parseInt(batch.pair.decimals_1, 10),
+    buyDecimals: parseInt(buyToken.decimals, 10),
+    sellDecimals: parseInt(sellToken.decimals, 10),
   });
 };
 

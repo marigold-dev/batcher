@@ -64,6 +64,7 @@ export const newEventCmd = (event: BigMapEvent) => {
               case 'rates_current': {
                 //! oracle price has changed
                 const data = eventData.content.value as RatesCurrentBigmap;
+                console.info("Oracle change",data);
                 dispatch(
                   updateOraclePrice(
                     computeOraclePrice(data.rate, {

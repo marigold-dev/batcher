@@ -1,18 +1,24 @@
 import React, { useEffect } from 'react';
 import { PriceStrategy } from '@/types';
-import { batchNumberSelector, volumesSelector } from '@/reducers';
+import {
+  batchNumberSelector,
+  volumesSelector,
+  tokensSelector,
+} from '@/reducers';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { getVolumes } from '@/actions';
+import { batch } from 'react-redux';
 
 const Volume = () => {
   const { sell, buy } = useSelector(volumesSelector);
   const batchNumber = useSelector(batchNumberSelector);
+  const tokens = useSelector(tokensSelector);
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (batchNumber) dispatch(getVolumes());
-  }, [dispatch, batchNumber]);
+  }, [dispatch, batchNumber, tokens]);
 
   const listOfBuyVolumesColumns = [
     {
@@ -58,7 +64,8 @@ const Volume = () => {
             {listOfBuyVolumesColumns.map((b, i) => (
               <th
                 className="border border-white p-2 text-center bg-darkgray"
-                key={i}>
+                key={i}
+              >
                 {b.title}
               </th>
             ))}
@@ -70,7 +77,8 @@ const Volume = () => {
               return (
                 <td
                   className="border border-white p-2 text-center bg-lightgray"
-                  key={i}>
+                  key={i}
+                >
                   {buy[b.key]}
                 </td>
               );
@@ -82,7 +90,8 @@ const Volume = () => {
             {listOfSellVolumesColumns.map((b, i) => (
               <th
                 className="border border-white p-2 text-center bg-darkgray"
-                key={i}>
+                key={i}
+              >
                 {b.title}
               </th>
             ))}
@@ -94,7 +103,8 @@ const Volume = () => {
               return (
                 <td
                   className="border border-white p-2 text-center bg-lightgray"
-                  key={i}>
+                  key={i}
+                >
                   {sell[b.key]}
                 </td>
               );
