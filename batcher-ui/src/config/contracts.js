@@ -25,6 +25,8 @@ const ghostnet = {
   EURL_vault: 'KT1J66Yj44DaD2EtvSPgz1XjjU9gZPDHoiBb',
 };
 
+
+
 const mainnet = {
   batcher: 'KT1CoTu4CXcWoVk69Ukbgwx2iDK7ZA4FMSpJ',
   market_maker: 'KT1TNX1YLCmPJN4rbwAUsUAdnqVYrZ5X5YNB',
