@@ -17,6 +17,8 @@ import {
   SwapNames,
   RatesCurrentBigmap,
   Token,
+  ValidToken,
+  ValidTokenAmount,
 } from '@/types';
 import {
   getTokenManagerStorage,
@@ -364,6 +366,23 @@ export const getTimeDifference = (
   return 0;
 };
 
+export const ensureMapTypeOnTokens = (
+  tokens: Map<string, Token>
+): Map<string, Token> => {
+  const typeOfTokens = typeof tokens;
+  console.info('tokens type', typeOfTokens);
+  if (tokens instanceof Map) {
+    return tokens;
+  } else {
+    let toks: Map<string, Token> = new Map<string, Token>();
+    Object.values(tokens).forEach(v => {
+      console.info('v', v);
+      toks = v as Map<string, Token>;
+    });
+    return toks;
+  }
+};
+
 export const getTimeDifferenceInMs = (
   status: BatcherStatus,
   startTime: string | null
@@ -457,13 +476,16 @@ const convertHoldingToPayout = (
   return [scaled_payout, scaled_remainder];
 };
 
-const findTokensForBatch = (batch: BatchBigmap, tokens: Map<string,Token>) => {
+const findTokensForBatch = (batch: BatchBigmap, toks: Map<string, Token>) => {
   const pair = batch.pair;
+  console.info('TOKS', toks);
+  const tokens = ensureMapTypeOnTokens(toks);
+  console.info('TOKENS', tokens);
   const buyToken = tokens.get(pair.string_0);
   const sellToken = tokens.get(pair.string_1);
   const tkns = {
-    to: { name: buyToken.name, decimals: buyToken.decimals },
-    from: { name: sellToken.name, decimals: sellToken.decimals },
+    to: { name: buyToken?.name || "", decimals: buyToken?.decimals || 0 },
+    from: { name: sellToken?.name || "", decimals: sellToken?.decimals || 0 },
   };
   return tkns;
 };
@@ -510,7 +532,7 @@ const computeHoldingsByBatchAndDeposit = (
   deposit: UserOrder,
   batch: BatchBigmap,
   currentHoldings: HoldingsState,
-  tokenMap: any
+  tokenMap: Map<string, Token>
 ) => {
   const side = getSideFromDeposit(deposit);
   const tokens = findTokensForBatch(batch, tokenMap);
@@ -647,7 +669,7 @@ const addObj = (o1: any, o2: any) => {
 };
 
 const computeHoldingsByBatch = (
-  tokens: any,
+  tokens: Map<string, Token>,
   deposits: UserOrder[], //! depots dans un batch
   batch: BatchBigmap,
   currentHoldings: HoldingsState
@@ -676,7 +698,7 @@ const computeHoldingsByBatch = (
 
 export const computeAllHoldings = async (
   orderbook: OrderBookBigmap,
-  tokens: any
+  tokens: Map<string, Token>
 ) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
@@ -704,7 +726,10 @@ export const computeAllHoldings = async (
   );
 };
 
-export const getOrdersBook = async (userAddress: string, tokens: any) => {
+export const getOrdersBook = async (
+  userAddress: string,
+  tokens: Map<string, Token>
+) => {
   const orderBookByBatch: { [key: number]: UserOrder[] } =
     await getBigMapByIdAndUserAddress(userAddress);
   return computeAllHoldings(orderBookByBatch, tokens);
@@ -712,3 +737,33 @@ export const getOrdersBook = async (userAddress: string, tokens: any) => {
 
 const getDepositAmount = (depositAmount: number, decimals: number) =>
   Math.floor(depositAmount) / 10 ** decimals;
+
+export const emptyToken = () => {
+  const t: Token = {
+    address: '',
+    name: '',
+    decimals: 0,
+    standard: 'FA2 token',
+    tokenId: 0,
+  };
+  return t;
+};
+
+export const emptyValidToken = () => {
+  const t: ValidToken = {
+    name: '',
+    address: '',
+    token_id: '0',
+    decimals: '0',
+    standard: '',
+  };
+  return t;
+};
+
+export const emptyValidTokenAmount = () => {
+  const ta: ValidTokenAmount = {
+    token: emptyValidToken(),
+    amount: 0,
+  };
+  return ta;
+};

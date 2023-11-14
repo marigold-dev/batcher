@@ -19,9 +19,11 @@ import {
   computeOraclePrice,
   mapStatus,
   toVolumes,
+  ensureMapTypeOnTokens,
 } from '@/utils/utils';
 
-export const newEventCmd = (event: BigMapEvent, tokens: Map<string, Token>) => {
+export const newEventCmd = (event: BigMapEvent, toks: Map<string, Token>) => {
+  const tokens = ensureMapTypeOnTokens(toks);
   return Cmd.run(
     (dispatch, getState) => {
       return event.data.map(async eventData => {
@@ -40,8 +42,8 @@ export const newEventCmd = (event: BigMapEvent, tokens: Map<string, Token>) => {
                 dispatch(
                   updateVolumes(
                     toVolumes(data.volumes, {
-                      buyDecimals: buyToken.decimals,
-                      sellDecimals: sellToken.decimals,
+                      buyDecimals: buyToken?.decimals || 0,
+                      sellDecimals: sellToken?.decimals || 0,
                     })
                   )
                 );
@@ -89,8 +91,8 @@ export const newEventCmd = (event: BigMapEvent, tokens: Map<string, Token>) => {
                 dispatch(
                   updateVolumes(
                     toVolumes(data.volumes, {
-                      buyDecimals: buyToken.decimals,
-                      sellDecimals: sellToken.decimals,
+                      buyDecimals: buyToken?.decimals || 0,
+                      sellDecimals: sellToken?.decimals || 0,
                     })
                   )
                 );

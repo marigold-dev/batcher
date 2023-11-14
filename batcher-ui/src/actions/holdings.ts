@@ -1,21 +1,24 @@
-import { HoldingsState } from '@/types';
+import { HoldingsState, Token } from '@/types';
 
 export const redeem = () =>
   ({
     type: 'REDEEM',
-  } as const);
+  }) as const;
 
 export const updateHoldings = (holdings: HoldingsState) =>
   ({
     type: 'UPDATE_HOLDINGS',
     payload: { holdings },
-  } as const);
+  }) as const;
 
-export const getHoldings = (userAddress: string | undefined, tokens:any) =>
+export const getHoldings = (
+  userAddress: string | undefined,
+  tokens: Map<string, Token>
+) =>
   ({
     type: 'GET_HOLDINGS',
     payload: { userAddress, tokens },
-  } as const);
+  }) as const;
 
 export type HoldingsActions =
   | ReturnType<typeof redeem>

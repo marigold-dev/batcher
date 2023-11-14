@@ -4,7 +4,7 @@ import { getMarketHoldings, fetchUserBalances } from '@/actions';
 import { selectCurrentVaultName } from '@/reducers';
 import { ValidTokenAmount } from '@/types/contracts/token-manager';
 import * as Form from '@radix-ui/react-form';
-import { scaleAmountUp } from '@/utils/utils';
+import { scaleAmountUp, emptyValidTokenAmount } from '@/utils/utils';
 import { tzip12 } from '@taquito/tzip12';
 import { tzip16 } from '@taquito/tzip16';
 import { compose, OpKind } from '@taquito/taquito';
@@ -25,13 +25,13 @@ const Vault = () => {
   const marketHoldings = useSelector(selectHoldings);
   const [amountInput, setAmount] = useState<string>('0');
   const tokenName = useSelector(selectCurrentVaultName);
- // const scaleTokenAmount = (ta: ValidTokenAmount): ValidTokenAmount => {
- //   const scaledAmount = ta.amount / 10 ** (ta?.token.decimals || 0);
- //   return {
- //     ...ta,
- //     amount: scaledAmount,
- //   };
- // };
+  // const scaleTokenAmount = (ta: ValidTokenAmount): ValidTokenAmount => {
+  //   const scaledAmount = ta.amount / 10 ** (ta?.token.decimals || 0);
+  //   return {
+  //     ...ta,
+  //     amount: scaledAmount,
+  //   };
+  // };
   useEffect(() => {
     dispatch(getMarketHoldings(tokenName || '', userAddress));
   }, [dispatch, userAddress, tokenName]);
@@ -419,14 +419,15 @@ const Vault = () => {
               <p>{`Shares: ${marketHoldings?.userVault?.shares}`}</p>
               {`Unclaimed Rewards: ${marketHoldings?.userVault?.unclaimed} TEZ`}
               {showAddLiquidity({
-                vaultToken: marketHoldings?.nativeToken,
+                vaultToken:
+                  marketHoldings?.nativeToken || emptyValidTokenAmount(),
                 userBalances: userBalances,
               })}
               {showRemoveLiquidity({
-                vaultToken: marketHoldings?.nativeToken,
+                vaultToken: marketHoldings?.nativeToken || emptyValidTokenAmount(),
               })}
               {showClaimRewards({
-                vaultToken: marketHoldings?.nativeToken,
+                vaultToken: marketHoldings?.nativeToken || emptyValidTokenAmount(),
               })}
             </div>
           </div>
