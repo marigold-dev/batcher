@@ -11,10 +11,10 @@ export const updateHoldings = (holdings: HoldingsState) =>
     payload: { holdings },
   } as const);
 
-export const getHoldings = (userAddress: string | undefined) =>
+export const getHoldings = (userAddress: string | undefined, tokens:any) =>
   ({
     type: 'GET_HOLDINGS',
-    payload: { userAddress },
+    payload: { userAddress, tokens },
   } as const);
 
 export type HoldingsActions =

@@ -457,13 +457,17 @@ const convertHoldingToPayout = (
   return [scaled_payout, scaled_remainder];
 };
 
-const findTokensForBatch = (batch: BatchBigmap) => {
+const findTokensForBatch = (batch: BatchBigmap, tokens: any) => {
   const pair = batch.pair;
+  console.info("tokens",tokens);
+  const toks = Object.values(tokens)[0];
+  const buyToken = toks.get(pair.string_0);
+  const sellToken = toks.get(pair.string_1);
   const tkns = {
     // buy_token_name: pair.name_0,
     // sell_token_name: pair.name_1,
-    to: { name: pair.name_0, decimals: parseInt(pair.decimals_0, 10) },
-    from: { name: pair.name_1, decimals: parseInt(pair.decimals_1, 10) },
+    to: { name: buyToken.name, decimals: parseInt(buyToken.decimals, 10) },
+    from: { name: sellToken.name, decimals: parseInt(sellToken.decimals, 10) },
   };
   return tkns;
 };
@@ -509,11 +513,14 @@ const getTolerance = (obj: {}) => {
 const computeHoldingsByBatchAndDeposit = (
   deposit: UserOrder,
   batch: BatchBigmap,
-  currentHoldings: HoldingsState
+  currentHoldings: HoldingsState,
+  tokenMap: any
 ) => {
   const side = getSideFromDeposit(deposit);
+  const tokens = findTokensForBatch(batch, tokenMap);
+  console.info('side', side);
+  console.info('tokens', tokens);
 
-  const tokens = findTokensForBatch(batch);
   if (batchIsCleared(batch.status)) {
     const clearing = batch.status['cleared'].clearing;
     const clearedVolumes = {
@@ -646,6 +653,7 @@ const addObj = (o1: any, o2: any) => {
 };
 
 const computeHoldingsByBatch = (
+  tokens: any,
   deposits: UserOrder[], //! depots dans un batch
   batch: BatchBigmap,
   currentHoldings: HoldingsState
@@ -655,11 +663,13 @@ const computeHoldingsByBatch = (
       return {
         open: addObj(
           acc.open,
-          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).open
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings, tokens)
+            .open
         ),
         cleared: addObj(
           acc.cleared,
-          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings).cleared
+          computeHoldingsByBatchAndDeposit(d, batch, currentHoldings, tokens)
+            .cleared
         ),
       };
     },
@@ -670,13 +680,18 @@ const computeHoldingsByBatch = (
   );
 };
 
-export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
+export const computeAllHoldings = async (
+  orderbook: OrderBookBigmap,
+  tokens: any
+) => {
   return Promise.all(
     Object.entries(orderbook).map(async ([batchNumber, deposits]) => {
+      console.info('batch number', batchNumber);
+      console.info('deposits', deposits);
       const batch = await getBigMapByIdAndBatchNumber(
         parseInt(batchNumber, 10)
       );
-      return computeHoldingsByBatch(deposits, batch, {
+      return computeHoldingsByBatch(tokens, deposits, batch, {
         open: { tzBTC: 0, USDT: 0, EURL: 0 },
         cleared: { tzBTC: 0, USDT: 0, EURL: 0 },
       });
@@ -697,10 +712,10 @@ export const computeAllHoldings = async (orderbook: OrderBookBigmap) => {
   );
 };
 
-export const getOrdersBook = async (userAddress: string) => {
+export const getOrdersBook = async (userAddress: string, tokens: any) => {
   const orderBookByBatch: { [key: number]: UserOrder[] } =
     await getBigMapByIdAndUserAddress(userAddress);
-  return computeAllHoldings(orderBookByBatch);
+  return computeAllHoldings(orderBookByBatch, tokens);
 };
 
 const getDepositAmount = (depositAmount: number, decimals: number) =>

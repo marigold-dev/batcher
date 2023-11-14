@@ -3,12 +3,12 @@ import { getOrdersBook } from '@/utils/utils';
 import { updateHoldings } from '@/actions/holdings';
 import { newError } from '@/actions';
 
-const fetchHoldingsCmd = (userAddress?: string) => {
+const fetchHoldingsCmd = (tokens: any, userAddress?: string) => {
   return Cmd.run(
     async () => {
       if (!userAddress) return Promise.reject('Not connected !');
-      const holdings = await getOrdersBook(userAddress);
-
+      const holdings = await getOrdersBook(userAddress, tokens);
+      console.info('holdings', holdings);
       return holdings;
     },
     {
