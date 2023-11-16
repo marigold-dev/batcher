@@ -16,6 +16,7 @@ import {
 const Swap = () => {
   const userAddress = useSelector(userAddressSelector);
   const tokenPair = useSelector(currentPairSelector);
+  //const tokens = useSelector(tokensSelector);
 
   const dispatch = useDispatch();
 

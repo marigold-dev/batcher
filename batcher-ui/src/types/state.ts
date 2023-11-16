@@ -29,6 +29,7 @@ export type VolumesState = {
   sell: Record<PriceStrategy, number>;
 };
 
+
 export type ExchangeState = {
   priceStrategy: PriceStrategy;
   currentSwap: CurrentSwap;

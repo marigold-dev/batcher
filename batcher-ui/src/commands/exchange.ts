@@ -151,6 +151,7 @@ const fetchSwapsCmd = () => {
   );
 };
 
+
 export {
   fetchPairInfosCmd,
   fetchCurrentBatchNumberCmd,

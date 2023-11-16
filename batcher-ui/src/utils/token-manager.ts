@@ -34,7 +34,7 @@ export const getLexicographicalPairName = (
   from: string
 ): string => {
   const comp = to.localeCompare(from);
-  if (comp < 0) {
+  if (comp < 0)
     return `${to}-${from}`;
   } else {
     return `${from}-${to}`;
@@ -179,6 +179,7 @@ export const getTokensMetadata = async () => {
   );
 };
 
+
 export const getTokensFromStorage = async () => {
   const storage = await getTokenManagerStorage();
   const validTokens = storage['valid_tokens'];
@@ -220,4 +221,4 @@ export const getSwapsFromStorage = async () => {
       };
     })
   );
-};
+}
