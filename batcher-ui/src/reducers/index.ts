@@ -50,6 +50,7 @@ export const oraclePriceSelector = (state: AppState) =>
   state.exchange.oraclePrice;
 
 export const tokensSelector = (state: AppState) => state.exchange.tokens;
+export const swapsSelector = (state: AppState) => state.exchange.swaps;
 
 export const volumesSelector = (state: AppState) => state.exchange.volumes;
 

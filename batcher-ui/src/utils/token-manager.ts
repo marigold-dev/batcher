@@ -33,7 +33,8 @@ export const getLexicographicalPairName = (
   to: string,
   from: string
 ): string => {
-  if (to > from) {
+  const comp = to.localeCompare(from);
+  if (comp < 0) {
     return `${to}-${from}`;
   } else {
     return `${from}-${to}`;
@@ -178,7 +179,6 @@ export const getTokensMetadata = async () => {
   );
 };
 
-
 export const getTokensFromStorage = async () => {
   const storage = await getTokenManagerStorage();
   const validTokens = storage['valid_tokens'];
@@ -193,6 +193,30 @@ export const getTokensFromStorage = async () => {
         decimals: t.value.decimals,
         standard: t.value.standard,
         tokenId: t.value.token_id,
+      };
+    })
+  );
+};
+
+export const getSwapsFromStorage = async () => {
+  const storage = await getTokenManagerStorage();
+  const validSwaps = storage['valid_swaps'];
+  const names = validSwaps.keys;
+  return Promise.all(
+    names.map(async swap => {
+      const t = await getSwapFromBigmap(validSwaps.values, swap);
+
+      const swp = {
+        from: t.value.swap.from,
+        to: t.value.swap.to,
+      };
+
+      return {
+        swap: swp,
+        oracle_address: t.value.oracle_address,
+        oracle_asset_name: t.value.oracle_asset_name,
+        oracle_precision: t.value.oracle_precision,
+        is_disabled_for_deposits: t.value.is_disabled_for_deposits,
       };
     })
   );

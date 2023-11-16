@@ -1,4 +1,10 @@
-import { BatcherStatus, CurrentSwap, PriceStrategy, Token } from '@/types';
+import {
+  BatcherStatus,
+  CurrentSwap,
+  PriceStrategy,
+  Token,
+  ValidSwap,
+} from '@/types';
 
 export const updatePriceStrategy = (priceStrategy: PriceStrategy) =>
   ({
@@ -119,6 +125,17 @@ export const getTokens = () =>
     type: 'GET_TOKENS',
   }) as const;
 
+export const updateSwaps = (swaps: Map<string, ValidSwap>) =>
+  ({
+    type: 'UPDATE_SWAPS',
+    payload: { swaps },
+  }) as const;
+
+export const getSwaps = () =>
+  ({
+    type: 'GET_SWAPS',
+  }) as const;
+
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
   | ReturnType<typeof reverseSwap>
@@ -138,4 +155,6 @@ export type ExchangeActions =
   | ReturnType<typeof getVolumes>
   | ReturnType<typeof updateVolumes>
   | ReturnType<typeof getTokens>
-  | ReturnType<typeof updateTokens>;
+  | ReturnType<typeof updateTokens>
+  | ReturnType<typeof getSwaps>
+  | ReturnType<typeof updateSwaps>;

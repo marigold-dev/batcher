@@ -3,7 +3,7 @@ import {
   PriceStrategy,
   SwapNames,
 } from '@/types/contracts/batcher';
-import { ValidTokenAmount } from './contracts/token-manager';
+import { ValidTokenAmount, ValidSwap } from './contracts/token-manager';
 
 export type Token = {
   address: string | undefined;
@@ -29,7 +29,6 @@ export type VolumesState = {
   sell: Record<PriceStrategy, number>;
 };
 
-
 export type ExchangeState = {
   priceStrategy: PriceStrategy;
   currentSwap: CurrentSwap;
@@ -45,6 +44,7 @@ export type ExchangeState = {
   oraclePrice: number;
   volumes: VolumesState;
   tokens: Map<string, Token>;
+  swaps: Map<string, ValidSwap>;
 };
 
 export type WalletState = {

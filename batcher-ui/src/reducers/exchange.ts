@@ -12,6 +12,7 @@ import {
   ExchangeState,
   PriceStrategy,
   Token,
+  ValidSwap,
 } from '@/types';
 import {
   fetchBatcherStatusCmd,
@@ -21,6 +22,7 @@ import {
   fetchOraclePriceCmd,
   setupBatcherCmd,
   fetchTokensCmd,
+  fetchSwapsCmd,
 } from '@/commands/exchange';
 import { getTimeDifference } from 'src/utils/utils';
 
@@ -61,6 +63,7 @@ const initialState: ExchangeState = {
   batchNumber: 0,
   oraclePrice: 0,
   tokens: new Map<string, Token>(),
+  swaps: new Map<string, ValidSwap>(),
   volumes: {
     sell: Object.keys(PriceStrategy).reduce(
       (acc, k) => ({ ...acc, [k]: 0 }),
@@ -205,6 +208,12 @@ const exchangeReducer = (
       return { ...state, tokens: action.payload.tokens };
     case 'GET_TOKENS':
       return loop(state, fetchTokensCmd());
+    case 'UPDATE_SWAPS':
+      console.info('swaps', action.payload.swaps);
+      console.info('state', state);
+      return { ...state, swaps: action.payload.swaps };
+    case 'GET_SWAPS':
+      return loop(state, fetchSwapsCmd());
     default:
       return state;
   }

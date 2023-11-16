@@ -7,6 +7,7 @@ import {
   getVolumes,
   getTimeDifferenceInMs,
   getTokens,
+  getSwaps,
 } from '@/utils/utils';
 import { getPairsInformation } from '@/utils/token-manager';
 import {
@@ -19,8 +20,15 @@ import {
   updateRemainingTime,
   newError,
   updateTokens,
+  updateSwaps,
 } from '@/actions';
-import { BatcherStatus, CurrentSwap, SwapNames, Token } from '@/types';
+import {
+  BatcherStatus,
+  CurrentSwap,
+  SwapNames,
+  Token,
+  ValidSwap,
+} from '@/types';
 
 const fetchPairInfosCmd = (pair: string) =>
   Cmd.run(
@@ -111,7 +119,10 @@ const fetchTokensCmd = () => {
   return Cmd.run(
     async () => {
       const tokens = await getTokens();
-      const mapped: Map<string, Token> = ((tokens as unknown) as Map<string, Token>);
+      const mapped: Map<string, Token> = tokens as unknown as Map<
+        string,
+        Token
+      >;
       console.info('Mapped tokens', mapped);
       return mapped;
     },
@@ -121,6 +132,25 @@ const fetchTokensCmd = () => {
     }
   );
 };
+
+const fetchSwapsCmd = () => {
+  return Cmd.run(
+    async () => {
+      const swaps = await getSwaps();
+      const mapped: Map<string, ValidSwap> = swaps as unknown as Map<
+        string,
+        ValidSwap
+      >;
+      console.info('Mapped swaps', mapped);
+      return mapped;
+    },
+    {
+      successActionCreator: updateSwaps,
+      failActionCreator: (e: string) => newError(e),
+    }
+  );
+};
+
 export {
   fetchPairInfosCmd,
   fetchCurrentBatchNumberCmd,
@@ -129,4 +159,5 @@ export {
   fetchOraclePriceCmd,
   fetchVolumesCmd,
   fetchTokensCmd,
+  fetchSwapsCmd,
 };

@@ -7,11 +7,16 @@ import {
   faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
-import { currentSwapSelector } from '@/reducers';
+import { currentSwapSelector, tokensSelector, swapsSelector } from '@/reducers';
 import { useDispatch } from 'react-redux';
-import { changePair } from '@/actions';
+import { changePair, newError } from '@/actions';
+import { ValidSwap } from '@/types';
 import Image from 'next/image';
-import { getTokensMetadata } from '@/utils/token-manager';
+import {
+  getLexicographicalPairName,
+  getTokensMetadata,
+} from '@/utils/token-manager';
+import { ensureMapTypeOnSwaps } from '@/utils/utils';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -21,8 +26,10 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   const { swap, isReverse } = useSelector(currentSwapSelector);
   const dispatch = useDispatch();
 
-  //const tokens = useSelector(tokensSelector);
+  const tokens = useSelector(tokensSelector);
+  const swaps = useSelector(swapsSelector);
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
+  const [availableSwaps, setAvailableSwaps] = useState<string[]>([]);
 
   const displayValue = useCallback(() => {
     if (isReverse && isFrom) return swap.to.name;
@@ -38,20 +45,54 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
         tokens: { name: string; address: string; icon: string | undefined }[]
       ) => {
         setAvailableTokens(tokens);
+        console.info('swaps - before', swaps);
+        const swapsAsMap: Map<string, ValidSwap> = ensureMapTypeOnSwaps(swaps);
+        console.info('swaps - dispatch', swapsAsMap);
+        console.info('swaps keys - dispatch', swapsAsMap.keys());
+        const swps: string[] = Array.from(swapsAsMap.keys());
+        console.info('swps - dispatch', swps);
+        setAvailableSwaps(swps);
       }
     );
-  }, []);
+  }, [dispatch, tokens, swaps]);
+
+  const isValidPair = (pair: string) => availableSwaps.includes(pair);
+
+  const invalidSwap = (pairName: string) => {
+    dispatch(
+      newError(
+        pairName +
+          ' is not a valid pair. Only ' +
+          availableSwaps.join() +
+          'are supported.'
+      )
+    );
+  };
+
+  const is_reversed = (pair: string, to: string, from: string) => {
+    const swap = ensureMapTypeOnSwaps(swaps).get(pair);
+    return to === swap?.swap.to && from === swap?.swap.from;
+  };
 
   return (
     <Select.Root
       value={displayValue()}
       onValueChange={value => {
-        //const pair = isFrom ? `${value}-${swap.to.name}` : `${swap.from.name}-${value}`;
-        //const availableSwap = availableSwaps[pair];
-        //  const reversed = (!isFrom && value === ${swap.from.name}) || (isFrom && value === ${swap.to.name});
-        const pair = 'tzBTC-USDT';
-        const reversed = false;
-        dispatch(changePair(pair, reversed));
+        console.info('availableSwaps', availableSwaps);
+        console.info('swaps', swaps);
+        console.info('swap', swap);
+        console.info('value', value);
+        console.info('isFrom', isFrom);
+        const from = isFrom ? `${swap.to.name}` : `${value}`;
+        const to = isFrom ? `${value}` : `${swap.from.token.name}`;
+        const pairName = getLexicographicalPairName(to, from);
+        const is_valid = isValidPair(pairName);
+        if (is_valid) {
+          const reversed = is_reversed(pairName, to, from);
+          dispatch(changePair(pairName, reversed));
+        } else {
+          invalidSwap(pairName);
+        }
       }}
     >
       <Select.Trigger className="flex items-center text-dark w-[200px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
