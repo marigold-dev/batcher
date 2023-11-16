@@ -48,7 +48,7 @@ export const getSwaps = async () => {
     swaps.map((value, index) => [
       getLexicographicalPairName(value.swap.to, value.swap.from),
       value,
-    ])<<<<<<< 410-further-split-out-batcher-and-mm-contracts-to-avoid-size-constraint
+    ])
   );
   console.info('getSwaps swapMap', swapsMap);
 
