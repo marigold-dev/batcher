@@ -9,6 +9,10 @@ COPY ./package.json ./
 RUN npm install
 
 COPY ./tsconfig.json ./jsconfig.json ./
+COPY ./.eslintignore ./.eslintignore ./
+COPY ./.eslintrc.json ./.eslintrc.json ./
+COPY ./next-env.d.ts ./next-env.d.ts ./
+COPY ./next.config.js ./next.config.js ./
 #COPY ./pages ./pages
 COPY ./src ./src
 COPY ./styles ./styles

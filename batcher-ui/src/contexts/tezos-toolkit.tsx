@@ -6,7 +6,7 @@ type TzTkState = {
 };
 
 export const TezosToolkitContext = createContext<TzTkState>({
-  tezos: new TezosToolkit(process.env.NEXT_PUBLIC_TEZOS_NODE_URI),
+  tezos: new TezosToolkit(process.env.NEXT_PUBLIC_TEZOS_NODE_URI || ''),
 });
 
 export const useTezosToolkit = () => React.useContext(TezosToolkitContext);

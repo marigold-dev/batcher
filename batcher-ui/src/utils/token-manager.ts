@@ -34,7 +34,7 @@ export const getLexicographicalPairName = (
   from: string
 ): string => {
   const comp = to.localeCompare(from);
-  if (comp < 0)
+  if (comp < 0){
     return `${to}-${from}`;
   } else {
     return `${from}-${to}`;
