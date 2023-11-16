@@ -18,11 +18,14 @@ import {
   RatesCurrentBigmap,
   Token,
   ValidToken,
+  ValidSwap,
   ValidTokenAmount,
 } from '@/types';
 import {
   getTokenManagerStorage,
   getTokensFromStorage,
+  getSwapsFromStorage,
+  getLexicographicalPairName,
 } from '@/utils/token-manager';
 import { NetworkType } from '@airgap/beacon-sdk';
 import { getByKey } from '@/utils/local-storage';
@@ -35,6 +38,22 @@ export const getTokens = async () => {
 
   return {
     tokens: tokenMap,
+  };
+};
+
+export const getSwaps = async () => {
+  const swaps = await getSwapsFromStorage();
+  console.info('getSwaps swaps', swaps);
+  const swapsMap = new Map(
+    swaps.map((value, index) => [
+      getLexicographicalPairName(value.swap.to, value.swap.from),
+      value,
+    ])<<<<<<< 410-further-split-out-batcher-and-mm-contracts-to-avoid-size-constraint
+  );
+  console.info('getSwaps swapMap', swapsMap);
+
+  return {
+    swaps: swapsMap,
   };
 };
 
@@ -383,6 +402,23 @@ export const ensureMapTypeOnTokens = (
   }
 };
 
+export const ensureMapTypeOnSwaps = (
+  swaps: Map<string, ValidSwap>
+): Map<string, ValidSwap> => {
+  const typeOfSwaps = typeof swaps;
+  console.info('swaps type', typeOfSwaps);
+  if (swaps instanceof Map) {
+    return swaps;
+  } else {
+    let swps: Map<string, ValidSwap> = new Map<string, ValidSwap>();
+    Object.values(swaps).forEach(v => {
+      console.info('v', v);
+      swps = v as Map<string, ValidSwap>;
+    });
+    return swps;
+  }
+};
+
 export const getTimeDifferenceInMs = (
   status: BatcherStatus,
   startTime: string | null
@@ -484,8 +520,8 @@ const findTokensForBatch = (batch: BatchBigmap, toks: Map<string, Token>) => {
   const buyToken = tokens.get(pair.string_0);
   const sellToken = tokens.get(pair.string_1);
   const tkns = {
-    to: { name: buyToken?.name || "", decimals: buyToken?.decimals || 0 },
-    from: { name: sellToken?.name || "", decimals: sellToken?.decimals || 0 },
+    to: { name: buyToken?.name || '', decimals: buyToken?.decimals || 0 },
+    from: { name: sellToken?.name || '', decimals: sellToken?.decimals || 0 },
   };
   return tkns;
 };

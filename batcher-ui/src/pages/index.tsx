@@ -4,12 +4,10 @@ import BatcherInfo from '@/components/batcher/BatcherInfo';
 import PriceStrategy from '@/components/batcher/PriceStrategy';
 
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  currentPairSelector,
-  userAddressSelector,
-} from '@/reducers';
+import { currentPairSelector, userAddressSelector } from '@/reducers';
 import {
   getTokens,
+  getSwaps,
   fetchUserBalances,
   batcherUnsetup,
   getPairsInfos,
@@ -38,6 +36,7 @@ const Swap = () => {
 
   useEffect(() => {
     dispatch(getTokens());
+    dispatch(getSwaps());
   }, [dispatch]);
 
   return (
