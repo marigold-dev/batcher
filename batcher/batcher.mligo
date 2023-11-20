@@ -1185,7 +1185,7 @@ let change_deposit_time_window
   no_op storage
 
 [@inline]
-/getlet change_liquidity_injection_limit_in_seconds
+let change_liquidity_injection_limit_in_seconds
   (new_time_limit: nat)
   (storage: storage) : result =
   let () = is_known_sender storage.administrator sender_not_administrator in
