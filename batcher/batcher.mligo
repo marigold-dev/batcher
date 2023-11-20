@@ -1225,12 +1225,8 @@ let does_batch_need_liquidity
   | _ -> (None: batch option)
 
   
-[@inline]
+[@view]
 let get_valid_swap (pair,storage:string * storage):  valid_swap_reduced = get_valid_swap_reduced pair storage
-
-
-
-
 
 [@view]
 let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
