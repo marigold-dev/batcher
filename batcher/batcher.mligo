@@ -1185,7 +1185,7 @@ let change_deposit_time_window
   no_op storage
 
 [@inline]
-let change_liquidity_injection_limit_in_seconds
+/getlet change_liquidity_injection_limit_in_seconds
   (new_time_limit: nat)
   (storage: storage) : result =
   let () = is_known_sender storage.administrator sender_not_administrator in
@@ -1223,8 +1223,14 @@ let does_batch_need_liquidity
                if volumes.buy_total_volume > 0n && volumes.sell_total_volume > 0n then (None: batch option) else 
                Some batch
   | _ -> (None: batch option)
-                
+
   
+[@inline]
+let get_valid_swap (pair,storage:string * storage):  valid_swap_reduced = get_valid_swap_reduced pair storage
+
+
+
+
 
 [@view]
 let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
