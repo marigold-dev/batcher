@@ -1,15 +1,15 @@
 (Pair (Pair "tz1ca4batAsNxMYab3mUK5H4QRjY8drV4ViL" 10)
       (Pair { "BTCtz-USDT" ; "BTCtz-USDtz" ; "tzBTC-EURL" ; "tzBTC-USDT" ; "tzBTC-USDtz" }
             { Elt "BTCtz-USDT"
-                  (Pair (Pair "BTCtz" "USDT") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) ;
+                  (Pair (Pair "BTCtz" "USDT") "KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM" "BTC-USDT" 6 False) ;
               Elt "BTCtz-USDtz"
-                  (Pair (Pair "BTCtz" "USDtz") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) ;
+                  (Pair (Pair "BTCtz" "USDtz") "KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM" "BTC-USDT" 6 False) ;
               Elt "tzBTC-EURL"
-                  (Pair (Pair "tzBTC" "EURL") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-EUR" 6 False) ;
+                  (Pair (Pair "tzBTC" "EURL") "KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM" "BTC-EUR" 6 False) ;
               Elt "tzBTC-USDT"
-                  (Pair (Pair "tzBTC" "USDT") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) ;
+                  (Pair (Pair "tzBTC" "USDT") "KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM" "BTC-USDT" 6 False) ;
               Elt "tzBTC-USDtz"
-                  (Pair (Pair "tzBTC" "USDtz") "KT1DG2g5DPYWqyHKGpRL579YkYZwJxibwaAZ" "BTC-USDT" 6 False) })
+                  (Pair (Pair "tzBTC" "USDtz") "KT1C5Y5dWWEP9Ucxsdmgb3PSPiYQ2Qcgo9xM" "BTC-USDT" 6 False) })
       { "BTCtz" ; "EURL" ; "USDT" ; "USDtz" ; "tzBTC" }
       { Elt "BTCtz"
             (Pair 0 "BTCtz" (Some "KT1ErLEYVsxqHxLgLucXViq5DYrtSyDuSFTe") 8 (Some "FA2 token")) ;
