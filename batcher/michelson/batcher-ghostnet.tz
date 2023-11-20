@@ -4776,6 +4776,45 @@
                     SWAP ;
                     ITER { CDR ; PUSH nat 0 ; SWAP ; COMPARE ; GT ; OR } ;
                     OR } } } ;
+  view "get_valid_swap"
+       string
+       (pair (pair %swap (string %from) (string %to))
+             (address %oracle_address)
+             (string %oracle_asset_name)
+             (nat %oracle_precision)
+             (bool %is_disabled_for_deposits))
+       { UNPAIR ;
+         SWAP ;
+         CDR ;
+         CDR ;
+         CAR ;
+         UNIT ;
+         VIEW "get_valid_swaps"
+              (map string
+                   (pair (pair %swap (string %from) (string %to))
+                         (address %oracle_address)
+                         (string %oracle_asset_name)
+                         (nat %oracle_precision)
+                         (bool %is_disabled_for_deposits))) ;
+         IF_NONE { PUSH nat 165 ; FAILWITH } {} ;
+         PUSH nat 0 ;
+         DUP 2 ;
+         SIZE ;
+         COMPARE ;
+         EQ ;
+         IF { DROP 2 ; PUSH nat 165 ; FAILWITH }
+            { SWAP ; GET ; IF_NONE { PUSH nat 117 ; FAILWITH } {} } } ;
+  view "get_pair_name"
+       (pair string string)
+       string
+       { CAR ;
+         UNPAIR ;
+         DUP 2 ;
+         DUP 2 ;
+         COMPARE ;
+         GT ;
+         IF { SWAP ; PUSH string "-" ; CONCAT ; SWAP ; CONCAT }
+            { PUSH string "-" ; CONCAT ; SWAP ; CONCAT } } ;
   view "get_batches_needing_liquidity"
        unit
        (list (pair (nat %batch_number)

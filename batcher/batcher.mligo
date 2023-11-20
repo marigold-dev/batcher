@@ -1229,6 +1229,9 @@ let does_batch_need_liquidity
 let get_valid_swap (pair,storage:string * storage):  valid_swap_reduced = get_valid_swap_reduced pair storage
 
 [@view]
+let get_pair_name ((to,from),_storage:(string * string) * storage):  string = find_lexicographical_pair_name to from
+
+[@view]
 let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
   let collect_batches (acc, (_s, i) :  batch list * (string * nat)) : batch list =
      match Big_map.find_opt i storage.batch_set.batches with
