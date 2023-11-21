@@ -54,7 +54,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz-USDtz", {
+    ("USDtz-BTCtz", {
         swap = {
             from =  "BTCtz";
             to =  "USDtz";
@@ -76,7 +76,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
         is_disabled_for_deposits = false
       }
     );
-    ("BTCtz-USDT", {
+    ("USDT-BTCtz", {
         swap = {
             from =  "BTCtz";
             to =  "USDT";
