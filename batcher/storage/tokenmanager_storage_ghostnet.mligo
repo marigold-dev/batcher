@@ -41,7 +41,7 @@ let f(_:unit) : TokenManager.TokenManager.storage = {
   ];
   };
   valid_swaps  = {
-   keys = Set.literal ["tzBTC-USDT";"BTCtz-USDtz";"tzBTC-USDtz";"BTCtz-USDT";"tzBTC-EURL"] ;
+   keys = Set.literal ["tzBTC-USDT";"USDtz-BTCtz";"tzBTC-USDtz";"USDT-BTCtz";"tzBTC-EURL"] ;
    values = Big_map.literal [
     ("tzBTC-USDT", {
         swap = {
