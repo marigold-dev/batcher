@@ -155,6 +155,8 @@ const Exchange = () => {
         tolerance,
       };
 
+      console.info("SWAP PARAMS", swap_params);
+
       if (selectedToken.standard === 'FA1.2 token') {
         if (!swap.from.token.address) {
           dispatch(

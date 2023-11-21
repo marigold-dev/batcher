@@ -72,3 +72,4 @@
 [@inline] let unable_to_get_balance_of_entrypoint_from_fa2_token : nat           = 171n
 [@inline] let unable_to_get_balance_response_fa12_entrypoint_from_vault : nat    = 172n
 [@inline] let unable_to_get_get_balance_entrypoint_from_fa12_token : nat         = 173n
+[@inline] let valid_swaps_map_is_empty                                           = 174n

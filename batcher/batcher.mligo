@@ -869,6 +869,7 @@ let get_valid_swap_reduced
  (pair_name: string)
  (storage : storage) : valid_swap_reduced =
  let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
+ if (Map.size valid_swaps) = 0n then failwith unable_to_get_swaps_from_token_manager else
  match Map.find_opt pair_name valid_swaps with
  | Some vswp -> vswp
  | None -> failwith swap_does_not_exist
@@ -957,6 +958,7 @@ let cancel
   let token_one, token_two = pair in
   let pair_name = find_lexicographical_pair_name token_one token_two in
   let valid_swaps = TokenManagerUtils.get_valid_swaps storage.tokenmanager in
+  if (Map.size valid_swaps) = 0n then failwith unable_to_get_swaps_from_token_manager else
   match Map.find_opt pair_name valid_swaps with
   | None -> failwith swap_does_not_exist
   | Some vswpr -> let valid_tokens = TokenManagerUtils.get_valid_tokens storage.tokenmanager in
@@ -1004,7 +1006,7 @@ let enforce_correct_side
 let deposit (external_order: external_swap_order) (storage : storage) : result =
   let pair = pair_of_external_swap external_order in
   let current_time = Tezos.get_now () in
-  let pair_name = get_rate_name_from_pair pair in
+  let pair_name = find_lexicographical_pair_name external_order.swap.to.name external_order.swap.from.token.name in
   let valid_swap = get_valid_swap_reduced pair_name storage in
   if valid_swap.is_disabled_for_deposits then failwith swap_is_disabled_for_deposits else
   let () = enforce_correct_side external_order valid_swap in
@@ -1221,8 +1223,13 @@ let does_batch_need_liquidity
                if volumes.buy_total_volume > 0n && volumes.sell_total_volume > 0n then (None: batch option) else 
                Some batch
   | _ -> (None: batch option)
-                
+
   
+[@view]
+let get_valid_swap (pair,storage:string * storage):  valid_swap_reduced = get_valid_swap_reduced pair storage
+
+[@view]
+let get_pair_name ((to,from),_storage:(string * string) * storage):  string = find_lexicographical_pair_name to from
 
 [@view]
 let get_batches_needing_liquidity ((),storage: unit * storage) : batch list=
