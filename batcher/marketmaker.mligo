@@ -103,7 +103,7 @@ let execute_liquidity_request
   (vault_address:address)
   (valid_tokens:ValidTokens.t_map)
   (valid_swaps:ValidSwaps.t_map): operation = 
-  let pair_name = find_lexicographical_pair_name lt.name ot.name in 
+  let pair_name = getLexicographicalPairName lt.name ot.name in 
   match Map.find_opt pair_name valid_swaps with
   | None  -> failwith swap_does_not_exist
   | Some vs -> let (lastupdated_opt, _tes) = OracleUtils.get_oracle_price pair_name unable_to_get_price_from_oracle vs (Big_map.empty: TickErrors.t) in

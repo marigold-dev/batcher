@@ -63,7 +63,9 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
       newError(
         pairName +
           ' is not a valid pair. Only ' +
-          availableSwaps.join() +
+          availableSwaps
+            .map(s => {s + '\n'})
+            .join() +
           'are supported.'
       )
     );
