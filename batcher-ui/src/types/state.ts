@@ -15,10 +15,7 @@ export type Token = {
 
 export type CurrentSwap = {
   swap: {
-    from: {
-      token: Token;
-      amount: number;
-    };
+    from: Token;
     to: Token;
   };
   isReverse: boolean;
@@ -28,7 +25,6 @@ export type VolumesState = {
   buy: Record<PriceStrategy, number>;
   sell: Record<PriceStrategy, number>;
 };
-
 
 export type ExchangeState = {
   priceStrategy: PriceStrategy;
@@ -43,9 +39,11 @@ export type ExchangeState = {
   swapPairName: SwapNames;
   batchNumber: number;
   oraclePrice: number;
+  oraclePair: string;
   volumes: VolumesState;
   tokens: Map<string, Token>;
   swaps: Map<string, ValidSwap>;
+  displayTokens: Map<string,DisplayToken>;
 };
 
 export type WalletState = {
@@ -65,6 +63,18 @@ export type VaultToken = {
   decimals: number;
   amount: number;
   standard: string;
+};
+
+export type DisplayToken = {
+  name: string;
+  address: string;
+  icon: string | undefined;
+};
+
+export type DisplaySwap = {
+  pair: string;
+  to: DisplayToken;
+  from: DisplayToken;
 };
 
 export type UserVault = {

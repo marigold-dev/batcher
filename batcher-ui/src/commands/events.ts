@@ -71,11 +71,15 @@ export const newEventCmd = (event: BigMapEvent, toks: Map<string, Token>) => {
                 //! oracle price has changed
                 const data = eventData.content.value as RatesCurrentBigmap;
                 console.info('Oracle change', data);
+                const buyToken = tokens.get(data.swap.from.token.name);
+                const sellToken = tokens.get(data.swap.to.name);
+                const buyTokenDecimals: number = buyToken?.decimals || 0;
+                const sellTokenDecimals: number = sellToken?.decimals || 0;
                 dispatch(
                   updateOraclePrice(
                     computeOraclePrice(data.rate, {
-                      buyDecimals: parseInt(data.swap.to.decimals),
-                      sellDecimals: parseInt(data.swap.from.token.decimals),
+                      buyDecimals: buyTokenDecimals,
+                      sellDecimals: sellTokenDecimals,
                     })
                   )
                 );
@@ -87,12 +91,14 @@ export const newEventCmd = (event: BigMapEvent, toks: Map<string, Token>) => {
                 const status = mapStatus(data);
                 const buyToken = tokens.get(data.pair.string_0);
                 const sellToken = tokens.get(data.pair.string_1);
+                const buyTokenDecimals: number = buyToken?.decimals || 0;
+                const sellTokenDecimals: number = sellToken?.decimals || 0;
                 dispatch(updateBatcherStatus(status));
                 dispatch(
                   updateVolumes(
                     toVolumes(data.volumes, {
-                      buyDecimals: buyToken?.decimals || 0,
-                      sellDecimals: sellToken?.decimals || 0,
+                      buyDecimals: buyTokenDecimals,
+                      sellDecimals: sellTokenDecimals,
                     })
                   )
                 );

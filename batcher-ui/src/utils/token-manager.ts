@@ -98,37 +98,50 @@ export const parseStandard = (standard: string) => {
 };
 
 export const getPairsInformation = async (
-  pair: string
+  pair: string,
+  swapStoredCurrently: CurrentSwap
 ): Promise<{ currentSwap: Omit<CurrentSwap, 'isReverse'>; pair: string }> => {
-  const storage = await getTokenManagerStorage();
-  //const validSwaps = storage['valid_swaps']; //TODO - Only swaps pairs allowed by the contract should be displayed. A token might not be swappable with every other token
-  const validTokens = storage['valid_tokens'];
-  const pairs = pair.split('-');
-  const left = (await getTokenFromBigmap(validTokens.values, pairs[0])).value;
-  const right = (await getTokenFromBigmap(validTokens.values, pairs[1])).value;
+  if (!pair) {
+    return { currentSwap: swapStoredCurrently, pair };
+  } else {
+    const storage = await getTokenManagerStorage();
+    console.info('DEBUG  getPairsInfo - pair ', pair);
+    console.info('DEBUG  getPairsInfo -storage ', storage);
+    //const validSwaps = storage['valid_swaps']; //TODO - Only swaps pairs allowed by the contract should be displayed. A token might not be swappable with every other token
+    const validTokens = storage['valid_tokens'];
+    const pairs = pair.split('-');
+    console.info('DEBUG  getPairsInfo - pairs ', pairs);
+    if (!pairs) {
+      console.trace();
+    }
+    const left = (await getTokenFromBigmap(validTokens.values, pairs[0])).value;
+    const right = (await getTokenFromBigmap(validTokens.values, pairs[1]))
+      .value;
+    console.info('DEBUG  getPairsInfo - left ', left);
+    console.info('DEBUG  getPairsInfo - right ', right);
 
-  return {
-    currentSwap: {
-      swap: {
-        from: {
-          token: {
-            ...left,
-            decimals: parseInt(left.decimals),
-            tokenId: parseInt(left.token_id),
-            standard: parseStandard(left.standard),
+    return {
+      currentSwap: {
+        swap: {
+          from: {
+              name: left.name,
+              address: left.address,
+              decimals: parseInt(left.decimals),
+              tokenId: parseInt(left.token_id),
+              standard: parseStandard(left.standard),
           },
-          amount: 0,
-        },
-        to: {
-          ...right,
-          decimals: parseInt(right.decimals),
-          tokenId: parseInt(right.token_id),
-          standard: parseStandard(right.standard),
+          to: {
+            name: right.name,
+            address: right.address,
+            decimals: parseInt(right.decimals),
+            tokenId: parseInt(right.token_id),
+            standard: parseStandard(right.standard),
+          },
         },
       },
-    },
-    pair,
-  };
+      pair,
+    };
+  }
 };
 
 export const parseToken = (tokenObject: any): ValidToken => {

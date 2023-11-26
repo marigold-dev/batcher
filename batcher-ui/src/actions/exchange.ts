@@ -4,6 +4,7 @@ import {
   PriceStrategy,
   Token,
   ValidSwap,
+  DisplayToken,
 } from '@/types';
 
 export const updatePriceStrategy = (priceStrategy: PriceStrategy) =>
@@ -136,6 +137,19 @@ export const getSwaps = () =>
     type: 'GET_SWAPS',
   }) as const;
 
+export const updateDisplayTokens = (
+  display_tokens: Map<string, DisplayToken>
+) =>
+  ({
+    type: 'UPDATE_DISPLAY_TOKENS',
+    payload: { display_tokens },
+  }) as const;
+
+export const getDisplayTokens = () =>
+  ({
+    type: 'GET_DISPLAY_TOKENS',
+  }) as const;
+
 export type ExchangeActions =
   | ReturnType<typeof updatePriceStrategy>
   | ReturnType<typeof reverseSwap>
@@ -157,4 +171,6 @@ export type ExchangeActions =
   | ReturnType<typeof getTokens>
   | ReturnType<typeof updateTokens>
   | ReturnType<typeof getSwaps>
-  | ReturnType<typeof updateSwaps>;
+  | ReturnType<typeof updateSwaps>
+  | ReturnType<typeof getDisplayTokens>
+  | ReturnType<typeof updateDisplayTokens>;

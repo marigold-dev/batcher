@@ -8,6 +8,7 @@ import { currentPairSelector, userAddressSelector } from '@/reducers';
 import {
   getTokens,
   getSwaps,
+  getDisplayTokens,
   fetchUserBalances,
   batcherUnsetup,
   getPairsInfos,
@@ -37,6 +38,7 @@ const Swap = () => {
   useEffect(() => {
     dispatch(getTokens());
     dispatch(getSwaps());
+    dispatch(getDisplayTokens());
   }, [dispatch]);
 
   return (

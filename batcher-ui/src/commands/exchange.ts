@@ -8,8 +8,9 @@ import {
   getTimeDifferenceInMs,
   getTokens,
   getSwaps,
+  ensureMapTypeOnTokens,
 } from '@/utils/utils';
-import { getPairsInformation } from '@/utils/token-manager';
+import { getPairsInformation, getTokensMetadata } from '@/utils/token-manager';
 import {
   updateBatchNumber,
   updateBatcherStatus,
@@ -21,6 +22,7 @@ import {
   newError,
   updateTokens,
   updateSwaps,
+  updateDisplayTokens,
 } from '@/actions';
 import {
   BatcherStatus,
@@ -28,12 +30,14 @@ import {
   SwapNames,
   Token,
   ValidSwap,
+  ExchangeState,
+  DisplayToken,
 } from '@/types';
 
-const fetchPairInfosCmd = (pair: string) =>
+const fetchPairInfosCmd = (state: ExchangeState, pair: string) =>
   Cmd.run(
     () => {
-      return getPairsInformation(pair);
+      return getPairsInformation(pair, state.currentSwap);
     },
     {
       successActionCreator: updatePairsInfos,
@@ -85,15 +89,23 @@ const setupBatcherCmd = (startTime: string | null, status: BatcherStatus) => {
   return Cmd.none;
 };
 
-const fetchOraclePriceCmd = (tokenPair: string, { swap }: CurrentSwap) => {
+const fetchOraclePriceCmd = (
+  tokenPair: string,
+  tokens: Map<string, Token>,
+  { swap }: CurrentSwap
+) => {
   return Cmd.run(
     async () => {
       console.info('TokenPair', tokenPair);
       const rates = await getCurrentRates(tokenPair);
       console.info('Rates', rates);
-      return computeOraclePrice(rates[0].rate, {
-        buyDecimals: swap.to.decimals,
-        sellDecimals: swap.from.token.decimals,
+      const rate = rates[0];
+      const tokensMapped = ensureMapTypeOnTokens(tokens);
+      const to = tokensMapped.get(rate.swap.to);
+      const from = tokensMapped.get(rate.swap.from);
+      return computeOraclePrice(rate.rate, {
+        buyDecimals: to?.decimals || 0,
+        sellDecimals: from?.decimals || 0,
       });
     },
     {
@@ -151,6 +163,22 @@ const fetchSwapsCmd = () => {
   );
 };
 
+const fetchDisplayTokensCmd = () => {
+  return Cmd.run(
+    async () => {
+      const tokensMetadata = await getTokensMetadata();
+
+      const mapped: Map<string, DisplayToken> =
+        tokensMetadata as unknown as Map<string, DisplayToken>;
+      console.info('Mapped tokens', mapped);
+      return mapped;
+    },
+    {
+      successActionCreator: updateDisplayTokens,
+      failActionCreator: (e: string) => newError(e),
+    }
+  );
+};
 
 export {
   fetchPairInfosCmd,
@@ -161,4 +189,5 @@ export {
   fetchVolumesCmd,
   fetchTokensCmd,
   fetchSwapsCmd,
+  fetchDisplayTokensCmd,
 };

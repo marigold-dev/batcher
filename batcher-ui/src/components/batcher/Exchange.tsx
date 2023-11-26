@@ -75,9 +75,9 @@ const Exchange = () => {
       return;
     }
 
-    const tokenName = isReverse ? swap.to.name : swap.from.token.name;
+    const tokenName = isReverse ? swap.to.name : swap.from.name;
 
-    const selectedToken = isReverse ? swap.to : swap.from.token;
+    const selectedToken = isReverse ? swap.to : swap.from;
 
     const batcherContract = await tezos.wallet.at(batcherContractHash);
 
@@ -92,11 +92,11 @@ const Exchange = () => {
       selectedToken.address,
       compose(tzip12, tzip16)
     );
-    const tokenId = isReverse ? swap.to.tokenId : swap.from.token.tokenId;
+    const tokenId = isReverse ? swap.to.tokenId : swap.from.tokenId;
 
     const scaled_amount = isReverse
       ? scaleAmountUp(amount, swap.to.decimals)
-      : scaleAmountUp(amount, swap.from.token.decimals);
+      : scaleAmountUp(amount, swap.from.decimals);
 
     const tolerance = toTolerance(isReverse, priceStategy);
 
@@ -133,16 +133,13 @@ const Exchange = () => {
                 amount: scaleAmountUp(amount, currentSwap.swap.to.decimals),
               },
               to: {
-                ...currentSwap.swap.from.token,
+                ...currentSwap.swap.from,
               },
             }
           : {
               from: {
-                token: { ...currentSwap.swap.from.token },
-                amount: scaleAmountUp(
-                  amount,
-                  currentSwap.swap.from.token.decimals
-                ),
+                token: { ...currentSwap.swap.from },
+                amount: scaleAmountUp(amount, currentSwap.swap.from.decimals),
               },
               to: {
                 ...currentSwap.swap.to,
@@ -155,19 +152,20 @@ const Exchange = () => {
         tolerance,
       };
 
-      console.info("SWAP PARAMS", swap_params);
+      console.info('SWAP PARAMS', swap_params);
+
 
       if (selectedToken.standard === 'FA1.2 token') {
-        if (!swap.from.token.address) {
+        if (!swap.from.address) {
           dispatch(
             newError(
-              `Can\t retrieve token contract address for ${swap.from.token.name}`
+              `Can\t retrieve token contract address for ${swap.from.name}`
             )
           );
           return;
         }
         const tokenfa12Contract = await tezos?.wallet.at(
-          swap.from.token.address,
+          swap.from.address,
           compose(tzip12, tzip16)
         );
 
@@ -232,13 +230,13 @@ const Exchange = () => {
         dispatch(
           newError(
             `Deposit failed for token ${
-              isReverse ? swap.to.name : swap.from.token.name
+              isReverse ? swap.to.name : swap.from.name
             }`
           )
         );
         throw new Error(
           `Failed to deposit ${
-            isReverse ? swap.to.name : swap.from.token.name
+            isReverse ? swap.to.name : swap.from.name
           } token.`
         );
       } else {
@@ -268,29 +266,31 @@ const Exchange = () => {
           onSubmit={event => {
             event.preventDefault();
             depositToken();
-          }}>
+          }}
+        >
           <Form.Field name="amount">
+            <SelectPair isFrom />
             <div className="flex items-baseline justify-between">
               <Form.Label className="text-xl font-medium text-white">
                 {`From ${
                   isReverse
-                    ? currentSwap.swap.to.name
-                    : currentSwap.swap.from.token.name
+                    ? currentSwap.swap.to?.name
+                    : currentSwap.swap.from?.name
                 }`}
                 <p className="text-sm mb-2">
                   {`Balance : ${
                     isReverse
-                      ? userBalances[currentSwap.swap.to.name.toUpperCase()] ||
-                        0
+                      ? userBalances[
+                          currentSwap.swap.to?.name?.toUpperCase()
+                        ] || 0
                       : userBalances[
-                          currentSwap.swap.from.token.name.toUpperCase()
+                          currentSwap.swap.from?.name?.toUpperCase()
                         ] || 0
                   }`}
                 </p>
               </Form.Label>
             </div>
             <div className="flex">
-              <SelectPair isFrom />
               <Form.Control asChild>
                 <input
                   className="box-border w-full bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -307,12 +307,14 @@ const Exchange = () => {
             </div>
             <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
-              match={'valueMissing'}>
+              match={'valueMissing'}
+            >
               Please input your amount
             </Form.Message>
             <Form.Message
               className="text-[13px] text-primary opacity-[0.8]"
-              match={'badInput'}>
+              match={'badInput'}
+            >
               Invalid input.
             </Form.Message>
             <Form.Message
@@ -321,12 +323,13 @@ const Exchange = () => {
                 return (
                   (isReverse &&
                     Number.parseFloat(value) >
-                      userBalances[swap.to.name.toUpperCase()]) ||
+                      userBalances[swap.to?.name?.toUpperCase()]) ||
                   (!isReverse &&
                     Number.parseFloat(value) >
-                      userBalances[swap.from.token.name.toUpperCase()])
+                      userBalances[swap.from?.name?.toUpperCase()])
                 );
-              }}>
+              }}
+            >
               Greater than the balance.
             </Form.Message>
           </Form.Field>
@@ -339,7 +342,8 @@ const Exchange = () => {
               setAnimate(true);
               dispatch(reverseSwap());
             }}
-            onAnimationEnd={() => setAnimate(false)}>
+            onAnimationEnd={() => setAnimate(false)}
+          >
             <FontAwesomeIcon
               size="2xl"
               icon={faArrowRightArrowLeft}
@@ -352,39 +356,30 @@ const Exchange = () => {
               <Form.Label className="text-xl font-medium leading-[35px] text-white">
                 {`To ${
                   isReverse
-                    ? currentSwap.swap.from.token.name
-                    : currentSwap.swap.to.name
+                    ? currentSwap.swap.from?.name
+                    : currentSwap.swap.to?.name
                 }`}
                 <p className="text-sm mb-2">
                   {`Balance : ${
                     isReverse
                       ? userBalances[
-                          currentSwap.swap.from.token.name.toUpperCase()
+                          currentSwap.swap.from?.name?.toUpperCase()
                         ] || 0
-                      : userBalances[currentSwap.swap.to.name.toUpperCase()] ||
-                        0
+                      : userBalances[
+                          currentSwap.swap.to?.name?.toUpperCase()
+                        ] || 0
                   }`}
                 </p>
               </Form.Label>
             </div>
-            <div className="flex">
-              <SelectPair isFrom={false} />
-              <Form.Control asChild>
-                <input
-                  className="box-border w-full cursor-not-allowed bg-white shadow-black inline-flex h-[35px] items-center justify-center rounded-[4px] px-[10px] text-[15px] leading-none text-black outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  type="number"
-                  min={0}
-                  disabled
-                  required
-                />
-              </Form.Control>
-            </div>
+            <div className="flex"></div>
           </Form.Field>
 
           <Form.Submit asChild>
             <button
               disabled={!userAddress || batcherStatus === BatcherStatus.CLOSED}
-              className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center">
+              className="text-white h-10 disabled:cursor-not-allowed cursor-pointer disabled:bg-lightgray items-center justify-center rounded bg-primary px-4 mt-8 text-xl self-center"
+            >
               Swap
             </button>
           </Form.Submit>
