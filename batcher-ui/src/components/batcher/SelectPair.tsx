@@ -7,16 +7,20 @@ import {
   faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector } from 'react-redux';
-import { currentSwapSelector, tokensSelector, swapsSelector } from '@/reducers';
+import {
+  currentSwapSelector,
+  //tokensSelector,
+  swapsSelector,
+  displayTokensSelector,
+} from '@/reducers';
 import { useDispatch } from 'react-redux';
-import { changePair, newError } from '@/actions';
-import { ValidSwap } from '@/types';
+import { changePair } from '@/actions';
+import { DisplaySwap } from '@/types';
 import Image from 'next/image';
 import {
-  getLexicographicalPairName,
-  getTokensMetadata,
-} from '@/utils/token-manager';
-import { ensureMapTypeOnSwaps } from '@/utils/utils';
+  ensureMapTypeOnSwaps,
+  ensureMapTypeOnDisplayTokens,
+} from '@/utils/utils';
 
 interface SelectPairProps {
   isFrom: boolean;
@@ -26,129 +30,137 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   const { swap, isReverse } = useSelector(currentSwapSelector);
   const dispatch = useDispatch();
 
-  const tokens = useSelector(tokensSelector);
+  //const tokens = useSelector(tokensSelector);
   const swaps = useSelector(swapsSelector);
-  const [availableTokens, setAvailableTokens] = useState<any[]>([]);
-  const [availableSwaps, setAvailableSwaps] = useState<string[]>([]);
+  const displayTokens = useSelector(displayTokensSelector);
+  const [availableSwapPairs, setAvailableSwapPairs] = useState<DisplaySwap[]>(
+    []
+  );
 
-  const displayValue = useCallback(() => {
-    if (isReverse && isFrom) return swap.to.name;
-    if (isReverse && !isFrom) return swap.from.token.name;
-    if (!isReverse && isFrom) return swap.from.token.name;
-    if (!isReverse && !isFrom) return swap.to.name;
-    return swap.from.token.name;
-  }, [isReverse, isFrom, swap]);
+  const emptyDisplayToken = () => {
+    return {
+      name: '',
+      address: '',
+      icon: '',
+    };
+  };
 
   useEffect(() => {
-    getTokensMetadata().then(
-      (
-        tokens: { name: string; address: string; icon: string | undefined }[]
-      ) => {
-        setAvailableTokens(tokens);
-        console.info('swaps - before', swaps);
-        const swapsAsMap: Map<string, ValidSwap> = ensureMapTypeOnSwaps(swaps);
-        console.info('swaps - dispatch', swapsAsMap);
-        console.info('swaps keys - dispatch', swapsAsMap.keys());
-        const swps: string[] = Array.from(swapsAsMap.keys());
-        console.info('swps - dispatch', swps);
-        setAvailableSwaps(swps);
-      }
-    );
-  }, [dispatch, tokens, swaps]);
+    console.info('SWAPPAIRS', swaps);
+    console.info('SWAPPAIRS displayTokens', displayTokens);
+    console.info('SWAPPAIRS displayTokens s', Array.from(displayTokens));
+    const mappedSwaps = ensureMapTypeOnSwaps(swaps);
+    const mappedDisplayTokens = ensureMapTypeOnDisplayTokens(displayTokens);
+    const swapPairs = Array.from(mappedSwaps).map(([k, v]) => {
+      console.info('SWAPPAIRS k', k);
+      console.info('SWAPPAIRS v', v);
+      const to = mappedDisplayTokens.get(v.swap.to);
+      const from = mappedDisplayTokens.get(v.swap.from);
+      console.info('SWAPPAIRS to', to);
+      console.info('SWAPPAIRS from', from);
+      let ds: DisplaySwap = {
+        pair: k,
+        to: to || emptyDisplayToken(),
+        from: from || emptyDisplayToken(),
+      };
+      console.info('SWAPPAIRS ds', ds);
 
-  const isValidPair = (pair: string) => availableSwaps.includes(pair);
+      return ds;
+    });
 
-  const invalidSwap = (pairName: string) => {
-    dispatch(
-      newError(
-        pairName +
-          ' is not a valid pair. Only ' +
-          availableSwaps
-            .map(s => {s + '\n'})
-            .join() +
-          'are supported.'
-      )
-    );
-  };
+    setAvailableSwapPairs(swapPairs);
+  }, [dispatch, swaps, displayTokens]);
 
-  const is_reversed = (pair: string, to: string, from: string) => {
-    const swap = ensureMapTypeOnSwaps(swaps).get(pair);
-    return to === swap?.swap.to && from === swap?.swap.from;
-  };
+  const displayValue = useCallback(() => {
+    if (isReverse && isFrom) return swap.to?.name;
+    if (isReverse && !isFrom) return swap.from?.name;
+    if (!isReverse && isFrom) return swap.from?.name;
+    if (!isReverse && !isFrom) return swap.to?.name;
+    return swap.from?.name;
+  }, [isReverse, isFrom, swap]);
 
   return (
     <Select.Root
       value={displayValue()}
       onValueChange={value => {
-        console.info('availableSwaps', availableSwaps);
         console.info('swaps', swaps);
+        console.info('display tokens', displayTokens);
         console.info('swap', swap);
         console.info('value', value);
         console.info('isFrom', isFrom);
-        const from = isFrom ? `${swap.to.name}` : `${value}`;
-        const to = isFrom ? `${value}` : `${swap.from.token.name}`;
-        const pairName = getLexicographicalPairName(to, from);
-        const is_valid = isValidPair(pairName);
-        if (is_valid) {
-          const reversed = is_reversed(pairName, to, from);
-          dispatch(changePair(pairName, reversed));
-        } else {
-          invalidSwap(pairName);
+        if (value.length > 0) {
+          dispatch(changePair(value, false));
         }
       }}
     >
       <Select.Trigger className="flex items-center text-dark w-[200px] justify-center rounded px-2 mr-1 text-base gap-2 bg-white hover:bg-hovergray outline-none">
         <Select.Value
-          placeholder={isReverse ? swap.to.name : swap.from.token.name}
+          placeholder={isReverse ? swap.to?.name : swap.from?.name}
         />
         <Select.Icon className="text-dark">
           <FontAwesomeIcon icon={faChevronDown} />
         </Select.Icon>
       </Select.Trigger>
-      <Select.Portal className="w-[7rem]">
+      <Select.Portal className="w-[15rem]">
         <Select.Content className="overflow-hidden bg-white rounded-md text-dark">
-          <Select.ScrollUpButton className="flex items-center justify-center h-[25px] cursor-default">
+          <Select.ScrollUpButton className="flex items-center justify-right h-[25px] cursor-default">
             <FontAwesomeIcon icon={faChevronUp} />
           </Select.ScrollUpButton>
-          <Select.Viewport className="p-2">
+          <Select.Viewport className="p-4">
             <Select.Group>
-              {availableTokens.map(t => (
+              {availableSwapPairs.map(sp => (
                 <SelectItem
-                  value={t.name}
-                  key={t.name}
-                  disabled={
-                    isReverse
-                      ? swap.to.name === t.name
-                      : swap.from.token.name === t.name
-                  }
+                  value={sp.pair}
+                  key={sp.pair}
                 >
-                  <div className="flex items-center">
-                    {t.icon ? (
+                  <div className="flex items-left">
+                    {sp.from.icon ? (
                       <Image
-                        src={t.icon}
-                        alt={`${t.name} icon`}
+                        src={sp.from.icon}
+                        alt={`${sp.from.name} icon`}
                         width={24}
                         height={24}
                         style={{ paddingRight: 4 }}
                       />
                     ) : (
                       <Image
-                        src={`/${t.name}-icon.png`}
+                        src={`/${sp.from.name}-icon.png`}
                         loader={({ src }) => src}
-                        alt={`${t.name} icon`}
+                        alt={`${sp.from.name} icon`}
                         width={24}
                         height={24}
                         style={{ paddingRight: 4 }}
                         unoptimized
                       />
                     )}
-                    <p>{t.name}</p>
+                    <p>{sp.from.name}</p>
+                    <p>-</p>
+                    <p>{sp.to.name}</p>
+                    {sp.to.icon ? (
+                      <Image
+                        src={sp.to.icon}
+                        alt={`${sp.to.name} icon`}
+                        width={24}
+                        height={24}
+                        style={{ paddingRight: 4 }}
+                      />
+                    ) : (
+                      <Image
+                        src={`/${sp.to.name}-icon.png`}
+                        loader={({ src }) => src}
+                        alt={`${sp.to.name} icon`}
+                        width={24}
+                        height={24}
+                        style={{ paddingRight: 4 }}
+                        unoptimized
+                      />
+                    )}
                   </div>
                 </SelectItem>
               ))}
             </Select.Group>
           </Select.Viewport>
-          <Select.ScrollDownButton className="flex items-center justify-center h-[25px] cursor-default">
+          <Select.ScrollDownButton className="flex items-center justify-right h-[25px] cursor-default">
             <FontAwesomeIcon icon={faChevronDown} />
           </Select.ScrollDownButton>
         </Select.Content>

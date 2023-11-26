@@ -20,6 +20,7 @@ import {
   ValidToken,
   ValidSwap,
   ValidTokenAmount,
+  DisplayToken,
 } from '@/types';
 import {
   getTokenManagerStorage,
@@ -419,6 +420,24 @@ export const ensureMapTypeOnSwaps = (
   }
 };
 
+export const ensureMapTypeOnDisplayTokens = (
+  displayTokens: Map<string, DisplayToken>
+): Map<string, DisplayToken> => {
+  const typeOfDisplayTokens = typeof displayTokens;
+  console.info('display tokens type', typeOfDisplayTokens);
+  if (displayTokens instanceof Map) {
+    return displayTokens;
+  } else {
+    let dsp: Map<string, DisplayToken> = new Map<string, DisplayToken>();
+    Object.values(displayTokens).forEach(v => {
+      console.info('v', v);
+      const dt = (v as unknown) as DisplayToken;
+      console.info('dt', dt);
+      dsp.set(dt.name, dt);
+    });
+    return dsp;
+  }
+};
 export const getTimeDifferenceInMs = (
   status: BatcherStatus,
   startTime: string | null
@@ -442,6 +461,7 @@ export const computeOraclePrice = (
 ) => {
   const numerator = parseInt(rate.p);
   const denominator = parseInt(rate.q);
+  console.info("#### Oracle Rate ######", rate);
   const scaledPow = sellDecimals - buyDecimals;
   return scaleAmountUp(numerator / denominator, scaledPow);
 };

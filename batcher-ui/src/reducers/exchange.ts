@@ -13,6 +13,7 @@ import {
   PriceStrategy,
   Token,
   ValidSwap,
+  DisplayToken,
 } from '@/types';
 import {
   fetchBatcherStatusCmd,
@@ -23,20 +24,22 @@ import {
   setupBatcherCmd,
   fetchTokensCmd,
   fetchSwapsCmd,
+  fetchDisplayTokensCmd,
 } from '@/commands/exchange';
-import { getTimeDifference } from 'src/utils/utils';
+import {
+  getTimeDifference,
+  ensureMapTypeOnSwaps,
+  ensureMapTypeOnTokens,
+} from 'src/utils/utils';
 
 const initialSwap: CurrentSwap = {
   swap: {
     from: {
-      token: {
-        tokenId: 0,
-        name: 'tzBTC',
-        address: undefined,
-        decimals: 0,
-        standard: undefined,
-      },
-      amount: 0,
+      tokenId: 0,
+      name: 'tzBTC',
+      address: undefined,
+      decimals: 0,
+      standard: undefined,
     },
     to: {
       tokenId: 0,
@@ -62,8 +65,10 @@ const initialState: ExchangeState = {
   swapPairName: 'tzBTC-USDT',
   batchNumber: 0,
   oraclePrice: 0,
+  oraclePair: 'tzBTC-USDT',
   tokens: new Map<string, Token>(),
   swaps: new Map<string, ValidSwap>(),
+  displayTokens: new Map<string, DisplayToken>(),
   volumes: {
     sell: Object.keys(PriceStrategy).reduce(
       (acc, k) => ({ ...acc, [k]: 0 }),
@@ -74,6 +79,36 @@ const initialState: ExchangeState = {
       {}
     ) as Record<PriceStrategy, number>,
   },
+};
+
+const getSwapFromSwaps = (state: ExchangeState, pair: string) => {
+  if (pair === undefined || pair === null || pair === '') {
+    console.error('pair is undefined for swap');
+    return initialSwap;
+  } else {
+    const mappedSwaps = ensureMapTypeOnSwaps(state.swaps);
+    const mappedTokens = ensureMapTypeOnTokens(state.tokens);
+    console.info('@@@@@@ pair', pair);
+    const swap = mappedSwaps.get(pair);
+    if (!swap) {
+      return initialSwap;
+    } else {
+      console.info('@@@@@@', swap);
+      const to = mappedTokens.get(swap.swap.to);
+      const from = mappedTokens.get(swap.swap.from);
+      console.info('@@@@@@ to', to);
+      console.info('@@@@@@ from', from);
+      const currentSwap = {
+        from: from,
+        to: to,
+      };
+      console.info('@@@@ current swap', currentSwap);
+      return {
+        ...state.currentSwap,
+        swap: currentSwap,
+      };
+    }
+  }
 };
 
 const exchangeReducer = (
@@ -99,15 +134,12 @@ const exchangeReducer = (
         {
           ...state,
           swapPairName: action.payload.pair,
-          currentSwap: {
-            ...state.currentSwap,
-            isReverse: action.payload.isReverse,
-          },
+          currentSwap: getSwapFromSwaps(state, action.payload.pair),
         },
         Cmd.action(getPairsInfos(action.payload.pair))
       );
     case 'GET_PAIR_INFOS':
-      return loop(state, fetchPairInfosCmd(action.payload.pair));
+      return loop(state, fetchPairInfosCmd(state, action.payload.pair));
     case 'UPDATE_PAIR_INFOS': {
       //! We hard code token_id because it's not in contract storage.
       //! Update this when we use token with token_id != 0
@@ -115,22 +147,9 @@ const exchangeReducer = (
         {
           ...state,
           swapPairName: action.payload.pair,
-          currentSwap: {
-            ...action.payload.currentSwap,
-            isReverse: state.currentSwap.isReverse,
-            swap: {
-              from: {
-                token: {
-                  ...action.payload.currentSwap.swap.from.token,
-                  tokenId: 0,
-                },
-              },
-              to: {
-                ...action.payload.currentSwap.swap.to,
-                tokenId: 0,
-              },
-            },
-          },
+          currentSwap: !action.payload.currentSwap
+            ? state.currentSwap.swap
+            : action.payload.currentSwap,
         },
         Cmd.list([
           Cmd.action(getOraclePrice()),
@@ -194,7 +213,7 @@ const exchangeReducer = (
     case 'GET_ORACLE_PRICE':
       return loop(
         state,
-        fetchOraclePriceCmd(state.swapPairName, state.currentSwap)
+        fetchOraclePriceCmd(state.swapPairName, state.tokens,state.currentSwap)
       );
     case 'UPDATE_ORACLE_PRICE':
       return { ...state, oraclePrice: action.payload.oraclePrice };
@@ -214,6 +233,12 @@ const exchangeReducer = (
       return { ...state, swaps: action.payload.swaps };
     case 'GET_SWAPS':
       return loop(state, fetchSwapsCmd());
+    case 'UPDATE_DISPLAY_TOKENS':
+      console.info('display_tokens', action.payload.display_tokens);
+      console.info('state', state);
+      return { ...state, displayTokens: action.payload.display_tokens };
+    case 'GET_DISPLAY_TOKENS':
+      return loop(state, fetchDisplayTokensCmd());
     default:
       return state;
   }

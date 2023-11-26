@@ -25,8 +25,13 @@ export const userBalancesSelector = (state: AppState) =>
 export const priceStrategySelector = (state: AppState) =>
   state.exchange.priceStrategy;
 
-export const currentSwapSelector = (state: AppState) =>
-  state.exchange.currentSwap;
+export const currentSwapSelector = (state: AppState) => {
+  return state.exchange.currentSwap;
+};
+
+export const displayTokensSelector = (state: AppState) => {
+  return state.exchange.displayTokens;
+};
 
 export const currentPairSelector = (state: AppState) =>
   state.exchange.swapPairName;
@@ -48,6 +53,9 @@ export const batchNumberSelector = (state: AppState) =>
 
 export const oraclePriceSelector = (state: AppState) =>
   state.exchange.oraclePrice;
+
+export const oraclePairSelector = (state: AppState) =>
+  state.exchange.oraclePair;
 
 export const tokensSelector = (state: AppState) => state.exchange.tokens;
 export const swapsSelector = (state: AppState) => state.exchange.swaps;
