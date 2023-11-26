@@ -104,8 +104,8 @@ const fetchOraclePriceCmd = (
       const to = tokensMapped.get(rate.swap.to);
       const from = tokensMapped.get(rate.swap.from);
       return computeOraclePrice(rate.rate, {
-        buyDecimals: to.decimals,
-        sellDecimals: from.decimals,
+        buyDecimals: to?.decimals || 0,
+        sellDecimals: from?.decimals || 0,
       });
     },
     {
