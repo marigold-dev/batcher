@@ -46,11 +46,13 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   };
 
   useEffect(() => {
+
     const mappedSwaps = ensureMapTypeOnSwaps(swaps);
     const mappedDisplayTokens = ensureMapTypeOnDisplayTokens(displayTokens);
     const swapPairs = Array.from(mappedSwaps).map(([k, v]) => {
       const to = mappedDisplayTokens.get(v.swap.to);
       const from = mappedDisplayTokens.get(v.swap.from);
+
       let ds: DisplaySwap = {
         pair: k,
         to: to || emptyDisplayToken(),
@@ -62,6 +64,7 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
 
     setAvailableSwapPairs(swapPairs);
   }, [dispatch, swaps, displayTokens]);
+
 
 
   const displayValue = useCallback(() => {

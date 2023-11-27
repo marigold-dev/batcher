@@ -101,7 +101,6 @@ const fetchOraclePriceCmd = (
       console.info('Rates', rates);
       const rate = rates[0];
       const tokensMapped = ensureMapTypeOnTokens(tokens);
-      console.info('Tokens', tokensMapped);
       const to = tokensMapped.get(rate.swap.to);
       const from = tokensMapped.get(rate.swap.from);
       return computeOraclePrice(rate.rate, {

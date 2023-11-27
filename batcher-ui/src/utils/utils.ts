@@ -430,6 +430,7 @@ export const ensureMapTypeOnDisplayTokens = (
     Object.values(displayTokens).forEach(v => {
       console.info('v', v);
       const dt = v as unknown as DisplayToken;
+
       console.info('dt', dt);
       dsp.set(dt.name, dt);
     });
@@ -462,6 +463,7 @@ export const computeOraclePrice = (
   console.info('#### Oracle Rate ######', rate);
   console.info('#### Buy Decimals ######', buyDecimals);
   console.info('#### Sell Decimals ######', sellDecimals);
+
   const scaledPow = sellDecimals - buyDecimals;
   return scaleAmountUp(numerator / denominator, scaledPow);
 };

@@ -107,6 +107,7 @@ export const getPairsInformation = async (
     const storage = await getTokenManagerStorage();
     const validTokens = storage['valid_tokens'];
     const pairs = pair.split('-');
+
     if (!pairs) {
       console.trace();
     }
