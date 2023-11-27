@@ -105,20 +105,14 @@ export const getPairsInformation = async (
     return { currentSwap: swapStoredCurrently, pair };
   } else {
     const storage = await getTokenManagerStorage();
-    console.info('DEBUG  getPairsInfo - pair ', pair);
-    console.info('DEBUG  getPairsInfo -storage ', storage);
-    //const validSwaps = storage['valid_swaps']; //TODO - Only swaps pairs allowed by the contract should be displayed. A token might not be swappable with every other token
     const validTokens = storage['valid_tokens'];
     const pairs = pair.split('-');
-    console.info('DEBUG  getPairsInfo - pairs ', pairs);
+
     if (!pairs) {
       console.trace();
     }
     const left = (await getTokenFromBigmap(validTokens.values, pairs[0])).value;
-    const right = (await getTokenFromBigmap(validTokens.values, pairs[1]))
-      .value;
-    console.info('DEBUG  getPairsInfo - left ', left);
-    console.info('DEBUG  getPairsInfo - right ', right);
+    const right = (await getTokenFromBigmap(validTokens.values, pairs[1])).value;
 
     return {
       currentSwap: {

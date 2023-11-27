@@ -6,14 +6,14 @@ import {
   batcherStatusSelector,
   currentPairSelector,
   oraclePriceSelector,
-  oraclePairSelector,
+  //oraclePairSelector,
   remainingTimeSelector,
 } from '@/reducers';
 import { BatcherStatus } from '@/types';
 
 const BatcherInfo = () => {
   const tokenPair = useSelector(currentPairSelector);
-  const oraclePair = useSelector(oraclePairSelector);
+  //const oraclePair = useSelector(oraclePairSelector);
   const batchNumber = useSelector(batchNumberSelector);
 
   const status = useSelector(batcherStatusSelector);

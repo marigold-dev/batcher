@@ -71,8 +71,8 @@ export const newEventCmd = (event: BigMapEvent, toks: Map<string, Token>) => {
                 //! oracle price has changed
                 const data = eventData.content.value as RatesCurrentBigmap;
                 console.info('Oracle change', data);
-                const buyToken = tokens.get(data.swap.from.token.name);
-                const sellToken = tokens.get(data.swap.to.name);
+                const buyToken = tokens.get(data.swap.from);
+                const sellToken = tokens.get(data.swap.to);
                 const buyTokenDecimals: number = buyToken?.decimals || 0;
                 const sellTokenDecimals: number = sellToken?.decimals || 0;
                 dispatch(

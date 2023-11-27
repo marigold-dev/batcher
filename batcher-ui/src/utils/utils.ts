@@ -216,11 +216,9 @@ export const getBalances = async (userAddress: string): Promise<Balances> => {
   const tokenManagerStorage = await getTokenManagerStorage();
   const validTokens = tokenManagerStorage['valid_tokens'];
   const rawBalances = await getTokensBalancesByAccount(userAddress);
-  console.info('DEBUG: storage', tokenManagerStorage);
   let bals = new Array<Balance>();
   for await (const token_name of validTokens.keys) {
     const token = await getBigMapByIdAndKey(validTokens.values, token_name);
-    console.info('DEBUG: token', token);
     const balance = rawBalances.find(
       (b: TokenBalance) => b.token?.contract?.address === token.address
     )?.balance;
@@ -431,7 +429,8 @@ export const ensureMapTypeOnDisplayTokens = (
     let dsp: Map<string, DisplayToken> = new Map<string, DisplayToken>();
     Object.values(displayTokens).forEach(v => {
       console.info('v', v);
-      const dt = (v as unknown) as DisplayToken;
+      const dt = v as unknown as DisplayToken;
+
       console.info('dt', dt);
       dsp.set(dt.name, dt);
     });
@@ -461,7 +460,10 @@ export const computeOraclePrice = (
 ) => {
   const numerator = parseInt(rate.p);
   const denominator = parseInt(rate.q);
-  console.info("#### Oracle Rate ######", rate);
+  console.info('#### Oracle Rate ######', rate);
+  console.info('#### Buy Decimals ######', buyDecimals);
+  console.info('#### Sell Decimals ######', sellDecimals);
+
   const scaledPow = sellDecimals - buyDecimals;
   return scaleAmountUp(numerator / denominator, scaledPow);
 };

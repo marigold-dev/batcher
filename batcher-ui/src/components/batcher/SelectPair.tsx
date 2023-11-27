@@ -46,31 +46,25 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
   };
 
   useEffect(() => {
-    console.info('SWAPPAIRS', swaps);
-    console.info('SWAPPAIRS displayTokens', displayTokens);
-    console.info('SWAPPAIRS displayTokens s', Array.from(displayTokens));
+
     const mappedSwaps = ensureMapTypeOnSwaps(swaps);
     const mappedDisplayTokens = ensureMapTypeOnDisplayTokens(displayTokens);
     const swapPairs = Array.from(mappedSwaps).map(([k, v]) => {
-      console.info('SWAPPAIRS k', k);
-      console.info('SWAPPAIRS v', v);
       const to = mappedDisplayTokens.get(v.swap.to);
       const from = mappedDisplayTokens.get(v.swap.from);
-      console.info('SWAPPAIRS to', to);
-      console.info('SWAPPAIRS from', from);
+
       let ds: DisplaySwap = {
         pair: k,
         to: to || emptyDisplayToken(),
         from: from || emptyDisplayToken(),
       };
-      console.info('SWAPPAIRS ds', ds);
-
       return ds;
     });
 
 
     setAvailableSwapPairs(swapPairs);
   }, [dispatch, swaps, displayTokens]);
+
 
 
   const displayValue = useCallback(() => {
