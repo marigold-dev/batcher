@@ -29,6 +29,7 @@ const getSwapFromBigmap = (
     `${process.env.NEXT_PUBLIC_TZKT_API_URI}/v1/bigmaps/${bigMapId}/keys/${swapName}`
   ).then(checkStatus);
 
+
 // FIXME =- This is the only way I could ge tthe string comparisons to work the same way as they do in the contract ¯\_(ツ)_/¯
 const alignWithLigoLexicographicalSorting = (to: string, from: string) => {
   const startsWithTzTo = to.startsWith('tz');

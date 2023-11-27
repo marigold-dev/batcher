@@ -59,8 +59,10 @@ const SelectPair = ({ isFrom }: SelectPairProps) => {
       return ds;
     });
 
+
     setAvailableSwapPairs(swapPairs);
   }, [dispatch, swaps, displayTokens]);
+
 
   const displayValue = useCallback(() => {
     if (isReverse && isFrom) return swap.to?.name;
