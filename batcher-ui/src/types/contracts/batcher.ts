@@ -19,11 +19,8 @@ export type TokenNames = 'tzBTC' | 'EURL' | 'USDT';
 export type SwapNames = 'tzBTC-USDT' | 'tzBTC-EURL';
 
 type Swap = {
-  from: {
-    token: ContractToken;
-    amount: string;
-  };
-  to: ContractToken;
+  from:  string;
+  to: string;
 };
 
 export type ContractToken = {
@@ -124,17 +121,6 @@ export type VaultHoldings = Map<number, MarketVaultHolding>;
 
 export type BatcherStorage = {
   metadata: number; //! ID of metadata bigmap
-  valid_tokens: Record<TokenNames, ContractToken>;
-  valid_swaps: Record<
-    SwapNames,
-    {
-      swap: Swap;
-      is_disabled_for_deposits: boolean;
-      oracle_address: string;
-      oracle_precision: string;
-      oracle_asset_name: string;
-    }
-  >;
   rates_current: number; //! ID of rates_current bigmap
   fee_in_mutez: number;
   batch_set: {
@@ -145,7 +131,6 @@ export type BatcherStorage = {
   fee_recipient: string; //! Address
   last_order_number: string; //! number in string
   user_batch_ordertypes: number; //! ID of order book bigmap
-  limit_on_tokens_or_pairs: string; //! 10 per default
   deposit_time_window_in_seconds: string; //! 600 at this time
   scale_factor_for_oracle_staleness: string; //! "1"
 };
